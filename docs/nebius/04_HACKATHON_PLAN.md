@@ -339,7 +339,7 @@ The UI and docs never label synthetic responses as recorded Nemotron.
 | N5 | Scenario fixtures (by 10-21, so N2/N3 tests use them), eval harness, paired replay | main | §3.9; replay after N3a | 10-26 |
 | N6 | Live measurement and tuning; recorded-live fixtures; seed: unchanged month + a small deterministic investigation dataset (a full regeneration only if time allows) | main (+ codex for the seed) | N0, N3a | 10-27 |
 | N7 | Public repo (new `responsecompass-nebius`, history kept), secret scan of all history, README, `HACKATHON_CHANGES.md`, `docs/ARCHITECTURE.md`, `EVALUATION.md`, `DEMO_SCRIPT.md`; dependency/asset licence inventory | main; codex reviews | N6 | 10-28 |
-| N8 | Hosted demo (separate Compose project and port; not 3200), judge access plan | main | N6 | 10-28 |
+| N8 | Hosted demo. **User decision 2026-10-19:** run locally first; the public URL will reuse `compass.makodev58.com` only after the AMD hackathon 3 is over (the AMD app keeps 3200 and that hostname until then). Separate Compose project; judge access plan | main | N6; AMD event end | before 10-30 |
 | N9 | Video < 3 min, form text, feedback, pre-existing disclosure | main + user | N7, N8 | 10-30 |
 
 **Go/no-go gates.**
