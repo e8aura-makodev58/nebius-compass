@@ -148,6 +148,9 @@ async function readJsonBody(request, maxLength = 2000) {
  * prefix existed).
  */
 async function handleRoomScopedRoute({ request, response, path, runtime, logger, url }) {
+  if (request.method === 'POST' && path === '/ask') return sendJson(response,200,await runtime.ask(await readJsonBody(request,4096)));
+  const askMatch=/^\/ask\/([^/]+)$/.exec(path);
+  if(request.method==='GET'&&askMatch)return sendJson(response,200,await runtime.getAsk(decodeURIComponent(askMatch[1])));
   if (request.method === 'POST' && path === '/reports') return sendJson(response, 202, await runtime.submitReport(await readJsonBody(request, 12000)));
   const reportMatch = /^\/reports\/([^/]+)(?:\/(confirm|close))?$/.exec(path);
   if (reportMatch) {
@@ -470,6 +473,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     agentOptions: () => settingsService.requestOptions("compass"),
     investigatorOptions: () => settingsService.requestOptions("investigator"),
     narratorOptions: () => settingsService.requestOptions("narrator"),
+    assistantOptions: () => settingsService.requestOptions("assistant"),
   });
   // createControlRoomManager already reconciled each READY room once during
   // construction; this is the same reconcile-before-serve discipline the

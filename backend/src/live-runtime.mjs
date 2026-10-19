@@ -1,3 +1,4 @@
+import { createAskService } from './assistant.mjs';
 import { createInvestigationService } from './investigation-service.mjs';
 import {cloneDraftValue} from './live-draft.mjs';
 import { createStaffingService, createStaffingReview, finishStaffingDeadline, decideStaffing, updateStaffingPolicy } from './staffing-service.mjs';
@@ -24,6 +25,7 @@ export function createLiveRuntime({
   requestFixRecommendation,
   requestStaffingRecommendation,
   investigatorOptions = { mode: process.env.COMPASS_INVESTIGATOR_MODE ?? process.env.COMPASS_LIVE_COMPASS_MODE ?? "live" },
+  assistantOptions = { mode: process.env.COMPASS_ASSISTANT_MODE ?? process.env.COMPASS_LIVE_COMPASS_MODE ?? "live" },
   logger = null,
 } = {}) {
   const clock = createSimulationClock(store);
@@ -34,6 +36,7 @@ export function createLiveRuntime({
   const fixRecommendations = createFixRecommendationService(store, { agentOptions, ...(requestFixRecommendation ? { requestRanking: requestFixRecommendation } : {}) });
   const staffingService = createStaffingService(store, { agentOptions, ...(requestStaffingRecommendation ? { requestRanking: requestStaffingRecommendation } : {}) });
   const investigations = createInvestigationService(store, { investigatorOptions, rankingOptions: agentOptions, narratorOptions });
+  const assistant = createAskService(store,{assistantOptions});
   let investigationWork = null;
   let investigationQueued = false;
   function scheduleInvestigationWork() {
@@ -265,7 +268,7 @@ export function createLiveRuntime({
   }
 
   async function withState(action) {
-    return { mode: "LIVE", action: action?.result ?? action ?? null, agentActivity: structuredClone(agentActivity), ...(await store.publicSnapshot()) };
+    return { mode: "LIVE", action: action?.result ?? action ?? null, agentActivity: structuredClone(agentActivity), ...(await store.publicSnapshot()), askHistory: assistant.history() };
   }
 
   // Shared engine cycle without a UI projection. Offline history generation
@@ -324,6 +327,8 @@ export function createLiveRuntime({
   return {
     mode: "LIVE",
     store,
+    ask:(input)=>assistant.ask(input),
+    getAsk:(id)=>assistant.get(id),
     async snapshot() { return withState(null); },
     async updateInvestigationPolicy(input) { return investigations.updatePolicy(input); },
     async reinvestigate(id,input) { const result=await investigations.reinvestigate(id,input);scheduleInvestigationWork();return result; },
@@ -339,6 +344,7 @@ export function createLiveRuntime({
     async analyticsPareto(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildParetoAnalytics(state, query)) : buildParetoAnalytics(await store.snapshot(), query)) }; },
     async reset() {
       await store.reset();
+      assistant.clear();
       Object.assign(agentActivity.eventPlanner, { status: "IDLE", detail: "Waiting for the next event opportunity.", startedAtRealTime: null, completedAtRealTime: null });
       Object.assign(agentActivity.compass, { status: "IDLE", detail: "Waiting for a recommendation request.", startedAtRealTime: null, completedAtRealTime: null });
       return withState({ status: "RESET" });
@@ -457,6 +463,8 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
       mode = nextMode;
       return this.snapshot();
     },
+    async ask(input) { return active().ask(input); },
+    async getAsk(id) { return active().getAsk(id); },
     async updateInvestigationPolicy(input) { return active().updateInvestigationPolicy(input); },
     async reinvestigate(id,input) { return active().reinvestigate(id,input); },
     async submitReport(input) { return active().submitReport(input); },

@@ -171,6 +171,15 @@ its incremented revision, also exposed at `/state.investigationPolicy`. Defaults
 Policy changes are audited. `/analytics.investigations` and every period's `investigations`
 contain outcome counts, rates and first-fix comparison; see analytics-and-ethics.
 
+## Ask Compass (round 22)
+
+| Method | Path | Behaviour |
+|---|---|---|
+| POST | `/ask` | `{question, context?, expectedRevision?}` → answer `{answerId, status: READY|DECLINED|FALLBACK, text, citations, trace, source, model, reason?}`. Read-only; mutation request guard applies; 429 on rate limit or concurrent question; 409 `STALE` on a revision mismatch. |
+| GET | `/ask/:answerId` | One stored answer; 404 `ASK_NOT_FOUND`. |
+
+`/state` includes `askHistory` (last 20). See [assistant.md](assistant.md).
+
 ## Provider usage in settings
 
 `GET /api/settings` includes deployment-global `usage:{today,last7Days,budgetUsd,exhausted}`,

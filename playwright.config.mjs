@@ -36,6 +36,7 @@ export default defineConfig({
       COMPASS_CONTROL_ROOMS_DATA_ROOT: `/tmp/compass-playwright-control-rooms-${port}`,
       COMPASS_EVENT_PLANNER_MODE: "force-failure",
       COMPASS_LIVE_COMPASS_MODE: "force-failure",
+      COMPASS_ASSISTANT_MODE: "force-failure",
     },
   },
 });

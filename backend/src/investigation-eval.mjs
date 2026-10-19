@@ -4,7 +4,7 @@ import { createInvestigationService } from './investigation-service.mjs';
 import { fixesFor } from './fix-catalog.mjs';
 import { SYMPTOMS } from './report-policy.mjs';
 import { roleDefaults } from './model-provider.mjs';
-import { validateLiveState } from './live-schema.mjs';
+import { validateLiveState, createPublicLiveSnapshot } from './live-schema.mjs';
 export function scenarioState(scenario) {
   const state=createLiveSeed();
   state.issues=[];state.resolutionAttempts=[];state.assignments=[];state.dispatchOffers=[];state.recommendations=[];
@@ -33,7 +33,9 @@ export function scenarioState(scenario) {
 export function memoryInvestigationStore(initial) {
   let state=structuredClone(initial);
   let queue=Promise.resolve();
+  // Same read contract as the durable live store, so runtimes can run on it in tests and evals.
   return {snapshot:async()=>structuredClone(state),
+    publicSnapshot:async()=>createPublicLiveSnapshot(structuredClone(state)),
     mutate(label,mutation){const work=queue.then(async()=>{const draft=structuredClone(state);const result=await mutation(draft);validateLiveState(draft);state=draft;return {label,result:structuredClone(result)};});queue=work.catch(()=>{});return work;},
   };
 }

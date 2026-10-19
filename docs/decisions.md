@@ -1208,3 +1208,20 @@ public IDs, allowed hypothesis texts and numeric metric tokens and explicitly pe
 dropping numeric rationale claims in favor of qualitative prose. Preserve the original
 one-repair deadline/call/tool budget and every acceptance rule. Live repair effectiveness
 remains for the main agent to measure after merge.
+
+## 2026-10-19 — Ask Compass: read-only grounded Q&A (round 22)
+
+- Feature: central command asks plain-language questions about the room. Nemotron Super
+  (role `assistant`) answers from seven read-only public tools, with citations that must be
+  records a tool returned in the same run.
+- Boundary (rules 3 and 4):
+  - code declines hidden-truth and action requests before any model call;
+  - the tools expose explicit public projections only;
+  - numbers in prose come only from allowlisted count/minute fields;
+  - answers cannot claim approval or give instructions;
+  - Ask never mutates operational state (it only appends to its own in-memory history).
+- Fallback is a labelled deterministic list of the found records, so the feature degrades
+  without inventing text.
+- Finished by the main agent in the codex worktree at the user's request (codex ran out of
+  credits). The main agent fixed two test problems: a usage ledger that persisted to
+  `backend/data/`, and the in-memory store's missing `publicSnapshot`.

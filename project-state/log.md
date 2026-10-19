@@ -544,3 +544,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added seven bounded public-only read projections, explicit numeric metric allowlists and noninterference/canary tests; shared grounded-prose validation with the investigator. Added the assistant role to provider settings, env defaults, usage accounting and the existing Settings role pattern.
 - Pages updated: backend/assistant.md (new), backend/overview.md, backend/model-providers.md, index.md. The Q&A service/routes follow in step 2.
 - Step 1 verification: unit suite 452/452; forced-provider Chromium E2E 85/85 on port 3021.
+
+## [2026-10-19] feature — Ask Compass service and route (round 22, completed by the main agent)
+- `assistant.mjs`: `POST/GET /ask`, code-owned decline patterns, bounded tool loop on the `assistant` role, citation/number/action validation with one repair, deterministic fallback, per-room rate limit and in-memory history (`askHistory` in `/state`), Offline fixture. Live and Offline runtimes wired; E2E forces the assistant to fail. Codex ran out of credits; the main agent finished it in the codex worktree, fixing the assistant test's usage ledger (it persisted to `backend/data/`) and adding `publicSnapshot()` to the in-memory store.
+- Pages updated: backend/assistant.md, backend/http-api.md.

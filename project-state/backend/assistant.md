@@ -26,3 +26,44 @@ settings and role-specific provider env overrides, uses shared provider controls
 usage/budget ledger, and appears as “Assistant (Ask Compass)” in the existing Settings
 role fieldset pattern. Numeric prose uses the shared investigator validator and explicit
 per-tool count/minute allowlists; narrative, ID and timestamp digits never ground numbers.
+
+## Ask service and route (`assistant.mjs`)
+
+`POST /api/control-rooms/:id/ask` takes `{ question (≤ 400 chars), context?: { issueId?,
+investigationId?, responderId? }, expectedRevision? }` (4 KB body limit) and returns
+`{ answerId, question, asOf, revision, status, text, citations: [{kind, id}], trace, source,
+model, reason?, repaired?, rawInvalid? }`. `GET …/ask/:answerId` returns one stored answer
+(404 `ASK_NOT_FOUND`). Room snapshots carry `askHistory`, the last 20 answers, kept in
+memory per room and runtime (Live and Offline separately) and cleared by reset. The route
+uses the room mutation guard (JSON content type, same-origin), but Ask **never mutates
+operational state**: tests compare the room state before and after.
+
+- **DECLINED, before any provider option is read or any model call:**
+  - questions about hidden truth (skill, causes, effectiveness, probabilities or
+    percentages) → `HIDDEN_TRUTH_REQUEST`;
+  - requests to act (assign, approve, dispatch, override, reset…) → `ACTION_REQUEST`;
+  - instruction-injection markers → `UNTRUSTED_INSTRUCTION_REQUEST`.
+
+  These are code-owned patterns, not model judgement.
+- **Model loop:**
+  - initial tool reads are seeded from the context ids, or ids named in the question,
+    else `analytics_summary`;
+  - then at most 4 tool steps, 6 calls and 45 s (the `assistant` role);
+  - the question and every narrative are passed as untrusted data.
+- **Final validation (`validateAskFinal`):**
+  - exactly `{text, citations}`;
+  - 1–10 citations, each a `kind:id` a tool returned in this run;
+  - text ≤ 1000 chars that passes the shared prose validator, with numbers only from
+    per-tool allowlisted count/minute fields;
+  - no hidden-truth, probability, advice or authorization language;
+  - "approved" only when a cited record shows an approval.
+
+  One repair with the allowed citations and numbers, then fallback.
+- **FALLBACK (`source: DETERMINISTIC`):** a labelled list of the records the tools found,
+  with the reason (`forced-failure`, `deadline`, `validation-failed`, `tool-step-cap`,
+  `provider-error`, `budget-exhausted`, …).
+- **Limits:** 10 questions per room per rolling real minute (`ASK_RATE_LIMIT`, 429), and one
+  question at a time per room (`ASK_BUSY`, 429). A reset during a question rejects its
+  publication (`ASK_RESET`).
+- **Offline/fixture:** reads `fixtures/assistant-response.json` (labelled `synthetic`); no
+  network. The E2E suite sets `COMPASS_ASSISTANT_MODE=force-failure`.
