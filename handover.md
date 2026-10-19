@@ -97,8 +97,8 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 20) |
-| gemini | RUN (round 20g) |
+| codex | RUN (round 21) |
+| gemini | RUN (round 21g) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Security and correctness review of the investigator path | 20 |
-| gemini | Theme review and enhancement plan (docs only) | 20g |
+| codex | Security fixes from 08_SECURITY_REVIEW.md | 21 |
+| gemini | CSS-only theme enhancements E1, E2, E4–E7 | 21g |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
 
@@ -1052,8 +1052,51 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
   - **Do not touch:** `frontend/`, `backend/`, `e2e/`, `handover.md` outside your section,
     `backend/data/`, other worktrees. No live provider calls.
 
+**Round 21 (2026-10-19).** Start with `git merge master`; keep your watchers.
+
+- **codex — fix `docs/nebius/08_SECURITY_REVIEW.md` findings 1 (partial), 2, 3, 4, 5, 6, 7,
+  8 and 10.** You own `investigator.mjs` and `prompts/investigator.mjs` again this round.
+  Ports 3021/3121.
+  - **#1, partial, no login yet:** room mutations accept only `Content-Type:
+    application/json` and reject a cross-origin `Origin` (allow same-origin and a missing
+    Origin for CLI/tests); return 403/415 with codes. Real authentication and a recorded
+    authenticated actor are a user decision, so do not add login yet.
+  - **#3:** replace my "grounded numbers" rule (`8a76993`). Prose may quote only numbers
+    from an **allowlist of numeric metric fields** in tool results (fix-evidence counts,
+    case counts, minutes). Exclude narrative, id and timestamp digits. Strip supplied ids
+    with token boundaries. Always reject probability/percentage claims (`%`,
+    "probability", "chance", "likelihood"). Keep the repair message's allowed-ids echo, and
+    make sure it carries public ids only.
+  - **#2, #4–#8, #10:** as proposed in the review, with tests: sanitize model-origin trace
+    fields and validate the whole public projection before commit; widen the hazard
+    lexicon (`spark*`, etc.); block READY with no supporting evidence for the first fix;
+    bound report admission (per-room open-report cap and rate limit) so investigations
+    can't starve; reclaim closed orphan state; route malformed array entries through
+    repair; bound provider response bytes.
+  - **Both suites green.** Record a `docs/decisions.md` entry and update `project-state`
+    pages. Do not touch `frontend/`, `e2e/` (tell me what changes) or `docs/nebius/`
+    except appending a "Status" section to `08_SECURITY_REVIEW.md`. No live calls.
+
+- **gemini — CSS-only theme enhancements from your plan.** Do E1, E2, E4, E6 and E7 as
+  proposed. Do E5 too, but in the **Nebius palette**: navy left border and lime focus/hover
+  per `docs/design/nebius-theme.md`, not indigo. Also read
+  `docs/design/nebius-theme-codex-notes.md`. Skip E3 and E8 for now.
+  - **Files:** `frontend/*.css` only. No JS or HTML changes; tell me if one is needed.
+    Never use lime as text.
+  - **Verify:**
+    - `node --test backend/tests/design-tokens-contrast.test.mjs` passes;
+    - the full `npm test` passes;
+    - the full E2E suite passes on port 3022 with
+      `LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu`.
+  - Commit before/after screenshots (at most 6, under 2 MB) in
+    `docs/design/theme-review-2026-10/after/`. Stop any server you start.
+
+- **main agent (meanwhile):** security #9 (UI re-investigate for failed approved attempts),
+  the authentication decision with the user, and the live replay with provenance.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `c301290` → merge `803792b` (security review, 10 findings; theme notes) and **gemini** `51350ec` → merge `7b913e6` (theme review and plan). Docs only. Master was rewound once to drop a user file swept in by `git add -A`; merges redone with named staging. Handoffs archived.
 - 2026-10-19 — **codex** `86dd08d` → merge `8234230`: Docker image ships fixtures, dev compose uses `/app/data`, replay pairs carry public source/fallback provenance with per-source rates. `project-state/log.md` conflict kept both. On master: `npm test` 435/435, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `a624e64` → merge `5936de9`: public docs factual review (27 findings, `docs/nebius/07_PUBLIC_DOCS_REVIEW.md`). Docs only. The main agent applies the documentation findings; code findings go to round 19. Handoff archived.
 - 2026-10-19 — **codex** `4538dfd` → merge `dafe5a2`: deployment-global provider usage ledger, daily budget fallback (`budget-exhausted`), Settings Usage card. Clean merge. On master: `npm test` 431/431, E2E 83/83. Handoff archived.
@@ -1088,33 +1131,17 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 20 — security and correctness review of the investigator path.
-- **Head commit:** This docs-only handoff commit on `codex` (parent `194da5f`).
-- **Changes:** `docs/nebius/08_SECURITY_REVIEW.md`: ten numbered findings (five High, four Medium, one Low), each with locations, concrete scenarios, verification limits and proposed fixes. High findings: unauthenticated operator authority / cross-origin text/plain mutations; model trace poisoning that persists and breaks public snapshots; numeric grounding from untrusted narratives and unrelated IDs; missed `sparking` hazard; unbounded report admission and starvation. Also covers unsupported READY fixes, orphan retention, malformed-final repair/classification, failed-attempt UI recovery and upstream byte bounds. Negative checks cover repair public IDs, shared gate, revision races, DTO private truth and UI escaping.
-- **Files changed:** docs/nebius/08_SECURITY_REVIEW.md, project-state/log.md, own handover section only. No implementation changes.
-- **Verification:** Synthetic transactional in-memory store, stubbed model turns, direct request-handler invocation and source tracing. Reproduced findings and uncertainty labels are explicit in the report. Concurrent approve/reinvestigate returned APPROVED / STALE; captured repair passed hidden-truth guard. No live calls, runtime data writes or application server. Both suites intentionally omitted per round 20's explicit docs-only instruction.
-- **project-state pages updated:** log.md (behavior unchanged).
-- **Risks / follow-ups:** Findings require separate implementation assignments. Upstream deployment authentication, real-model injection compliance, load thresholds and full browser exploitation were not confirmed. Watcher PID 41408 remains running without restart.
-- **Additional user-requested input:** `docs/design/nebius-theme-codex-notes.md` contains six recommendations for Gemini’s Nebius color enhancement proposal, including the user’s updated palette direction. Separate supplement avoids editing Gemini’s report or worktree. Docs only; no suites needed.
-- **Questions for main:** None.
+- **Task:** Round 21 assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
 ## gemini
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 20g — theme review and enhancement plan (docs only)
-- **Head commit:** `51350ec`
-- **Changes:** Comprehensive visual and architectural design review across 375px, 1280px, and 1920px viewports with isolated preview server on port 3122. Authored `docs/design/theme-review-2026-10.md` covering observed strengths, 8 concrete issues (WCAG AA contrast risks on microcopy, wall display 1920px density and line measure, Field reports tile empty-state and header alignment, mobile 375px vertical budget, narrative card semantics, usage table alignment, focus rings), and an 8-item prioritized enhancement plan with CSS-only classifications. Reference screenshots committed under `docs/design/theme-review-2026-10/` (1.2 MB total).
-- **Files changed:** `docs/design/theme-review-2026-10.md`, `docs/design/theme-review-2026-10/*.png`, `handover.md` (gemini section only)
-- **Verification:** Docs and reference images only; no suites needed (verified preview server stopped and port 3122 free; watcher scheduled).
-- **project-state pages updated:** None (design review document only; no implementation changes).
-- **Risks / follow-ups:** Ready for main agent review; items E1-E3 and E5-E7 can be implemented as purely CSS additions.
-- **Questions for main:** None.
-
+- **Task:** Round 21 assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 

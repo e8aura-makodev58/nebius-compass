@@ -4,6 +4,33 @@
 
 ## Merged handoffs
 
+### 2026-10-19 — gemini → master (branch commit `51350ec`, merge `7b913e6`)
+
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-19
+- **Task:** Round 20g — theme review and enhancement plan (docs only)
+- **Head commit:** `51350ec`
+- **Changes:** Comprehensive visual and architectural design review across 375px, 1280px, and 1920px viewports with isolated preview server on port 3122. Authored `docs/design/theme-review-2026-10.md` covering observed strengths, 8 concrete issues (WCAG AA contrast risks on microcopy, wall display 1920px density and line measure, Field reports tile empty-state and header alignment, mobile 375px vertical budget, narrative card semantics, usage table alignment, focus rings), and an 8-item prioritized enhancement plan with CSS-only classifications. Reference screenshots committed under `docs/design/theme-review-2026-10/` (1.2 MB total).
+- **Files changed:** `docs/design/theme-review-2026-10.md`, `docs/design/theme-review-2026-10/*.png`, `handover.md` (gemini section only)
+- **Verification:** Docs and reference images only; no suites needed (verified preview server stopped and port 3122 free; watcher scheduled).
+- **project-state pages updated:** None (design review document only; no implementation changes).
+- **Risks / follow-ups:** Ready for main agent review; items E1-E3 and E5-E7 can be implemented as purely CSS additions.
+- **Questions for main:** None.
+
+### 2026-10-19 — codex → master (branch commit `c301290`, merge `803792b`)
+
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-19
+- **Task:** Round 20 — security and correctness review of the investigator path.
+- **Head commit:** This docs-only handoff commit on `codex` (parent `194da5f`).
+- **Changes:** `docs/nebius/08_SECURITY_REVIEW.md`: ten numbered findings (five High, four Medium, one Low), each with locations, concrete scenarios, verification limits and proposed fixes. High findings: unauthenticated operator authority / cross-origin text/plain mutations; model trace poisoning that persists and breaks public snapshots; numeric grounding from untrusted narratives and unrelated IDs; missed `sparking` hazard; unbounded report admission and starvation. Also covers unsupported READY fixes, orphan retention, malformed-final repair/classification, failed-attempt UI recovery and upstream byte bounds. Negative checks cover repair public IDs, shared gate, revision races, DTO private truth and UI escaping.
+- **Files changed:** docs/nebius/08_SECURITY_REVIEW.md, project-state/log.md, own handover section only. No implementation changes.
+- **Verification:** Synthetic transactional in-memory store, stubbed model turns, direct request-handler invocation and source tracing. Reproduced findings and uncertainty labels are explicit in the report. Concurrent approve/reinvestigate returned APPROVED / STALE; captured repair passed hidden-truth guard. No live calls, runtime data writes or application server. Both suites intentionally omitted per round 20's explicit docs-only instruction.
+- **project-state pages updated:** log.md (behavior unchanged).
+- **Risks / follow-ups:** Findings require separate implementation assignments. Upstream deployment authentication, real-model injection compliance, load thresholds and full browser exploitation were not confirmed. Watcher PID 41408 remains running without restart.
+- **Additional user-requested input:** `docs/design/nebius-theme-codex-notes.md` contains six recommendations for Gemini’s Nebius color enhancement proposal, including the user’s updated palette direction. Separate supplement avoids editing Gemini’s report or worktree. Docs only; no suites needed.
+- **Questions for main:** None.
+
 ### 2026-10-19 — codex → master (branch commit `86dd08d`, merge `8234230`)
 
 - **Status:** READY FOR MERGE
