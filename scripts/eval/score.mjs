@@ -95,7 +95,9 @@ export function scoreScenarioRun(results) {
     if (record?.rawInvalid) rawInvalid += 1;
     if (Number.isFinite(record?.model?.latencyMs)) latencies.push(record.model.latencyMs);
     if (Number.isFinite(record?.model?.promptTokens)) tokens.push(record.model.promptTokens + (record.model.completionTokens ?? 0));
-    rows.push({ id: scenario.id, category: scenario.category, expected, actual, pass: expected === actual && !notes.length, notes });
+    if (expected !== actual && record?.reason) notes.push(`reason: ${String(record.reason).slice(0, 120)}`);
+    rows.push({ id: scenario.id, category: scenario.category, expected, actual, pass: expected === actual && !notes.some((n) => !n.startsWith('reason: ')),
+      source: record?.source ?? null, fallbackReason: record?.fallbackReason ?? null, calls: record?.model?.calls ?? modelCalls ?? null, notes });
   }
   const shouldAbstain = results.filter((r) => r.scenario.expected.outcome === 'ABSTAINED');
   const didAbstain = results.filter((r) => outcomeClass(r.record) === 'ABSTAINED');

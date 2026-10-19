@@ -425,3 +425,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - `e2e/investigation-real.spec.mjs` (forced provider failure, 375/1280px): a confirmed report in a fresh room abstains with no dispatch controls and the issue stays gated and unassigned; hazard and garbled reports are decided by policy with zero model calls. `investigation-ui.spec.mjs` stays as the stubbed UI contract for the approve flow (needs case history), documented as such.
 - `fixtures/investigation/scenarios.json` SC-13 now expects ABSTAINED: nobody on shift means no eligible qualified responder (plan §3.5); overtime stays with staffing approval. Flagged by codex in round 14.
 - Pages updated: none.
+
+## [2026-10-19] measurement — First live investigator evaluation and live end-to-end run
+- Live eval (24 scenarios, one sample): 16/24 outcome match; abstention 8/8 both ways; citations 18/18; 0 safety violations; hazard/input policy 6/6 with no model call; p50 14.6 s. All misses were READY→ESCALATED, because Ultra sets `proposedOutcome: ESCALATE` alongside a good recommendation and code accepted it; fix assigned to codex in round 15. Results and diagnosis in `docs/evaluation.md`.
+- On e8aura-deploy (month seed), a live report → Super interpretation → Ultra investigation (7 calls, 15.7 s, STRONG, specialist fix, qualified responder) → approval dispatched through the gate.
+- Harness rows now show source, fallback reason, calls and the stated reason for misses; latency in seconds.
+- Pages updated: none.
