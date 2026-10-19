@@ -431,3 +431,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - On e8aura-deploy (month seed), a live report → Super interpretation → Ultra investigation (7 calls, 15.7 s, STRONG, specialist fix, qualified responder) → approval dispatched through the gate.
 - Harness rows now show source, fallback reason, calls and the stated reason for misses; latency in seconds.
 - Pages updated: none.
+
+## [2026-10-19] docs — README investigator section; submission draft; demo script
+- README: "New for Nebius: Compass Investigator" (flow, boundary, fallback, eval pointer), diagram gains the field-report path, boundary sentence updated, test counts refreshed.
+- `docs/nebius/06_SUBMISSION_DRAFT.md`: track, descriptions, Nebius/NVIDIA usage, pre-existing disclosure, judge testing instructions and feedback, with ⟨…⟩ blanks for URLs, the city event and one claim that waits for the ESCALATE fix to merge.
+- `docs/DEMO_SCRIPT.md`: a 2:45 walkthrough recorded on a live run, with a recording checklist.
+- Pages updated: none.

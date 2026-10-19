@@ -47,6 +47,36 @@ data, or production credentials.
 
 ## What is implemented
 
+### New for Nebius: Compass Investigator
+
+An operator types a field report in plain language ("Station 12: the transfer keeps
+stopping short of the end position…"). The report is handled in five steps:
+
+1. **Screening in code.** Code screens it first. Hazard words (smoke, sparks, injury,
+   bypassing an interlock) escalate it to a person with no model call. Garbled, empty or
+   over-long text is declined, and instruction-like text is flagged and kept as quoted data.
+2. **Interpretation.** Code lists the possible readings (station × catalog symptom).
+   Nemotron Super ranks them, and the operator confirms one before any issue exists.
+3. **Investigation.** Nemotron Ultra investigates with six read-only tools: case search, case
+   lookup, equipment history, fix catalog, fix evidence, and eligible responders. The tools
+   see only outcomes completed before the decision time.
+4. **Validation.** Code checks every claim:
+   - cited case ids must have been returned by the tools in this run;
+   - fixes must come from the catalog, with procedure text quoted verbatim;
+   - responders must be eligible and hold the fix's certifications;
+   - evidence grade and outcome are computed by code.
+
+   If evidence is missing or no qualified responder exists, the investigation abstains.
+5. **Approval.** Central command approves, confirming each safety prerequisite, or escalates
+   or rejects. One dispatch gate on every assignment path makes sure a reported issue is
+   never dispatched without that approval.
+
+If the model is slow or invalid, a labelled deterministic investigation takes over. An
+evaluation harness (`npm run eval:investigator`) scores 24 synthetic scenarios; results and
+known limits are in [docs/evaluation.md](docs/evaluation.md).
+
+### Earlier platform
+
 - persistent simulation clock with pause/resume; the UI offers 1× and 5× (the API also accepts 10× and 60×);
 - deterministic one-shot scheduler with bounded cadence and no restart catch-up;
 - a dedicated Demo view with visible agent activity and Trigger Next Event / Force Resolve controls;
@@ -62,7 +92,7 @@ data, or production credentials.
 - clickable, on-demand issue audit trails with complete Compass analysis, offer history, control-center overrides, and resolution actions;
 - fixed-snapshot P0 analytics with denominators and thin-sample safeguards;
 - API-free deterministic Offline Demo using the same offer/accept and override interaction;
-- 341 hermetic unit and integration tests (including a 100-opportunity deterministic soak) and 73 Chromium E2E tests.
+- hermetic unit and integration tests (including a 100-opportunity deterministic soak) and Chromium E2E tests: 394 and 81 on 2026-10-19.
 
 ## Architecture
 
@@ -85,9 +115,17 @@ flowchart TD
     Resolution --> Store
     Store --> UI[Shared Live / Offline control room]
     Store --> Analytics[Fixed-snapshot analytics]
+    Report[Field report] --> Policy[Hazard / input policy in code]
+    Policy --> Interp[Nemotron Super ranks code-built interpretations]
+    Interp --> Confirm[Operator confirms facts]
+    Confirm --> Investigator[Nemotron Ultra + read-only tools]
+    Investigator --> Checks[Citation, catalog, qualification checks]
+    Checks --> Approval[Central command approval]
+    Approval --> Gate[Dispatch gate]
+    Gate --> Dispatch
 ```
 
-Application code owns time, facts, eligibility, metrics, baselines, validation, simulation outcomes, and all mutations. Models may only propose one bounded event or rank the eligible candidates supplied to them. Neither model sees `ResponderSkill`; the normal UI/API and analytics do not expose it either. See [architecture details](docs/architecture.md).
+Application code owns time, facts, eligibility, metrics, baselines, validation, simulation outcomes, and all mutations. Models may only propose one bounded event, rank the eligible candidates or interpretations supplied to them, or investigate with read-only tools whose outputs code validates; they never dispatch, approve, or decide overtime. Neither model sees `ResponderSkill`; the normal UI/API and analytics do not expose it either. See [architecture details](docs/architecture.md).
 
 ## Run locally
 
