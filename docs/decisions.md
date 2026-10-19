@@ -1111,3 +1111,13 @@ synthetic seed supplies approved/abstained/escalated examples (1/7/1 plus 2 auto
 All files are below 20MB. Dataset README records reproduction and limitations.
 The responder-ranking-only reliability soak explicitly disables investigation sampling to keep
 its original experiment intact; production sampling remains enabled by default.
+
+## 2026-10-19 — Model ESCALATE is not accepted beside a supported recommendation
+
+- Live evaluation run 1: 8 of 24 scenarios became `ESCALATED` because Ultra returned a
+  supported, qualified recommendation together with `proposedOutcome: ESCALATE`, and the
+  investigator accepted any model escalation.
+- Decision: models may still propose escalation, and code still decides (rule 3). An
+  `ESCALATE` beside a `MODERATE`/`STRONG` first fix with a qualified responder is a
+  validation error that gets one repair; repeated, it falls back deterministically. The
+  prompt reserves `ESCALATE` for safety concerns. Nothing can auto-dispatch either way.

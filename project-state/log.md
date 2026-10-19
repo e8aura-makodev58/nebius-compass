@@ -441,3 +441,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - `docs/nebius/06_SUBMISSION_DRAFT.md`: track, descriptions, Nebius/NVIDIA usage, pre-existing disclosure, judge testing instructions and feedback, with ⟨…⟩ blanks for URLs, the city event and one claim that waits for the ESCALATE fix to merge.
 - `docs/DEMO_SCRIPT.md`: a 2:45 walkthrough recorded on a live run, with a recording checklist.
 - Pages updated: none.
+
+## [2026-10-19] fix — Model ESCALATE beside a supported recommendation is repaired
+- `investigator.mjs`: a model `ESCALATE` with a supported (MODERATE/STRONG) first fix and a qualified responder is a validation error (one repair, then `validation-failed` fallback); prompt reserves ESCALATE for blocking safety concerns. Test in `investigator.test.mjs`. Main agent did this right after merging N3b, with codex idle.
+- Pages updated: backend/investigation.md.

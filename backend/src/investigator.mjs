@@ -156,6 +156,14 @@ export async function investigate(state, issue, options = {}) {
       const first=fixRows[0];
       const eligible=first ? returnedResponders.get(first.fixId) ?? [] : [];
       const responders=output.responders.map((row) => {const source=eligible.find((item) => item.responderId===row.responderId);return {responderId:source.responderId,displayName:source.displayName,qualified:true,certifications:source.certifications,rationale:row.rationale};});
+      // ESCALATE is for a safety concern that blocks any action. Escalating alongside a
+      // supported fix with a qualified responder contradicts itself: ask for one repair
+      // (live eval 2026-10-19: Ultra used ESCALATE to mean "send to the operator").
+      if(output.proposedOutcome?.outcome==='ESCALATE' && ['MODERATE','STRONG'].includes(first?.grade) && responders.length) {
+        rawInvalid=true;
+        if(repaired || model.calls>=8)return fallback('validation-failed');
+        repaired=true; messages.push({role:'assistant',content:JSON.stringify({invalidFinalDiscarded:true})},{role:'user',content:JSON.stringify({validationErrors:['proposedOutcome ESCALATE contradicts a supported fix with a qualified responder. Use ESCALATE only for a safety concern that blocks any action; otherwise omit proposedOutcome. Every recommendation already requires operator approval.'],instruction:'Repair the final JSON using only supplied and returned ids; no more tools.'})});continue;
+      }
       const status=output.proposedOutcome?.outcome==='ESCALATE' ? 'ESCALATED' : output.proposedOutcome?.outcome==='ABSTAIN' || !first || derived.fixes.every((row)=>row.grade==='NONE') || !responders.length ? 'ABSTAINED' : 'READY';
       return {status,source:fixture ? 'FIXTURE' : provider==='nebius'?'NEBIUS_MODEL':'AMD_MODEL',model:{...model,latencyMs:Math.max(0,now()-started)},fallbackReason:null,evidenceGrade:first?.grade ?? 'NONE',
         reason:output.proposedOutcome?.reason ?? (status==='READY'?'Public evidence supports an action for approval.':'No grounded action with an eligible qualified responder.'),hypotheses:output.hypotheses,fixes:fixRows,responders,trace,repaired,rawInvalid,warnings:[...warnings,...shiftWarnings(eligible,context.asOf),...(first?.grade==='THIN'?['Low evidence; operator approval required.']:[])]};

@@ -128,7 +128,7 @@ What could be better:
   them (OpenMDW 1.1 for Ultra and Lightning, the NVIDIA Nemotron Open Model License for
   Super and Nano).
 - **Agentic "escalate" semantics.** Ultra sometimes set a model-proposed `ESCALATE` next to
-  a good recommendation; we are adding a validator rule against that combination ⟨confirm merged before filing⟩. Guidance on structured
+  a good recommendation; our validator now rejects that combination and asks for one repair. Guidance on structured
   "abstain/escalate" fields in agent prompts would help other builders.
 
 ## IRL city event

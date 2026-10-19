@@ -238,3 +238,13 @@ See analytics-and-ethics for denominators and the unobserved baseline limitation
 small and month datasets, counts, reproduction and unattended queue limits are documented in
 `backend/seed/INVESTIGATION_DATASETS.md`. Lifecycle tests live in
 `backend/tests/investigation-lifecycle.test.mjs`.
+
+## Model-proposed escalation (2026-10-19)
+
+`proposedOutcome: ESCALATE` is accepted only when the model recommends no supported action.
+If the first fix is graded `MODERATE`/`STRONG` and a qualified responder is ranked, an
+`ESCALATE` contradicts the recommendation. It is treated as a validation error: one
+repair, within the shared call and step budget, then the deterministic fallback
+(`validation-failed`). The prompt reserves `ESCALATE` for a safety concern that blocks any
+action. Found by the first live evaluation (`docs/evaluation.md`), where Ultra used it to
+mean "send to the operator". The code-owned hazard policy is unchanged.

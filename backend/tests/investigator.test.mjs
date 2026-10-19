@@ -252,3 +252,17 @@ test('offer creation, manual override and forged offer acceptance all enforce th
   assert.equal((await assignments.handleOfferDue({offerId:'offer-001',token:'offer-response-1'})).result.status,'GATED');
   assert.equal((await store.snapshot()).assignments.filter((row)=>row.issueId===ids.issueId).length,0);
 });
+test('model ESCALATE beside a supported qualified fix is repaired once, then falls back; safety escalation without a supported fix stands',async()=>{
+  const {store,ids}=await ready();const state=await store.snapshot(),issue=state.issues.find((r)=>r.id===ids.issueId);
+  const final=(proposedOutcome,fixes=[{fixId:'FIX-A-01',rationale:'Public cases support this action.',evidenceRefs:[]}],responders=[{responderId:state.responders[0].id,rationale:'Qualified and available.'}])=>({toolCalls:[],content:JSON.stringify({hypotheses:[{symptomCode:'A-DRIFT',text:'Output drifts from the operating reference.',evidenceRefs:[{caseId:'CASE-ISS-001',field:'symptomText'}]}],fixes,responders,...(proposedOutcome?{proposedOutcome}:{})})});
+  const tools={toolCalls:[{id:'search',name:'search_cases',arguments:'{"issueClass":"A","symptomCode":"A-DRIFT"}'},{id:'eligible',name:'eligible_responders',arguments:'{"equipmentId":"EQ-04","issueClass":"A","fixId":"FIX-A-01"}'}]};
+  const escalate={outcome:'ESCALATE',reason:'Strong historical evidence supports the fix and a qualified responder is available.'};
+  const run=(turns)=>{let n=0;return investigate(state,issue,{mode:'live',callTurn:async()=>turns[Math.min(n++,turns.length-1)],asOf:state.simulationState.simulationTime});};
+  const repairedRun=await run([tools,final(escalate),final()]);
+  assert.ok(['MODERATE','STRONG'].includes(repairedRun.evidenceGrade),'scenario must give the first fix supported evidence');
+  assert.equal(repairedRun.status,'READY');assert.equal(repairedRun.repaired,true);assert.equal(repairedRun.rawInvalid,true);
+  const stubborn=await run([tools,final(escalate),final(escalate)]);
+  assert.equal(stubborn.source,'DETERMINISTIC');assert.equal(stubborn.fallbackReason,'validation-failed');
+  const safety=await run([tools,final({outcome:'ESCALATE',reason:'A safety concern needs a person before any action.'},[],[])]);
+  assert.equal(safety.status,'ESCALATED');assert.equal(safety.repaired,false);
+});
