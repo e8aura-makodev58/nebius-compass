@@ -144,6 +144,8 @@ export function createAskService(store,{mode,assistantOptions={},now=()=>perform
           return fallback('inference-call-cap');
         } catch(error) {
           if(error.code==='ASK_RESET')throw error;
+          // Operators need the cause of a provider fallback; log codes only, never prompt content.
+          console.error(JSON.stringify({timestamp:new Date().toISOString(),event:'ask_model_error',code:String(error.code??error.name??'error').slice(0,80),status:Number.isInteger(error.status)?error.status:null,message:String(error.message??'').slice(0,200)}));
           return fallback(['deadline','budget-exhausted','response-too-large'].includes(error.code)?error.code:'provider-error');
         }
       } finally {busy=false;}
