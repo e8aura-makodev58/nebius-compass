@@ -121,12 +121,17 @@ export function scoreScenarioRun(results) {
 
 /**
  * Paired first-fix replay (plan §4). `pairs` is [{ issueId, investigator, baseline,
- * deterministic, excluded }] where each arm is { fixed: boolean } from the isolated outcome
- * runner, or `excluded` names why the issue is outside the paired comparison.
+ * deterministic, excluded }] where outcome arms contain { fixed: boolean }. Investigator
+ * provenance adds public source/fallbackReason labels; legacy arms remain supported.
+ * `excluded` names why the issue is outside the paired comparison.
  */
 export function scorePairedReplay(pairs) {
   const included = pairs.filter((p) => !p.excluded);
   const arm = (name) => ratio(included.filter((p) => p[name]?.fixed).length, included.length);
+  const investigatorBySource = Object.fromEntries(['NEBIUS_MODEL','AMD_MODEL','DETERMINISTIC','FIXTURE','UNKNOWN'].map((source) => {
+    const rows = included.filter((p) => (['NEBIUS_MODEL','AMD_MODEL','DETERMINISTIC','FIXTURE'].includes(p.investigator?.source) ? p.investigator.source : 'UNKNOWN') === source);
+    return [source, ratio(rows.filter((p) => p.investigator?.fixed).length, rows.length)];
+  }));
   const excluded = {};
   for (const p of pairs.filter((x) => x.excluded)) excluded[p.excluded] = (excluded[p.excluded] ?? 0) + 1;
   const discordant = (a, b) => ({ [`${a}Only`]: included.filter((p) => p[a]?.fixed && !p[b]?.fixed).length, [`${b}Only`]: included.filter((p) => !p[a]?.fixed && p[b]?.fixed).length });
@@ -135,6 +140,7 @@ export function scorePairedReplay(pairs) {
     coverage: ratio(included.length, pairs.length),
     excluded,
     firstTimeFix: { investigator: arm('investigator'), baseline: arm('baseline'), deterministic: arm('deterministic') },
+    investigatorBySource,
     discordantVsBaseline: discordant('investigator', 'baseline'),
     discordantVsDeterministic: discordant('investigator', 'deterministic'),
   };

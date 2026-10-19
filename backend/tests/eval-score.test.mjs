@@ -67,3 +67,11 @@ test('paired replay reports coverage, exclusions, per-arm first-time fix and dis
   assert.deepEqual([r.firstTimeFix.investigator.numerator, r.firstTimeFix.baseline.numerator], [2, 2]);
   assert.deepEqual(r.discordantVsBaseline, { investigatorOnly: 1, baselineOnly: 1 });
 });
+
+test('paired provenance splits sources with independent denominators and preserves legacy scores',()=>{
+  const pair=(fixed,source)=>({investigator:{fixed,source},baseline:{fixed:false},deterministic:{fixed:true}});
+  const score=scorePairedReplay([pair(true,'NEBIUS_MODEL'),pair(false,'NEBIUS_MODEL'),pair(true,'DETERMINISTIC'),pair(false,'FIXTURE'),pair(true),{excluded:'FAILED',investigator:{source:'NEBIUS_MODEL'}}]);
+  assert.deepEqual(score.firstTimeFix.investigator,ratio(3,5));
+  assert.deepEqual(score.investigatorBySource,{NEBIUS_MODEL:ratio(1,2),AMD_MODEL:ratio(0,0),DETERMINISTIC:ratio(1,1),FIXTURE:ratio(0,1),UNKNOWN:ratio(1,1)});
+  for(const rate of Object.values(scorePairedReplay([]).investigatorBySource))assert.deepEqual(rate,ratio(0,0));
+});

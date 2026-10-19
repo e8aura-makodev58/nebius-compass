@@ -93,11 +93,24 @@ test('fixture replay limit five is hermetic, read-only, repeatable and CLI print
   const original=globalThis.fetch;globalThis.fetch=()=>{throw Error('network forbidden');};t.after(()=>{globalThis.fetch=original;});
   const first=await runPairedReplay({mode:'fixture',limit:5});const second=await runPairedReplay({mode:'fixture',limit:5});
   assert.equal(first.pairs.length,5);assert.deepEqual(first.pairs,second.pairs);assert.equal(first.meta.seedHash,second.meta.seedHash);assert.equal(first.meta.archiveHash,second.meta.archiveHash);assert.equal(first.meta.counts.selected,5);
-  assertNoResponderSkill(first);for(const pair of first.pairs)if(!pair.excluded)for(const arm of ['investigator','baseline','deterministic'])assert.deepEqual(Object.keys(pair[arm]),['fixed']);
+  assertNoResponderSkill(first);for(const pair of first.pairs)if(!pair.excluded)for(const arm of ['investigator','baseline','deterministic'])assert.deepEqual(Object.keys(pair[arm]),arm==='investigator'?['fixed','source','fallbackReason']:['fixed']);
   const {stdout}=await promisify(execFile)(process.execPath,['scripts/eval-investigator.mjs','--replay','--mode','fixture','--limit','5'],{cwd:new URL('../../',import.meta.url)});
-  assert.match(stdout,/Coverage.*\(\d\/5\)/);assert.match(stdout,/First-time fix: investigator/);assert.match(stdout,/Discordant vs baseline/);
+  assert.match(stdout,/Coverage.*\(\d\/5\)/);assert.match(stdout,/First-time fix: investigator/);assert.match(stdout,/Discordant vs baseline/);assert.match(stdout,/Investigator first-time fix by source: FIXTURE.*\(\d\/\d\)/);
 });
 
 test('replay rejects invalid mode, window and limits',async()=>{
   for(const input of [{mode:'off'},{mode:'fixture',heldOutDays:0},{mode:'fixture',limit:0},{mode:'fixture',limit:1.5}])await assert.rejects(runPairedReplay(input));
+});
+
+test('included replay arms retain only public source and fallback reason labels',async()=>{
+  for(const [source,fallbackReason,wantSource,wantReason] of [
+    ['NEBIUS_MODEL',null,'NEBIUS_MODEL',null],
+    ['DETERMINISTIC','deadline','DETERMINISTIC','deadline'],
+    ['hidden-cause-A-0','private diagnostic','UNKNOWN','unknown'],
+  ]) {
+    const result=await runPairedReplay({...options,seed:seed().state,investigate:async()=>({...await recommend(),source,fallbackReason})});
+    assert.equal(result.pairs.length,1);
+    assert.deepEqual(result.pairs[0].investigator,{fixed:result.pairs[0].baseline.fixed,source:wantSource,fallbackReason:wantReason});
+    assertNoResponderSkill(result);
+  }
 });

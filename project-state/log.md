@@ -471,3 +471,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — N7 factual public documentation review
 - Reviewed eight assigned public documents at master 9b2a76e against implementation, tests and Git history; added docs/nebius/07_PUBLIC_DOCS_REVIEW.md with numbered severities, source locations/evidence and exact replacement text. Reviewed files unchanged; no suites or live calls (round-18 docs-only instruction).
 - Pages updated: this log only; review artifact is in docs/nebius/.
+
+## [2026-10-19] fix — Docker fixture packaging and replay provenance (round 19)
+- Included both fixture directories in the runtime image and aligned dev Compose persistence with `/app/data`; verified a local Docker build and read-only, network-disabled fixture smoke check.
+- Replay pairs retain public investigator source/fallback labels; scoring and CLI add source-specific first-fix rates with denominators while preserving aggregate and legacy scoring.
+- Pages updated: backend/investigation.md, operations/running-and-config.md, operations/testing.md.

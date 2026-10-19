@@ -12,6 +12,12 @@ import { fixById } from './fix-catalog.mjs';
 import { crewForTime, ROTATION_ANCHOR } from './workforce-continuity.mjs';
 import { assertNoResponderSkill } from './live-schema.mjs';
 import { createReplayOutcomeRunner } from './replay-outcome-runner.mjs';
+const PUBLIC_SOURCES = new Set(['NEBIUS_MODEL','AMD_MODEL','DETERMINISTIC','FIXTURE']);
+const PUBLIC_FALLBACK_REASONS = new Set(['forced-failure','invalid-fixture','missing-fixture','deadline','invalid-tool-call','tool-step-cap','trace-budget','validation-failed','inference-call-cap','tool-result-budget','invalid-tool-arguments','budget-exhausted','provider-error']);
+function provenance(result) {
+  return {source:PUBLIC_SOURCES.has(result?.source)?result.source:'UNKNOWN',
+    fallbackReason:result?.fallbackReason == null ? null : PUBLIC_FALLBACK_REASONS.has(result.fallbackReason)?result.fallbackReason:'unknown'};
+}
 const seedPath=fileURLToPath(new URL('../seed/demo-control-rooms/plant-1.json',import.meta.url));
 const hash=(bytes)=>createHash('sha256').update(bytes).digest('hex');
 const at=(value)=>Date.parse(value);
@@ -108,7 +114,7 @@ export async function runPairedReplay({mode,heldOutDays=7,limit,investigate=defa
     try {arms=outcome({decision,issueId:target.id,...first,fixes});} catch {arms=null;}
     if(!arms || arms.some((arm)=>!arm)){counts.failed++;pairs.push({issueId:target.id,excluded:'FAILED'});continue;}
     counts.ready++;
-    pairs.push({issueId:target.id,investigator:arms[0],baseline:arms[1],deterministic:arms[2]});
+    pairs.push({issueId:target.id,investigator:{fixed:arms[0].fixed,...provenance(result)},baseline:arms[1],deterministic:arms[2]});
   }
   const meta={version:'paired-first-fix-v1',mode,heldOutWindow:{start:new Date(start).toISOString(),end:new Date(end).toISOString(),days:heldOutDays,basis:'resolvedAt'},counts,selection:'raisedAt ascending; issue ID tie-break; limit takes the first entries',startedAt,finishedAt:new Date().toISOString(),seedHash:source.seedHash,archiveHash:source.archiveHash,modelIds:[...modelIds].sort(),runtimeMs:Math.max(0,performance.now()-started)};
   assertNoResponderSkill({pairs,meta});

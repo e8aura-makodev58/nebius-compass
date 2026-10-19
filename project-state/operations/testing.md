@@ -220,3 +220,8 @@ for role/model aggregation, unknown/partial costs, pre-fetch/queued budget rejec
 rollover, in-flight completion, restart/log idempotency, 120-day retention, exact small-cost
 increments, original deadline preservation, content-free files and ranking/planner/investigator/narrator fallback propagation.
 Node test workers never use the production ledger file; no live provider is added to npm test.
+
+`backend/tests/docker-fixtures.test.mjs` scans runtime fixture URL literals and checks
+that each existing fixture is covered by a Dockerfile COPY at its expected relative path.
+Replay tests cover public provenance labels and sanitization; `eval-score.test.mjs` checks
+source-specific denominators, excluded cases, zero-case sources and legacy pairs.

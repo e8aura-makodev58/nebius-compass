@@ -276,7 +276,12 @@ baseline choices. No interpretation confirmation or policy shortcut is used.
 `replay-outcome-runner.mjs` owns private outcome inputs and reproduces the recorded first
 attempt's engine draws with the historical first responder, cloning the same start state
 for each explicit fix. Only `{fixed}` leaves each arm. Missing original inputs fail closed
-into FAILED exclusions. No runtime state is written. Pairs include non-READY exclusions;
+into FAILED exclusions. No runtime state is written. Included investigator arms add public
+`source` and `fallbackReason` labels to `{fixed}`; unknown labels are normalized rather than
+copying diagnostic text. Baseline/deterministic outcome arms remain `{fixed}`. The scorer
+adds `investigatorBySource` rates with separate denominators (including zero-case rates),
+which the replay CLI prints alongside the unchanged aggregate scores. Legacy pairs without
+provenance score under UNKNOWN. Pairs include non-READY exclusions;
 meta reports window, source hashes, counts, model IDs and runtime. CLI `--replay` uses the
 existing pure scorePairedReplay; see `docs/evaluation.md` for method, assumptions and commands.
 `backend/tests/replay-runner.test.mjs` covers future/truth noninterference, identical draws,
