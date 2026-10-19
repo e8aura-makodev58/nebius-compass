@@ -112,10 +112,10 @@ Nebius entry starts from baseline commit `1e1c69c` (2026-10-19). Everything afte
 
 ## Testing instructions for judges
 
-⟨Open the demo URL → choose control room e8-aura-p1 → Live Floor. In the Field reports panel
+⟨Open the demo URL → choose control room e8-aura-p1 (it opens on the Live Floor). In the Field reports panel
 press **Report incident** and describe a fault, e.g. "Station 12: the transfer keeps stopping
 short of the end position every few cycles". Confirm the suggested interpretation, open the
-investigation, tick the safety prerequisites and approve. Try a hazard report ("…light smoke
+investigation, tick every safety prerequisite checkbox (Approve stays disabled until all are ticked) and approve. Try a hazard report ("…light smoke
 near the drive") to see it escalate without a model call. Rooms pause after 10 idle minutes;
 press Resume to run the simulation live.⟩ No login is required. Live mode spends our Nebius
 credit; Offline Demo makes no API calls.

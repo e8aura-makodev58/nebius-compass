@@ -146,6 +146,7 @@ npm run dev
 
 ```sh
 # Optional month-backed demonstration, using a new isolated data directory.
+# Add COMPASS_PORT=3100 (or any free port) if 3000 is in use.
 COMPASS_DATA_DIR="$PWD/.cache/judge-demo" COMPASS_BOOTSTRAP_DEMO_SEED=true npm run dev
 ```
 
@@ -167,7 +168,11 @@ Ultra/provider-default thinking for investigation, and Lightning/off for plannin
 narration. Existing saved AMD configurations are preserved. Settings → API can save a
 server-side key and select either provider's models, thinking settings and timeouts.
 Missing credentials or failed inference use the applicable deterministic fallback. Keys
-stay server-side and are never sent to the browser.
+stay server-side and are never sent to the browser. Without a key, reports and
+investigations show a **Deterministic** source with a fallback reason such as
+`provider-error`: that is the intended behaviour, not a crash. Hazard and input screening,
+case evidence, safety prerequisites, approval and dispatch all still work; the model's
+interpretation ranking, investigation and explanations are what is missing.
 
 Offline Demo makes no provider calls. It uses the committed fixtures in a source checkout and in the Docker image, which includes `fixtures/` and `backend/fixtures/` (a test checks every runtime fixture path is packaged).
 

@@ -206,3 +206,17 @@ The walkthrough revealed 6 friction points where a judge could be confused or en
 - [x] Hazard escalation policy verified (instant escalation on `smoke`)
 - [x] Simulation clock controls and stepping verified
 - [x] Zero API key requirement verified (deterministic resilience intact)
+
+## Status (main agent, 2026-10-19)
+
+- Issue 1: applied (port note in the month-backed command).
+- Issue 2: applied.
+- Issue 3: fixed in the UI instead of the instructions. Submitting a report that policy decides
+  at once (hazard or bad input), or confirming an interpretation, now selects the new
+  investigation (`e2e/investigation-real.spec.mjs`).
+- Issue 4: applied with narrower wording. Without a key, the model's interpretation ranking,
+  investigation and explanations are missing, so "100% functional" would overclaim.
+- Issue 5: applied.
+- Issue 6: not applied. The E2E server defaults to port 3012, not 3000
+  (`playwright.config.mjs`), so it doesn't collide with `npm run dev`, and the README
+  already documents `COMPASS_E2E_PORT`.

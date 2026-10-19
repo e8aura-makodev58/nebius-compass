@@ -224,13 +224,14 @@ function bind(target, state, { escape, request, onState }, previousOverride = nu
     if (!narrative) { say('Describe the incident first.'); return; }
     const equipmentId = form.querySelector('#inv-equipment').value || undefined;
     reportFormOpen = false; form.querySelector('[data-inv-narrative]').value = '';
-    await send('report', '/reports', { narrative, equipmentId, reporter: 'Central command' });
+    // Policy-decided reports (hazard, bad input) return their investigation at once: show it.
+    await send('report', '/reports', { narrative, equipmentId, reporter: 'Central command' }, (next) => { if (next?.investigationId) selectedId = next.investigationId; });
   };
   target.querySelectorAll('[data-inv-action="confirm"]').forEach((b) => { b.onclick = () => {
     const report = state.fieldReports.find((r) => r.id === b.dataset.report);
     const optionId = target.querySelector(`input[name="inv-option-${CSS.escape(report.id)}"]:checked`)?.value;
     if (!optionId) { say('Choose an interpretation first.'); return; }
-    send(report.id, `/reports/${encodeURIComponent(report.id)}/confirm`, { optionId, expectedRevision: report.revision });
+    send(report.id, `/reports/${encodeURIComponent(report.id)}/confirm`, { optionId, expectedRevision: report.revision }, (next) => { if (next?.investigationId) selectedId = next.investigationId; });
   }; });
   target.querySelectorAll('[data-inv-action="close-report"]').forEach((b) => { b.onclick = () => {
     const report = state.fieldReports.find((r) => r.id === b.dataset.report);

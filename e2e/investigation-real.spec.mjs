@@ -54,6 +54,8 @@ test('hazard and garbled reports are decided by policy before any model call', a
   const [hazard, garbled] = (await (await request.get(`${room}/state`)).json()).investigations;
   expect([hazard.status, garbled.status]).toEqual(['ESCALATED', 'ABSTAINED']);
   for (const row of [hazard, garbled]) expect(row.model?.calls ?? 0).toBe(0);
+  // The newest policy-decided investigation is selected without a click.
+  await expect(tile.locator(`[data-investigation-id="${garbled.id}"]`)).toBeVisible();
   await tile.getByRole('button', { name: new RegExp(hazard.issueId ?? hazard.id) }).click();
   await expect(tile.getByText('Escalated — safety').first()).toBeVisible();
   await expect(tile.getByText('Hazard: smoke')).toBeVisible();

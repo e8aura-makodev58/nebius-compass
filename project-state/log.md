@@ -552,3 +552,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Pages updated: frontend/overview.md, log.md.
 
 
+
+## [2026-10-19] ui/docs — Judge walkthrough fixes
+- New investigations from a policy-decided report or a confirmed interpretation are selected automatically in the Field reports tile. README: port note for the month-backed run; what a keyless judge sees. Submission draft: clearer room and approval steps. Status recorded in `docs/nebius/09_JUDGE_WALKTHROUGH.md` (issue 6 not applied: E2E uses port 3012).
+- Pages updated: none.
