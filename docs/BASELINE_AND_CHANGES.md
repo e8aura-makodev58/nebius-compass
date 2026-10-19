@@ -35,5 +35,9 @@ table with file references: plan §1.
 | Change | Commits | Tests | Demo proof |
 |---|---|---|---|
 | _Hackathon plan and baseline audit_ | `2e21beb` | — | — |
+| Plan v2 after independent review | `a2d8373` | — | — |
+| Field reports tile (UI for the investigator, on the API contract) | `90f0638` | `e2e/investigation-ui.spec.mjs` (stubbed routes until N3a) | — |
+| Nebius Token Factory verified live: five Nemotron models, JSON, native tool calls, thinking control | `8ff664d` | `scripts/probe-nebius.mjs` (manual, live) | `docs/nebius/05_TOKEN_FACTORY_FACTS.md` |
+| Nebius Token Factory provider (default), four model roles, per-provider controls, tool turns, call metadata | `d3a500b`, `1f18284` | `backend/tests/nebius-provider.test.mjs`, `e2e/provider-settings.spec.mjs` | — |
 
 Rows are added as packages N1–N9 merge.
