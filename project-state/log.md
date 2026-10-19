@@ -490,3 +490,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Included both fixture directories in the runtime image and aligned dev Compose persistence with `/app/data`; verified a local Docker build and read-only, network-disabled fixture smoke check.
 - Replay pairs retain public investigator source/fallback labels; scoring and CLI add source-specific first-fix rates with denominators while preserving aggregate and legacy scoring.
 - Pages updated: backend/investigation.md, operations/running-and-config.md, operations/testing.md.
+
+## [2026-10-19] docs — Investigator security and correctness review (round 20)
+- Reviewed untrusted reports/cases/model replies, repair/public boundaries, dispatch authorization, revision races, UI escaping and resource bounds at `194da5f`; recorded ten findings with verification limits and proposed fixes in `docs/nebius/08_SECURITY_REVIEW.md`.
+- Synthetic in-memory and direct-handler checks reproduced operator impersonation, persisted trace poisoning, numeric claim acceptance, unsupported READY fixes, backlog/retention gaps and malformed-final classification. No application code changed; suites omitted under the round's explicit docs-only instruction.
+- Pages updated: log.md; component behavior is unchanged.
