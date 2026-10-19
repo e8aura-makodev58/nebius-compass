@@ -1,3 +1,4 @@
+import { mkdir as ensureScratchDirectory } from "node:fs/promises";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createLiveSeed} from '../seed/live-simulation.mjs';
@@ -42,7 +43,7 @@ test('late fix responses cannot overwrite a reset request; resolved work cancels
 test('a pending fix provider wait yields the live agent lane and never holds dispatch or the clock', async (t) => {
  const {mkdtemp,rm}=await import('node:fs/promises');const {join}=await import('node:path');
  const {createLiveStore}=await import('../src/live-store.mjs');const {createLiveRuntime}=await import('../src/live-runtime.mjs');
- const dir=await mkdtemp(new URL('../../.cache/fix-lane-',import.meta.url).pathname);t.after(()=>rm(dir,{recursive:true,force:true}));
+ const dir=await (ensureScratchDirectory(new URL('../../.cache/', import.meta.url), { recursive: true })).then(() => mkdtemp(new URL('../../.cache/fix-lane-',import.meta.url).pathname));t.after(()=>rm(dir,{recursive:true,force:true}));
  const store=createLiveStore({filePath:join(dir,'live.json')});let release,started;
  const providerStarted=new Promise(r=>started=r);const blocked=new Promise(r=>release=r);
  const runtime=createLiveRuntime({store,plannerOptions:{mode:'force-failure'},agentOptions:{mode:'force-failure'},requestFixRecommendation:async packet=>{started(packet);return blocked;}});

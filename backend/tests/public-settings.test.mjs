@@ -37,7 +37,7 @@ test("tunnel visitors can read provider settings but every change and model disc
   const snapshot = await invoke(handler, "GET", "/api/settings", { headers: TUNNEL });
   assert.equal(snapshot.status, 200);
   assert.equal(snapshot.json.editable, false);
-  assert.equal(snapshot.json.provider, "amd");
+  assert.equal(snapshot.json.provider, "nebius");
 
   const attempts = [
     ["GET", "/api/settings/models?provider=amd"],

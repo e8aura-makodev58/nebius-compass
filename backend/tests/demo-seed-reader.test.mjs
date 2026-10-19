@@ -1,10 +1,11 @@
+import { mkdir as ensureScratchDirectory } from "node:fs/promises";
 import test from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,writeFile,readFile,rm,mkdir,symlink} from 'node:fs/promises';import{join}from'node:path';import{gzipSync}from'node:zlib';import{createHash}from'node:crypto';
 import{readDemoSeedBytes,readDemoSeedState}from'../src/demo-seed-reader.mjs';
 import{bootstrapDemoSeed}from'../src/demo-seed-bootstrap.mjs';
 import{createLiveSeed}from'../seed/live-simulation.mjs';
 test('compressed seeds restore exact state bytes, bootstrap with archives and reject corrupt or escaping payloads',async t=>{
- const root=await mkdtemp(new URL('../../.cache/seed-reader-',import.meta.url).pathname);t.after(()=>rm(root,{recursive:true,force:true}));
+ const root=await (ensureScratchDirectory(new URL('../../.cache/', import.meta.url), { recursive: true })).then(() => mkdtemp(new URL('../../.cache/seed-reader-',import.meta.url).pathname));t.after(()=>rm(root,{recursive:true,force:true}));
  const bytes=Buffer.from(JSON.stringify(createLiveSeed())+'\n');const compressed=gzipSync(bytes,{level:9});
  assert.deepEqual(compressed,gzipSync(bytes,{level:9}));
  const manifest={format:'compass-seed-gzip-v1',file:'plant-1.state.json.gz',bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};

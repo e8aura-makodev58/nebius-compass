@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { callChatCompletion, AMD_DEFAULT_MODEL_ID, defaultReasoningEffortFor, readAmdApiKey } from './model-provider.mjs';
+import { callChatCompletion, defaultReasoningEffortFor, readProviderApiKey, roleDefaults } from './model-provider.mjs';
 import { assertNoResponderSkill } from './live-schema.mjs';
 
 const keysEqual = (value, keys) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).sort().join() === [...keys].sort().join();
@@ -26,8 +26,9 @@ const instruction = 'Rank every supplied staffing option ID exactly once, using 
 export async function requestStaffingRanking(packet, options = {}) {
   assertNoResponderSkill(packet);
   const mode = options.mode ?? 'fixture';
-  const modelId = options.modelId ?? (process.env.AMD_TOKEN_FACTORY_MODEL || AMD_DEFAULT_MODEL_ID);
-  const modelInfo = { provider: options.provider ?? 'amd', modelId, mode, reasoningEffort: options.reasoningEffort ?? (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId)) };
+  const provider = options.provider ?? 'amd';
+  const modelId = options.modelId ?? roleDefaults(provider, 'compass').modelId;
+  const modelInfo = { provider, modelId, mode, reasoningEffort: options.reasoningEffort ?? (provider === 'nebius' ? roleDefaults(provider, 'compass').reasoningEffort : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId))) };
   if (mode === 'force-failure') return { status: 'unavailable', reason: 'forced-failure', modelInfo };
   try {
     let result;
@@ -36,7 +37,7 @@ export async function requestStaffingRanking(packet, options = {}) {
       result = { schemaVersion: fixture.schemaVersion, rankedOptions: packet.candidates.map((row, i) => ({ optionId: row.optionId, rank: i + 1, rationale: fixture.rationale })) };
     } else if (mode === 'live') {
       const now = options.now ?? (() => performance.now()), deadline = now() + (options.timeoutMs ?? (Number.parseInt(process.env.COMPASS_AGENT_TIMEOUT_MS, 10) || 90_000));
-      const request = (feedback) => callChatCompletion({ ...options, ...modelInfo, apiKey: options.apiKey ?? readAmdApiKey(), fetchImpl: options.fetchImpl ?? fetch,
+      const request = (feedback) => callChatCompletion({ ...options, ...modelInfo, apiKey: options.apiKey ?? readProviderApiKey(provider), onMetadata: metadata => Object.assign(modelInfo, metadata), fetchImpl: options.fetchImpl ?? fetch,
         timeoutMs: Math.max(0, deadline - now()), systemInstruction: instruction,
         userContent: JSON.stringify(feedback ? { packet, validationErrors: feedback.slice(0,8) } : packet),
         jsonSchemaName: 'compass_staffing_ranking', jsonSchema: { type: 'object', required: ['schemaVersion', 'rankedOptions'] }, errorLabel: 'Compass staffing ranking' });
@@ -47,5 +48,5 @@ export async function requestStaffingRanking(packet, options = {}) {
     } else return { status: 'unavailable', reason: 'unsupported-mode', modelInfo };
     const checked = validateStaffingRanking(packet, result);
     return checked.valid ? { status: 'ok', result, modelInfo } : { status: 'unavailable', reason: 'validation-failed', modelInfo };
-  } catch (error) { return { status: 'unavailable', reason: error.name === 'AbortError' ? 'timeout' : 'provider-error', modelInfo }; }
+  } catch (error) { return { status: 'unavailable', reason: error.code === 'model-not-configured' ? 'model-not-configured' : error.name === 'AbortError' ? 'timeout' : 'provider-error', modelInfo }; }
 }

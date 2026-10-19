@@ -47,8 +47,8 @@ const baseCall = {
   systemInstruction: "system", userContent: "user", jsonSchemaName: "schema", jsonSchema: { type: "object" }, errorLabel: "Test provider",
 };
 
-test("AMD Token Factory is the only provider and resolves its OpenAI-compatible endpoint", () => {
-  assert.deepEqual([...PROVIDER_IDS], ["amd"]);
+test("AMD remains selectable beside Nebius and resolves its OpenAI-compatible endpoint", () => {
+  assert.deepEqual([...PROVIDER_IDS], ["amd", "nebius"]);
   assert.equal(providerDef("amd").chatCompletionsUrl, CHAT_URL);
   assert.equal(providerDef("amd").apiKeyEnv, "AMD_TOKEN_FACTORY_API_KEY");
   // A removed provider id recorded in old state still resolves to AMD rather than nowhere.

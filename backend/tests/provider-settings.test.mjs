@@ -9,7 +9,9 @@ import { AMD_DEFAULT_MODEL_ID, defaultReasoningEffortFor } from "../src/model-pr
 
 async function scratchPath() {
   const directory = await mkdtemp(join(tmpdir(), "compass-provider-settings-"));
-  return join(directory, "provider-settings.json");
+  const filePath = join(directory, "provider-settings.json");
+  await writeFile(filePath, JSON.stringify({ provider: "amd" }));
+  return filePath;
 }
 
 /** A stubbed AMD /models catalog, shaped like the live one. */
@@ -48,7 +50,7 @@ test("reasoningEffortsForModel maps documented AMD model families and falls back
   assert.deepEqual(reasoningEffortsForModel("Gemma-4-31B-IT"), ["default"]);
 });
 
-test("snapshot reports only AMD Token Factory, defaults to MiMo-V2.6-Flash with reasoning off, and never returns the key", async () => {
+test("saved AMD provider retains MiMo defaults with reasoning off and never returns either key", async () => {
   const service = createProviderSettingsService({ filePath: await scratchPath(), apiKeys: { amd: "rc-test-key" }, environment: {} });
   const snapshot = await service.snapshot();
   assert.equal(snapshot.provider, "amd");
@@ -58,6 +60,7 @@ test("snapshot reports only AMD Token Factory, defaults to MiMo-V2.6-Flash with 
   assert.equal(JSON.stringify(snapshot).includes("rc-test-key"), false);
   assert.deepEqual(snapshot.providers, [
     { id: "amd", label: "AMD Token Factory", enabled: true, credentialConfigured: true, credentialSource: "environment", credentialHint: "••••-key" },
+    { id: "nebius", label: "Nebius Token Factory", enabled: true, credentialConfigured: false, credentialSource: null, credentialHint: null },
   ]);
 });
 
@@ -173,10 +176,10 @@ test("a settings file naming a removed provider loads as AMD with its default mo
 
 test("requestOptions returns a live-mode call configuration and omits a 'default' reasoning level", async () => {
   const service = createProviderSettingsService({ filePath: await scratchPath(), apiKeys: { amd: "rc-test-key" }, environment: {}, fetchImpl: stubAmdModelList(AMD_CATALOG) });
-  assert.deepEqual(await service.requestOptions(), { mode: "live", provider: "amd", apiKey: "rc-test-key", modelId: "MiMo-V2.6-Flash", reasoningEffort: "none" });
+  assert.deepEqual(await service.requestOptions(), { mode: "live", provider: "amd", apiKey: "rc-test-key", modelId: "MiMo-V2.6-Flash", reasoningEffort: "none", timeoutMs: 90000 });
   await service.refreshModels();
   await service.update({ provider: "amd", modelId: "DeepSeek-V4-Flash", reasoningEffort: "default" });
-  assert.deepEqual(await service.requestOptions(), { mode: "live", provider: "amd", apiKey: "rc-test-key", modelId: "DeepSeek-V4-Flash" });
+  assert.deepEqual(await service.requestOptions(), { mode: "live", provider: "amd", apiKey: "rc-test-key", modelId: "DeepSeek-V4-Flash", timeoutMs: 90000 });
 });
 
 test("requestOptions preserves independent explicit inference modes for hermetic runs", async () => {
@@ -437,7 +440,7 @@ test("settings routes are wired end to end: snapshot, credentials, model discove
   const snapshot = await invoke(handler, "GET", "/api/settings");
   assert.equal(snapshot.status, 200);
   assert.equal(snapshot.json.provider, "amd");
-  assert.equal(snapshot.json.providers.length, 1);
+  assert.equal(snapshot.json.providers.length, 2);
 
   const credentialSaved = await invoke(handler, "POST", "/api/settings/credentials", { provider: "amd", apiKey: "rc-secret-9876" });
   assert.equal(credentialSaved.status, 200);

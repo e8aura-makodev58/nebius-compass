@@ -1,3 +1,4 @@
+import { mkdir as ensureScratchDirectory } from "node:fs/promises";
 import { readDemoSeedState } from '../src/demo-seed-reader.mjs';
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -14,7 +15,7 @@ import { originalLength } from "../src/history-retention.mjs";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 async function scratch(t) {
-  const directory = await mkdtemp(join(repository, ".cache/history-test-"));
+  const directory = await ensureScratchDirectory(join(repository, ".cache"), { recursive: true }).then(() => mkdtemp(join(repository, ".cache/history-test-")));
   t.after(() => rm(directory, { recursive: true, force: true }));
   return directory;
 }

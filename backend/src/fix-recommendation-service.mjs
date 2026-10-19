@@ -1,3 +1,4 @@
+import { safeModelMetadata } from "./model-provider.mjs";
 import { randomUUID } from 'node:crypto';
 import { deterministicFixRecommendation } from './fix-evidence.mjs';
 import { requestFixRanking, validateFixRanking } from './fix-ranking.mjs';
@@ -18,7 +19,7 @@ export function createFixRecommendationService(store, { agentOptions = {}, reque
     let outcome;
     try { outcome = await requestRanking(packet, options); } catch { outcome = { status: 'unavailable', reason: 'provider-error' }; }
     // Never persist transport exceptions or credentials. Accept only the bounded public model metadata.
-    const modelInfo = outcome.modelInfo ? Object.fromEntries(['provider','modelId','mode','reasoningEffort'].filter((k) => typeof outcome.modelInfo[k] === 'string').map((k) => [k,outcome.modelInfo[k]])) : null;
+    const modelInfo = outcome.modelInfo ? safeModelMetadata(outcome.modelInfo) : null;
     const valid = outcome.status === 'ok' && validateFixRanking(packet, outcome.result).valid;
     return store.mutate('fix-ranking-result', (state) => {
       const issue = state.issues.find((row) => row.id === issueId);
@@ -26,7 +27,7 @@ export function createFixRecommendationService(store, { agentOptions = {}, reque
       const rec = issue.fixRecommendation;
       delete rec.requestToken;
       if (issue.status === 'RESOLVED') { rec.status = 'CANCELLED'; rec.reason = 'issue-completed-during-ranking'; return { status: 'CANCELLED' }; }
-      Object.assign(rec, { status: valid ? 'READY' : 'FALLBACK', source: valid ? (modelInfo?.mode === 'fixture' ? 'FIXTURE' : 'AMD_MODEL') : 'DETERMINISTIC', modelInfo,
+      Object.assign(rec, { status: valid ? 'READY' : 'FALLBACK', source: valid ? (modelInfo?.mode === 'fixture' ? 'FIXTURE' : (outcome.modelInfo?.provider === 'nebius' ? 'NEBIUS_MODEL' : 'AMD_MODEL')) : 'DETERMINISTIC', modelInfo,
         reason: valid ? null : (outcome.reason ?? 'validation-failed'), ...(valid ? { rankedFixes: outcome.result.rankedFixes } : {}) });
       rec.disagreement = rec.rankedFixes[0].fixId !== rec.baselineFixId;
       return { status: rec.status, issueId };

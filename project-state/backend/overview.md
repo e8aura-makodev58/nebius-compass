@@ -58,8 +58,8 @@ one TypeScript type file; there is no build step.
 |--------|----------------|
 | `agent.mjs` | The Compass agent: sends the bounded candidate packet, validates the ranked result against the strict contract, never trusts it. Owns `AGENT_RESULT_JSON_SCHEMA`, `SYSTEM_INSTRUCTION`, `requestAgentRecommendation`. |
 | `event-planner.mjs` | Proposes one plausible next `ISSUE_RAISED` event from bounded context; validates and falls back deterministically. Owns `EVENT_PLANNER_SYSTEM_INSTRUCTION`, `requestEventProposal`. |
-| `model-provider.mjs` | Provider-specific chat-completion mechanics shared by both. Owns `PROVIDER_IDS`, `callChatCompletion`, `providerDef`. |
-| `provider-controls.mjs` | Runtime controls for every AMD call: limiter (RPM, concurrency, queue), 429 retry, circuit breaker. See [model-providers.md](model-providers.md#runtime-controls-provider-controlsmjs). |
+| `model-provider.mjs` | Nebius and AMD transport, explicit model capabilities and normalized tool turns. Owns `PROVIDER_IDS`, `callChatCompletion`, `callChatTurn`, `providerDef`. |
+| `provider-controls.mjs` | Provider-isolated runtime controls for Nebius and AMD: limiter (RPM, concurrency, queue), 429 retry, circuit breaker. See [model-providers.md](model-providers.md#controls-and-fallback). |
 | `provider-settings.mjs` | Operator-selectable provider/model/reasoning configuration, persisted and env-seeded, plus live model discovery. Owns `createProviderSettingsService`, `reasoningEffortsForModel`. |
 
 ## Types

@@ -34,13 +34,14 @@ function nonNegativeInt(value, fallback) {
 }
 
 /** Application budgets from the environment; AMD's own limits are higher. */
-export function readProviderControlSettings(environment = process.env) {
+export function readProviderControlSettings(environment = process.env, provider = "amd") {
+  const prefix = provider === "nebius" ? "NEBIUS_TOKEN_FACTORY" : "AMD_TOKEN_FACTORY";
   return {
-    rpm: positiveInt(environment.AMD_TOKEN_FACTORY_APP_RPM, DEFAULTS.rpm),
-    concurrency: positiveInt(environment.AMD_TOKEN_FACTORY_APP_CONCURRENCY, DEFAULTS.concurrency),
-    maxRetries: nonNegativeInt(environment.AMD_TOKEN_FACTORY_MAX_RETRIES, DEFAULTS.maxRetries),
-    breakerThreshold: positiveInt(environment.AMD_TOKEN_FACTORY_BREAKER_THRESHOLD, DEFAULTS.breakerThreshold),
-    breakerCooldownMs: positiveInt(environment.AMD_TOKEN_FACTORY_BREAKER_COOLDOWN_MS, DEFAULTS.breakerCooldownMs),
+    rpm: positiveInt(environment[`${prefix}_APP_RPM`], provider === "nebius" ? 20 : DEFAULTS.rpm),
+    concurrency: positiveInt(environment[`${prefix}_APP_CONCURRENCY`], DEFAULTS.concurrency),
+    maxRetries: nonNegativeInt(environment[`${prefix}_MAX_RETRIES`], DEFAULTS.maxRetries),
+    breakerThreshold: positiveInt(environment[`${prefix}_BREAKER_THRESHOLD`], DEFAULTS.breakerThreshold),
+    breakerCooldownMs: positiveInt(environment[`${prefix}_BREAKER_COOLDOWN_MS`], DEFAULTS.breakerCooldownMs),
     maxQueue: DEFAULTS.maxQueue,
   };
 }
@@ -225,11 +226,9 @@ export function createProviderControls(settings = {}, {
 // process, while each injected test transport gets its own isolated set.
 const controlsByTransport = new WeakMap();
 
-export function providerControlsFor(fetchImpl, environment = process.env) {
-  let controls = controlsByTransport.get(fetchImpl);
-  if (!controls) {
-    controls = createProviderControls(readProviderControlSettings(environment));
-    controlsByTransport.set(fetchImpl, controls);
-  }
-  return controls;
+export function providerControlsFor(fetchImpl, environment = process.env, provider = "amd") {
+  let byProvider = controlsByTransport.get(fetchImpl);
+  if (!byProvider) { byProvider = new Map(); controlsByTransport.set(fetchImpl, byProvider); }
+  if (!byProvider.has(provider)) byProvider.set(provider, createProviderControls(readProviderControlSettings(environment, provider)));
+  return byProvider.get(provider);
 }

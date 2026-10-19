@@ -19,7 +19,7 @@ puts the selected version's `bin/` first on `PATH` for the shell session. Re-run
 is identical. Live state persists under the git-ignored `backend/data/` tree; simulation
 time does not advance while the process is stopped.
 
-Copy the example env file to configure the AMD Token Factory provider:
+Copy the example env file to configure the Nebius (default) or AMD Token Factory provider:
 
 ```sh
 cp .env.example .env
@@ -54,6 +54,42 @@ baselines.
 | `COMPASS_AGENT_TIMEOUT_MS` | `90000` | Compass-agent budget (ms) covering queueing, the ranking and its one repair attempt. An AMD ranking takes about 25–60s. |
 | `COMPASS_EVENT_PLANNER_TIMEOUT_MS` | `30000` | Event-planner request timeout (ms). |
 
+### Nebius Token Factory
+
+Fresh installs select Nebius. Existing persisted AMD selections remain AMD. A key alone is
+insufficient: configure each role's verified model ID after N0; blank IDs cause
+`model-not-configured` and deterministic fallback. No runtime model IDs are guessed.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `NEBIUS_TOKEN_FACTORY_BASE_URL` | `https://api.tokenfactory.nebius.com/v1` | OpenAI-compatible base URL. |
+| `NEBIUS_TOKEN_FACTORY_API_KEY` / `_API_KEY_FILE` | unset | Server-side key or key-file path; direct value wins; unreadable file fails closed. |
+| `NEBIUS_TOKEN_FACTORY_MODEL` | blank | Ranking role model seed. |
+| `NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_MODEL` | blank | Event planner model seed. |
+| `NEBIUS_TOKEN_FACTORY_INVESTIGATOR_MODEL` | blank | Investigator model seed (runtime added in later packages). |
+| `NEBIUS_TOKEN_FACTORY_NARRATOR_MODEL` | blank | Narrator model seed (runtime added in later packages). |
+| `NEBIUS_TOKEN_FACTORY_REASONING_EFFORT` | `default` | Ranking thinking seed: default/on/off; explicit on/off require a verified capability entry. |
+| `NEBIUS_TOKEN_FACTORY_{EVENT_PLANNER,INVESTIGATOR,NARRATOR}_REASONING_EFFORT` | `default` | Independent role thinking seeds; shared effort inherits only for the same configured model. |
+| `NEBIUS_TOKEN_FACTORY_TIMEOUT_MS` | `90000` | Ranking timeout seed (ms). |
+| `NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_TIMEOUT_MS` | `30000` | Planner timeout seed (ms). |
+| `NEBIUS_TOKEN_FACTORY_INVESTIGATOR_TIMEOUT_MS` | `120000` | Investigator timeout seed (ms). |
+| `NEBIUS_TOKEN_FACTORY_NARRATOR_TIMEOUT_MS` | `30000` | Narrator timeout seed (ms). |
+| `NEBIUS_TOKEN_FACTORY_APP_RPM` | `20` | Request starts per rolling minute across this provider's roles/rooms. |
+| `NEBIUS_TOKEN_FACTORY_APP_CONCURRENCY` | `2` | Requests in flight; queue cap 32. |
+| `NEBIUS_TOKEN_FACTORY_MAX_RETRIES` | `2` | 429 retries within the caller deadline. |
+| `NEBIUS_TOKEN_FACTORY_BREAKER_THRESHOLD` | `5` | Consecutive service failures before opening. |
+| `NEBIUS_TOKEN_FACTORY_BREAKER_COOLDOWN_MS` | `60000` | Cooldown before one probe. |
+
+Persisted role settings take precedence over environment seeds. Generic
+`COMPASS_AGENT_TIMEOUT_MS` / `COMPASS_EVENT_PLANNER_TIMEOUT_MS` remain fallback seeds when
+provider-specific timeout variables are absent. `COMPASS_INVESTIGATOR_MODE` and
+`COMPASS_NARRATOR_MODE` default to the live Compass mode; fixture and force-failure remain
+API-free. Their optional `COMPASS_*_TIMEOUT_MS` fallback seeds default to 120000/30000.
+The main agent fills `NEBIUS_ROLE_DEFAULTS` and `NEBIUS_MODEL_CAPABILITIES` in
+`backend/src/model-provider.mjs` after N0 establishes IDs, tool protocol, JSON support and
+thinking mapping. The capability table supports optional on/off `reasoningValues` for a
+verified `reasoning_effort` mapping. A discovered model alone grants no thinking capability.
+
 ### AMD Token Factory
 
 | Variable | Default | Purpose |
@@ -72,8 +108,8 @@ baselines.
 | `AMD_TOKEN_FACTORY_BREAKER_THRESHOLD` | `5` | Consecutive service failures (429, 5xx, network, timeout) that open the circuit breaker. |
 | `AMD_TOKEN_FACTORY_BREAKER_COOLDOWN_MS` | `60000` | How long the breaker stays open before one probe request is allowed. |
 
-The model and reasoning level can be chosen independently for Ranking (Compass) and Event
-planner at runtime from the Settings → API tab, which
+The model and reasoning level can be chosen independently for Ranking (Compass), Event
+planner, Investigator and Narrator at runtime from the Settings → API tab, which
 persists to `backend/data/provider-settings.json`. A persisted selection takes precedence
 over the env seeds on subsequent boots. See
 [../backend/model-providers.md](../backend/model-providers.md).
