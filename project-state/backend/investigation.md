@@ -261,3 +261,23 @@ repair, within the shared call and step budget, then the deterministic fallback
 (`validation-failed`). The prompt reserves `ESCALATE` for a safety concern that blocks any
 action. Found by the first live evaluation (`docs/evaluation.md`), where Ultra used it to
 mean "send to the operator". The code-owned hazard policy is unchanged.
+
+## Paired first-fix replay
+
+`replay-runner.mjs` exports `runPairedReplay({mode,heldOutDays=7,limit,investigate})` returning
+`{pairs,meta}`. Default input is the existing committed plant-1 month plus archive bundles;
+optional seed injection supports hermetic perturbation tests. `buildReplayDecisionState`
+constructs an explicit public rolling-origin projection at target raisedAt, excludes target
+and all equal/future completions, reconstructs roster from rotation/approved staffing and
+assignment intervals, and never exposes engine truth or approval policy. The shared
+casesBefore tools and cutoff-filtered buildFixPacket determine all public evidence and
+baseline choices. No interpretation confirmation or policy shortcut is used.
+
+`replay-outcome-runner.mjs` owns private outcome inputs and reproduces the recorded first
+attempt's engine draws with the historical first responder, cloning the same start state
+for each explicit fix. Only `{fixed}` leaves each arm. Missing original inputs fail closed
+into FAILED exclusions. No runtime state is written. Pairs include non-READY exclusions;
+meta reports window, source hashes, counts, model IDs and runtime. CLI `--replay` uses the
+existing pure scorePairedReplay; see `docs/evaluation.md` for method, assumptions and commands.
+`backend/tests/replay-runner.test.mjs` covers future/truth noninterference, identical draws,
+fixed-responder controls, coverage, reproducibility and a hermetic limit-five CLI invocation.

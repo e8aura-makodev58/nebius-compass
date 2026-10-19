@@ -1132,3 +1132,25 @@ the contract; no claim of improved live outcome agreement is made without anothe
   `ESCALATE` beside a `MODERATE`/`STRONG` first fix with a qualified responder is a
   validation error that gets one repair; repeated, it falls back deterministically. The
   prompt reserves `ESCALATE` for safety concerns. Nothing can auto-dispatch either way.
+
+## 2026-10-19 — Engine-only private truth in paired first-fix replay
+
+Rule 4 excludes hidden ResponderSkill and cause/effectiveness inputs from Compass, model
+packets, ordinary UI and analytics. Rule 3 assigns deterministic simulation outcomes to
+application code. Paired replay uses private truth exclusively inside the isolated
+replay-outcome-runner engine, just as the ordinary attempt engine does. Three cloned starts
+reuse recorded first-attempt draws, time, history and the actual first responder; only fix
+varies. The scorer receives only `{fixed}` arms/exclusions, never private state or traces.
+Canary tests require changed hidden truth to change outcomes without changing model packets.
+This controlled synthetic comparison is not observed production history; `/analytics`
+continues to report alternative outcomes as unobserved.
+
+Public evidence is reconstructed strictly before raisedAt using shared cutoff tools; no
+approval policy, cached recommendation or target outcome enters investigation. Public roster
+uses immutable seed reference definitions, normal rotation, prior approved staffing intervals
+and assignment occupancy; it is not a complete historical UI-location replay. Missing private
+inputs or the first responder are FAILED exclusions, not invented observations. Coverage,
+fallbacks/timeouts, exclusions, source hashes and paired denominators are retained. Live
+measurement belongs to the main agent; no result numbers or improvement claim accompany this
+method-only change. The existing month remains the cohort; the unattended policy candidate
+from N3b remains separate.

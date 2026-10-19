@@ -14,16 +14,35 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
-import { formatRatio, scoreScenarioRun } from './eval/score.mjs';
+import { formatRatio, scoreScenarioRun, scorePairedReplay } from './eval/score.mjs';
 
 const { values } = parseArgs({ options: {
   mode: { type: 'string', default: 'fixture' },
   samples: { type: 'string', default: '1' },
   only: { type: 'string' },
   json: { type: 'string' },
+  replay: { type: 'boolean', default: false },
+  'held-out-days': { type: 'string', default: '7' },
+  limit: { type: 'string' },
 } });
 if (!['fixture', 'live'].includes(values.mode)) { console.error('--mode must be fixture or live'); process.exit(2); }
 
+if (values.replay) {
+  const { runPairedReplay } = await import('../backend/src/replay-runner.mjs');
+  const result = await runPairedReplay({mode:values.mode,heldOutDays:Number(values['held-out-days']),...(values.limit!==undefined?{limit:Number(values.limit)}:{})});
+  const score = scorePairedReplay(result.pairs);
+  console.log(`\nPaired first-fix replay · mode ${values.mode} · ${result.meta.heldOutWindow.start} through ${result.meta.heldOutWindow.end}\n`);
+  console.log('| Metric | Result |\n|---|---|');
+  console.log(`| Eligible / selected | ${result.meta.counts.eligible} / ${score.heldOut} |`);
+  console.log(`| Coverage | ${formatRatio(score.coverage)} |`);
+  for (const [reason,count] of Object.entries(score.excluded)) console.log(`| Excluded ${reason} | ${count}/${score.heldOut} |`);
+  for (const [arm,rate] of Object.entries(score.firstTimeFix)) console.log(`| First-time fix: ${arm} | ${formatRatio(rate)} |`);
+  for (const [name,counts] of Object.entries({baseline:score.discordantVsBaseline,deterministic:score.discordantVsDeterministic})) console.log(`| Discordant vs ${name} | ${JSON.stringify(counts)} (${score.coverage.numerator} pairs) |`);
+  console.log(`| Fallback / timeout / repaired / raw invalid | ${result.meta.counts.fallback} / ${result.meta.counts.timeouts} / ${result.meta.counts.repaired} / ${result.meta.counts.rawInvalid} (of ${score.heldOut}) |`);
+  console.log(`| Seed SHA-256 | ${result.meta.seedHash} |`);
+  console.log(`| Runtime | ${(result.meta.runtimeMs/1000).toFixed(2)} s |`);
+  if(values.json) writeFileSync(values.json,JSON.stringify({...result,score},null,2));
+} else {
 const { scenarios, version } = JSON.parse(readFileSync(new URL('../fixtures/investigation/scenarios.json', import.meta.url), 'utf8'));
 const selected = values.only ? scenarios.filter((s) => values.only.split(',').includes(s.id)) : scenarios;
 
@@ -58,3 +77,5 @@ line('Tokens per investigation p50 / p95', score.tokensPerInvestigation.samples 
 console.log('\n| Scenario | Category | Expected | Actual | Pass | Source (fallback) | Calls | Notes |\n|---|---|---|---|---|---|---|---|');
 for (const r of score.rows) console.log(`| ${r.id} | ${r.category} | ${r.expected} | ${r.actual} | ${r.pass ? 'yes' : 'no'} | ${r.source ?? '—'}${r.fallbackReason ? ` (${r.fallbackReason})` : ''} | ${r.calls ?? '—'} | ${r.notes.join('; ').replaceAll('|', '/') || '—'} |`);
 if (values.json) writeFileSync(values.json, JSON.stringify({ mode: values.mode, version, score }, null, 2));
+
+}

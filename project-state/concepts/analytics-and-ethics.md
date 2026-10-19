@@ -112,3 +112,10 @@ suppresses its rate with COUNTERFACTUAL_NOT_OBSERVED. No hidden fault/skill data
 and no improvement claim follows from this descriptive comparison. Paired replay must provide
 counterfactual evidence separately. Compact facts preserve every count/rate and period across
 retention; full archived run/report detail remains available for audits.
+
+Controlled counterfactual evidence is separate from observed `/analytics`: the paired replay
+engine may use private simulation truth to produce `{fixed}` per arm under identical draws,
+time and historical first responder. The public scorer never receives causes, skills or
+probabilities. Coverage/exclusions accompany rates; the reconstructed roster and synthetic
+first-attempt limitation are documented in docs/evaluation.md. This does not fill unobserved
+production analytics outcomes or imply a lawful alternative dispatch.

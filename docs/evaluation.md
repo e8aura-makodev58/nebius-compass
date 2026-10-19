@@ -64,3 +64,54 @@ The soak uses `evidence-policy-v1`, a deterministic test policy that produces sc
 ## External live-provider gate
 
 The ten-run Scenario A gate below was run under the since-removed OpenAI provider (`gpt-5.6-terra` / `medium`); AMD Token Factory is now the only provider and has no equivalent recorded gate here. Before the synthetic-code migration, the genuine ten-run Scenario A gate completed 10/10 READY with the responder now identified as Engr028 ranked first on every run; the recorded latencies were 7.486–13.011 seconds, with every tradeoff grounded and no numeric leakage. The live 100-opportunity provider evaluation (now against AMD Token Factory) remains outstanding and must confirm the SOW disagreement thresholds. Do not substitute the fixture or deterministic evaluation policy for that claim.
+
+## Paired replay method
+
+`npm run eval:investigator -- --replay --mode fixture --limit 5` exercises the replay
+hermetically. The main agent can run `--replay --mode live [--held-out-days N] [--limit N]`
+for measured model results; `--json <path>` writes only public pairs, metadata and scores.
+This section records the method, not replay result numbers or a live improvement claim.
+
+`backend/src/replay-runner.mjs` reads the existing committed plant-1 month and its archives,
+verifies the compressed seed checksum, and selects resolved issues in the last held-out
+window ending at the seed clock. Eligible issues have a public symptom and a nonlegacy
+catalog fix in their observed attempts. Missing first-attempt engine inputs are reported as FAILED exclusions. Window membership uses resolution time;
+decisions use each issue's raisedAt. Ordering is raisedAt then issue ID; a limit takes the
+first entries in that order. Metadata separates resolved, eligible, selected and included
+counts, identifies seed/archive hashes and model IDs, and records wall timestamps/runtime.
+Fixture model IDs are nominal configured metadata, not evidence of live calls.
+
+Each investigator sees a fresh public projection with the target's engine-owned
+interpretation, no approval policy, no cached target recommendation and no target outcome.
+Completed observations and resolved cases must precede raisedAt strictly; equal-time and
+future outcomes are excluded before constructing evidence and baseline packets. Earlier
+held-out outcomes become visible at later origins: this is rolling-origin evaluation,
+not a single frozen training cutoff. Immutable equipment/responder reference definitions
+come from the synthetic seed. Duty is reconstructed from the fixed crew rotation and
+previously approved staffing intervals; occupancy and position use assignment intervals
+at the origin, otherwise the duty station. This is a documented public roster
+reconstruction, not a replay of every historical UI tick or manual relocation.
+
+Only READY results enter the paired comparison. ABSTAINED, ESCALATED and FAILED (including
+missing engine inputs or a thrown run) appear as exclusions and in coverage denominators.
+Fallback, timeout, repaired and raw-invalid counts are also reported, so a deterministic
+fallback is not presented as live-model success. The first investigator fix is compared
+with same-class observed fix frequency (catalog-order ties) and the existing deterministic
+symptom-based fix ordering, frozen from the same cutoff-filtered packet.
+
+`replay-outcome-runner.mjs` alone captures the engine's private cause, skill and original
+first-attempt draw. It restores the engine RNG immediately before those recorded draws
+and creates three isolated first attempts through the existing attempt engine. All arms
+start at the same simulated instant with identical engine inputs and the historical first
+responder; only the fix changes. Engine effects can change completion times, but only the
+boolean fixed outcome leaves the runner. No assistance, retries, staffing changes, dispatch
+or approval mutation occurs. Holding the historical responder fixed is an efficacy control,
+not a claim that each alternative fix would be lawfully assigned to that responder today.
+
+The scorer receives only issue IDs, three `{fixed}` arms or an exclusion reason. It prints
+coverage, exclusions by reason, first-fix rates with the same paired denominator and
+positive/negative discordant-pair counts against each baseline. Hidden causes, skills,
+probabilities, draws and internal traces never enter score inputs, model packets or logs.
+Perturbation tests prove hidden truth can affect outcomes without affecting packets and
+future observations cannot affect an earlier decision. This is a controlled synthetic
+first-attempt comparison, not real-world accuracy or a whole-floor time/cost benefit.

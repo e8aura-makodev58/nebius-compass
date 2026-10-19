@@ -449,3 +449,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] fix — Model ESCALATE beside a supported recommendation is repaired
 - `investigator.mjs`: a model `ESCALATE` with a supported (MODERATE/STRONG) first fix and a qualified responder is a validation error (one repair, then `validation-failed` fallback); prompt reserves ESCALATE for blocking safety concerns. Test in `investigator.test.mjs`. Main agent did this right after merging N3b, with codex idle.
 - Pages updated: backend/investigation.md.
+
+## [2026-10-19] feature — Paired rolling-origin first-fix replay runner
+- Added public cutoff-filtered decisions and an isolated engine-only three-arm outcome runner using the historical first responder and common recorded draws. CLI --replay reports paired coverage/exclusions, rates and discordance through the existing scorer; hermetic tests cover a five-issue fixture replay, future/hidden-truth invariance and reproducibility. No live run or result claims.
+- Pages updated: backend/investigation.md, backend/overview.md, operations/testing.md, concepts/analytics-and-ethics.md; method in docs/evaluation.md.
