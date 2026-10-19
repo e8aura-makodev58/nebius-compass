@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | RUN (round 22) |
-| gemini | RUN (round 23g) |
+| gemini | STOP (no open task) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | Ask Compass: grounded Q&A over the room (backend) | 22 |
-| gemini | Fresh-clone judge walkthrough of the README (docs only) | 23g |
+| gemini | none (waiting for the Ask Compass UI to review) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
 
@@ -1207,6 +1207,7 @@ Start with `git merge master`; keep your watcher.
 
 ### Merge log
 
+- 2026-10-19 — **gemini** `4d7408d` → merge `64eefff`: fresh-clone judge walkthrough (docs). Main agent applied the fixes (UI auto-select, README/draft). On master: `npm test` 450/450, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **gemini** `3927f02` → merge `be5066e`: wall-display layout (≥1440/2200px) and provisional period charts. On master: `npm test` 450/450, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **codex** `a6e06e4` → merge `8c41c9c`: precise repair feedback (exact item/field paths and bounded reasons). `handover.md`/`log.md` conflicts resolved (codex section reset to round 22). On master: `npm test` 450/450, E2E 85/85. Handoff archived.
 - 2026-10-19 — **codex** `bcc1cec` → merge `767fd2c`: security fixes #1 (JSON/Origin guard), #2–#8, #10 with 13 security tests. Main agent added the frontend JSON header and a header-free E2E. On master: `npm test` 448/448, E2E 85/85. Deployed; 415/403 verified on the server. Handoff archived.
@@ -1254,23 +1255,9 @@ Start with `git merge master`; keep your watcher.
 
 ## gemini
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 23g: Fresh-clone judge walkthrough of the README (docs only)
-- **Head commit:** This handoff's commit on `gemini` (see `git log -1 gemini`)
-- **Changes:**
-  - Cloned master from `/home/makodev58/nebius-compass` into `.cache/judge-clone` and followed `README.md` and `docs/nebius/06_SUBMISSION_DRAFT.md` as written, using zero API credentials.
-  - Verified `npm ci` (0.584 s), hermetic unit tests `npm test` (450/450 pass, 35.6 s), Playwright E2E on port 3022 (85/85 pass, 2m 34s), and month-seeded demo cold start on port 3122 (2.09 s).
-  - Walked the full interactive judge testing script via browser: room selection (`e8-aura-p1`), Station 12 incident reporting, deterministic interpretation confirmation, prerequisite verification, dispatch approval, smoke hazard screening and instant policy escalation without inference, and simulation unpause/stepping.
-  - Authored `docs/nebius/09_JUDGE_WALKTHROUGH.md` recording all numbered steps, exact commands, timings, outputs, deterministic fallback experience evaluation, and 6 numbered issues with severity, line references, and exact replacement text.
-  - Stopped test servers, verified ports 3022 and 3122 are free, and removed `.cache/judge-clone`.
-- **Files changed:**
-  - `docs/nebius/09_JUDGE_WALKTHROUGH.md`
-  - `handover.md` (gemini section only)
-- **Verification:** `npm test` 450/450 · E2E 85/85 (run during walkthrough in clean clone; docs-only commit)
-- **project-state pages updated:** None (docs only task; no architecture or behavior changes)
-- **Risks / follow-ups:** Main agent can review the proposed documentation fixes in `docs/nebius/09_JUDGE_WALKTHROUGH.md` and apply them to `README.md` and `docs/nebius/06_SUBMISSION_DRAFT.md`.
-- **Questions for main:** None.
+- **Task:** none open. Watcher STOP until the next assignment.
 
 ---
 
