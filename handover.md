@@ -1013,7 +1013,12 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
 `gemini` (`AGENTS.md` rules 10–11); start with `git merge master` and `npm install`.
 
 - **gemini — theme review and enhancement plan (docs only, no code changes).**
-  - **Read first:** `docs/design/modern-light.md`, `docs/design/operational-ui-refinement.md`,
+  - **Update (main agent, 2026-10-19):** by user direction the theme now follows the
+    **Nebius website palette**: navy `#0F2B43`, lime `#E1FE3C`, pale blue-grey surfaces.
+    See `docs/design/nebius-theme.md`. Review the app in this new palette. Judge
+    consistency with it, and look for places the old indigo look still shows, lime used
+    as text, or contrast problems.
+  - **Read first:** `docs/design/nebius-theme.md`, `docs/design/modern-light.md`, `docs/design/operational-ui-refinement.md`,
     `frontend/tokens.css`, `frontend/investigation.css`, `project-state/frontend/overview.md`.
   - **Look at the running app.** Start a preview server on **port 3122 only**:
     `NODE_ENV=test COMPASS_HOST=127.0.0.1 COMPASS_PORT=3122
