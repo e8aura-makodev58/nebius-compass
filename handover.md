@@ -1092,6 +1092,7 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
 - **Verification:** Synthetic transactional in-memory store, stubbed model turns, direct request-handler invocation and source tracing. Reproduced findings and uncertainty labels are explicit in the report. Concurrent approve/reinvestigate returned APPROVED / STALE; captured repair passed hidden-truth guard. No live calls, runtime data writes or application server. Both suites intentionally omitted per round 20's explicit docs-only instruction.
 - **project-state pages updated:** log.md (behavior unchanged).
 - **Risks / follow-ups:** Findings require separate implementation assignments. Upstream deployment authentication, real-model injection compliance, load thresholds and full browser exploitation were not confirmed. Watcher PID 41408 remains running without restart.
+- **Additional user-requested input:** `docs/design/nebius-theme-codex-notes.md` contains six recommendations for Gemini’s Nebius color enhancement proposal, including the user’s updated palette direction. Separate supplement avoids editing Gemini’s report or worktree. Docs only; no suites needed.
 - **Questions for main:** None.
 
 ---
