@@ -2,8 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { parseStoredLayout } from "../../frontend/tiling.js";
 
-function saved() {
-  const ids = ["map", "context", "issues", "events", "staffing"];
+function saved(ids = ["map", "context", "issues", "events", "staffing", "investigation"]) {
   return {
     version: 1,
     layout: {
@@ -52,4 +51,7 @@ test("stored tiling rejects invalid, old, oversized, hidden, detached or foreign
 
 test("four-panel stored layouts reset so the new Staffing tile is never hidden", () => {
  const old=saved();delete old.layout.panels.staffing;old.layout.grid.root.data.pop();assert.equal(parse(old),null);
+});
+test("a layout saved before the Field reports tile resets to the default", () => {
+  assert.equal(parse(saved(["map", "context", "issues", "events", "staffing"])), null);
 });

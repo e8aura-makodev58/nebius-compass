@@ -4,7 +4,7 @@ const KEY = "responsecompass.tiling.v1";
 const tile = (page, id) => page.locator(`[data-tile="${id}"]`).locator("xpath=ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' dv-groupview ')][1]");
 async function boot(page) {
   await page.goto("/rooms/plant-1");
-  await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(5);
+  await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(6);
   await expect(page.locator("#floor .building")).toBeVisible();
 }
 async function geometry(page) {
@@ -33,7 +33,7 @@ test("desktop tiles cover the frame without gaps, overlaps or outbound requests"
     await page.setViewportSize({ width, height });
     await boot(page);
     const { frame, groups } = await geometry(page);
-    expect(groups).toHaveLength(5);
+    expect(groups).toHaveLength(6);
     let area = 0;
     for (const group of groups) {
       expect(group.left).toBeGreaterThanOrEqual(frame.left - 1);
@@ -95,7 +95,7 @@ test("layout persists across reload and Reset restores default sizes", async ({ 
   await page.getByRole("button", { name: "Analytics", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Compass vs Baselines" })).toBeVisible();
   await page.getByRole("button", { name: "Live Floor", exact: true }).click();
-  await page.reload(); await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(5);
+  await page.reload(); await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(6);
   expect((await tile(page, "map").boundingBox()).width).toBeCloseTo(changed.width, 0);
   await page.getByRole("button", { name: "Reset layout", exact: true }).click();
   expect((await tile(page, "map").boundingBox()).width).toBeCloseTo(original.width, 0);
@@ -108,7 +108,7 @@ test("tiles can move to another edge and maximise/restore without detaching", as
   const target = tile(page, "context"); const box = await target.boundingBox();
   await page.locator(".dv-tab").filter({ hasText: "Event feed" }).dragTo(target, { targetPosition: { x: box.width / 2, y: box.height - 8 } });
   await expect.poll(async () => (await tile(page, "events").boundingBox()).x).not.toBe(before.x);
-  expect(await page.locator("#floor-tiles .dv-groupview").count()).toBe(5);
+  expect(await page.locator("#floor-tiles .dv-groupview").count()).toBe(6);
   await page.getByRole("button", { name: "Maximise Floor map", exact: true }).click();
   await expect(page.getByRole("button", { name: "Restore Floor map", exact: true })).toBeVisible();
   const maximized = await tile(page, "map").boundingBox(), frame = await page.locator("#floor-tiles").boundingBox();
@@ -127,7 +127,7 @@ test("corrupt and detached layouts fall back safely; unavailable storage does no
     Storage.prototype.getItem = () => { throw new Error("Storage blocked"); };
     Storage.prototype.setItem = () => { throw new Error("Storage blocked"); };
   });
-  await page.reload(); await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(5);
+  await page.reload(); await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(6);
 });
 
 test("crossing the desktop breakpoint restores stacked nodes and keeps their handlers", async ({ page }) => {
@@ -143,6 +143,6 @@ test("crossing the desktop breakpoint restores stacked nodes and keeps their han
   await page.getByRole("button", { name: "Show manufacturing floor 3" }).click();
   await expect(page.locator(".floor-plane.active-floor .floor-tag")).toHaveText(/Floor 3/i);
   await page.setViewportSize({ width: 1280, height: 900 });
-  await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(5);
+  await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(6);
   expect(await page.evaluate(() => document.querySelector("#floor") === window.originalFloorNode && document.querySelector("#issue-list") === window.originalIssueNode)).toBe(true);
 });

@@ -5,6 +5,7 @@ const VERSION = 1;
 const SIZE_CAP = 200_000;
 const PANELS = {
   staffing: { selector: "#staffing-tile", title: "Staffing", minimumWidth: 260, minimumHeight: 180 },
+  investigation: { selector: "#investigation-tile", title: "Field reports", minimumWidth: 260, minimumHeight: 180 },
   map: { selector: ".floor-section", title: "Floor map", minimumWidth: 300, minimumHeight: 220 },
   issues: { selector: "#issue-list", title: "Issues", minimumWidth: 180, minimumHeight: 130 },
   events: { selector: "#event-feed", title: "Event feed", minimumWidth: 180, minimumHeight: 130 },
@@ -34,7 +35,7 @@ export function parseStoredLayout(raw) {
     function visit(node, depth = 0) {
       if (!node || depth > 12 || node.visible === false || (node.size !== undefined && (!Number.isFinite(node.size) || node.size <= 0))) throw new Error("Invalid grid node");
       if (node.type === "branch") {
-        if (!Array.isArray(node.data) || node.data.length < 1 || node.data.length > 5) throw new Error("Invalid branch");
+        if (!Array.isArray(node.data) || node.data.length < 1 || node.data.length > ids.length) throw new Error("Invalid branch");
         node.data.forEach((child) => visit(child, depth + 1));
       } else if (node.type === "leaf") {
         const group = node.data;
@@ -110,7 +111,8 @@ export function initTiling({ onMapResize = () => {} } = {}) {
     api.addPanel({ id: "context", component: "context", tabComponent: "tile", title: PANELS.context.title, position: { referencePanel: "map", direction: "right" }, initialWidth: Math.min(440, width * .36), ...constraints("context") });
     api.addPanel({ id: "issues", component: "issues", tabComponent: "tile", title: PANELS.issues.title, position: { referencePanel: "map", direction: "below" }, initialHeight: Math.max(160, height * .28), ...constraints("issues") });
     api.addPanel({ id: "events", component: "events", tabComponent: "tile", title: PANELS.events.title, position: { referencePanel: "issues", direction: "right" }, ...constraints("events") });
-    api.addPanel({ id: "staffing", component: "staffing", tabComponent: "tile", title: PANELS.staffing.title, position: { referencePanel: "context", direction: "below" }, initialHeight: Math.max(200, height * .45), ...constraints("staffing") });
+    api.addPanel({ id: "investigation", component: "investigation", tabComponent: "tile", title: PANELS.investigation.title, position: { referencePanel: "context", direction: "below" }, initialHeight: Math.max(220, height * .4), ...constraints("investigation") });
+    api.addPanel({ id: "staffing", component: "staffing", tabComponent: "tile", title: PANELS.staffing.title, position: { referencePanel: "investigation", direction: "below" }, initialHeight: Math.max(180, height * .25), ...constraints("staffing") });
     api.getPanel("context").api.setSize({ width: Math.min(440, width * .36) });
     api.getPanel("issues").api.setSize({ height: Math.max(160, height * .28) });
     api.getPanel("map").api.setActive();

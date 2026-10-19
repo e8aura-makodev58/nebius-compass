@@ -1,0 +1,204 @@
+import { setHtml } from './render-lifecycle.js';
+
+/**
+ * Field reports and Compass Investigator (plan v2 §3). The backend owns every fact shown
+ * here: interpretation options, evidence grade, safety classes, prerequisites and
+ * qualification. This view only renders DTOs and sends operator decisions. Narrative text
+ * is untrusted and always rendered escaped, as quoted text.
+ */
+const OPEN_REPORT = new Set(['UNRESOLVED']);
+const OPEN_INVESTIGATION = new Set(['QUEUED', 'RUNNING', 'READY', 'ABSTAINED', 'ESCALATED']);
+const STATUS = { QUEUED: 'Queued', RUNNING: 'Investigating', READY: 'Awaiting central command', ABSTAINED: 'Abstained — needs a person', ESCALATED: 'Escalated — safety', APPROVED: 'Approved by central command', AUTO_APPROVED: 'Auto-approved by policy', REJECTED: 'Rejected', EXPIRED: 'Expired', SUPERSEDED: 'Superseded', FAILED: 'Failed', UNRESOLVED: 'Needs confirmation', CONFIRMED: 'Confirmed', CLOSED: 'Closed' };
+const SAFETY = { ROUTINE: 'Routine', ISOLATION_REQUIRED: 'Isolation required', SPECIALIST_ONLY: 'Specialist only' };
+const GRADE = { STRONG: 'Strong evidence', MODERATE: 'Moderate evidence', THIN: 'Thin evidence', NONE: 'No evidence' };
+const pending = new Set();
+let selectedId = null;
+let reportFormOpen = false;
+let lastFeedback = '';
+
+export function openInvestigations(state) {
+  return (state.fieldReports ?? []).filter((r) => OPEN_REPORT.has(r.status)).length
+    + (state.investigations ?? []).filter((i) => ['READY', 'ABSTAINED', 'ESCALATED'].includes(i.status)).length;
+}
+
+function sourceLabel(record) {
+  if (record.source === 'NEBIUS_MODEL') return `Nebius · ${record.model?.modelId ?? 'model'}`;
+  if (record.source === 'AMD_MODEL') return `AMD · ${record.model?.modelId ?? 'model'}`;
+  if (record.source === 'FIXTURE') return 'Offline fixture';
+  return 'Deterministic';
+}
+function modelFacts(record, escape) {
+  const m = record.model;
+  if (!m || record.source === 'DETERMINISTIC') return record.fallbackReason ? `<p class="inv-meta">Fallback: ${escape(record.fallbackReason)}</p>` : '';
+  const parts = [m.calls != null ? `${m.calls} model calls` : null, m.latencyMs != null ? `${(m.latencyMs / 1000).toFixed(1)} s` : null, m.promptTokens != null ? `${m.promptTokens} in / ${m.completionTokens ?? 0} out tokens` : null].filter(Boolean);
+  return parts.length ? `<p class="inv-meta">${escape(parts.join(' · '))}</p>` : '';
+}
+const quote = (text, escape) => `<blockquote class="inv-narrative" title="Untrusted field text">${escape(text)}</blockquote>`;
+const flags = (report, escape) => {
+  const f = report.flags ?? {};
+  const chips = [...(f.hazard ?? []).map((w) => `<span class="inv-chip warn">Hazard: ${escape(w)}</span>`), ...(f.injection?.length ? ['<span class="inv-chip warn">Instruction-like text quoted as data</span>'] : []), ...(f.input ? [`<span class="inv-chip">${escape(f.input)}</span>`] : [])];
+  return chips.length ? `<div class="inv-chips">${chips.join('')}</div>` : '';
+};
+const caseLinks = (refs, escape) => (refs ?? []).length ? `<span class="inv-refs">${[...new Map(refs.map((r) => [r.caseId, r])).values()].map((r) => `<button type="button" class="inv-case" data-case-id="${escape(r.caseId)}">${escape(r.caseId)}</button>`).join('')}</span>` : '<span class="inv-meta">No cited case</span>';
+
+function reportFormMarkup(state, escape) {
+  const equipment = (state.equipment ?? []).map((e) => `<option value="${escape(e.id)}">${escape(e.name)} · ${escape(e.id)}</option>`).join('');
+  return `<form class="inv-report-form" data-inv-form ${reportFormOpen ? '' : 'hidden'}><label>What is happening?<textarea data-inv-narrative maxlength="600" rows="4" required placeholder="Describe what you see, where, and what has been tried."></textarea></label><label>Station (optional)<select id="inv-equipment"><option value="">Let Compass suggest from the text</option>${equipment}</select></label><div class="inv-actions"><button type="submit">Submit report</button><button type="button" class="secondary-button" data-inv-action="cancel-report">Cancel</button></div><p class="inv-meta">Reports are investigated by Compass; nothing is dispatched until central command approves.</p></form>`;
+}
+
+function reportMarkup(report, escape) {
+  const interp = report.interpretation ?? {};
+  const options = interp.options ?? [];
+  const waiting = interp.status === 'PENDING_MODEL' || interp.status === 'QUEUED';
+  const rows = options.map((o, i) => `<li><label class="inv-option"><input type="radio" name="inv-option-${escape(report.id)}" value="${escape(o.optionId)}" ${i === 0 ? 'checked' : ''}/><span><strong>${escape(o.equipmentName ?? o.equipmentId)} · Class ${escape(o.issueClass)} · ${escape(o.symptomCode)}</strong><small>${escape(o.symptomText ?? '')}</small>${o.rationale ? `<small>${escape(o.rationale)}</small>` : ''}</span></label></li>`).join('');
+  return `<section class="inv-card" data-report-id="${escape(report.id)}" data-revision="${escape(report.revision)}"><div class="inv-heading"><h4>${escape(report.id)} · ${escape(STATUS[report.status] ?? report.status)}</h4><span class="status-badge">${escape(sourceLabel(interp))}</span></div>${quote(report.narrative, escape)}${flags(report, escape)}${waiting ? '<p class="inv-meta">Ranking interpretations…</p>' : options.length ? `<p class="inv-meta">Confirm what this report is about. Code built these options; Compass only ordered them.</p><ol class="inv-options">${rows}</ol>` : '<p class="inv-meta">No station or symptom could be matched. Close the report or resubmit it with a station.</p>'}<div class="inv-actions">${options.length ? `<button type="button" data-inv-action="confirm" data-report="${escape(report.id)}" ${waiting ? 'disabled' : ''}>Confirm and investigate</button>` : ''}<button type="button" class="secondary-button" data-inv-action="close-report" data-report="${escape(report.id)}">Close report</button></div></section>`;
+}
+
+function fixMarkup(fix, escape, first) {
+  return `<div class="inv-fix ${first ? 'first' : ''}"><div class="inv-heading"><strong>${escape(fix.title)}</strong><span class="inv-chip ${fix.safetyClass === 'ROUTINE' ? '' : 'warn'}">${escape(SAFETY[fix.safetyClass] ?? fix.safetyClass)}</span></div><p class="inv-steps">${escape(fix.steps)}</p><p class="inv-meta">${escape(fix.fixId)} · ${escape(GRADE[fix.grade] ?? fix.grade ?? '')}${(fix.requiredCertifications ?? []).length ? ` · Requires ${escape(fix.requiredCertifications.join(', '))}` : ''}</p>${fix.rationale ? `<p>${escape(fix.rationale)}</p>` : ''}${caseLinks(fix.evidenceRefs, escape)}</div>`;
+}
+
+function investigationMarkup(inv, state, escape) {
+  const report = (state.fieldReports ?? []).find((r) => r.id === inv.reportId);
+  const fixes = inv.fixes ?? [];
+  const first = fixes[0];
+  const responders = inv.responders ?? [];
+  const decidable = inv.status === 'READY' && !pending.has(inv.id);
+  const prereqs = first?.prerequisites ?? [];
+  const callout = inv.status === 'ESCALATED' || inv.status === 'ABSTAINED' ? `<div class="inv-callout ${inv.status === 'ESCALATED' ? 'warn' : ''}"><strong>${escape(STATUS[inv.status])}</strong><p>${escape(inv.reason ?? '')}</p><p class="inv-meta">Nothing is dispatched automatically. Use a central command override on the issue, or close the report.</p></div>` : '';
+  const hypotheses = (inv.hypotheses ?? []).map((h) => `<li><strong>${escape(h.symptomCode)}</strong> ${escape(h.text)} ${caseLinks(h.evidenceRefs, escape)}</li>`).join('');
+  const responderRows = responders.map((r, i) => `<li><label class="inv-option"><input type="radio" name="inv-responder-${escape(inv.id)}" value="${escape(r.responderId)}" ${i === 0 && r.qualified ? 'checked' : ''} ${r.qualified ? '' : 'disabled'} ${decidable ? '' : 'disabled'}/><span><strong>${escape(r.displayName)}</strong>${r.qualified ? '' : ' <span class="inv-chip warn">Not qualified for this fix</span>'}<small>${escape((r.certifications ?? []).join(', ') || 'No certifications')}</small>${r.rationale ? `<small>${escape(r.rationale)}</small>` : ''}</span></label></li>`).join('');
+  const trace = (inv.trace ?? []).map((t) => `<li><code>${escape(t.tool)}</code> ${escape(JSON.stringify(t.args ?? {}))} → ${escape((t.resultIds ?? []).join(', ') || 'no rows')}${t.ms != null ? ` · ${escape(t.ms)} ms` : ''}${t.error ? ` · <span class="inv-chip warn">${escape(t.error)}</span>` : ''}</li>`).join('');
+  const decision = inv.decision ? `<div class="inv-decision"><strong>${escape(STATUS[inv.decision.status] ?? inv.decision.status)}</strong><p class="inv-meta">${escape([inv.decision.actor, inv.decision.at?.replace('T', ' ').slice(0, 16), inv.decision.responderId, inv.decision.fixId, inv.decision.reason].filter(Boolean).join(' · '))}</p>${inv.feedback ? `<p class="inv-meta">Feedback recorded: ${inv.feedback.useful ? 'useful' : 'not useful'}</p>` : `<div class="inv-actions"><button type="button" class="secondary-button" data-inv-action="feedback" data-useful="true">Useful</button><button type="button" class="secondary-button" data-inv-action="feedback" data-useful="false">Not useful</button></div>`}</div>` : '';
+  return `<section class="inv-detail" data-investigation-id="${escape(inv.id)}" data-revision="${escape(inv.revision)}">
+    <div class="inv-heading"><h4>${escape(inv.id)} · ${escape(inv.issueId ?? '')}</h4><span class="status-badge">${escape(sourceLabel(inv))}</span></div>
+    <p class="inv-status">${escape(STATUS[inv.status] ?? inv.status)}${inv.evidenceGrade ? ` · ${escape(GRADE[inv.evidenceGrade] ?? inv.evidenceGrade)}` : ''}</p>${modelFacts(inv, escape)}
+    ${report ? quote(report.narrative, escape) + flags(report, escape) : ''}
+    ${callout}
+    ${(inv.warnings ?? []).length ? `<ul class="inv-warnings">${inv.warnings.map((w) => `<li>${escape(w)}</li>`).join('')}</ul>` : ''}
+    ${inv.status === 'QUEUED' || inv.status === 'RUNNING' ? '<p class="inv-meta">Compass is investigating with read-only tools. Dispatch waits for approval.</p>' : ''}
+    ${hypotheses ? `<h5>Observed pattern</h5><ul class="inv-hypotheses">${hypotheses}</ul>` : ''}
+    ${first ? `<h5>Recommended first action</h5>${fixMarkup(first, escape, true)}` : ''}
+    ${fixes.length > 1 ? `<details data-inv-detail="alternatives"><summary>Alternatives (${fixes.length - 1})</summary>${fixes.slice(1).map((f) => fixMarkup(f, escape, false)).join('')}</details>` : ''}
+    ${responderRows ? `<h5>Responders</h5><ol class="inv-options">${responderRows}</ol>` : ''}
+    ${inv.status === 'READY' ? `<fieldset class="inv-prereqs" ${decidable ? '' : 'disabled'}><legend>Confirm before dispatch</legend>${prereqs.length ? prereqs.map((p) => `<label><input type="checkbox" data-inv-prereq value="${escape(p)}"/> ${escape(p.replaceAll('_', ' ').toLowerCase())}</label>`).join('') : '<p class="inv-meta">No prerequisites for this action.</p>'}</fieldset><label class="inv-reason">Reason (for escalate or reject)<input data-inv-reason maxlength="360"/></label><div class="inv-actions inv-primary"><button type="button" data-inv-action="approve" ${decidable ? '' : 'disabled'}>Approve and dispatch</button><button type="button" class="secondary-button" data-inv-action="escalate" ${decidable ? '' : 'disabled'}>Escalate</button><button type="button" class="secondary-button" data-inv-action="reject" ${decidable ? '' : 'disabled'}>Reject</button></div>` : ''}
+    ${decision}
+    ${trace ? `<details data-inv-detail="trace"><summary>Investigation steps (${inv.trace.length})</summary><ol class="inv-trace">${trace}</ol></details>` : ''}
+  </section>`;
+}
+
+export function investigationTileMarkup(state, escape) {
+  if (state.mode !== 'LIVE') return '<div class="empty-state"><h3>Field reports</h3><p>Field reports and Compass investigations run in Live mode. Offline remains API-free.</p></div>';
+  const reports = (state.fieldReports ?? []).filter((r) => OPEN_REPORT.has(r.status));
+  const invs = state.investigations ?? [];
+  const open = invs.filter((i) => OPEN_INVESTIGATION.has(i.status));
+  const recent = invs.filter((i) => !OPEN_INVESTIGATION.has(i.status)).slice(-5).reverse();
+  if (!invs.some((i) => i.id === selectedId)) selectedId = (open[0] ?? recent[0])?.id ?? null;
+  const selected = invs.find((i) => i.id === selectedId);
+  const list = [...open, ...recent].map((i) => `<button type="button" class="inv-row ${i.id === selectedId ? 'selected' : ''}" data-inv-select="${escape(i.id)}" aria-pressed="${i.id === selectedId}"><strong>${escape(i.issueId ?? i.id)}</strong><span>${escape(STATUS[i.status] ?? i.status)}</span></button>`).join('');
+  return `<div class="inv-tile-head"><h3>Field reports</h3><button type="button" data-inv-action="open-report" ${reportFormOpen ? 'hidden' : ''}>Report incident</button></div>${reportFormMarkup(state, escape)}
+    ${reports.map((r) => reportMarkup(r, escape)).join('')}
+    ${list ? `<nav class="inv-list" aria-label="Investigations">${list}</nav>` : reports.length ? '' : '<div class="empty-state"><strong>No field reports</strong><p>Report an incident in plain language; Compass investigates it against past cases and recommends a safe first action for approval.</p></div>'}
+    ${selected ? investigationMarkup(selected, state, escape) : ''}
+    <p class="inv-feedback" role="status">${escape(lastFeedback)}</p>
+    <dialog class="inv-case-dialog" data-inv-case-dialog><div data-inv-case-body></div><form method="dialog"><button type="submit" class="secondary-button">Close</button></form></dialog>`;
+}
+
+function caseMarkup(record, escape) {
+  const tried = (record.fixesTried ?? []).map((f) => `<li>${escape(f.order)}. ${escape(f.fixId)} — ${escape(f.outcome === 'FIXED' ? 'fixed' : 'not fixed')}</li>`).join('');
+  return `<h4>${escape(record.caseId)}${record.legacy ? ' · legacy' : ''}</h4><p class="inv-meta">${escape(record.equipmentId)} · Class ${escape(record.issueClass)} · ${escape(record.symptomCode ?? 'no symptom')} · resolved ${escape((record.resolvedAt ?? '').replace('T', ' ').slice(0, 16))}</p><p>${escape(record.symptomText ?? '')}</p>${record.reportNarrative ? `${quote(record.reportNarrative, escape)}<p class="inv-meta">Narrative source: ${escape(record.narrativeSource ?? 'unknown')}</p>` : ''}<h5>Fixes tried</h5><ol class="inv-plain">${tried || '<li>None recorded</li>'}</ol><p class="inv-meta">${record.firstTimeFix ? 'Fixed on the first attempt' : 'Not fixed on the first attempt'}${record.totalMinutes != null ? ` · ${escape(record.totalMinutes)} min in total` : ''}</p>`;
+}
+
+export function renderInvestigations(state, { escape, request, onState }) {
+  const target = document.querySelector('#investigation-tile');
+  if (!target) return;
+  const narrative = target.querySelector('[data-inv-narrative]')?.value;
+  const reason = target.querySelector('[data-inv-reason]')?.value;
+  const priorId = target.querySelector('[data-investigation-id]')?.dataset.investigationId;
+  const checked = [...target.querySelectorAll('input[type=radio]:checked, [data-inv-prereq]:checked')].map((i) => `${i.name}|${i.value}`);
+  const openDetails = [...target.querySelectorAll('[data-inv-detail]')].filter((d) => d.open).map((d) => d.dataset.invDetail);
+  const dialogOpen = target.querySelector('[data-inv-case-dialog]')?.open;
+  if (dialogOpen) return; // Never rebuild under an open case dialog.
+  const scrollTop = target.scrollTop;
+  const focusedNarrative = document.activeElement?.matches?.('[data-inv-narrative]');
+  if (!setHtml(target, investigationTileMarkup(state, escape))) return;
+  if (narrative !== undefined && target.querySelector('[data-inv-narrative]')) target.querySelector('[data-inv-narrative]').value = narrative;
+  if (focusedNarrative) target.querySelector('[data-inv-narrative]')?.focus({ preventScroll: true });
+  const sameSelection = priorId && priorId === target.querySelector('[data-investigation-id]')?.dataset.investigationId;
+  if (sameSelection) {
+    if (reason !== undefined && target.querySelector('[data-inv-reason]')) target.querySelector('[data-inv-reason]').value = reason;
+    target.querySelectorAll('[data-inv-detail]').forEach((d) => { d.open = openDetails.includes(d.dataset.invDetail); });
+  }
+  for (const input of target.querySelectorAll('input[type=radio], [data-inv-prereq]')) {
+    if (input.type === 'checkbox') input.checked = sameSelection && checked.includes(`${input.name}|${input.value}`);
+    else if (checked.some((c) => c.startsWith(`${input.name}|`)) && !input.disabled) input.checked = checked.includes(`${input.name}|${input.value}`);
+  }
+  target.scrollTop = scrollTop;
+  bind(target, state, { escape, request, onState });
+}
+
+function bind(target, state, { escape, request, onState }) {
+  const rerender = () => renderInvestigations(state, { escape, request, onState });
+  const refresh = (next) => { if (next?.simulationState) onState(next); else rerender(); };
+  const say = (text) => { lastFeedback = text; const node = target.querySelector('.inv-feedback'); if (node) node.textContent = text; };
+  async function send(key, path, body) {
+    if (pending.has(key)) return;
+    pending.add(key);
+    target.querySelectorAll('[data-inv-action]').forEach((b) => { b.disabled = true; });
+    let next;
+    try { next = await request(path, { method: 'POST', body: JSON.stringify(body) }); say(next?.message ?? 'Updated.'); }
+    catch (error) { say(error.payload?.code === 'STALE' || /stale|revision/i.test(error.message) ? 'This record changed; nothing was applied. Review it again.' : error.message); }
+    finally { pending.delete(key); }
+    try { next = next?.simulationState ? next : await request('/state'); } catch { /* keep the current view */ }
+    refresh(next);
+  }
+  target.querySelectorAll('[data-inv-select]').forEach((b) => { b.onclick = () => { selectedId = b.dataset.invSelect; lastFeedback = ''; rerender(); }; });
+  const openButton = target.querySelector('[data-inv-action="open-report"]');
+  if (openButton) openButton.onclick = () => { reportFormOpen = true; rerender(); target.querySelector('[data-inv-narrative]')?.focus(); };
+  const cancel = target.querySelector('[data-inv-action="cancel-report"]');
+  if (cancel) cancel.onclick = () => { reportFormOpen = false; target.querySelector('[data-inv-narrative]').value = ''; rerender(); };
+  const form = target.querySelector('[data-inv-form]');
+  if (form) form.onsubmit = async (event) => {
+    event.preventDefault();
+    const narrative = form.querySelector('[data-inv-narrative]').value.trim();
+    if (!narrative) { say('Describe the incident first.'); return; }
+    const equipmentId = form.querySelector('#inv-equipment').value || undefined;
+    reportFormOpen = false; form.querySelector('[data-inv-narrative]').value = '';
+    await send('report', '/reports', { narrative, equipmentId, reporter: 'Central command' });
+  };
+  target.querySelectorAll('[data-inv-action="confirm"]').forEach((b) => { b.onclick = () => {
+    const report = state.fieldReports.find((r) => r.id === b.dataset.report);
+    const optionId = target.querySelector(`input[name="inv-option-${CSS.escape(report.id)}"]:checked`)?.value;
+    if (!optionId) { say('Choose an interpretation first.'); return; }
+    send(report.id, `/reports/${encodeURIComponent(report.id)}/confirm`, { optionId, expectedRevision: report.revision });
+  }; });
+  target.querySelectorAll('[data-inv-action="close-report"]').forEach((b) => { b.onclick = () => {
+    const report = state.fieldReports.find((r) => r.id === b.dataset.report);
+    send(report.id, `/reports/${encodeURIComponent(report.id)}/close`, { reason: 'Closed by central command', expectedRevision: report.revision });
+  }; });
+  const detail = target.querySelector('[data-investigation-id]');
+  const inv = detail && state.investigations.find((i) => i.id === detail.dataset.investigationId);
+  if (inv) {
+    const approve = detail.querySelector('[data-inv-action="approve"]');
+    const prereqs = [...detail.querySelectorAll('[data-inv-prereq]')];
+    const responder = () => detail.querySelector(`input[name="inv-responder-${CSS.escape(inv.id)}"]:checked`)?.value;
+    const sync = () => { if (approve) approve.disabled = inv.status !== 'READY' || pending.has(inv.id) || !responder() || prereqs.some((p) => !p.checked); };
+    detail.querySelectorAll('input').forEach((i) => { i.onchange = sync; });
+    sync();
+    if (approve) approve.onclick = () => send(inv.id, `/investigations/${encodeURIComponent(inv.id)}/approve`, { responderId: responder(), fixId: inv.fixes[0]?.fixId, confirmedPrerequisites: prereqs.filter((p) => p.checked).map((p) => p.value), expectedRevision: inv.revision });
+    for (const action of ['escalate', 'reject']) {
+      const button = detail.querySelector(`[data-inv-action="${action}"]`);
+      if (button) button.onclick = () => send(inv.id, `/investigations/${encodeURIComponent(inv.id)}/${action}`, { reason: detail.querySelector('[data-inv-reason]').value, expectedRevision: inv.revision });
+    }
+    detail.querySelectorAll('[data-inv-action="feedback"]').forEach((b) => { b.onclick = () => send(`${inv.id}:feedback`, `/investigations/${encodeURIComponent(inv.id)}/feedback`, { useful: b.dataset.useful === 'true' }); });
+  }
+  const dialog = target.querySelector('[data-inv-case-dialog]');
+  target.querySelectorAll('[data-case-id]').forEach((b) => { b.onclick = async () => {
+    const body = dialog.querySelector('[data-inv-case-body]');
+    body.innerHTML = '<p class="inv-meta">Loading case…</p>';
+    dialog.showModal?.();
+    try { body.innerHTML = caseMarkup(await request(`/cases/${encodeURIComponent(b.dataset.caseId)}`), escape); }
+    catch (error) { body.innerHTML = `<p class="load-error">${escape(error.message)}</p>`; }
+  }; });
+  if (dialog) dialog.onclose = rerender;
+}

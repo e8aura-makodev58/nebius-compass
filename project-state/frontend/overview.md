@@ -10,6 +10,7 @@ and re-renders. Node serves these files directly (see [../backend/http-api.md](.
 |------|----------------|
 | `index.html` | The DOM scaffold: the room-picker view (shown at `/`) and the app shell — tabs (Live Floor, Control Rooms, Analytics, Settings), the floor-map container, sidebar panels, simulation controls, search palette, audit trail, and demo controls. |
 | `app.js` | The SPA controller. Parses `/rooms/:id` at boot, polls state, and renders every panel. Handles issue/responder selection, staffing actions, the map (pan/zoom/rotate, floor switching, 2D vs. 2.5D), control-room search, analytics, the audit trail, and the settings forms. |
+| `investigation-view.js`, `investigation.css` | The **Field reports** tile (plan v2 §3, N4): report form, interpretation confirmation, investigation detail (cited case chips, verbatim procedure, safety class, qualified responders, prerequisite checkboxes, approve/escalate/reject, feedback, tool trace) and a case viewer dialog. Renders backend DTOs only; narrative text is always escaped. Backend routes arrive in N3a; until then `e2e/investigation-ui.spec.mjs` stubs them to the §3.8 contract. |
 | `workspace-nav.js` | Local phone workspace selection (Issues, Floor, Decisions, Events), pending-decision counts and selected-task reveal; reuses the existing DOM across the Dockview breakpoint. |
 | `render-lifecycle.js` | An idempotent HTML writer (`setHtml`) that preserves form state (select values, focus) across the 1.5s re-render so polling never clobbers an in-progress interaction. |
 | `map-label-layout.js` | Screen-space label layout for the floor map: lane-based collision avoidance for equipment/responder bubbles, measured against projected geometry each frame. |
@@ -51,17 +52,17 @@ a pointer gesture is active, then resumes.
 ## Live Floor layout
 
 At desktop widths (≥901px), `tiling.js` adopts the existing map section, issue-list
-section, event-feed section, Staffing section and dispatch/context aside into five Dockview tiles. It
+section, event-feed section, Field reports section, Staffing section and dispatch/context aside into six Dockview tiles. It
 resolves all nodes before moving any of them, and retains their IDs, ARIA attributes,
 listeners and `app.js` references. The default has the map at upper left, issues/events
-beneath it and context at right. Tiles fill the bounded frame; dividers resize both
+beneath it, and a right column of context, Field reports and Staffing. The frame's minimum height is 560px so the three stacked tiles keep their minimum sizes. Tiles fill the bounded frame; dividers resize both
 neighbours and clamp to panel minimum sizes. Users can drag tiles to edges and
 maximise/restore a group. Centre merges, floating groups and pop-outs are disabled.
 Very short desktop windows scroll the page to keep the minimum-sized frame reachable.
 
 Layout persistence is per browser (`responsecompass.tiling.v1`), debounced and guarded
 against blocked/full storage. Stored JSON has a version and a 200,000-character cap;
-validation requires exactly the five known panels, one per group, with no detached or
+validation requires exactly the six known panels (a layout saved before Field reports existed resets to the default), one per group, with no detached or
 hidden regions. Persisted constraints/parameters are replaced with application-owned
 values. Invalid or infeasible geometry falls back to the default; **Reset layout**
 restores the default. An owned `ResizeObserver` ignores zero-sized hidden workspaces,

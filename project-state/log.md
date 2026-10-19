@@ -348,3 +348,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] fixtures — Investigation scenarios (N5, part 1)
 - `fixtures/investigation/scenarios.json`: 24 synthetic field reports with expected outcome (`READY`/`ABSTAINED`/`ESCALATED`), the operator-confirmed interpretation where one exists, setup tags and constraint names; `fixtures/investigation/README.md` defines the tags and constraint vocabulary. Codex imports them read-only for N2/N3 tests.
 - Pages updated: none (fixtures only; no code reads them yet).
+
+## [2026-10-19] feature — Field reports tile (N4, on the §3.8 contract)
+- `frontend/investigation-view.js` + `investigation.css`: report form, interpretation confirmation, investigation detail with case citations, safety class, qualified responders, prerequisite checkboxes, approve/escalate/reject, feedback, tool trace and a case dialog. Sixth Dockview tile (right column: context, Field reports, Staffing; frame min-height 560px), display screen `/rooms/:id/display/investigation`, phone Decisions view and count include open reports and investigations.
+- `e2e/investigation-ui.spec.mjs` stubs the not-yet-built routes exactly to plan §3.8; replaced by a real-API spec when N3a merges. Tile-count assertions updated in tiling, display-screen and workspace specs; `tiling-layout.test.mjs` covers the five-tile reset.
+- Pages updated: frontend/overview.md.

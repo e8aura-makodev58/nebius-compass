@@ -42,7 +42,7 @@ test('phone navigation reaches floor, selected task and decisions directly and p
  await page.locator('#open-control-search').click();await page.locator('#control-search-input').fill('ISS-104');await page.locator('#control-search-input').press('Enter');
  await expect(page.locator('.context-panel')).toBeVisible();await expect(page.locator('#issue-summary')).toContainText('ISS-104');
  await expect(page.locator('[data-workspace=issues]')).toHaveAttribute('aria-pressed','true');
- await page.setViewportSize({width:1280,height:900});await expect(page.locator('#floor-tiles .dv-groupview')).toHaveCount(5);
+ await page.setViewportSize({width:1280,height:900});await expect(page.locator('#floor-tiles .dv-groupview')).toHaveCount(6);
  expect(await page.evaluate(()=>document.querySelector('#floor')===window.originalMap)).toBe(true);
 });
 test('analytics puts Pareto before detail tables and preserves expanded evidence and search through polling',async({page,request})=>{

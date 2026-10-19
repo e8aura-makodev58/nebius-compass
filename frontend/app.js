@@ -1,5 +1,6 @@
 import { initWorkspaceNav } from "./workspace-nav.js";
 import { renderStaffing } from './staffing-view.js';
+import { renderInvestigations } from './investigation-view.js';
 import { initTiling } from "./tiling.js";
 import { initParetoPanel } from "./pareto.js";
 import { setHtml } from "./render-lifecycle.js";
@@ -30,7 +31,7 @@ const currentControlRoomId = (() => {
  * control room can put each panel on its own monitor. Read once at boot like the room;
  * `null` is the operator console. An unknown screen name falls back to the console.
  */
-const DISPLAY_SCREENS = { map: "Floor map", issues: "Issues", events: "Event feed", dispatch: "Dispatch", analytics: "Analytics", pareto: "Issue Pareto", staffing: "Staffing" };
+const DISPLAY_SCREENS = { map: "Floor map", issues: "Issues", events: "Event feed", dispatch: "Dispatch", analytics: "Analytics", pareto: "Issue Pareto", staffing: "Staffing", investigation: "Field reports" };
 const displayScreen = (() => {
   const match = window.location.pathname.match(/^\/rooms\/[^/]+\/display\/([a-z]+)\/?$/);
   return match && Object.hasOwn(DISPLAY_SCREENS, match[1]) ? match[1] : null;
@@ -1068,7 +1069,7 @@ function render(state) {
   const previousMode = currentState?.mode;
   if (previousMode && previousMode !== state.mode) { stationHistoryCache.clear(); selectedIssueId = null; selectedStationId = null; selectedResponderId = null; clearEventSelection(); }
   workspaceNav?.update(state);
-  currentState = state; const live = state.mode === "LIVE"; elements["simulation-controls"].hidden = !live; elements["control-room-search"].hidden = !live; if (!live && searchOpen) closeSearchPalette(); elements["offline-reset-button"].hidden = live; elements["live-mode-button"].classList.toggle("active", live); elements["offline-mode-button"].classList.toggle("active", !live); renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render}); renderResponders(state); renderStations(state); renderSidebarTabs(); if (currentView === "settings" && currentSettingsTab === "demo") renderDemoContinuity(state);
+  currentState = state; const live = state.mode === "LIVE"; elements["simulation-controls"].hidden = !live; elements["control-room-search"].hidden = !live; if (!live && searchOpen) closeSearchPalette(); elements["offline-reset-button"].hidden = live; elements["live-mode-button"].classList.toggle("active", live); elements["offline-mode-button"].classList.toggle("active", !live); renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render}); renderInvestigations(state, {escape: escapeHtml, request: roomApi, onState: render}); renderResponders(state); renderStations(state); renderSidebarTabs(); if (currentView === "settings" && currentSettingsTab === "demo") renderDemoContinuity(state);
   if (currentView === "settings" && currentSettingsTab === "demo") renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render});
   if (!live) { renderOffline(state); renderAgentActivity(state); return; }
   elements["simulation-time"].textContent = new Date(state.simulationState.simulationTime).toISOString().replace("T", " ").slice(0, 16); elements["simulation-status"].textContent = statusLabel(state.simulationState.status); renderSpeedOptions(state.simulationState.speedMultiplier); elements["pause-resume-button"].textContent = state.simulationState.status === "RUNNING" ? "Pause" : "Resume";

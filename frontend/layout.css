@@ -142,8 +142,11 @@
 .staffing-open .evidence-scroll { max-width: 100%; min-width: 0; overflow-x: auto; }
 .staffing-decisions { padding-left: 22px; }
 .display-mode:not([data-display="staffing"]) #staffing-tile { display: none !important; }
+.display-mode:not([data-display="investigation"]) #investigation-tile { display: none !important; }
 .display-mode[data-display="staffing"] .floor-section, .display-mode[data-display="staffing"] .context-panel { display: none !important; }
 .display-mode[data-display="staffing"] #staffing-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
+.display-mode[data-display="investigation"] .floor-section, .display-mode[data-display="investigation"] .context-panel { display: none !important; }
+.display-mode[data-display="investigation"] #investigation-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
 @media (max-width: 900px) { .staffing-tile { border-top: 1px solid var(--rule); } }
 
 /* Compact decisions keep the recommended action ahead of expandable evidence. */
@@ -196,6 +199,7 @@
   body:not(.display-mode):not([data-workspace-view="floor"]) #floor,
   body:not(.display-mode):not([data-workspace-view="issues"]) .context-panel,
   body:not(.display-mode):not([data-workspace-view="staffing"]) #staffing-tile,
+  body:not(.display-mode):not([data-workspace-view="staffing"]) #investigation-tile,
   body:not(.display-mode):not([data-workspace-view="issues"]) .lower-grid > section:has(#issue-list),
   body:not(.display-mode):not([data-workspace-view="events"]) .lower-grid > section:has(#event-feed),
   body:not(.display-mode)[data-workspace-view="staffing"] .floor-section { display: none; }

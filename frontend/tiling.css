@@ -43,8 +43,8 @@
 #reset-layout { margin-right: 8px; }
 @media (min-width: 901px) {
   body:has(.tiling-active):has(#control-room-view:not([hidden])) { overflow: hidden; }
-  .app-shell:has(.tiling-active) { display: grid; height: 100dvh; min-height: 600px; max-width: none; padding: 10px 20px; grid-template-rows: auto minmax(0, 1fr); }
-  .dashboard.tiling-active { position: relative; display: block; min-width: 0; min-height: 430px; height: 100%; overflow: hidden; }
+  .app-shell:has(.tiling-active) { display: grid; height: 100dvh; min-height: 680px; max-width: none; padding: 10px 20px; grid-template-rows: auto minmax(0, 1fr); }
+  .dashboard.tiling-active { position: relative; display: block; min-width: 0; min-height: 560px; height: 100%; overflow: hidden; }
 }
 /* Preserve usable tile minimums in very short windows, with reachable page scrolling. */
 @media (min-width: 901px) and (max-height: 599px) {
