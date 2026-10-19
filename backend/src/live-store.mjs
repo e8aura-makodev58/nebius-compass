@@ -1,4 +1,4 @@
-import { publicInvestigationState } from './investigation-public.mjs';
+import { publicInvestigationState, investigationDTO, reportDTO } from './investigation-public.mjs';
 import { initializeFaults, assertNoFaultTruth } from './fault-truth.mjs';
 /**
  * Single-process journaled persistence for v4 Live Simulation.
@@ -114,12 +114,34 @@ export function createLiveStore({ filePath = process.env.COMPASS_LIVE_STATE_PATH
     async publicSnapshot() {
       return queue(async () => createPublicLiveSnapshot(await ensureLoaded(), { validated: true }));
     },
+    async investigationRecord(id) {
+      return queue(async()=>{
+        const state=await ensureLoaded();
+        let row=state.investigations?.find((item)=>item.id===id);
+        if(!row && state.historyRetention?.investigationArchives?.[id]) {
+          const bundle=await archivedIssue(archiveRoot,state,state.historyRetention.investigationArchives[id]);
+          row=bundle?.investigations?.find((item)=>item.id===id);
+        }
+        return row?investigationDTO(row):null;
+      });
+    },
+    async reportRecord(id) {
+      return queue(async()=>{
+        const state=await ensureLoaded();
+        let row=state.fieldReports?.find((item)=>item.id===id);
+        if(!row && state.historyRetention?.reportArchives?.[id]) {
+          const bundle=await archivedIssue(archiveRoot,state,state.historyRetention.reportArchives[id]);
+          row=bundle?.fieldReports?.find((item)=>item.id===id);
+        }
+        return row?reportDTO(row):null;
+      });
+    },
     async issueAudit(issueId) {
       return queue(async () => {
         const state = await ensureLoaded();
         if (state.issues.some((row) => row.id === issueId)) return createIssueAuditRecord(state, issueId);
         const bundle = await archivedIssue(archiveRoot, state, issueId);
-        return bundle ? redactIssueAuditRecord({ ...bundle, ...((state.investigations ?? []).some((row)=>row.issueId===issueId) ? {investigations:publicInvestigationState({investigations:state.investigations.filter((row)=>row.issueId===issueId),fieldReports:[]}).investigations} : {}), equipment: state.equipment.find((row) => row.id === bundle.issue.equipmentId) ?? null }) : null;
+        return bundle ? redactIssueAuditRecord({ ...bundle, ...(bundle.investigations?{investigations:bundle.investigations.map((row)=>investigationDTO(row))}:{}), ...(bundle.fieldReports?{fieldReports:bundle.fieldReports.map(reportDTO)}:{}), ...((state.investigations ?? []).some((row)=>row.issueId===issueId) ? {investigations:publicInvestigationState({investigations:state.investigations.filter((row)=>row.issueId===issueId),fieldReports:[]}).investigations} : {}), equipment: state.equipment.find((row) => row.id === bundle.issue.equipmentId) ?? null }) : null;
       });
     },
     async stationHistory(equipmentId, { before = null, limit = 100 } = {}) {

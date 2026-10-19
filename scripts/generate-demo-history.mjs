@@ -55,7 +55,7 @@ async function generate(options) {
   let credentialReads = 0;
   globalThis.fetch = () => { fetchCalls += 1; throw new Error("Network is forbidden during history generation"); };
   process.env = new Proxy(process.env, { get(target, name) {
-    if (name === "AMD_TOKEN_FACTORY_API_KEY" || name === "AMD_TOKEN_FACTORY_API_KEY_FILE") { credentialReads += 1; throw new Error("Credential reads are forbidden during history generation"); }
+    if (/^(AMD|NEBIUS)_TOKEN_FACTORY_API_KEY(?:_FILE)?$/.test(name)) { credentialReads += 1; throw new Error("Credential reads are forbidden during history generation"); }
     return target[name];
   } });
   const RealDate = Date;
@@ -86,6 +86,8 @@ async function generate(options) {
   narrate(state);
   // Explicit history-generation policy: retain autonomous surge behavior with audit.
   const { updateStaffingPolicy, decideStaffing } = await import('../backend/src/staffing-service.mjs');
+  const { updateInvestigationPolicy } = await import('../backend/src/investigation-service.mjs');
+  updateInvestigationPolicy(state,{investigationApproval:'AUTO_APPROVE_SAFE',investigationShare:Number(options.investigationShare ?? state.investigationPolicy.investigationShare),expectedRevision:state.investigationPolicy.revision});
   updateStaffingPolicy(state, { staffingApproval: 'AUTO_APPROVE_TOP', expectedRevision: state.workforceContinuity.staffingPolicyRevision });
   await assertHistoryArchivePresent(archiveRoot, state);
   await writeHistoryArchive(archiveRoot, state, compactHistory(state, days, { force: true }));
@@ -119,9 +121,10 @@ async function generate(options) {
     }) };
   }
   const offline = { mode: "force-failure" };
-  const runtime = createLiveRuntime({ store, plannerOptions: offline, agentOptions: offline });
+  const runtime = createLiveRuntime({ store, plannerOptions: offline, agentOptions: offline, investigatorOptions:{mode:'force-failure',now:()=>0},narratorOptions:{mode:'force-failure',noisy:true,now:()=>0} });
   const clock = createSimulationClock(store);
   await runtime.reconcileStartup();
+  await runtime.agentWorkIdle();
   await clock.setSpeed(60);
   await clock.resume();
   if (options.durableStorePath) state = await store.snapshot();
@@ -136,6 +139,7 @@ async function generate(options) {
     // Cap idle gaps at one simulated minute, and stop exactly on earlier due
     // events/offers/resolutions/handovers. Never force a completion or insert a row.
     const due = [state.simulationState.nextEventAt,
+      ...(state.investigations ?? []).filter((row)=>row.status==='READY').map((row)=>row.deadline),
       ...state.resolutionAttempts.filter((row) => row.status === "ACTIVE").flatMap((row) => [row.resolutionDueAt, row.reviewDueAt, row.assistance?.cooldownUntil]),
       ...(state.dispatchOffers ?? []).filter((row) => row.status === "PENDING").map((row) => row.responseDueAt),
       ...state.workforceContinuity.staffingRecommendations.filter((r) => r.status === 'PENDING').map((r) => r.deadline),
@@ -202,8 +206,8 @@ if (!isMainThread && workerData?.demoHistory) {
     const options = {};
     for (let index = 2; index < process.argv.length; index += 2) {
       const name = process.argv[index];
-      if (!["--room", "--until", "--from", "--out", "--retention-days", "--staffing-examples"].includes(name) || !process.argv[index + 1]) throw new Error("Usage: npm run generate:history -- --room plant-1 --until <ISO> [--from <seed.json>] [--out <file.json>] [--retention-days N] [--staffing-examples yes]");
-      options[name === "--retention-days" ? "retentionDays" : name === "--staffing-examples" ? "staffingExamples" : name.slice(2)] = process.argv[index + 1];
+      if (!["--room", "--until", "--from", "--out", "--retention-days", "--staffing-examples", "--investigation-share"].includes(name) || !process.argv[index + 1]) throw new Error("Usage: npm run generate:history -- --room plant-1 --until <ISO> [--from <seed.json>] [--out <file.json>] [--retention-days N] [--staffing-examples yes] [--investigation-share 0..1]");
+      options[name === "--investigation-share" ? "investigationShare" : name === "--retention-days" ? "retentionDays" : name === "--staffing-examples" ? "staffingExamples" : name.slice(2)] = process.argv[index + 1];
     }
     console.log(JSON.stringify(await generateDemoHistory(options, (progress) => console.error(JSON.stringify(progress))), null, 2));
   } catch (error) { console.error(error.message); process.exitCode = 1; }

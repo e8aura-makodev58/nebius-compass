@@ -42,3 +42,15 @@ and assignment functions; reports and investigators use labelled files in
 The normal Offline scripted journey is unchanged, and the current frontend still hides
 its field-report form in Offline. Backend contract tests exercise this API-free seam.
 See [investigation.md](investigation.md) for the same safety gates and DTOs used in both modes.
+
+
+## Investigation policy parity
+
+Offline exposes the same policy, override, re-investigation, deadline and analytics services.
+Narration and investigator calls use fixed fixture/template paths, with no credentials/network.
+The generator sets AUTO_APPROVE_SAFE and supports `--investigation-share` (default 0.2),
+advances through READY deadline boundaries and drains queued agent jobs deterministically.
+Synthetic examples and the separately staged month are in `backend/seed/INVESTIGATION_DATASETS.md`.
+
+The Offline clock is always RUNNING; each clock synchronization delivers due investigation
+claims through the shared synchronous completion helper before rendering or assignment.

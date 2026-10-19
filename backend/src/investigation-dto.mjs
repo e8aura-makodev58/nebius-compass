@@ -75,3 +75,14 @@ export function createEquipmentDTO(equipment, cases) {
   return { equipmentId: text(equipment.id, 120), name: text(equipment.name, 120), floor: number(equipment.floor),
     issueClasses: ['A', 'B', 'C'], recentCaseCount: cases.filter((row) => row.equipmentId === equipment.id).length };
 }
+
+/** Narrator-only facts: no responder, outcome, procedure or latent information. */
+export function createObservableDTO(state, issue, asOf) {
+  cutoffTime(asOf);
+  const equipment=state.equipment.find((row)=>row.id===issue.equipmentId);
+  const events=[...(state.historyRetention?.facts?.events ?? []),...(state.operationalEvents ?? [])]
+    .filter((row)=>row.equipmentId===issue.equipmentId && row.issueId!==issue.id && ['ISSUE_RAISED','ISSUE_RESOLVED','ISSUE_REOPENED'].includes(row.eventType) && completedBefore(row.simulationTimestamp,asOf))
+    .sort((a,b)=>Date.parse(b.simulationTimestamp)-Date.parse(a.simulationTimestamp)||a.eventType.localeCompare(b.eventType)).slice(0,10);
+  return {equipmentName:text(equipment?.name,120),issueClass:text(issue.issueClass,1),symptomText:text(issue.symptom?.text),
+    recentPublicEvents:events.map((row)=>({eventType:row.eventType,at:row.simulationTimestamp}))};
+}

@@ -170,3 +170,15 @@ host or LAN at port 3200.
 
 
 Blank Nebius model/effort environment values use the built-in N0 defaults; an explicitly empty model ID supplied directly to the transport fails closed. Ultra (investigator) uses provider-default thinking; Super (ranking) and Lightning (planner, narrator) send `enable_thinking: false`.
+
+
+## Room investigation settings
+
+Use the revision-guarded `/demo/investigation-policy` PATCH endpoint for OPERATOR (default)
+or AUTO_APPROVE_SAFE, investigationDeadlineMinutes (30) and investigationShare (0.2).
+These are persisted room settings, not environment variables. The offline history generator
+sets safe approval explicitly and accepts `--investigation-share`. The staged synthetic datasets
+are not installed into existing rooms automatically; see `backend/seed/INVESTIGATION_DATASETS.md`.
+
+`COMPASS_NARRATOR_MODE` overrides the narrator execution mode; absent it, the runtime uses
+`COMPASS_LIVE_COMPASS_MODE`, then live. Forced failure/fixture paths use templates without API calls.

@@ -67,7 +67,7 @@ test('manual safety-checked override of an abstained investigation requires an a
   await store.mutate('abstain',(s)=>{s.investigations[0].status='ABSTAINED';});
   const input={responderId:record.responders[0].responderId,fixId:'FIX-A-03',confirmedPrerequisites:['STATION_ISOLATED','LOCKOUT_CONFIRMED'],expectedRevision:record.revision};
   await assert.rejects(service.decide(record.id,input,'approve'),{code:'STALE'});
-  await service.decide(record.id,{...input,reason:'Operator reviewed the public procedure.'},'approve');
+  await service.decide(record.id,{...input,reason:'Operator reviewed the public procedure.'},'override');
   assert.equal((await store.snapshot()).investigations[0].decision.manualOverride,true);
 });
 test('hazard and invalid-input policies terminate without ranking or investigator calls',async()=>{

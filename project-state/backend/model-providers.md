@@ -109,3 +109,11 @@ JSON-protocol history converts tool-role messages to ordinary quoted JSON user m
 and assistant action objects, so providers without native tools receive a valid history.
 Interpretation ranking uses the Compass role. Both paths are exercised through global
 fetch stubs; fixture and forced-failure modes do not read credentials or call providers.
+
+
+## Sampled-report narrator
+
+`narrator.mjs` uses `callChatTurn` with narrator-role defaults (Lightning, thinking off),
+provider controls and a bounded deadline. Only ObservableDTO enters its prompt. Validated
+narratives are marked simulated; invalid/unavailable output uses a deterministic template.
+Offline and forced failures do not read credentials or fetch. See investigation.md.

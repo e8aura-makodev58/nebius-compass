@@ -174,3 +174,14 @@ changing OPEN issues. Gated issues cannot head-of-line block the autonomous queu
 fix inference skips them. Operator approval validates and assigns the exact authorized fix
 and responder atomically. Failed attempts cannot silently rematch under an old approval.
 See [investigation.md](investigation.md) for budgets, public state bounds and N3b deferrals.
+
+
+## Investigation lifecycle pump
+
+The shared investigation service drains interpretation, sampled narration and investigation
+jobs outside store mutations. Narration publishes only if its persisted claim is current;
+restart requeues interrupted work and closed reports cancel it. Scheduler deadline claims
+are durable and replayed on restart; final safety validation and assignment are atomic.
+Sequential `advanceSimulation` drains agent work for reproducible history generation, while
+the scheduled Live loop yields during provider waits. Room wrappers expose policy updates
+and re-investigation through the same service as Offline.

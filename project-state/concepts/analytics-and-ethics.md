@@ -86,3 +86,29 @@ terminal decision or risk timestamp with the existing UTC half-open period bound
 The shared period selector drives a locally scrolling outcome-count/denominator table;
 period baseline rates use the same thin-sample suppression. Staffing-action totals now
 count applied approvals plus legacy extension/call-in actions, not pending review rows.
+
+
+## Investigation analytics
+
+`/analytics.investigations` (also each period) contains `total`, `byOutcome`, `approvalRate`,
+`overrideRate`, `abstentionRate`, `firstFixComparison` and a human-readable `definition`.
+Counts include QUEUED/RUNNING/FAILED/READY/APPROVED/OVERRIDDEN/REJECTED/EXPIRED/ABSTAINED/
+ESCALATED/AUTO_APPROVED/SUPERSEDED. Outcomes use current status at snapshot; period cohorts
+use last status transition, unaffected by feedback. Decision rates use their decision time;
+first-fix observations use completion time. Future observations are excluded.
+
+Each rate is `{numerator, denominator, rate, status}`; fewer than three observations yields
+null/INSUFFICIENT_DATA. Approval and override share the denominator of dispatched decisions
+(APPROVED/AUTO_APPROVED/OVERRIDDEN); approval includes automatic approval. Abstention uses
+all evaluated READY/ABSTAINED/ESCALATED results, preserving the original result after decisions.
+
+`firstFixComparison` contains `issues`, `investigator`, `classFrequencyBaseline`,
+`baselineAgreement`, `definition`. Its cohort is completed first attempts using an approved
+investigator first choice (excluding overrides/alternatives/legacy attempts). Class-frequency
+baseline is frozen at run start from strictly earlier nonlegacy same-class fix observations,
+catalog order breaking ties. Baseline uses the same issue denominator, with `observed` and
+`unobserved` counts. An alternative fix's outcome is not observed: any such missing outcome
+suppresses its rate with COUNTERFACTUAL_NOT_OBSERVED. No hidden fault/skill data is consulted
+and no improvement claim follows from this descriptive comparison. Paired replay must provide
+counterfactual evidence separately. Compact facts preserve every count/rate and period across
+retention; full archived run/report detail remains available for audits.

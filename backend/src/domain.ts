@@ -61,6 +61,9 @@ export interface Issue {
   /** Legacy planner text retained as an incident note, not the applied procedure. */
   responseAction?: string;
   symptom?: { code: string; text: string };
+  origin?: "FIELD_REPORT" | "SIMULATION";
+  dispatchGate?: "OPEN" | "INVESTIGATION";
+  fieldReportId?: string;
   reportNarrative?: string;
   narrativeSource?: "operator" | "simulated" | "template";
   fixRecommendation?: FixRecommendation;
@@ -313,4 +316,18 @@ export interface StaffingRecommendation {
   selectedOptionId?: string | null;
   decidedAt?: string;
   actor?: "Central command" | "Room policy" | "Application";
+}
+
+export type InvestigationStatus = "QUEUED" | "RUNNING" | "FAILED" | "READY" | "ABSTAINED" | "ESCALATED" | "APPROVED" | "OVERRIDDEN" | "AUTO_APPROVED" | "REJECTED" | "EXPIRED" | "SUPERSEDED";
+export interface InvestigationPolicy {
+  investigationApproval: "OPERATOR" | "AUTO_APPROVE_SAFE";
+  investigationDeadlineMinutes: number;
+  investigationShare: number;
+  revision: number;
+}
+export interface ObservableDTO {
+  equipmentName: string;
+  issueClass: "A" | "B" | "C";
+  symptomText: string;
+  recentPublicEvents: Array<{eventType: "ISSUE_RAISED" | "ISSUE_RESOLVED" | "ISSUE_REOPENED"; at: string}>;
 }

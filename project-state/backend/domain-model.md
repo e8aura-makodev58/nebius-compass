@@ -143,3 +143,13 @@ missing/OPEN gates preserve legacy behavior. Approval stores authorized responde
 Central command, timestamp, original revision and prerequisite confirmations. The first
 attempt ID consumes that authorization. Public decisions omit internal authorization IDs
 and run tokens. Full contracts and state/mode behavior are in [investigation.md](investigation.md).
+
+
+## Investigation lifecycle additions
+
+Persisted `investigationPolicy` holds approval mode, simulated-minute deadline, sampled share
+and revision. Runs retain creation/transition times, original result outcome, frozen public
+baseline fix, deadline and private claim tokens; SUPERSEDED, EXPIRED, OVERRIDDEN and
+AUTO_APPROVED are explicit terminal statuses. ObservableDTO contains only equipmentName,
+issueClass, symptomText and recentPublicEvents. Simulated reports are engine-confirmed;
+operator field reports retain the explicit confirmation workflow. See investigation.md.

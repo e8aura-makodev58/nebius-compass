@@ -77,10 +77,12 @@ test("multi-day retention preserves decisions, exact analytics, audits, and cras
   const id = archived[0].issue.id;
   assert.deepEqual(await store.issueAudit(id), createIssueAuditRecord(full, id));
   assertNoResponderSkill(await store.issueAudit(id));
-  const page = await store.stationHistory(archived[0].issue.equipmentId, { limit: 1 });
+  const repeatedStation = archived.find((bundle) => full.issues.filter((issue) => issue.equipmentId === bundle.issue.equipmentId).length > 1)?.issue.equipmentId;
+  assert.ok(repeatedStation, "fixture must contain a station with repeated history");
+  const page = await store.stationHistory(repeatedStation, { limit: 1 });
   assert.equal(page.issues.length, 1);
   assert.ok(page.next);
-  const second = await store.stationHistory(archived[0].issue.equipmentId, { limit: 1, before: page.next });
+  const second = await store.stationHistory(repeatedStation, { limit: 1, before: page.next });
   assert.notEqual(second.issues[0].id, page.issues[0].id);
   const publicState = await store.publicSnapshot();
   assertNoResponderSkill(publicState);

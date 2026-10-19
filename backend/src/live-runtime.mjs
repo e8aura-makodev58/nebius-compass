@@ -19,6 +19,7 @@ export function createLiveRuntime({
   store = createLiveStore(),
   plannerOptions = { mode: process.env.COMPASS_EVENT_PLANNER_MODE ?? "live" },
   agentOptions = { mode: process.env.COMPASS_LIVE_COMPASS_MODE ?? "live" },
+  narratorOptions = { mode: process.env.COMPASS_NARRATOR_MODE ?? process.env.COMPASS_LIVE_COMPASS_MODE ?? "live" },
   requestRecommendation,
   requestFixRecommendation,
   requestStaffingRecommendation,
@@ -32,7 +33,7 @@ export function createLiveRuntime({
   const assignments = createLiveAssignmentService(store);
   const fixRecommendations = createFixRecommendationService(store, { agentOptions, ...(requestFixRecommendation ? { requestRanking: requestFixRecommendation } : {}) });
   const staffingService = createStaffingService(store, { agentOptions, ...(requestStaffingRecommendation ? { requestRanking: requestStaffingRecommendation } : {}) });
-  const investigations = createInvestigationService(store, { investigatorOptions, rankingOptions: agentOptions });
+  const investigations = createInvestigationService(store, { investigatorOptions, rankingOptions: agentOptions, narratorOptions });
   let investigationWork = null;
   let investigationQueued = false;
   function scheduleInvestigationWork() {
@@ -46,7 +47,7 @@ export function createLiveRuntime({
         .finally(async () => {
           const snapshot = await store.snapshot();
           investigationWork = null;
-          if (!failed && (snapshot.investigations?.some((row)=>row.status==='QUEUED') || snapshot.fieldReports?.some((row)=>row.status==='UNRESOLVED'&&row.interpretation.status==='QUEUED'))) scheduleInvestigationWork();
+          if (!failed && (snapshot.investigations?.some((row)=>row.status==='QUEUED') || snapshot.fieldReports?.some((row)=>(row.status==='UNRESOLVED'&&row.interpretation.status==='QUEUED')||row.narrationStatus==='QUEUED'))) scheduleInvestigationWork();
         });
     });
     startAgentLane();
@@ -176,6 +177,7 @@ export function createLiveRuntime({
   }
 
   const scheduler = createScheduler(store, {
+    onInvestigationDeadline: (trigger) => investigations.finishDeadline(trigger),
     onEventDue: (trigger) => runAgentWork(async () => {
       const planned = await trackAgent(
         "eventPlanner",
@@ -190,6 +192,7 @@ export function createLiveRuntime({
       const result = planned.result ?? planned;
       if (result.status === "PERSISTED") {
         await store.mutate('issue-staffing-recheck', (state) => requestStaffingRecheck(state, 'ISSUE_RAISED'));
+        scheduleInvestigationWork();
         await recommendPending();
       }
     }),
@@ -285,6 +288,10 @@ export function createLiveRuntime({
       });
     }
     await scheduleFixWork();
+    if (!inLoop()) {
+      scheduleInvestigationWork();
+      while (agentLane || investigationWork || investigationQueued) { if (agentLane) await agentLane; if (investigationWork) await investigationWork; }
+    }
     if ((await store.snapshot()).investigations?.some((row)=>row.status==='QUEUED')) scheduleInvestigationWork();
     return transaction.result;
   }
@@ -318,6 +325,8 @@ export function createLiveRuntime({
     mode: "LIVE",
     store,
     async snapshot() { return withState(null); },
+    async updateInvestigationPolicy(input) { return investigations.updatePolicy(input); },
+    async reinvestigate(id,input) { const result=await investigations.reinvestigate(id,input);scheduleInvestigationWork();return result; },
     async submitReport(input) { const result = await investigations.submit(input); scheduleInvestigationWork(); return result; },
     async confirmReport(id,input) { const result = await investigations.confirm(id,input); scheduleInvestigationWork(); return result; },
     closeReport: (id,input) => investigations.close(id,input),
@@ -448,6 +457,8 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
       mode = nextMode;
       return this.snapshot();
     },
+    async updateInvestigationPolicy(input) { return active().updateInvestigationPolicy(input); },
+    async reinvestigate(id,input) { return active().reinvestigate(id,input); },
     async submitReport(input) { return active().submitReport(input); },
     async confirmReport(id,input) { return active().confirmReport(id,input); },
     async closeReport(id,input) { return active().closeReport(id,input); },

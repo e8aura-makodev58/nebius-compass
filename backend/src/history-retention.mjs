@@ -1,3 +1,4 @@
+import { compactInvestigationFact } from './investigation-analytics.mjs';
 /** Deterministic retention planning. No I/O, wall clock, RNG or model inputs. */
 export const HISTORY_COLLECTIONS = ["issues", "recommendations", "operationalEvents", "dispatchOffers", "resolutionAttempts", "assignments"];
 const prefixes = { issues: "ISS", recommendations: "live-rec", operationalEvents: "event", dispatchOffers: "offer", resolutionAttempts: "attempt", assignments: "assignment" };
@@ -15,7 +16,7 @@ export function originalLength(state, collection) { return state[collection].len
 
 function metadata(epoch = 0) {
   return { version: 1, epoch, lastDay: null, highWater: {}, removed: {}, archives: {}, eventTokens: [], order: { issues: {}, recommendations: {} },
-    facts: { issues: [], events: [], recommendations: [], earliestEventAt: null } };
+    facts: { investigations: [], issues: [], events: [], recommendations: [], earliestEventAt: null } };
 }
 export function resetRetention(state, epoch) { state.historyRetention = metadata(epoch); }
 
@@ -30,6 +31,9 @@ export function compactHistory(state, days = retentionDays(), { force = false } 
   if (!force && state.historyRetention?.lastDay === day) return [];
   const retention = state.historyRetention ??= metadata();
   retention.lastDay = day;
+  retention.facts.investigations ??= [];
+  retention.investigationArchives ??= {};
+  retention.reportArchives ??= {};
   for (const collection of HISTORY_COLLECTIONS) {
     const pattern = new RegExp(`^${prefixes[collection]}-(\\d+)$`);
     retention.highWater[collection] = state[collection].reduce((max, row) => Math.max(max, Number(pattern.exec(row.id)?.[1] ?? 0)), retention.highWater[collection] ?? 0);
@@ -41,6 +45,7 @@ export function compactHistory(state, days = retentionDays(), { force = false } 
   }
   const cutoff = Date.parse(state.simulationState.simulationTime) - days * 86_400_000;
   const protectedIds = new Set([
+    ...(state.investigations ?? []).filter((row)=>['QUEUED','RUNNING','READY'].includes(row.status)||row.deadlineDispatchToken).map((row)=>row.issueId),
     ...state.resolutionAttempts.filter((row) => row.status === "ACTIVE" || row.resolutionDueToken || row.resolutionDispatchToken || row.reviewDueToken || row.reviewDispatchToken).map((row) => row.issueId),
     ...state.assignments.filter((row) => row.status === "ACTIVE").map((row) => row.issueId),
     ...(state.dispatchOffers ?? []).filter((row) => row.status === "PENDING" || row.responseDueToken || row.responseDispatchToken).map((row) => row.issueId),
@@ -53,11 +58,25 @@ export function compactHistory(state, days = retentionDays(), { force = false } 
   const ids = new Set(selected.map((issue) => issue.id));
   const eventTail = recentHistoryEvents(state);
   const bundles = new Map(selected.map((issue) => [issue.id, {
-    issue, recommendations: [], operationalEvents: [], dispatchOffers: [], resolutionAttempts: [], assignments: [], resolutionHistory: [],
+    issue, ...((state.investigations ?? []).some((row)=>row.issueId===issue.id)?{investigations:[],fieldReports:[]}:{}), recommendations: [], operationalEvents: [], dispatchOffers: [], resolutionAttempts: [], assignments: [], resolutionHistory: [],
   }]));
   for (const collection of [...HISTORY_COLLECTIONS.filter((key) => key !== "issues"), "resolutionHistory"]) {
     for (const row of state[collection] ?? []) if (ids.has(row.issueId)) bundles.get(row.issueId)[collection].push(row);
   }
+  const archivedRuns=(state.investigations ?? []).filter((row)=>ids.has(row.issueId));
+  const reportIds=new Set(archivedRuns.map((row)=>row.reportId));
+  for(const row of archivedRuns) {
+    retention.facts.investigations.push(compactInvestigationFact(row));
+    retention.investigationArchives[row.id]=row.issueId;
+    bundles.get(row.issueId).investigations.push(row);
+  }
+  for(const row of state.fieldReports ?? []) if(reportIds.has(row.id)) {
+    const run=archivedRuns.find((run)=>run.reportId===row.id);
+    bundles.get(run.issueId).fieldReports.push(row);
+    retention.reportArchives[row.id]=run.issueId;
+  }
+  state.investigations=(state.investigations ?? []).filter((row)=>!ids.has(row.issueId));
+  state.fieldReports=(state.fieldReports ?? []).filter((row)=>!reportIds.has(row.id));
   for (const event of state.operationalEvents) {
     if (!retention.facts.earliestEventAt || event.simulationTimestamp < retention.facts.earliestEventAt) retention.facts.earliestEventAt = event.simulationTimestamp;
   }
@@ -78,7 +97,7 @@ export function compactHistory(state, days = retentionDays(), { force = false } 
     retention.facts.recommendations.push({ id: row.id, issueId: row.issueId, createdAt: row.createdAt ?? row.updatedAt ?? null, agentResult: true, disagreement: row.disagreement });
   }
   for (const row of state.operationalEvents) if (ids.has(row.issueId) && lifecycle.has(row.eventType)) {
-    retention.facts.events.push({ eventType: row.eventType, simulationTimestamp: row.simulationTimestamp });
+    retention.facts.events.push({ eventType: row.eventType, simulationTimestamp: row.simulationTimestamp, equipmentId:row.equipmentId,issueId:row.issueId });
   }
   const tokens = new Set(retention.eventTokens);
   for (const row of state.operationalEvents) if (ids.has(row.issueId) && row.payload?.dueEventToken) tokens.add(row.payload.dueEventToken);

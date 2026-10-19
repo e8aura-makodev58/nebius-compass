@@ -42,7 +42,7 @@ export function createLiveSeed() {
       nextEventAt: "2026-09-01T08:15:00.000Z",
       dueEventToken: "due-1",
       rngVersion: "lcg32-v1",
-      rngStreams: { scheduler: 1729, fallback: 2718, resolution: 3141, dispatch: 5772, attempt: 9973, durability: 6113 },
+      rngStreams: { scheduler: 1729, fallback: 2718, resolution: 3141, dispatch: 5772, attempt: 9973, durability: 6113, investigation: 0x19a63 },
     },
     simulationConfig: { maxActiveIssues: 10, baselineConfig: structuredClone(BASELINE_CONFIG) },
     workforceContinuity: createWorkforceConfig(424242),
@@ -97,6 +97,7 @@ export function createLiveSeed() {
     dispatchOffers: [],
     resolutionHistory: base.resolutionHistory.map((record) => ({ ...record, attemptId: `legacy-${record.id}`, assisted: false, participants: [{ responderId: record.responderId, roleIntervals: [{ role: "PRIMARY", joinedAt: null, endedAt: record.resolvedAt ?? null }], participationMinutes: record.resolutionMinutes, contributionShare: 1 }] })),
     recommendations: [],
+    investigationPolicy: {investigationApproval:'OPERATOR',investigationDeadlineMinutes:30,investigationShare:0.2,revision:0},
     fieldReports: [],
     investigations: [],
     operationalEvents: [

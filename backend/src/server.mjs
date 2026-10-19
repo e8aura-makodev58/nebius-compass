@@ -137,12 +137,14 @@ async function handleRoomScopedRoute({ request, response, path, runtime, logger,
     if (request.method === 'GET' && !reportMatch[2]) return sendJson(response, 200, await runtime.getReport(id));
     if (request.method === 'POST' && reportMatch[2]) return sendJson(response, 200, await runtime[reportMatch[2] === 'confirm' ? 'confirmReport' : 'closeReport'](id, await readJsonBody(request)));
   }
-  const investigationMatch = /^\/investigations\/([^/]+)(?:\/(approve|reject|escalate|feedback))?$/.exec(path);
+  const investigationMatch = /^\/investigations\/([^/]+)(?:\/(approve|override|reinvestigate|reject|escalate|feedback))?$/.exec(path);
   if (investigationMatch) {
     const id = decodeURIComponent(investigationMatch[1]);
     if (request.method === 'GET' && !investigationMatch[2]) return sendJson(response, 200, await runtime.getInvestigation(id));
+    if (request.method === 'POST' && investigationMatch[2] === 'reinvestigate') return sendJson(response, 200, await runtime.reinvestigate(id, await readJsonBody(request)));
     if (request.method === 'POST' && investigationMatch[2]) return sendJson(response, 200, await runtime.decideInvestigation(id, await readJsonBody(request), investigationMatch[2]));
   }
+  if (request.method === 'PATCH' && path === '/demo/investigation-policy') return sendJson(response, 200, await runtime.updateInvestigationPolicy(await readJsonBody(request)));
   const caseMatch = /^\/cases\/([^/]+)$/.exec(path);
   if (request.method === 'GET' && caseMatch) return sendJson(response, 200, await runtime.getCase(decodeURIComponent(caseMatch[1])));
   const stationHistoryMatch = /^\/equipment\/([^/]+)\/issues$/.exec(path);
@@ -448,6 +450,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     plannerOptions: () => settingsService.requestOptions("event-planner"),
     agentOptions: () => settingsService.requestOptions("compass"),
     investigatorOptions: () => settingsService.requestOptions("investigator"),
+    narratorOptions: () => settingsService.requestOptions("narrator"),
   });
   // createControlRoomManager already reconciled each READY room once during
   // construction; this is the same reconcile-before-serve discipline the

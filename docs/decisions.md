@@ -1086,3 +1086,28 @@ Restricted private simulation-marker content returns 400 rather than poisoning t
 public snapshot (whose legacy serialized privacy guard rejects those markers). This is a
 privacy-boundary validation exception to ordinary untrusted-narrative handling; normal
 instruction-like spans remain quoted data and do not bypass the investigation policy.
+
+
+## 2026-10-19 — N3b durable policy, narration and honest comparison
+
+READY deadlines use simulated time and durable scheduler claims; policy approval occurs only
+at deadline after atomic safety checks. Explicit overrides are separate from normal approval.
+An independent seeded stream samples planner issues without perturbing simulation RNGs.
+Narrator receives only cutoff-filtered ObservableDTO, never responder/fault truth; code keeps
+classification and outcomes fixed. Offline exercises these services without provider calls.
+
+The requested same-issue class-frequency comparison cannot observe a different fix's outcome
+from production history. Analytics freezes the public baseline before investigation, counts
+the same issues, and returns COUNTERFACTUAL_NOT_OBSERVED with observed/unobserved counts
+rather than manufacture alternative outcomes using hidden truth. Paired replay remains the
+separate source of causal comparisons. Compact facts preserve these denominators through retention.
+
+Regenerated the month under safe policy/share 0.2 in about 14 seconds; staged it separately at
+backend/seed/investigation-month rather than replacing the existing paired-replay seed.
+It has 23 AUTO_APPROVED, 2 EXPIRED and 1 ABSTAINED runs and eventually saturates the pending
+queue because authorization is consumed on failure and unsupported work needs an operator.
+Replacing the baseline would erase its last-week evaluation cohort. A reproducible four-hour
+synthetic seed supplies approved/abstained/escalated examples (1/7/1 plus 2 auto-approved).
+All files are below 20MB. Dataset README records reproduction and limitations.
+The responder-ranking-only reliability soak explicitly disables investigation sampling to keep
+its original experiment intact; production sampling remains enabled by default.

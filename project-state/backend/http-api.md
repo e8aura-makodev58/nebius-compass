@@ -150,3 +150,23 @@ private run tokens, authorization internals and ID-sequence metadata are exclude
 issue audits include the public investigations. Report-created issues stay gated even on
 model outage, input abstention, rejection or escalation. Existing legacy/planner-origin
 issues retain their autonomous assignment behavior.
+
+
+## Investigation lifecycle routes (N3b)
+
+All paths below use the existing room-scoped prefix. `POST /investigations/:id/override`
+accepts `{responderId, fixId, confirmedPrerequisites, reason, expectedRevision}` for
+ABSTAINED/ESCALATED only. It returns `{status:"OVERRIDDEN", id}` and records an audited
+Central command decision with reason, exact fix/responder and prerequisite confirmations.
+Certification, availability, issue state and prerequisite checks are identical to approval.
+
+`POST /investigations/:id/reinvestigate` accepts `{expectedRevision}` and returns
+`{investigationId, issueId, supersedes}`. The old record becomes SUPERSEDED. Public run
+fields include `createdAt`, `asOf`, `readyAt`, `deadline`, `supersedes`; private tokens stay hidden.
+
+`PATCH /demo/investigation-policy` accepts `{expectedRevision, investigationApproval?,
+investigationDeadlineMinutes?, investigationShare?}`. It returns the updated policy, including
+its incremented revision, also exposed at `/state.investigationPolicy`. Defaults are OPERATOR,
+30 simulated minutes and 0.2. Unknown fields/invalid values fail; stale revisions conflict.
+Policy changes are audited. `/analytics.investigations` and every period's `investigations`
+contain outcome counts, rates and first-fix comparison; see analytics-and-ethics.

@@ -82,10 +82,10 @@ function assertNoReservedIdCollision(rooms) {
  * rule in SOW §4.2: a caller that forgets to pass a path is exactly the
  * failure class fixed the week before this feature was built.
  */
-function buildRoom({ id, label, dataRoot, logger, plannerOptions, agentOptions, investigatorOptions }) {
+function buildRoom({ id, label, dataRoot, logger, plannerOptions, agentOptions, investigatorOptions, narratorOptions }) {
   const liveStore = createLiveStore({ filePath: roomFilePath(dataRoot, id, "live-simulation.json") });
   const roomLogger = createControlRoomLogger(logger, id);
-  const liveRuntime = createLiveRuntime({ store: liveStore, logger: roomLogger, plannerOptions, agentOptions, investigatorOptions });
+  const liveRuntime = createLiveRuntime({ store: liveStore, logger: roomLogger, plannerOptions, agentOptions, investigatorOptions, narratorOptions });
   const offlineAuditStore = createAuditStore(roomFilePath(dataRoot, id, "recommendation-events.json"));
   const offlineRuntime = createDemoRuntime({ mode: "fixture" }, offlineAuditStore, roomLogger);
   const applicationRuntime = createApplicationRuntime({ liveRuntime, offlineRuntime, initialMode: "LIVE" });
@@ -113,6 +113,7 @@ export async function createControlRoomManager({
   dataRoot = resolveCompassDataRoot(),
   logger = null,
   plannerOptions = { mode: process.env.COMPASS_EVENT_PLANNER_MODE ?? "live" },
+  narratorOptions = { mode: process.env.COMPASS_NARRATOR_MODE ?? process.env.COMPASS_LIVE_COMPASS_MODE ?? "live" },
   investigatorOptions = { mode: process.env.COMPASS_INVESTIGATOR_MODE ?? process.env.COMPASS_LIVE_COMPASS_MODE ?? "live" },
   agentOptions = { mode: process.env.COMPASS_LIVE_COMPASS_MODE ?? "live" },
   migrateLegacyData = true,
@@ -148,7 +149,7 @@ export async function createControlRoomManager({
         }
         hasMigratedData = migration.results.some((entry) => entry.status === "MIGRATED" || entry.status === "ALREADY_MIGRATED");
       }
-      const room = buildRoom({ id: descriptor.id, label: descriptor.label, dataRoot, logger, plannerOptions, agentOptions, investigatorOptions });
+      const room = buildRoom({ id: descriptor.id, label: descriptor.label, dataRoot, logger, plannerOptions, agentOptions, investigatorOptions, narratorOptions });
       // Only a freshly-seeded room (no real prior-deployment data behind it)
       // gets the LIVE+PAUSED default. A room with real migrated state must be
       // preserved exactly as-is, whatever its clock status already was.

@@ -425,3 +425,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - `e2e/investigation-real.spec.mjs` (forced provider failure, 375/1280px): a confirmed report in a fresh room abstains with no dispatch controls and the issue stays gated and unassigned; hazard and garbled reports are decided by policy with zero model calls. `investigation-ui.spec.mjs` stays as the stubbed UI contract for the approve flow (needs case history), documented as such.
 - `fixtures/investigation/scenarios.json` SC-13 now expects ABSTAINED: nobody on shift means no eligible qualified responder (plan §3.5); overtime stays with staffing approval. Flagged by codex in round 14.
 - Pages updated: none.
+
+
+## [2026-10-19] feature — N3b investigation lifecycle and observed analytics
+- Added durable expiry/supersession, audited override/safe policy, sampled ObservableDTO-only narration, retained analytics and repeatable synthetic small/month seeds. Alternative baseline outcomes remain explicitly unobserved; the separately staged month exposes unattended queue saturation.
+- Pages updated: backend investigation, simulation, live-runtime, offline-runtime, http-api, domain-model, overview, model-providers; concepts analytics-and-ethics; operations testing and running-and-config.
