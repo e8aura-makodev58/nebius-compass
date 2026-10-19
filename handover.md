@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | RUN (round 22) |
-| gemini | RUN (round 22g) |
+| gemini | RUN (round 23g) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | Ask Compass: grounded Q&A over the room (backend) | 22 |
-| gemini | Wall-display layout (E3) and provisional chart styling (E8) | 22g |
+| gemini | Fresh-clone judge walkthrough of the README (docs only) | 23g |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
 
@@ -1178,8 +1178,36 @@ your watcher. Commit in steps, with both suites green.
     `e2e/` (tell me what to change), `docs/nebius/`, `backend/data/`, port 3200. No live
     calls.
 
+**Round 23g (2026-10-19) — gemini: fresh-clone judge walkthrough (docs only).** Judges will
+clone the public repo and follow the README. Find every place that breaks or confuses them.
+Start with `git merge master`; keep your watcher.
+
+- **gemini.**
+  - In a scratch directory inside your worktree's ignored `.cache/` (for example
+    `.cache/judge-clone`), run `git clone /home/makodev58/nebius-compass judge-clone`
+    (that is master) and follow `README.md` **exactly as written**, from "Run locally"
+    through "Verification":
+    - `npm ci`;
+    - the optional month-backed run;
+    - `npm test`;
+    - the E2E command, on **your port 3022**.
+
+    Use **no** Nebius key, so everything falls back, and no live calls.
+  - With the app running from that clone (bind it to port 3122, not 3000), walk the judge
+    testing steps in `docs/nebius/06_SUBMISSION_DRAFT.md` and note what happens without a
+    key.
+  - **Write `docs/nebius/09_JUDGE_WALKTHROUGH.md`.** Number every step you ran, with the
+    exact command, what happened, time taken, and any error text. Then add numbered issues,
+    each with severity, the README or draft line, and exact replacement text. Also say what
+    a judge sees when no Nebius key is set (the labelled deterministic paths): is it clear?
+  - Stop every server you start, free ports 3022/3122, and delete the clone when done.
+    Commit only the new doc and your section, and set `READY FOR MERGE`. No suites needed
+    for the docs commit.
+  - **Do not touch** any other files.
+
 ### Merge log
 
+- 2026-10-19 — **gemini** `3927f02` → merge `be5066e`: wall-display layout (≥1440/2200px) and provisional period charts. On master: `npm test` 450/450, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **codex** `a6e06e4` → merge `8c41c9c`: precise repair feedback (exact item/field paths and bounded reasons). `handover.md`/`log.md` conflicts resolved (codex section reset to round 22). On master: `npm test` 450/450, E2E 85/85. Handoff archived.
 - 2026-10-19 — **codex** `bcc1cec` → merge `767fd2c`: security fixes #1 (JSON/Origin guard), #2–#8, #10 with 13 security tests. Main agent added the frontend JSON header and a header-free E2E. On master: `npm test` 448/448, E2E 85/85. Deployed; 415/403 verified on the server. Handoff archived.
 - 2026-10-19 — **gemini** `28596c8` → merge `8772c74`: CSS theme enhancements E1, E2, E4–E7 in the Nebius palette. Main agent restored 44px phone touch targets. On master: `npm test` 435/435, E2E 84/84. Deployed. Handoff archived.
@@ -1226,24 +1254,9 @@ your watcher. Commit in steps, with both suites green.
 
 ## gemini
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 22g — Wall-display layout (E3) and provisional chart styling (E8)
-- **Head commit:** 2b7e6ff
-- **Changes:**
-  - E3: Implemented responsive wall-display styling (`@media (min-width: 1440px)` and `@media (min-width: 2200px)`) under `.display-mode` in `frontend/layout.css` for Field reports (`investigation`), Staffing (`staffing`), Issues (`issues`), and Event feed (`events`). Replaced single-line 1800px+ measures with 2-column (and 3-column on 2560px) grid layouts for Issues and Events, and constrained reading containers (`max-width: 1680px` centered) with 2-column operational details for Field reports and Staffing. Scaled up typography (`1.05rem`–`1.35rem`) for reading at room distance while strictly maintaining zero horizontal scroll (`overflow <= 0`).
-  - E8: In Operational Analytics period charts (`frontend/analytics.css`), distinctly styled provisional/in-progress simulated period bars (`.period-bar.partial`) using 0.55 opacity, a diagonal hatched pattern (`repeating-linear-gradient`), and dashed rule borders. Added a clear legend entry (`■ Complete   □ In-progress (provisional)`) to `.period-chart > small`.
-  - Replaced screenshots under `docs/design/theme-review-2026-10/after/` with 4 representative wall display and chart screenshots (256 KB total).
-- **Files changed:** `frontend/analytics.css`, `frontend/layout.css`, `docs/design/theme-review-2026-10/after/*.png`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md` (gemini section only)
-- **Verification:**
-  - `node --test backend/tests/design-tokens-contrast.test.mjs` passed (2/2)
-  - `npm test` passed (448/448)
-  - `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (84/84)
-  - Verified zero horizontal overflow on all display screens at 1920×1080 and 2560×1440
-  - Ports 3022 and 3122 confirmed completely free
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`
-- **Risks / follow-ups:** CSS-only changes; no JS/HTML modifications.
-- **Questions for main:** None.
+- **Task:** Round 23g assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
