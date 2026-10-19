@@ -791,7 +791,7 @@
   - Added current/pressed/focus semantics, `aria-busy`, and a compact refresh indicator.
 - Files changed: `frontend/app.js`, `frontend/index.html`, `frontend/styles.css`, `backend/tests/wp10-control-room-ui.test.mjs`, `e2e/audit-trail.spec.mjs`, `docs/decisions.md`, and this handover.
 - Verification: `npm test` passes all 161 unit/integration cases. `LD_LIBRARY_PATH=/home/makodev58/rendertest/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passes 12/12 with both providers forced to fail, so no API credits were used. Browser acceptance covers `event-002` (`ISSUE_RAISED`) versus `event-003` (`RESPONDER_ASSIGNED`) on `ISS-103`, two poll ticks, system event `event-001`, stale response reordering, and resolved issue history. `git diff --check` passes.
-- Deployment: Committed as `47f0513` (`fix: show selected event details`) and cleanly replaced only the identified Compass process on port 3000, preserving `.env` and `backend/data/`. The restarted server is PID `4104636`; both `/` and `/api/state` returned successfully. Test at `http://127.0.0.1:3000` locally or `http://192.168.80.193:3000` on the LAN. No provider calls were made and nothing was pushed.
+- Deployment: Committed as `47f0513` (`fix: show selected event details`) and cleanly replaced only the identified Compass process on port 3000, preserving `.env` and `backend/data/`. The restarted server is PID `4104636`; both `/` and `/api/state` returned successfully. Test at `http://127.0.0.1:3000` locally or `http://<lan-ip>:3000` on the LAN. No provider calls were made and nothing was pushed.
 
 ### 2026-09-05 — Default 2D map, floor selection, pan, and zoom
 

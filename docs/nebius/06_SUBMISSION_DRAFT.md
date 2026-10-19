@@ -16,7 +16,9 @@ ResponseCompass: an operations control-room agent on NVIDIA Nemotron
 
 ResponseCompass turns a technician's plain-language fault report into a cited, safety-checked
 recommendation for an operations control room. Nemotron on Nebius Token Factory investigates
-it with read-only tools; code checks every claim, and a person approves every dispatch.
+it with read-only tools; code validates the structured result. Investigated issues require
+operator approval by default, or authorization from an explicitly enabled safe application
+policy.
 
 ## Project description (what, why, how)
 
@@ -31,11 +33,12 @@ report arrives as free text. ResponseCompass:
 Central command approves, escalates or rejects. When the evidence is thin, or the report
 describes a hazard, the system says so instead of guessing.
 
-**Why.** In a control room, the nearest technician and the first fix tried are often guesses,
-and a confident-sounding wrong answer is worse than "I don't know". Most AI assistants are
-built to always produce an answer. We built one whose authority is limited by design:
+**Why.** A control-room recommendation needs a clear account of its evidence and limits.
+This synthetic project explores bounded troubleshooting and dispatch rather than
+assuming that a confident answer is correct. We limit the assistant's authority by design:
 - the application owns every fact, eligibility rule, safety rule and the dispatch itself;
-- the model may only rank what it is given and explain, with citations that code verifies.
+- the model may only rank what it is given and explain, with citations that code checks
+  against the tool results of the same run.
 
 **How.**
 - **Nemotron 3 Super** ranks interpretations of the report, and the operator confirms one.
@@ -53,8 +56,9 @@ built to always produce an answer. We built one whose authority is limited by de
 - **Approval** confirms each safety prerequisite, and one dispatch gate covers every
   assignment path.
 - **Nemotron 3.5 Lightning** plans simulated events.
-- If a model is slow or invalid, a labelled deterministic path takes over, and the floor
-  keeps running.
+- If inference is slow or invalid, a labelled deterministic path remains available.
+  Unsupported or expired investigated work still requires operator action; no fallback
+  bypasses the approval gate.
 
 ## How we used Nebius Token Factory and NVIDIA models
 
@@ -65,11 +69,16 @@ built to always produce an answer. We built one whose authority is limited by de
   - Ultra: investigator;
   - Lightning, thinking off: planner and narrator.
 - Native tool calling for the investigator.
-- `GET /v1/models?verbose=true` for pricing, limits and capabilities.
+- A manual N0 `GET /v1/models?verbose=true` probe informed model, pricing and limit choices.
+  Runtime Settings refreshes `/v1/models`; capabilities, prices and local limits are
+  maintained explicitly in code rather than automatically imported from that catalog.
+- A deployment-global usage ledger and optional daily budget (`COMPASS_DAILY_BUDGET_USD`).
 - Per-provider rate limiter, 429 retry and circuit breaker.
-- What Token Factory changed for us: on our previous provider a ranking took 20–60 s; on
-  Nemotron Super it takes about 3 s. That made a multi-step live investigation (about 15 s,
-  ≈ USD 0.03) practical in an interactive control room.
+- What Token Factory changed for us: on our previous provider a ranking took 20–60 s.
+  In the recorded five-sample Scenario A test, Super/off had a median ranking latency of
+  3.2 s. One full live investigation took 15.7 s and about 23k input / 2.4k output tokens
+  (approximately USD 0.0302 at the dated Ultra prices). These are sample measurements,
+  not latency or per-investigation cost guarantees.
 
 ## Significant update during the Submission Period (pre-existing project disclosure)
 
@@ -82,15 +91,21 @@ Nebius entry starts from baseline commit `1e1c69c` (2026-10-19). Everything afte
 - the investigation data contracts: public certifications, procedure safety classes and
   prerequisites, case records, and the decision-time cutoff;
 - the Nebius Token Factory provider with four model roles;
-- an evaluation harness and live evaluation (run 2: 24/24 outcome classes, 64/64 valid citations, 0 safety violations, 6/6 hazard/input decisions without a model call, median 8.9 s);
+- an evaluation harness and a reported second live-mode run: 24/24 end-to-end outcome
+  classes including policy and deterministic paths, 64/64 returned-reference citations,
+  zero post-validation certification inconsistencies in accepted outputs, and 6/6 labelled
+  hazard/input decisions without a model call; these are small scenario checks, not a
+  general accuracy or safety certification;
 - a new deployment.
 
 ## Links
 
-- Working demo: ⟨URL — reuses compass.makodev58.com after the AMD event ends; until then
-  Tailscale-only⟩
-- Demo video (YouTube, < 3 min): ⟨URL⟩ — script in `docs/DEMO_SCRIPT.md`
-- Public repository: ⟨https://github.com/e8aura-makodev58/…⟩ (Apache-2.0)
+- Working demo: not yet published; supply and verify a public judge-access URL before filing
+  (planned: compass.makodev58.com after the AMD event ends).
+- Demo video: not yet published; supply the final video URL before filing (script in
+  `docs/DEMO_SCRIPT.md`).
+- Public repository: final URL not yet recorded; supply the published repository URL before
+  filing (Apache-2.0).
 
 ## Testing instructions for judges
 
@@ -102,14 +117,20 @@ near the drive") to see it escalate without a model call. Rooms pause after 10 i
 press Resume to run the simulation live.⟩ No login is required. Live mode spends our Nebius
 credit; Offline Demo makes no API calls.
 
+The approval example assumes a month-seeded room with supported case evidence and an
+available qualified responder. An occupied station or an abstaining investigation needs
+a different station or operator follow-up; approval is not guaranteed for arbitrary text.
+
 ## Feedback on Nebius Token Factory and NVIDIA models
 
 What worked well:
 - The `?verbose=true` model listing returns context length, pricing, per-model RPM/TPM
   limits, supported features and region. It let us choose models from data rather than
   guesswork.
-- Native tool calling produced well-formed `tool_calls` with valid JSON arguments on every
-  Nemotron model we tried (19 of 20 runs; the 20th timed out).
+- Native tool calling: the published four-model native-tool table reports 20/20
+  thinking-on and 19/20 thinking-off runs returning tool calls, with one thinking-off
+  timeout. These small samples do not establish reliability for all Nemotron models; the
+  application separately validates tool names, arguments and final citations.
 - Latency was low enough for interactive multi-step agents: Super ranks in about 3 s with
   thinking off, and Ultra completes a 5–7-call investigation in about 15 s.
 - Reasoning comes back in a separate `reasoning_content` field, so JSON content stays clean.
@@ -124,9 +145,10 @@ What could be better:
   Super with thinking on was slower and less consistent on our ranking task (4/5 valid,
   17.6 s, versus 5/5 at 3.2 s with thinking off). Recommended defaults per task type in the
   docs would save time.
-- **Licences are missing from the listing.** We had to read Hugging Face model cards to find
-  them (OpenMDW 1.1 for Ultra and Lightning, the NVIDIA Nemotron Open Model License for
-  Super and Nano).
+- **Licence provenance is incomplete in the catalog.** N0 recorded licences from related
+  NVIDIA model cards. For Super it checked a Base/BF16 card, not the exact served instruct
+  variant. Verify and link the exact served variant before claiming its licence is
+  established; the application calls hosted APIs and does not redistribute model weights.
 - **Agentic "escalate" semantics.** Ultra sometimes set a model-proposed `ESCALATE` next to
   a good recommendation; our validator now rejects that combination and asks for one repair. Guidance on structured
   "abstain/escalate" fields in agent prompts would help other builders.

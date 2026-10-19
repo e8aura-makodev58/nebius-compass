@@ -18,15 +18,16 @@ requests ([docs/nebius/05_TOKEN_FACTORY_FACTS.md](docs/nebius/05_TOKEN_FACTORY_F
 | Role | Default model | Thinking | What it does |
 |---|---|---|---|
 | Compass ranking (responders, fixes, overtime options) | `nvidia/nemotron-3-super-120b-a12b` | off | Ranks only the eligible candidates code supplies, with qualitative tradeoffs. |
-| Investigator (in development) | `nvidia/Nemotron-3-Ultra-550b-a55b` | on | Investigates a free-text field report with read-only tools and cited past cases. |
+| Investigator | `nvidia/Nemotron-3-Ultra-550b-a55b` | provider default (observed on in N0) | Investigates reports with read-only tools and cited past cases. |
 | Event planner, narrator | `nvidia/Nemotron-3_5-Lightning` | off | Proposes the next simulated event; writes simulated field reports. |
 
-Token Factory made the agent practical to run live: a ranking returns in about 3 s
-(the previous provider took 20–60 s), native tool calling works on every Nemotron model,
-and per-model pricing and limits are published in the model catalog. Every model output is
-validated by application code. If a call is slow, invalid or unavailable, a deterministic
-path takes over, so dispatch never stops. AMD Token Factory remains selectable in
-Settings. Changes made for this hackathon are listed in [HACKATHON_CHANGES.md](HACKATHON_CHANGES.md).
+Token Factory made the agent practical to run live: in our measurements a ranking returned
+in about 3 s (the previous provider took 20–60 s), native tool calls were observed on the four
+Nemotron models in the recorded probe table, and per-model pricing and limits are published
+in the model catalog. Application code validates model output and supplies deterministic
+fallbacks when inference is slow, invalid or unavailable. Investigations may still abstain,
+escalate or expire and need operator action; fallback never bypasses the dispatch gate. AMD
+Token Factory remains selectable in Settings. Changes made for this hackathon are listed in [HACKATHON_CHANGES.md](HACKATHON_CHANGES.md).
 
 Set `NEBIUS_TOKEN_FACTORY_API_KEY` (or `NEBIUS_TOKEN_FACTORY_API_KEY_FILE`); see
 [.env.example](.env.example). Live mode spends Nebius credit. Offline mode and both test
@@ -34,9 +35,13 @@ suites make no model calls.
 
 ## Live demo
 
-The hosted Nebius demo URL is added here when it is deployed (plan N8). A running room
-pauses itself after 10 minutes with nobody using it, so an unattended tab does not spend
-tokens. **Offline Demo** replays a fixed scenario with no API calls.
+Public judge access has not yet been published. Until a verified public URL is added,
+use the local setup below; the private deployment address is not a judge-access link.
+
+Running rooms pause their simulation clocks after ten idle minutes by default.
+In-flight calls can finish, and explicit operator actions can still request inference.
+A positive `COMPASS_DAILY_BUDGET_USD` adds an estimated daily limit; its default is
+unlimited. **Offline Demo** makes no provider calls.
 
 ResponseCompass was first built for an earlier AMD hackathon; that submission's media
 remain in [docs/submission/](docs/submission/). What is new for Nebius is listed in
@@ -60,16 +65,19 @@ stopping short of the end position…"). The report is handled in five steps:
 3. **Investigation.** Nemotron Ultra investigates with six read-only tools: case search, case
    lookup, equipment history, fix catalog, fix evidence, and eligible responders. The tools
    see only outcomes completed before the decision time.
-4. **Validation.** Code checks every claim:
+4. **Validation.** Code checks the structured result's IDs, citations, catalog membership,
+   qualifications and bounded prose; it does not prove every free-text explanation true:
    - cited case ids must have been returned by the tools in this run;
    - fixes must come from the catalog, with procedure text quoted verbatim;
    - responders must be eligible and hold the fix's certifications;
    - evidence grade and outcome are computed by code.
 
    If evidence is missing or no qualified responder exists, the investigation abstains.
-5. **Approval.** Central command approves, confirming each safety prerequisite, or escalates
-   or rejects. One dispatch gate on every assignment path makes sure a reported issue is
-   never dispatched without that approval.
+5. **Approval.** Operator approval is the default for investigated issues. Central command
+   confirms the required safety prerequisites before dispatch, or rejects/escalates.
+   An explicitly enabled safe policy may approve a hazard-free, supported READY result
+   at its deadline after the same current qualification checks. The dispatch gate
+   requires the recorded authorization; the model cannot approve or dispatch.
 
 If the model is slow or invalid, a labelled deterministic investigation takes over. An
 evaluation harness (`npm run eval:investigator`) scores 24 synthetic scenarios; results and
@@ -82,7 +90,7 @@ known limits are in [docs/evaluation.md](docs/evaluation.md).
 - a dedicated Demo view with visible agent activity and Trigger Next Event / Force Resolve controls;
 - a default 2D manufacturing-floor map with three-floor selection, drag pan, wheel/button/keyboard zoom, and an optional 2.5D overview;
 - contextual structured event planner plus deterministic seeded fallback;
-- up to three concurrent issues, one or two exclusive responders per issue, waiting behavior, and stale protection;
+- a planner ceiling of ten unresolved issues, one or two exclusive responders per assigned issue, waiting behavior, and stale protection;
 - automatic support matching for complex or delayed work, plus roster-versioned central release and cross-issue transfer;
 - hidden per-responder/per-class simulation truth blended with confidence-weighted same-class history for stochastic resolution outcomes;
 - runtime resolution history, success, failure/reopen, responder release, and downtime tracking;
@@ -92,7 +100,7 @@ known limits are in [docs/evaluation.md](docs/evaluation.md).
 - clickable, on-demand issue audit trails with complete Compass analysis, offer history, control-center overrides, and resolution actions;
 - fixed-snapshot P0 analytics with denominators and thin-sample safeguards;
 - API-free deterministic Offline Demo using the same offer/accept and override interaction;
-- hermetic unit and integration tests (including a 100-opportunity deterministic soak) and Chromium E2E tests: 394 and 81 on 2026-10-19.
+- hermetic unit/integration tests, including the deterministic soak, and Chromium E2E tests; the recorded round-17 verification on 2026-10-19 passed 431 and 83 respectively.
 
 ## Architecture
 
@@ -136,6 +144,15 @@ npm ci
 npm run dev
 ```
 
+```sh
+# Optional month-backed demonstration, using a new isolated data directory.
+COMPASS_DATA_DIR="$PWD/.cache/judge-demo" COMPASS_BOOTSTRAP_DEMO_SEED=true npm run dev
+```
+
+Use a data directory that has not created `control-rooms`; bootstrap never replaces
+existing rooms. Configure a Nebius key for live model output. Without enough public case
+evidence an investigation may abstain, which is expected behavior rather than a failed demo.
+
 Open `http://127.0.0.1:3000`. The server binds `0.0.0.0` by default for LAN demos; use `COMPASS_HOST` and `COMPASS_PORT` to override it. Live state persists under ignored `backend/data/` by default; set `COMPASS_DATA_DIR` to relocate all persistent application state. Simulation time does not advance while the process is stopped. A running room pauses itself after 10 minutes with no one using it (`COMPASS_IDLE_PAUSE_MINUTES`; `0` disables), so an unattended tab does not keep spending provider tokens.
 
 The application reads an optional `.env` automatically:
@@ -144,9 +161,13 @@ The application reads an optional `.env` automatically:
 cp .env.example .env
 ```
 
-ResponseCompass uses one model provider: **AMD Token Factory** (OpenAI-compatible, `https://developer.amd.com.cn/radeon/api/v1`). Set the team key with `AMD_TOKEN_FACTORY_API_KEY`, or point `AMD_TOKEN_FACTORY_API_KEY_FILE` at a file containing only the key, and leave both Live modes set to `live`. The key stays server-side and is never sent to the browser. The default model is `MiMo-V2.6-Flash` with reasoning `none`. Without a key, or whenever AMD is slow, rate-limited, unavailable, or returns output that fails validation, Live event generation and responder matching fall back deterministically, so dispatch continues without a model response.
-
-The Settings tab lets an operator save a key and pick another AMD model and reasoning level at runtime, without editing `.env`. See [Compass_AMD_Token_Factory_Integration_Guide.md](Compass_AMD_Token_Factory_Integration_Guide.md) for the service's limits and terms.
+Fresh installs select Nebius Token Factory. Set `NEBIUS_TOKEN_FACTORY_API_KEY` or
+`NEBIUS_TOKEN_FACTORY_API_KEY_FILE`; the default roles are Super/off for ranking,
+Ultra/provider-default thinking for investigation, and Lightning/off for planning and
+narration. Existing saved AMD configurations are preserved. Settings → API can save a
+server-side key and select either provider's models, thinking settings and timeouts.
+Missing credentials or failed inference use the applicable deterministic fallback. Keys
+stay server-side and are never sent to the browser.
 
 Offline Demo is always hard-pinned to the committed fixture, regardless of Live environment settings, and never makes an API request.
 
@@ -157,9 +178,15 @@ Offline Demo is always hard-pinned to the committed fixture, regardless of Live 
 **`responsecompass-data`** at `/app/data`, `restart: unless-stopped`. The container runs as
 the non-root `node` user with a read-only root filesystem, a `/tmp` tmpfs, all Linux
 capabilities dropped and no-new-privileges. `.env` is read at runtime only and excluded
-from the image. The AMD key never enters the image or `.env`: Compose mounts the host file
-named by `AMD_TOKEN_FACTORY_API_KEY_FILE` in `.env` as a read-only secret at
-`/run/secrets/amd_token_factory_key`, and the container reads it from there.
+from the image.
+
+Before running production Compose, create a readable host file containing the Nebius key
+and set `NEBIUS_TOKEN_FACTORY_API_KEY_FILE` in `.env` to its absolute host path. This file
+is required by `compose.yaml`, even if a direct API-key variable is set. Compose mounts it
+read-only at `/run/secrets/nebius_token_factory_key`. An AMD key file is optional; set
+`AMD_TOKEN_FACTORY_API_KEY_FILE` to enable its secret mount. Do not put credential values
+in committed files or the image. For an API-free fallback-only container, use
+`/dev/null` as the Nebius host file path instead of a key file.
 
 ```sh
 docker compose -p responsecompass up -d --build
@@ -212,7 +239,7 @@ former process against the verified backup. Do not delete the volume as a rollba
 ## Demo controls
 
 - **Resume / Pause** controls simulation time.
-- **Speed** selects 1× or 5× without replacing the current timer. Live AMD rankings take about 40–90 seconds, so faster speeds outrun them; the API still accepts 10× and 60× for offline generation.
+- **Speed** selects 1× or 5× without replacing the current timer. Live inference runs in wall-clock time and can lag a faster simulation. The API also accepts 10× and 60×; those higher speeds are useful for accelerated fixture/fallback runs.
 - **Demo** opens a dedicated activity monitor and keeps presentation-only shortcuts out of the normal operating controls. The navigation status pill remains visible while an agent is working.
 - **Trigger Next Event** immediately executes the validated scheduler path and respects the active-issue ceiling.
 - **Force Resolve** immediately consumes the selected assigned issue's one-shot token. The result still uses the normal skill/history probability and variability model; it bypasses waiting, not outcome logic.
@@ -222,17 +249,17 @@ former process against the verified backup. Do not delete the volume as a rollba
 ## Verification
 
 ```sh
+npm ci
+npx playwright install --with-deps chromium
 npm test
 npm run test:e2e
 ```
 
+Playwright's dependency installation may need system-package privileges. On a system
+with Chromium dependencies already installed, `npx playwright install chromium` is
+sufficient. The test server uses port 3012 by default; set `COMPASS_E2E_PORT` if needed.
+
 `npm test` includes contracts, persistence, clock/scheduler idempotency, planner fallback, multi-issue races, latent resolution, live recommendations, assignments, analytics, Offline reset, convergence, and a 100-opportunity soak.
-
-Playwright may require Chromium system libraries. In this build environment the successful command was:
-
-```sh
-LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e
-```
 
 See [evaluation results and limitations](docs/evaluation.md). The deterministic policy proves state integrity and seed disagreement capacity; it is deliberately not presented as a live-model quality result. Genuine provider sign-off requires credentials and pinned model IDs.
 
@@ -250,15 +277,18 @@ The application persists up to 1,000 structured runtime log events in the ignore
 
 The generic control rooms are **e8-aura-p1** (`/rooms/plant-1`) and
 **e8-aura-p2** (`/rooms/plant-2`). Compass ranks eligible responders from aggregate
-simulated history; MES integration and case-guided response plans are not included.
+simulated history. MES integration is not implemented; the investigator now uses public
+case records to rank catalog procedures for approval.
 
 ## Evidence-based troubleshooting
 
-Issues expose an observed symptom and a Recommended fix section with catalog procedures,
-ranked order, observed evidence and an explicit AMD / deterministic / Offline-fixture
-source. The applied procedure is frozen when work begins and affects the seeded simulated
-outcome; failed work tries the next untried procedure. The incident planner's free-text
-response remains a note, while audit entries record the fix actually applied.
+Issues expose a public symptom and catalog procedures with ranked order and observed
+evidence. Source labels distinguish Nebius, AMD, deterministic fallback and Offline fixtures.
+The applied procedure is frozen when work begins and affects the seeded simulated
+outcome. OPEN-gate work can try the next untried procedure after failure. An investigated
+issue needs a fresh authorization before another attempt; its previous approval is
+consumed. The incident planner's free-text response remains a note, while audit entries
+record the fix actually applied.
 
 Models never see latent fault causes, effectiveness tables or hidden responder skill.
 First-time fix rates and recommendation/baseline agreement carry denominators; legacy

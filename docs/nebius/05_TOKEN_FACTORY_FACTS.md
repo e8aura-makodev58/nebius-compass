@@ -10,8 +10,9 @@ Small samples (1 + 5 per setting). Re-measure on the real Compass packets after 
 
 - Base URL: `https://api.tokenfactory.nebius.com/v1`. The API is OpenAI-compatible
   (`/models`, `/chat/completions`).
-- Auth header: `Authorization: Bearer <key>`. The key is a single line starting with `v1.`.
-  It lives in `~/nebius.token` (mode 600, outside git); the main agent only.
+- Auth header: `Authorization: Bearer <key>`. Credentials remain server-side and outside
+  git; configure `NEBIUS_TOKEN_FACTORY_API_KEY` or `NEBIUS_TOKEN_FACTORY_API_KEY_FILE` without
+  publishing the key or its private location.
 - `GET /v1/models` lists 28 models. `?verbose=true` adds context length, pricing, per-model
   limits, `supported_features` and region.
 
@@ -38,7 +39,13 @@ here so the README states them accurately.
 
 ## Request behaviour (live probe)
 
-- **JSON mode.** `response_format: {type: "json_object"}` works on every Nemotron model.
+These are historical measurements reported by the main agent. The repository contains their
+summaries and the probe script, not complete per-run output artifacts; a new live run may
+differ and spends provider credit.
+
+
+- **JSON mode.** The four tabulated models returned JSON-mode responses in the probe;
+  truncation and task-invalid output remain failures, so JSON mode alone is not validation.
   Reasoning comes back in a separate `message.reasoning_content` field, so `content` stays
   clean JSON. As before, reasoning text is never parsed, stored or shown.
 - **Thinking control.**
@@ -50,10 +57,11 @@ here so the README states them accurately.
 - **Truncation.** Lightning with thinking on used up `max_tokens: 1024` on reasoning
   (`finish_reason: "length"`) in 4 of 5 runs. Keep `max_tokens` ≥ 4096 when thinking is on.
   The existing truncation guard treats `length` as a failure.
-- **Tool calling (native).** OpenAI-style `tools` + `tool_choice: "auto"` returned a
-  well-formed `tool_calls` entry with valid JSON arguments on **every** model (19 of 20
-  runs; the one failure was a timeout). The second turn, with the `role: "tool"` result,
-  worked on all models. Whether the final answer quoted the returned case id was not
+- **Tool calling (native).** The published four-model native-tool table reports 20/20
+  thinking-on and 19/20 thinking-off runs returning tool calls, with one thinking-off
+  timeout. These small historical samples do not establish reliability for all Nemotron
+  models or Super-VL. The application separately validates tool names, arguments and final
+  citations. Whether the final answer quoted the returned case id was not
   required by the probe prompt, so citation rates here say nothing about validity. The
   investigator's validators and prompt will require structured evidence refs.
 
@@ -100,7 +108,7 @@ Super / off.** The planner default stays Lightning / off.
 
 | Role | Model | Thinking | Why |
 |---|---|---|---|
-| `investigator` | `nvidia/Nemotron-3-Ultra-550b-a55b` | on | Best tool-loop behaviour; ~3 s per step. Fallback tier: Super. |
+| `investigator` | `nvidia/Nemotron-3-Ultra-550b-a55b` | provider default (observed on) | Chosen from the recorded tool probes; failures use deterministic investigation, with no automatic Super tier. |
 | `compass` (responder, fix, staffing ranking) | `nvidia/nemotron-3-super-120b-a12b` | **off** | Real packet: 5/5 valid, 5/5 expected top, 3.2 s (thinking on: 4/5, 2/5, 17.6 s). |
 | `event-planner` | `nvidia/Nemotron-3_5-Lightning` | off | Real packet: 5/5 valid, 1.3 s; cheapest; 600 RPM. |
 | `narrator` | `nvidia/Nemotron-3_5-Lightning` | off | Same. |
@@ -110,10 +118,13 @@ no tested model needs it.
 
 ## Cost and limits
 
-- An investigation with ≤ 8 Ultra calls at ~1–2k tokens each costs ≈ USD 0.01–0.03.
-- A ranking call on Super costs ≈ USD 0.001.
-- Provider limits are far above the app's own (RPM 20, concurrency 2 per plan N1). The app
-  limiter stays the binding budget for the judge period.
+- Estimate Ultra cost as `(inputTokens + 3 * outputTokens) / 1_000_000` USD, and Super
+  cost as `(0.30 * inputTokens + 0.90 * outputTokens) / 1_000_000`, using the dated N0
+  prices. Tool-history size and output length vary; the call cap is not a cost cap.
+- Local provider controls default to 20 starts/minute and concurrency 2 for Nebius.
+  `COMPASS_DAILY_BUDGET_USD` optionally blocks new live calls after known estimated
+  UTC-day spend reaches a positive limit; unset/0 is unlimited. Unpriced usage and
+  in-flight calls mean this is not a hard provider-billing cap.
 
 ## Plan updates this causes
 

@@ -641,3 +641,12 @@ presenting a population-level claim as established fact.
 
 No reviewed file was edited, no credential/private folder was opened, and no claim of a
 new live eval, replay result, secret certification or legal verification is made by this review.
+
+## Status (main agent, 2026-10-19)
+
+Applied as written, or with equivalent wording that keeps the reviewed meaning: findings 1, 2,
+5–27. Finding 18 also moved the deployment host into a private env file outside the repo
+(`deploy.sh` now requires `DEPLOY_HOST`). Private addresses in current files are redacted;
+older commits still contain them. Findings 3 (Docker image omits fixtures) and 4 (development
+compose data mount) are fixed in code by codex in round 19, and their README sentences are
+updated with that merge, rather than documenting a limitation that is about to be removed.

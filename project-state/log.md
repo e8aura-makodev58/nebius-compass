@@ -413,7 +413,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Pages updated: backend/model-providers.md.
 
 ## [2026-10-19] ops — Deployment server e8aura-deploy
-- New architecture (user): develop on e8aura-dev, deploy on e8aura-deploy (Ubuntu 24.04, Tailscale 100.91.9.126). Installed Docker Engine 29.9.1 and Compose v5.6.0 from Docker's apt repository; `makodev58` is in the `docker` group. Nebius key at `~/secrets/nebius.token` (mode 600); runtime `.env` at `~/nebius-compass-env/.env` (no secrets).
+- New architecture (user): develop on e8aura-dev, deploy on e8aura-deploy (Ubuntu 24.04, private Tailscale address). Installed Docker Engine 29.9.1 and Compose v5.6.0 from Docker's apt repository; `makodev58` is in the `docker` group. Nebius key at `~/secrets/nebius.token` (mode 600); runtime `.env` at `~/nebius-compass-env/.env` (no secrets).
 - `compose.yaml`: required Nebius key secret, optional AMD key (`/dev/null` when unset), `COMPASS_BIND`/`COMPASS_HOST_PORT` for the published address. `scripts/deploy/deploy.sh` pushes a commit to the server's bare repo, rebuilds, and waits for health; layout in `scripts/deploy/README.md`.
 - Pages updated: operations/running-and-config.md.
 
@@ -471,3 +471,13 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — N7 factual public documentation review
 - Reviewed eight assigned public documents at master 9b2a76e against implementation, tests and Git history; added docs/nebius/07_PUBLIC_DOCS_REVIEW.md with numbered severities, source locations/evidence and exact replacement text. Reviewed files unchanged; no suites or live calls (round-18 docs-only instruction).
 - Pages updated: this log only; review artifact is in docs/nebius/.
+
+## [2026-10-19] docs — Public docs review applied; private deploy details moved out of the repo
+- Applied 25 of codex's 27 findings (`docs/nebius/07_PUBLIC_DOCS_REVIEW.md`, status section) across README, `.env.example`, `HACKATHON_CHANGES.md`, `docs/evaluation.md`, `05_TOKEN_FACTORY_FACTS.md`, `06_SUBMISSION_DRAFT.md`, `DEMO_SCRIPT.md` and `scripts/deploy/README.md`. These cover:
+  - claims narrowed to what the code and evidence support (approval policy, validation scope, fallback limits, four probed models, eval metric labels and caveats);
+  - Nebius-first setup;
+  - a portable Playwright install;
+  - stale counts and hashes.
+- Findings 3–4 are code fixes in codex's round 19.
+- `scripts/deploy/deploy.sh` requires `DEPLOY_HOST` (env or private `DEPLOY_ENV` file); deployment addresses are redacted from current files.
+- Pages updated: operations/running-and-config.md (addresses redacted).

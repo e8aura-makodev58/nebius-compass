@@ -10,12 +10,12 @@ This is one sample per scenario, not a general accuracy measure.
 | Outcome class matches expected | 24/24 |
 | Abstention precision / recall | 8/8 / 8/8 |
 | Citation validity of accepted outputs | 64/64 |
-| Safety violations in accepted outputs | 0 in 12 |
+| Certification inconsistencies in accepted outputs (post-validation) | 0 in 12 |
 | Hazard and input policy decided without a model call | 6/6 |
-| Interpretation agreement (operator-confirmed option) | 15/15 |
+| Confirmed interpretation round-trip agreement (expected facts supplied by operator adapter) | 15/15 |
 | Accepted / repaired / deterministic / raw invalid | 12 / 4 / 13 / 4 |
-| Latency p50 / p95 (model runs) | 8.9 s / 29.4 s (15 runs) |
-| Tokens per investigation p50 / p95 | 11.0k / 24.2k |
+| Investigation-record latency p50 / p95 (includes deterministic/injected-provider cases) | 8.9 s / 29.4 s (15 runs) |
+| Recorded investigator tokens p50 / p95 (includes zero-token injected-provider cases) | 11.0k / 24.2k |
 
 The 13 deterministic results break down as follows:
 - **Policy decisions with zero model calls (6):** hazard (3) and bad input (3).
@@ -32,6 +32,24 @@ The 13 deterministic results break down as follows:
   Both still ended in the expected outcome class. In the 4 runs where the model's first
   final answer was invalid, the repair was accepted twice.
 
+**How to read these tables.**
+- **Timing and tokens:** the percentiles use all investigation records with those fields,
+  including the forced-failure and injected-deadline scenarios. They are not live-only
+  provider latency or token estimates, and they exclude interpretation-ranking latency
+  and tokens.
+- **Interpretation agreement:** the harness supplies each labelled expected interpretation
+  to the confirmation endpoint, so agreement verifies that those confirmed facts are
+  preserved. It does not measure whether Super's top interpretation was independently
+  correct.
+- **Safety and citations:** the scenario runner does not approve assignments, so the zero
+  counts do not measure approval-time prerequisite enforcement or every possible safety
+  failure; separate integration tests exercise those controls. Citation counts measure
+  returned-reference validity, not proof that a rationale follows from a case.
+- **Reproducibility:** these are historical measurements reported by the main agent. The
+  repository contains their summaries and harnesses, not complete per-run output artifacts
+  from which all totals can be recomputed. A new live run may differ and spends provider
+  credit, and fixture runs do not reproduce live measurements.
+
 ## Compass Investigator on Nebius Token Factory (2026-10-19, run 1)
 
 Command: `npm run eval:investigator -- --mode live` (24 synthetic scenarios in
@@ -44,12 +62,12 @@ Scoring: `scripts/eval/score.mjs`. This is one small run and is not a general ac
 | Outcome class matches expected | 16/24 |
 | Abstention precision / recall | 8/8 / 8/8 |
 | Citation validity of accepted outputs | 18/18 |
-| Safety violations in accepted outputs | 0 in 4 |
+| Certification inconsistencies in accepted outputs (post-validation) | 0 in 4 |
 | Hazard and input policy decided without a model call | 6/6 |
-| Interpretation agreement (operator-confirmed option) | 15/15 |
+| Confirmed interpretation round-trip agreement (expected facts supplied by operator adapter) | 15/15 |
 | Accepted / repaired / deterministic fallback / raw invalid | 4 / 3 / 13 / 3 |
-| Latency p50 / p95 (model runs) | 14.6 s / 22.5 s (15 runs) |
-| Tokens per investigation p50 / p95 | 13.9k / 20.9k |
+| Investigation-record latency p50 / p95 (includes deterministic/injected-provider cases) | 14.6 s / 22.5 s (15 runs) |
+| Recorded investigator tokens p50 / p95 (includes zero-token injected-provider cases) | 13.9k / 20.9k |
 
 **What failed and why.** All eight misses expected `READY` and got `ESCALATED`. The diagnosis
 reran three of them. In each, Ultra ranked a supported, qualified fix and also set
@@ -91,11 +109,11 @@ The soak uses `evidence-policy-v1`, a deterministic test policy that produces sc
 
 ## Browser gate
 
-`npm run test:e2e` covers all 32 Chromium E2E tests after exposing the already-present local browser-library bundle through `LD_LIBRARY_PATH`. Coverage includes Live reset, immediate Compass/event-workflow activity indicators, the dedicated Demo view, Trigger Next Event, event feed, Force Resolve, Analytics, mode switching, Offline fixed winners, Offline confirmation, and Live/Offline assignment overrides held across multiple polling intervals. Explicit test inference modes are honored through provider settings, so the suite makes no provider request and spends no API credits.
+The recorded round-17 browser gate on 2026-10-19 passed 83 Chromium tests with forced provider failures and no API spend. The older 32-test gate described here is a historical checkpoint, not the current suite size. Coverage includes Live reset, immediate Compass/event-workflow activity indicators, the dedicated Demo view, Trigger Next Event, event feed, Force Resolve, Analytics, mode switching, Offline fixed winners, Offline confirmation, and Live/Offline assignment overrides held across multiple polling intervals. Explicit test inference modes are honored through provider settings, so the suite makes no provider request and spends no API credits.
 
 ## External live-provider gate
 
-The ten-run Scenario A gate below was run under the since-removed OpenAI provider (`gpt-5.6-terra` / `medium`); AMD Token Factory is now the only provider and has no equivalent recorded gate here. Before the synthetic-code migration, the genuine ten-run Scenario A gate completed 10/10 READY with the responder now identified as Engr028 ranked first on every run; the recorded latencies were 7.486–13.011 seconds, with every tradeoff grounded and no numeric leakage. The live 100-opportunity provider evaluation (now against AMD Token Factory) remains outstanding and must confirm the SOW disagreement thresholds. Do not substitute the fixture or deterministic evaluation policy for that claim.
+This archived ten-run Scenario A measurement used the removed OpenAI provider and is not a measurement of either current provider. Fresh installs now use Nebius Token Factory; AMD remains selectable. The recorded legacy result was 10/10 READY, with Engr028 ranked first and latencies of 7.486–13.011 seconds. It does not establish current provider accuracy or satisfy an outstanding live 100-opportunity responder-ranking gate. Current Nebius measurements are in the sections above and in `docs/nebius/05_TOKEN_FACTORY_FACTS.md`.
 
 ## Paired replay method
 

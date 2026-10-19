@@ -144,7 +144,7 @@ whole target room. The compressed artifact does not compress runtime storage or 
 ## Deployment server (e8aura-deploy, Nebius build)
 
 Since 2026-10-19 (user): all development happens on `e8aura-dev` and all deployments on
-`e8aura-deploy` (Tailscale 100.91.9.126), both on the Proxmox host. `scripts/deploy/deploy.sh`
+`e8aura-deploy` (private Tailscale address), both on the Proxmox host. `scripts/deploy/deploy.sh`
 pushes a commit to a bare repo on the server and rebuilds the Compose project there; see
 [scripts/deploy/README.md](../../scripts/deploy/README.md) for the server layout. `compose.yaml`
 mounts the Nebius key as the required secret `nebius_token_factory_key`; the AMD key is an
