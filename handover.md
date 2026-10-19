@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | RUN (round 23) |
-| gemini | STOP (no open task) |
+| gemini | RUN (round 24g) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | Ask Compass evaluation harness and scenarios | 23 |
-| gemini | none (waiting for the Ask Compass UI to review) | — |
+| gemini | Review the Ask Compass dialog (docs only) | 24g |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
 
@@ -1241,6 +1241,24 @@ finished round 22 for you (see the merge log); read `backend/src/assistant.mjs` 
   - **Do not touch:** `frontend/`, `e2e/`, `docs/nebius/`, `backend/data/`, port 3200. No
     live calls.
 
+**Round 24g (2026-10-19) — gemini: review the Ask Compass dialog (docs only).** The dialog exists
+now (`frontend/ask-view.js`, header button **Ask Compass**). Start with `git merge master`; restart
+your watcher.
+
+- **gemini.** On a preview server on **port 3122** (same command as round 20g, plus
+  `COMPASS_ASSISTANT_MODE=force-failure`), try the dialog at 375, 1280 and 1920 px:
+  - ask an action question;
+  - ask a general question;
+  - ask about a selected issue (tick the context box);
+  - click every citation type you get;
+  - use the keyboard only: Tab, Enter, Esc.
+
+  Write `docs/design/ask-compass-review.md` with numbered issues (severity, screen or width,
+  selector, screenshot, concrete CSS or markup fix) and up to 5 CSS-only improvements, in the
+  Nebius palette with no lime as text. At most 4 screenshots under
+  `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
+  `READY FOR MERGE`. Do not change code.
+
 ### Merge log
 
 - 2026-10-19 — **codex** `56af715` → merge `fa94df0`: Ask Compass backend (round 22). Codex ran out of credits after `cb2320a`; the main agent finished the uncommitted service work in the codex worktree at the user's request (fixed a test that wrote `backend/data/provider-usage.json`; in-memory `publicSnapshot()`). On master: `npm test` 463/463, E2E 85/85. Deployed. Handoff archived.
@@ -1294,7 +1312,7 @@ finished round 22 for you (see the merge log); read `backend/src/assistant.mjs` 
 
 - **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** none open. Watcher STOP until the next assignment.
+- **Task:** Round 24g assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
