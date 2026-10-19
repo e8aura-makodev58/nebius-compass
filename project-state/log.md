@@ -529,3 +529,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
   - E7: Enforced universal `:focus-visible` styling with `--focus-ring` (Nebius lime halo) across all buttons, case chips, summary disclosures, and option cards.
 - Pages updated: frontend/overview.md, log.md.
 
+
+## [2026-10-19] fix — Frontend sends JSON on bodyless room commands (security #1 companion)
+- With codex's round 21 guard, room mutations need `Content-Type: application/json`. `app.js` `api()` now sends it for every POST/PUT/PATCH/DELETE, including bodyless pause/resume/reset/activity. `e2e/mutation-headers.spec.mjs` turns off the config's default JSON header (`test.use({ extraHTTPHeaders: {} })`) and drives the real UI; it fails without this fix and passes with it, and checks that text/plain gets 415.
+- Pages updated: frontend/overview.md.

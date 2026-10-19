@@ -44,6 +44,7 @@ Two explicit helpers, so every call site states its scope (see
 [../backend/control-rooms.md](../backend/control-rooms.md)):
 
 - `roomApi(path, options)` → `/api/control-rooms/:id` + `path` (room-scoped).
+- `api()` sends `Content-Type: application/json` on every POST/PUT/PATCH/DELETE, even without a body: room mutations reject other types (415) and cross-origin `Origin` headers (403).
 - `globalApi(path, options)` → `/api` + `path` (deployment-global: settings, logs).
 
 `currentControlRoomId` is parsed once from `location.pathname` at boot. Room switching is

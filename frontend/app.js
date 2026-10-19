@@ -1079,7 +1079,7 @@ function render(state) {
 
 async function api(url, options = {}) {
   const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 45_000);
-  try { const response = await fetch(url, { ...options, headers: options.body ? { "content-type": "application/json" } : undefined, signal: controller.signal }); if (!response.ok) { const payload = await response.json().catch(() => ({})); const error = new Error(payload.error ?? "Compass request failed"); error.payload = payload; throw error; } return response.json(); }
+  try { const method = (options.method ?? "GET").toUpperCase(); const response = await fetch(url, { ...options, headers: options.body || ["POST", "PUT", "PATCH", "DELETE"].includes(method) ? { "content-type": "application/json" } : undefined, signal: controller.signal }); if (!response.ok) { const payload = await response.json().catch(() => ({})); const error = new Error(payload.error ?? "Compass request failed"); error.payload = payload; throw error; } return response.json(); }
   catch (error) { if (error.name === "AbortError") throw new Error("Compass did not respond within 45 seconds. Check application logs."); throw error; }
   finally { clearTimeout(timeout); }
 }

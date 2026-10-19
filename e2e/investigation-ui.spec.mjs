@@ -175,4 +175,6 @@ test('a failed approved attempt asks for a new investigation instead of reusing 
   await expect(detail.getByRole('button', { name: 'Approve and dispatch' })).toHaveCount(0);
   await detail.getByRole('button', { name: 'Re-investigate with current evidence' }).click();
   await expect.poll(() => body).toEqual({ expectedRevision: 3 });
+  // A poll may still be inside the stubbed /state route when the test ends.
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
 });
