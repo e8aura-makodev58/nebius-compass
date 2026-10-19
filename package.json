@@ -13,7 +13,8 @@
     "test:all": "npm test && npm run test:e2e",
     "measure:amd": "node --env-file-if-exists=.env scripts/measure-amd-models.mjs",
     "generate:history": "node scripts/generate-demo-history.mjs",
-    "vendor": "node scripts/vendor-frontend.mjs"
+    "vendor": "node scripts/vendor-frontend.mjs",
+    "eval:investigator": "node --env-file-if-exists=.env scripts/eval-investigator.mjs"
   },
   "engines": {
     "node": ">=22"

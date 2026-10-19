@@ -394,3 +394,12 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - `docs/BASELINE_AND_CHANGES.md` moved to `HACKATHON_CHANGES.md` (guide §10 name, one record). README gains "Nebius Token Factory and NVIDIA Nemotron" (roles, models, thinking, why Token Factory, credentials) and a Live demo section that defers the Nebius URL to N8 and points to the AMD-era media. The ranking default it states (Super / off) lands with codex's N1b.
 - Secret scan of all git history (`rc-…`, `sk-…`, `v1.…`, JWT, AWS, GitHub tokens, private keys) found nothing; the Nebius key string appears in no file or commit in either worktree.
 - Pages updated: none.
+
+## [2026-10-19] tooling — Investigator evaluation harness (N5 part 1)
+- `scripts/eval/score.mjs`: pure scoring over §3.2 records — outcome class, abstention precision/recall with "n/a (0 cases)", citation validity and safety violations of accepted outputs, interpretation agreement, zero-model-call policy, repaired/fallback/raw-invalid counts, latency and token percentiles, paired first-fix replay with coverage and discordant pairs. Tests: `backend/tests/eval-score.test.mjs`.
+- `scripts/eval-investigator.mjs` / `npm run eval:investigator -- --mode fixture|live`: runs the 24 scenarios through `backend/src/investigation-eval.mjs` `runScenario` (contract in plan §4, built in N3a) and prints a Markdown report; exits 3 with a clear message until that module exists.
+- Pages updated: none.
+
+## [2026-10-19] ui — Field reports tile fits the desktop right column
+- Inside Dockview the tile drops its duplicate heading and shows investigations as one horizontally scrolling strip; the default layout sizes it to 42% of the frame height (min 240px), so the selected investigation's detail starts in view. Phone and display-screen layouts are unchanged.
+- Pages updated: none (frontend/overview.md already describes the right column).
