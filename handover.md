@@ -1061,6 +1061,13 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
     application/json` and reject a cross-origin `Origin` (allow same-origin and a missing
     Origin for CLI/tests); return 403/415 with codes. Real authentication and a recorded
     authenticated actor are a user decision, so do not add login yet.
+  - **Watch validity (main agent, replay run C):** with the same code, live replay fallbacks
+    went from 7/60 to 23/60, and every invalid first answer failed its repair. Tightening
+    prose (#3) can raise invalids again. So in the repair turn, tell the model exactly
+    which item and field failed (e.g. `fixes[0].rationale: number 288 not allowed`), and
+    let rationale prose drop numbers entirely, which is always valid. Report the
+    validation-error categories you see in the fixture tests. The main agent re-measures
+    live after merge.
   - **#3:** replace my "grounded numbers" rule (`8a76993`). Prose may quote only numbers
     from an **allowlist of numeric metric fields** in tool results (fix-evidence counts,
     case counts, minutes). Exclude narrative, id and timestamp digits. Strip supplied ids
