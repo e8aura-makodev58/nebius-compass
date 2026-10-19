@@ -12,8 +12,8 @@ outcomes or mutations; validators and deterministic fallback remain in the calle
 `investigator`, and `narrator`. Fix and staffing ranking reuse `compass`. Investigator and
 narrator settings are transport preparation; the investigation runtime is a later package.
 Each role stores model ID, reasoning effort and timeout; API saves accept 1000–120000 ms.
-Legacy flat AMD selections populate the two existing roles. Settings saves serialize
-atomic owner-only writes; a model save does not rewrite the separate credential file.
+Legacy flat AMD selections populate the two existing roles. Model and credential saves share a serialized queue for
+atomic owner-only writes; in-memory credentials change only after persistence succeeds; a model save does not rewrite the separate credential file.
 
 Nebius has **no guessed model defaults**. `NEBIUS_ROLE_DEFAULTS` is the single role-default
 table, populated from the main agent’s N0 probes on 2026-10-19; `roleDefaults` applies environment overrides. Explicitly blank or

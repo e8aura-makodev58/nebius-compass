@@ -213,10 +213,10 @@ export function createProviderSettingsService({
     await rename(temporaryPath, filePath);
   }
 
-  async function persistCredentials() {
+  async function persistCredentials(nextCredentials) {
     await mkdir(dirname(credentialsFilePath), { recursive: true, mode: 0o700 });
     const temporaryPath = `${credentialsFilePath}.${process.pid}.tmp`;
-    await writeFile(temporaryPath, `${JSON.stringify(storedCredentials, null, 2)}\n`, { mode: 0o600 });
+    await writeFile(temporaryPath, `${JSON.stringify(nextCredentials, null, 2)}\n`, { mode: 0o600 });
     await rename(temporaryPath, credentialsFilePath);
   }
 
@@ -265,11 +265,12 @@ export function createProviderSettingsService({
     }
   }
 
-  function update(input) {
-    const saving = settingsWrite.then(() => updateSelection(input));
+  function serializeSave(operation) {
+    const saving = settingsWrite.then(operation);
     settingsWrite = saving.catch(() => {});
     return saving;
   }
+  function update(input) { return serializeSave(() => updateSelection(input)); }
 
   async function updateSelection(input) {
     await initialize();
@@ -300,28 +301,29 @@ export function createProviderSettingsService({
     async snapshot() { await initialize(); return preview(); },
     refreshModels,
     update,
-    async updateCredential(input) {
+    updateCredential(input) { return serializeSave(async () => {
       await initialize();
       const providerId = input?.provider;
       if (!PROVIDER_IDS.includes(providerId)) throw new Error("Select an available provider");
       const apiKey = typeof input?.apiKey === "string" ? input.apiKey.trim() : "";
       if (!apiKey || apiKey.length > 1_000) throw new Error("Enter a valid API key");
-      storedCredentials = { ...storedCredentials, [providerId]: apiKey };
+      const next = { ...storedCredentials, [providerId]: apiKey };
+      await persistCredentials(next);
+      storedCredentials = next;
       invalidateCatalog();
-      await persistCredentials();
       return preview(providerId);
-    },
-    async removeCredential(providerId) {
+    }); },
+    removeCredential(providerId) { return serializeSave(async () => {
       await initialize();
       if (!PROVIDER_IDS.includes(providerId)) throw new Error("Select an available provider");
       if (storedCredentials[providerId]) {
         const { [providerId]: removed, ...remaining } = storedCredentials;
+        await persistCredentials(remaining);
         storedCredentials = remaining;
         invalidateCatalog();
-        await persistCredentials();
       }
       return preview(providerId);
-    },
+    }); },
     async requestOptions(purpose = "compass") {
       await initialize();
       const role = modelRole(purpose);

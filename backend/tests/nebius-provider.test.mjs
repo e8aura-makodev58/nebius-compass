@@ -172,3 +172,16 @@ test('verified N0 role defaults map native tools and thinking through the capabi
   }
   assert.equal(roleDefaults('nebius','compass',{NEBIUS_TOKEN_FACTORY_MODEL:''}).modelId,'');
 });
+
+test('simultaneous provider credential saves persist both keys and survive reload', async t => {
+  const filePath=join(await directory(t),'settings.json');
+  const service=createProviderSettingsService({filePath,environment:{},apiKeys:{}});
+  await Promise.all([service.updateCredential({provider:'amd',apiKey:'synthetic-amd-key'}),service.updateCredential({provider:'nebius',apiKey:'synthetic-nebius-key'})]);
+  const saved=JSON.parse(await readFile(join(filePath,'..','provider-credentials.json'),'utf8'));
+  assert.deepEqual(saved,{amd:'synthetic-amd-key',nebius:'synthetic-nebius-key'});
+  const reloaded=createProviderSettingsService({filePath,environment:{},apiKeys:{}});
+  const snapshot=await reloaded.snapshot();assert.equal(snapshot.providers.every(row=>row.credentialConfigured),true);
+  assert.equal(JSON.stringify(snapshot).includes('synthetic-nebius-key'),false);
+  await Promise.all([service.removeCredential('amd'),service.updateCredential({provider:'nebius',apiKey:'replacement'})]);
+  assert.deepEqual(JSON.parse(await readFile(join(filePath,'..','provider-credentials.json'),'utf8')),{nebius:'replacement'});
+});

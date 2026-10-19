@@ -373,3 +373,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] feature — Adopt verified N0 Nemotron defaults
 - Filled the centralized role/capability tables from the main agent's live probes: Ultra investigator, Super ranking, Lightning planner/narrator; native tools, explicit thinking mapping and 4096-token cap. Retained fail-closed explicit blanks and env overrides.
 - Pages updated: `backend/model-providers.md`, `operations/running-and-config.md`, `.env.example`, `docs/decisions.md`.
+
+## [2026-10-19] fix — Serialize provider credential saves
+- Model and credential updates now share the settings save queue; concurrent AMD/Nebius key updates cannot collide on one temporary file or lose a provider's credential. In-memory credentials change only after persistence succeeds. Added a simultaneous-save/reload/remove regression.
+- Pages updated: `backend/model-providers.md`, Codex handoff in `handover.md`.
