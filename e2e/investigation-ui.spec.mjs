@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * UI contract test for the Field reports tile (plan v2 §3.8). The backend routes arrive in
- * N3a; until then this spec stubs them with Playwright routes, shaped exactly as the plan's
- * API contract. The real-API E2E replaces the stubs when N3a merges.
+ * UI contract test for the Field reports tile (plan v2 §3.8), with stubbed routes. It covers
+ * the approve flow and the exact request bodies, which need case history a freshly reset room
+ * does not have. The real routes are exercised in investigation-real.spec.mjs and the backend
+ * investigator tests; keep the stub shapes identical to the real DTOs.
  */
 const room = '/api/control-rooms/plant-1';
 const at = '2026-10-19T08:00:00.000Z';
@@ -86,7 +87,7 @@ async function liveRoom(request) {
   await request.post(`${room}/simulation/pause`);
 }
 
-for (const width of [375, 1280]) test(`field report → confirm → approve with prerequisites at ${width}px (stubbed API contract)`, async ({ page, request }) => {
+for (const width of [375, 1280]) test(`UI contract: field report → confirm → approve with prerequisites at ${width}px (stubbed routes)`, async ({ page, request }) => {
   await liveRoom(request);
   const store = stubStore();
   await installStubs(page, store);

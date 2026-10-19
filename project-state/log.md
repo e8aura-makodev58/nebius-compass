@@ -420,3 +420,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] feature — N3a investigator vertical slice
 - Added persisted field reports, interpretation ranking/confirmation, bounded investigator tools and repair, deterministic policy/fallback, shared dispatch authorization, atomic safety-checked approval, routes, Offline fixtures and the scenario adapter. Added native/JSON-protocol transport, gate/offer, policy, privacy, restart, race and responsiveness coverage.
 - Pages updated: backend/investigation.md, backend/domain-model.md, backend/simulation.md, backend/http-api.md, backend/live-runtime.md, backend/offline-runtime.md, backend/overview.md, backend/model-providers.md, concepts/agent-boundary.md, operations/testing.md, operations/running-and-config.md.
+
+## [2026-10-19] tests — Field reports E2E against the real N3a routes; SC-13 corrected
+- `e2e/investigation-real.spec.mjs` (forced provider failure, 375/1280px): a confirmed report in a fresh room abstains with no dispatch controls and the issue stays gated and unassigned; hazard and garbled reports are decided by policy with zero model calls. `investigation-ui.spec.mjs` stays as the stubbed UI contract for the approve flow (needs case history), documented as such.
+- `fixtures/investigation/scenarios.json` SC-13 now expects ABSTAINED: nobody on shift means no eligible qualified responder (plan §3.5); overtime stays with staffing approval. Flagged by codex in round 14.
+- Pages updated: none.

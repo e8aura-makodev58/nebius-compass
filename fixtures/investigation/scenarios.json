@@ -263,17 +263,19 @@
         "responders:only-via-overtime"
       ],
       "expected": {
-        "outcome": "READY",
+        "outcome": "ABSTAINED",
         "interpretation": {
           "equipmentId": "EQ-33",
           "issueClass": "B",
           "symptomCode": "B-IRREGULAR"
         },
         "constraints": [
+          "reason:no-eligible-qualified-responder",
           "overtime-via-staffing-approval-only",
-          "no-auto-overtime"
+          "no-overtime-decision"
         ]
-      }
+      },
+      "note": "Nobody is on shift, so no eligible qualified responder exists: the investigator abstains (plan \u00a73.5) and overtime stays with the staffing approval path. Corrected 2026-10-19 after codex flagged the original READY label."
     },
     {
       "id": "SC-14",
