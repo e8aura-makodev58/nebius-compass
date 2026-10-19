@@ -25,5 +25,9 @@
 
 .settings-usage { min-width: 0; }
 .settings-usage .evidence-scroll { min-width: 0; max-width: 100%; margin-top: 0; }
-.settings-usage .analytics-table { min-width: 0; }
-.settings-usage th, .settings-usage td { overflow-wrap: anywhere; }
+.settings-usage .analytics-table { min-width: 0; width: 100%; border-collapse: collapse; }
+.settings-usage th, .settings-usage td { overflow-wrap: anywhere; padding: 8px 10px; }
+.settings-usage .analytics-table th:not(:first-child),
+.settings-usage .analytics-table td:not(:first-child) { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.settings-usage .analytics-table tbody tr { border-bottom: 1px solid var(--rule); }
+
