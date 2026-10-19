@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 22) |
+| codex | RUN (round 23) |
 | gemini | STOP (no open task) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Ask Compass: grounded Q&A over the room (backend) | 22 |
+| codex | Ask Compass evaluation harness and scenarios | 23 |
 | gemini | none (waiting for the Ask Compass UI to review) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -1205,8 +1205,45 @@ Start with `git merge master`; keep your watcher.
     for the docs commit.
   - **Do not touch** any other files.
 
+**Round 23 (2026-10-19) — codex: Ask Compass evaluation harness.** Welcome back. The main agent
+finished round 22 for you (see the merge log); read `backend/src/assistant.mjs` first. Start with
+`git merge master`; ports 3021/3121; keep your watcher.
+
+- **codex.**
+  - **Scenarios.** Write `fixtures/assistant/scenarios.json`, labelled synthetic: about 20
+    questions with expected `status` (READY / DECLINED / FALLBACK) and constraints. Cover:
+    - why an issue was dispatched to a responder;
+    - what failed on a station;
+    - room workload;
+    - a question that names an unknown id;
+    - hidden-truth asks ("how skilled is…", "what really caused…");
+    - action asks ("assign…", "approve…");
+    - injection in the question and in a retrieved narrative;
+    - a question needing a number;
+    - a probability ask;
+    - an empty or over-long question;
+    - provider failure and timeout.
+
+    You may create `fixtures/assistant/`.
+  - **Harness.** `npm run eval:ask -- --mode fixture|live` (`scripts/eval-ask.mjs`, with
+    scoring in `scripts/eval/score.mjs` or a sibling module). Score with denominators:
+    - status match;
+    - citation validity (every citation returned by a tool in that run);
+    - number violations;
+    - hidden-truth and action leakage (must be 0);
+    - decline precision and recall;
+    - fallback, repaired and raw-invalid counts;
+    - latency.
+
+    Fixture mode is hermetic and goes into a test. **Live mode is run only by the main
+    agent.**
+  - **Docs:** a method section in `docs/evaluation.md`, with no live numbers, and `log.md`.
+  - **Do not touch:** `frontend/`, `e2e/`, `docs/nebius/`, `backend/data/`, port 3200. No
+    live calls.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `56af715` → merge `fa94df0`: Ask Compass backend (round 22). Codex ran out of credits after `cb2320a`; the main agent finished the uncommitted service work in the codex worktree at the user's request (fixed a test that wrote `backend/data/provider-usage.json`; in-memory `publicSnapshot()`). On master: `npm test` 463/463, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **gemini** `4d7408d` → merge `64eefff`: fresh-clone judge walkthrough (docs). Main agent applied the fixes (UI auto-select, README/draft). On master: `npm test` 450/450, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **gemini** `3927f02` → merge `be5066e`: wall-display layout (≥1440/2200px) and provisional period charts. On master: `npm test` 450/450, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **codex** `a6e06e4` → merge `8c41c9c`: precise repair feedback (exact item/field paths and bounded reasons). `handover.md`/`log.md` conflicts resolved (codex section reset to round 22). On master: `npm test` 450/450, E2E 85/85. Handoff archived.
@@ -1247,30 +1284,10 @@ Start with `git merge master`; keep your watcher.
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 22 — Ask Compass backend. **Completed by the main agent in this worktree at
-  the user's request** (codex ran out of credits). Codex's own commit `cb2320a` holds the tools
-  and the `assistant` role; the main agent finished the uncommitted service work.
-- **Changes:** `assistant.mjs` (codex's draft, finished):
-  - `POST /ask` and `GET /ask/:answerId`;
-  - code-owned decline patterns;
-  - a tool loop (4 steps, 6 calls, 45 s);
-  - citation, number and action validation with one repair;
-  - deterministic fallback;
-  - a per-room rate limit and busy guard;
-  - in-memory `askHistory` in `/state`, cleared on reset;
-  - an Offline fixture.
+- **Task:** Round 23 assigned; see Main agent → Assignments. Replace this section at handoff.
 
-  It is wired into the Live and Offline runtimes, the server route and the room manager,
-  and the E2E config sets `COMPASS_ASSISTANT_MODE=force-failure`. The main agent fixed two
-  test problems: the assistant ledger test persisted to `backend/data/provider-usage.json`
-  (now `filePath: null`), and the in-memory store gained `publicSnapshot()`. It also
-  wrote the docs and the decision record.
-- **Response shape for the UI:** `{answerId, question, asOf, revision, status: READY|DECLINED|FALLBACK, text, citations: [{kind, id}], trace: [{tool, args, resultIds, error?}], source, model: {modelId, calls, latencyMs, promptTokens, completionTokens} | null, reason?, repaired?, rawInvalid?}`. Citation kinds: `issue`, `investigation`, `event`, `responder`, `case`, `analytics`.
-- **Verification:** `npm test` 463/463; E2E 85/85 on port 3021 (forced providers). No live calls.
-- **project-state pages updated:** backend/assistant.md, backend/http-api.md, log.md; decision recorded.
-- **Questions for main:** none.
 ---
 
 ## gemini

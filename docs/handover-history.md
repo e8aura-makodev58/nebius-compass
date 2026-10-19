@@ -4,6 +4,33 @@
 
 ## Merged handoffs
 
+### 2026-10-19 — codex (finished by the main agent) → master (branch commit `56af715`, merge `fa94df0`)
+
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-19
+- **Task:** Round 22 — Ask Compass backend. **Completed by the main agent in this worktree at
+  the user's request** (codex ran out of credits). Codex's own commit `cb2320a` holds the tools
+  and the `assistant` role; the main agent finished the uncommitted service work.
+- **Changes:** `assistant.mjs` (codex's draft, finished):
+  - `POST /ask` and `GET /ask/:answerId`;
+  - code-owned decline patterns;
+  - a tool loop (4 steps, 6 calls, 45 s);
+  - citation, number and action validation with one repair;
+  - deterministic fallback;
+  - a per-room rate limit and busy guard;
+  - in-memory `askHistory` in `/state`, cleared on reset;
+  - an Offline fixture.
+
+  It is wired into the Live and Offline runtimes, the server route and the room manager,
+  and the E2E config sets `COMPASS_ASSISTANT_MODE=force-failure`. The main agent fixed two
+  test problems: the assistant ledger test persisted to `backend/data/provider-usage.json`
+  (now `filePath: null`), and the in-memory store gained `publicSnapshot()`. It also
+  wrote the docs and the decision record.
+- **Response shape for the UI:** `{answerId, question, asOf, revision, status: READY|DECLINED|FALLBACK, text, citations: [{kind, id}], trace: [{tool, args, resultIds, error?}], source, model: {modelId, calls, latencyMs, promptTokens, completionTokens} | null, reason?, repaired?, rawInvalid?}`. Citation kinds: `issue`, `investigation`, `event`, `responder`, `case`, `analytics`.
+- **Verification:** `npm test` 463/463; E2E 85/85 on port 3021 (forced providers). No live calls.
+- **project-state pages updated:** backend/assistant.md, backend/http-api.md, log.md; decision recorded.
+- **Questions for main:** none.
+
 ### 2026-10-19 — gemini → master (branch commit `4d7408d`, merge `64eefff`)
 
 - **Status:** READY FOR MERGE
