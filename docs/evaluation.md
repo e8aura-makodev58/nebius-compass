@@ -115,6 +115,33 @@ The recorded round-17 browser gate on 2026-10-19 passed 83 Chromium tests with f
 
 This archived ten-run Scenario A measurement used the removed OpenAI provider and is not a measurement of either current provider. Fresh installs now use Nebius Token Factory; AMD remains selectable. The recorded legacy result was 10/10 READY, with Engr028 ranked first and latencies of 7.486–13.011 seconds. It does not establish current provider accuracy or satisfy an outstanding live 100-opportunity responder-ranking gate. Current Nebius measurements are in the sections above and in `docs/nebius/05_TOKEN_FACTORY_FACTS.md`.
 
+## Paired first-fix replay, live (2026-10-19)
+
+Command: `npm run eval:investigator -- --replay --mode live --limit 60`. The held-out window is
+2026-09-29T08:00Z → 2026-10-06T08:00Z of the committed month: 718 eligible issues, of which
+the first 60 by `raisedAt` were selected. The seed SHA-256 is `3ac921d0…7091`. The
+responder, state, time and random draws are identical across arms; only the first fix
+differs.
+
+| Run | Investigator | Deterministic order | Class-frequency baseline | Investigator fell back | Discordant vs baseline (inv / base) | Discordant vs deterministic (inv / det) |
+|---|---|---|---|---|---|---|
+| A (before the prose/repair fix) | 49/60 | 46/60 | 41/60 | 34/60 | 9 / 1 | 4 / 1 |
+| **B (after the fix, current code)** | **46/60** | **46/60** | **41/60** | **7/60** | **7 / 2** | **2 / 2** |
+
+**Reading.** In run B the model chose the first fix in 53 of 60 issues. The investigator arm
+ties the deterministic order (46/60 each) and is ahead of the class-frequency baseline
+(46 vs 41; discordant pairs 7 vs 2). Run A's higher investigator figure is not a model
+result: 34 of its 60 choices came from the deterministic fallback, because the validator
+rejected numbers Ultra quoted from tool results and the repair message did not restate
+the contract (fixed in `8a76993`). The replay does not yet record per-pair source, so run B's
+53 model choices cannot be scored separately; that provenance is in codex's round 19.
+
+**Limits.** 60 issues, one window, one sample per issue. With 4 discordant pairs against the
+deterministic order there is no evidence of a difference either way. With 9 against the
+baseline the direction favours the investigator, but this is not a significance claim.
+The runs spent live credit and are not reproducible from fixtures; the summaries above are
+reported by the main agent.
+
 ## Paired replay method
 
 `npm run eval:investigator -- --replay --mode fixture --limit 5` exercises the replay

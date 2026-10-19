@@ -96,6 +96,9 @@ Nebius entry starts from baseline commit `1e1c69c` (2026-10-19). Everything afte
   zero post-validation certification inconsistencies in accepted outputs, and 6/6 labelled
   hazard/input decisions without a model call; these are small scenario checks, not a
   general accuracy or safety certification;
+- a paired first-fix replay on 60 held-out issues: the investigator's first fix tied the
+  deterministic order (46/60 first-time fixes each) and beat the class-frequency baseline
+  (41/60); a small sample, reported with its limits in `docs/evaluation.md`;
 - a new deployment.
 
 ## Links

@@ -481,3 +481,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Findings 3–4 are code fixes in codex's round 19.
 - `scripts/deploy/deploy.sh` requires `DEPLOY_HOST` (env or private `DEPLOY_ENV` file); deployment addresses are redacted from current files.
 - Pages updated: operations/running-and-config.md (addresses redacted).
+
+## [2026-10-19] measurement — Live paired first-fix replay, 60 held-out issues
+- Run A (before the prose/repair fix): investigator 49/60, deterministic 46/60, baseline 41/60, but 34/60 investigator choices were deterministic fallbacks. Run B (after `8a76993`): investigator 46/60, deterministic 46/60, baseline 41/60, 7/60 fallbacks; discordant vs baseline 7/2, vs deterministic 2/2. Recorded with limits in `docs/evaluation.md`; per-pair source provenance is codex's round 19.
+- Pages updated: none.
