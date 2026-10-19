@@ -1180,6 +1180,7 @@ your watcher. Commit in steps, with both suites green.
 
 ### Merge log
 
+- 2026-10-19 — **codex** `a6e06e4` → merge `8c41c9c`: precise repair feedback (exact item/field paths and bounded reasons). `handover.md`/`log.md` conflicts resolved (codex section reset to round 22). On master: `npm test` 450/450, E2E 85/85. Handoff archived.
 - 2026-10-19 — **codex** `bcc1cec` → merge `767fd2c`: security fixes #1 (JSON/Origin guard), #2–#8, #10 with 13 security tests. Main agent added the frontend JSON header and a header-free E2E. On master: `npm test` 448/448, E2E 85/85. Deployed; 415/403 verified on the server. Handoff archived.
 - 2026-10-19 — **gemini** `28596c8` → merge `8772c74`: CSS theme enhancements E1, E2, E4–E7 in the Nebius palette. Main agent restored 44px phone touch targets. On master: `npm test` 435/435, E2E 84/84. Deployed. Handoff archived.
 - 2026-10-19 — **codex** `c301290` → merge `803792b` (security review, 10 findings; theme notes) and **gemini** `51350ec` → merge `7b913e6` (theme review and plan). Docs only. Master was rewound once to drop a user file swept in by `git add -A`; merges redone with named staging. Handoffs archived.
@@ -1220,17 +1221,6 @@ your watcher. Commit in steps, with both suites green.
 - **Status:** IDLE
 - **Updated:** 2026-10-19
 - **Task:** Round 22 assigned; see Main agent → Assignments. Replace this section at handoff.
-
-- **Task:** Round 21 follow-up — actionable repair feedback from the updated replay-C validity instruction. Original security fixes are `62e97af` (already merged on master as `767fd2c`).
-- **Head commit:** This follow-up handoff commit on `codex` (parent `bcc1cec`, master sync).
-- **Changes:** Final validation errors now identify exact array item/field paths and bounded reasons, including the rejected numeric token (max 80 characters), shape/bounds, IDs, citations and qualification. Unknown IDs and restricted text are never echoed. Repair restates public IDs, hypothesis texts and metric numbers and explicitly permits dropping numbers for qualitative rationale. Supported-action / ESCALATE conflicts name `proposedOutcome.outcome`. Acceptance rules and one-repair/tool/call/deadline budgets are preserved.
-- **Validation categories observed:** New adversarial fixtures: shape; array bounds; disallowed number; probability/percentage claim; restricted prose; prose length; catalog hypothesis text; unknown fix; duplicate ID; first-fix qualification; citation case; citation field; outcome enum. Existing contradiction fixtures cover supported-action / ESCALATE conflict. Standard 24-scenario fixture eval: **24/24 outcomes**, **0 repaired / 0 raw-invalid**; accepted 12, deterministic fallback 11. Stubbed numeric-invalid output repaired to qualitative prose in three turns including tools; this is not a live-model quality measurement.
-- **Files changed:** backend/src/investigator.mjs, backend/tests/investigation-security.test.mjs, backend/tests/investigator.test.mjs, docs/decisions.md, appended Status follow-up in docs/nebius/08_SECURITY_REVIEW.md, project-state/backend/investigation.md, project-state/operations/testing.md, project-state/log.md, own handoff section. Master sync preserved all authorized security/theme/UI work and both sides of the append-only log conflict.
-- **Verification:** `npm test` **450/450**; forced-provider Chromium E2E on port 3021 with required library path **84/84**; `node scripts/eval-investigator.mjs --mode fixture` **24/24**. No live calls or runtime data writes. Ports 3021/3121 released. Watcher PID 41408 preserved without restart.
-- **project-state pages updated:** backend/investigation.md, operations/testing.md, log.md. Decision/review Status appended.
-- **Required companion change:** Production `frontend/app.js` request helper still sets JSON headers only for requests with a body in the synced source. Main must add headers for bodyless mutations before deployment; exact expression remains in review Status. Shared Playwright headers cover test requests, so green E2E does not establish that the unmodified production helper works. No frontend/e2e edits made by this follow-up.
-- **Risks / follow-ups:** Main agent remeasures live repair quality after merge; no live rate claim from hermetic fixtures. Authentication remains a user decision. Original round 21 retention/admission limits remain documented in decisions and project-state.
-- **Questions for main:** Apply the frontend header companion and remeasure live as already planned; no additional implementation decision needed.
 
 ---
 
