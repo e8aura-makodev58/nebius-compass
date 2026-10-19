@@ -36,6 +36,7 @@ export function investigationEvent(state,type,row,detail={}) {
 }
 function createRun(state, report, issue, status='QUEUED', reason='Waiting for read-only investigation.') {
   const row={id:idFor(state,'investigations','INV'),issueId:issue?.id??null,reportId:report.id,status,source:'DETERMINISTIC',model:null,
+    ...(['ABSTAINED','ESCALATED'].includes(status)?{fallbackReason:status==='ESCALATED'?'hazard-policy':'input-policy'}:{}),
     createdAt:state.simulationState.simulationTime,updatedAt:state.simulationState.simulationTime,asOf:state.simulationState.simulationTime,baselineFixId:issue?classFrequencyBaseline(state,issue,state.simulationState.simulationTime):null,resultOutcome:['ABSTAINED','ESCALATED'].includes(status)?status:null,revision:0,reason,warnings:report.flags.injection.length?['Instruction-like report spans are quoted untrusted data.']:[],
     hypotheses:[],fixes:[],responders:[],trace:[],evidenceGrade:'NONE',interpretation:issue?{equipmentId:issue.equipmentId,issueClass:issue.issueClass,symptomCode:issue.symptom.code}:null};
   ensureInvestigationPolicy(state);

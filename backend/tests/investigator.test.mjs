@@ -252,3 +252,40 @@ test('offer creation, manual override and forged offer acceptance all enforce th
   assert.equal((await assignments.handleOfferDue({offerId:'offer-001',token:'offer-response-1'})).result.status,'GATED');
   assert.equal((await store.snapshot()).assignments.filter((row)=>row.issueId===ids.issueId).length,0);
 });
+
+
+test('supported qualified ESCALATE output is repaired once within the shared budget; unsupported escalation is accepted',async()=>{
+  const {store,ids}=await ready();const state=await store.snapshot(),issue=state.issues.find((row)=>row.id===ids.issueId);
+  const output={hypotheses:[{symptomCode:'A-DRIFT',text:'Output drifts from the operating reference.',evidenceRefs:[]}],
+    fixes:[{fixId:'FIX-A-01',rationale:'Strong historical evidence supports the fix.',evidenceRefs:[]}],
+    responders:[{responderId:state.responders[0].id,rationale:'Qualified and available.'}],
+    proposedOutcome:{outcome:'ESCALATE',reason:'Strong historical evidence supports the fix.'}};
+  for(const repairedOutput of ['corrected','repeated','unsupported']) {
+    let calls=0;const messages=[];
+    const result=await investigate(state,issue,{mode:'live',now:()=>0,callTurn:async(request)=>{
+      calls++;messages.push(structuredClone(request.messages));
+      if(calls===1)return {toolCalls:[{id:'eligible',name:'eligible_responders',arguments:{equipmentId:issue.equipmentId,issueClass:'A',fixId:'FIX-A-01'}}]};
+      const final=structuredClone(output);
+      if(repairedOutput==='corrected'&&calls===3)delete final.proposedOutcome;
+      if(repairedOutput==='unsupported'){final.fixes=[];final.responders=[];}
+      return {toolCalls:[],content:JSON.stringify(final)};
+    }});
+    if(repairedOutput==='corrected'){
+      assert.equal(result.status,'READY');assert.equal(result.source,'NEBIUS_MODEL');assert.equal(result.repaired,true);assert.equal(result.rawInvalid,true);assert.equal(calls,3);
+      const feedback=JSON.parse(messages[2].at(-1).content);assert.match(feedback.validationErrors[0],/ESCALATE conflicts/);assert.ok(feedback.validationErrors[0].length<250);
+    } else if(repairedOutput==='repeated'){
+      assert.equal(result.source,'DETERMINISTIC');assert.equal(result.fallbackReason,'validation-failed');assert.equal(result.rawInvalid,true);assert.equal(result.repaired,true);assert.equal(calls,3);
+    } else {
+      assert.equal(result.status,'ESCALATED');assert.equal(result.rawInvalid,false);assert.equal(result.repaired,false);assert.equal(calls,2);
+    }
+    assert.ok(result.trace.length<=6);assert.ok(result.model.calls<=8);
+  }
+});
+
+test('code-owned policy runs expose fallback reasons and accurate validation flags without model calls',async()=>{
+  for(const index of [13,18]){
+    const sc=fixtures.scenarios[index];const service=createInvestigationService(memoryInvestigationStore(scenarioState(sc)),{investigatorOptions:()=>{throw Error('must not resolve provider');}});
+    const ids=await service.submit(sc.input);const record=await service.getInvestigation(ids.investigationId);
+    assert.equal(record.source,'DETERMINISTIC');assert.equal(record.fallbackReason,index===13?'hazard-policy':'input-policy');assert.equal(record.rawInvalid,false);assert.equal(record.repaired,false);
+  }
+});

@@ -146,6 +146,11 @@ export async function investigate(state, issue, options = {}) {
       }
       let output; try {output=JSON.parse(turn.content);}catch{output=null;}
       const errors=validateInvestigationFinal(output,{issue,returnedCases,returnedResponders});
+      if (!errors.length && output.proposedOutcome?.outcome==='ESCALATE' && output.fixes.length && output.responders.length) {
+        const firstFix=output.fixes[0].fixId;
+        const evidence=executeInvestigationTool(state,'fix_evidence',{issueClass:issue.issueClass,fixId:firstFix,equipmentId:issue.equipmentId,symptomCode:issue.symptom.code},context).rows[0];
+        if (['MODERATE','STRONG'].includes(evidence.grade)) errors.push('ESCALATE conflicts with a supported first fix and qualified responder. Omit proposedOutcome when recommending; routine approval is not escalation.');
+      }
       if(errors.length) {
         rawInvalid=true;
         if(repaired || model.calls>=8)return fallback('validation-failed');

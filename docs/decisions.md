@@ -1111,3 +1111,15 @@ synthetic seed supplies approved/abstained/escalated examples (1/7/1 plus 2 auto
 All files are below 20MB. Dataset README records reproduction and limitations.
 The responder-ranking-only reliability soak explicitly disables investigation sampling to keep
 its original experiment intact; production sampling remains enabled by default.
+
+
+## 2026-10-19 — Repair model escalation that contradicts a supported recommendation
+
+The first live evaluation found model ESCALATE alongside MODERATE/STRONG first fixes and
+qualified recommended responders, confusing routine approval with safety escalation. Such
+finals are now validation failures with bounded feedback and one repair under the existing
+six-tool/eight-call/time budgets. The prompt reserves proposedOutcome for not recommending.
+Without a supported qualified action, model escalation remains valid; deterministic hazard
+policy is unchanged and still makes no model call. Every deterministic public result exposes
+a fallback reason, including policy exits and unresolved eval interpretations. This corrects
+the contract; no claim of improved live outcome agreement is made without another live run.

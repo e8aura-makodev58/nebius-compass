@@ -441,3 +441,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - `docs/nebius/06_SUBMISSION_DRAFT.md`: track, descriptions, Nebius/NVIDIA usage, pre-existing disclosure, judge testing instructions and feedback, with ⟨…⟩ blanks for URLs, the city event and one claim that waits for the ESCALATE fix to merge.
 - `docs/DEMO_SCRIPT.md`: a 2:45 walkthrough recorded on a live run, with a recording checklist.
 - Pages updated: none.
+
+
+## [2026-10-19] fix — Validate contradictory model escalation before outcome selection
+- Live-eval follow-up: a MODERATE/STRONG first fix plus a qualified responder cannot also propose ESCALATE. Request one bounded repair inside existing budgets; preserve unsupported and code-owned hazard escalation. Clarified prompt, labelled every deterministic public/eval result, and extended hermetic flags/repair/policy tests. Refreshed the small synthetic seed for persisted policy reasons; counts unchanged.
+- Pages updated: backend/investigation.md; live results still require a separate measurement.

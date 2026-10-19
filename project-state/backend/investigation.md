@@ -138,7 +138,11 @@ Unknown keys, invented IDs, duplicate rankings and prose over 400 characters or 
 digits outside supplied IDs fail validation. One repair shares the original budget and
 cannot execute further tools. Procedures always come verbatim from the catalog.
 
-Code computes grades and qualification. Accepted model escalation takes precedence;
+Code computes grades and qualification. A model ESCALATE paired with a MODERATE/STRONG
+first fix and supplied qualified responder is contradictory final output: bounded validation
+feedback requests the existing single repair within the original budget. Repeated contradiction
+uses deterministic fallback. ESCALATE remains accepted without a supported qualified action;
+code-owned hazard escalation still precedes all model work. Otherwise accepted escalation takes precedence;
 otherwise an explicit abstention, no supported fix or no eligible qualified responder
 produces ABSTAINED. THIN produces a low-evidence warning and still requires approval.
 Code also shows approaching duty endpoints as public facts. Failures use labelled
@@ -238,3 +242,13 @@ See analytics-and-ethics for denominators and the unobserved baseline limitation
 small and month datasets, counts, reproduction and unattended queue limits are documented in
 `backend/seed/INVESTIGATION_DATASETS.md`. Lifecycle tests live in
 `backend/tests/investigation-lifecycle.test.mjs`.
+
+
+The prompt reserves proposedOutcome for not recommending: routine operator approval is not
+an escalation reason. Model recommendations omit that field. Every public deterministic run
+has a nonempty fallbackReason, including persisted hazard-policy/input-policy exits, older
+records with deterministic-policy fallback, and pending-investigation placeholders. The eval
+adapter's unresolved interpretation result is labelled interpretation-unresolved. Invalid
+contradictory finals set rawInvalid and consume the same single repair; policy exits remain
+rawInvalid/repaired false and make no provider calls. Live accuracy must be remeasured
+separately; hermetic repair tests do not establish live model accuracy.
