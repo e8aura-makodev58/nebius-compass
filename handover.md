@@ -533,6 +533,17 @@ Plan v2 (`docs/nebius/04_HACKATHON_PLAN.md`) is the spec. Read §2 (model tierin
     `docs/decisions.md` entry (Nebius default, AMD retained, no guessed IDs).
   - **Do not touch:** `backend/data/`, port 3200, `docs/submission/`, `docs/nebius/`,
     `fixtures/investigation/`, `e2e/` (tell me if an E2E needs updating), and no live calls.
+  - **Also (fresh-clone defect):** several unit tests `mkdtemp` under `.cache/` and fail with
+    ENOENT on a fresh clone (judges will clone). Make them create `.cache/` themselves
+    (`mkdir(..., { recursive: true })`) and verify by running `npm test` after
+    `rm -rf .cache`.
+  - **E2E environment changed:** the Chromium library path is now
+    `LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu` (AGENTS.md
+    rule 9). If Playwright reports a missing browser, run
+    `npx playwright install chromium-headless-shell` once.
+  - **Frontend note:** master now has the Field reports tile (`frontend/investigation-view.js`,
+    sixth Dockview tile). Keep your Settings changes inside the existing Settings → API role
+    fieldsets in `app.js`; do not touch the investigation files or `tiling.js`.
   - **Handoff:** both suites green on port 3021; list the exact env table the main agent
     must fill after N0. Next for you after merge: N2.
 
@@ -541,6 +552,7 @@ Plan v2 (`docs/nebius/04_HACKATHON_PLAN.md`) is the spec. Read §2 (model tierin
 
 ### Merge log
 
+- 2026-10-19 — **main agent** `claude` → master (fast-forward to `26fe6db`): plan v2, Apache-2.0 licence, 24 investigation scenarios (N5 part 1), Field reports tile on the §3.8 contract with stubbed-route E2E (N4), Chromium libraries moved to `/home/makodev58/nebius-tools`, override/rooms spec race fix. `npm test` 342/342, E2E 78/78 on master.
 - 2026-10-19 — **codex** `534a1b1` → merge `f892d3b`: one-pass review of the Nebius plan (round 11), 12 findings, all accepted into plan v2 `a2d8373`. Docs only; `project-state/log.md` append conflict kept both. Handoff archived.
 - 2026-10-18 — **codex** `7d74b73` → merge `9aee67d`: journaled live store, copy-on-write drafts, frozen snapshots (round 10). Codex ran out of tokens mid-task; the main agent finished it in the codex worktree at the user's request (16 failing tests fixed, crash-safety tests added). Clean merge. `npm test` 327/327, E2E 71/71. Tick-mutation 50 ms target not met (p95 0.18 s). Handoff archived.
 - 2026-10-18 — **codex** `28b0fed` → merge `4e0cfb8`: user-directed operational UI refinements (decision-first staffing, phone workspace, analytics layout) and strict staffing prose `ce2b7c2`. Clean merge. `npm test` 319/319, E2E 71/71. Handoff archived. Round 10 (store performance) still open.
