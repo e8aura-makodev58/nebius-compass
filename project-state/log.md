@@ -357,3 +357,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] ops — Chromium libraries moved to `/home/makodev58/nebius-tools`
 - The old `rendertest` library folder is gone on this machine. Playwright's headless shell is installed in `~/.cache/ms-playwright` and its missing system libraries are extracted (no sudo) into `/home/makodev58/nebius-tools/libs`. `AGENTS.md` rules 9 and 11, `handover.md`, README and the testing page now name that path.
 - Pages updated: operations/testing.md.
+
+## [2026-10-19] measurement — Nebius Token Factory N0 probe
+- Team key verified (HTTP 200). `docs/nebius/05_TOKEN_FACTORY_FACTS.md` records catalog facts (five Nemotron models with context, price, limits), JSON mode, thinking control via `chat_template_kwargs.enable_thinking`, native tool calling on every Nemotron model, 5-run validity tables, and role defaults: investigator Ultra (thinking on), ranking Super (on), planner/narrator Lightning (off). `scripts/probe-nebius.mjs` is the manual, credit-spending probe (never in `npm test`).
+- Pages updated: none yet (codex updates model-providers.md in N1).
