@@ -89,3 +89,14 @@ manifest. Bootstrap and generation use it; live persistence remains plain JSON.
   one deadline-bounded repair, API-free stored fixture and deterministic unavailability.
 - `backend/fixtures/staffing-ranking.json`: API-free qualitative fixture over the supplied
   deterministic option order. No fixed responder assumptions or simulation truth.
+
+## Investigation evidence contracts
+
+- `investigation-dto.mjs`: explicit Case/Responder/Fix/Equipment allowlists and cutoff-filtered,
+  archive-backed case derivation.
+- `investigation-records.mjs`: independent id-seeded public certifications, symptom templates,
+  noisy synthetic report templates and public-record migration.
+- `investigation-tools.mjs`: six read-only OpenAI function schemas, strict argument validation,
+  host-bound cutoff/target, qualification and evidence counts, bounded tool envelopes.
+
+See [investigation.md](investigation.md) for contracts; loop/routes/approval follow in N3a.

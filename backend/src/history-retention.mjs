@@ -65,6 +65,7 @@ export function compactHistory(state, days = retentionDays(), { force = false } 
     const { id, equipmentId, issueClass, raisedAt, resolvedAt, downtimeStartedAt } = issue;
     retention.facts.issues.push({ id, equipmentId, issueClass, status: "RESOLVED", raisedAt, resolvedAt,
       description: issue.description, responseAction: issue.responseAction,
+      reportNarrative: issue.reportNarrative, narrativeSource: issue.narrativeSource,
       ...(issue.symptom ? { symptom: issue.symptom } : {}),
       ...(issue.fixRecommendation ? { fixRecommendation: { source: issue.fixRecommendation.source, status: issue.fixRecommendation.status,
         baselineFixId: issue.fixRecommendation.baselineFixId, disagreement: issue.fixRecommendation.disagreement,

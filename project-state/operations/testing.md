@@ -170,3 +170,15 @@ reveal the issue, and preserve the map node through the desktop breakpoint. Anal
 checks Pareto placement, collapsed detail tables, expanded-state persistence, search focus
 and explicit insufficient-data denominators. Existing staffing, fix-audit and tiling
 journeys use the new phone/disclosure entry points and retain their canonical API assertions.
+
+## Investigation contracts (N2)
+
+`backend/tests/investigation-contracts.test.mjs` runs hermetically inside `npm test`.
+It checks explicit DTO keys, hidden-truth noninterference and renamed-key canaries,
+archive-stable case IDs, strict cutoff/target exclusion, qualification, catalog safety,
+id-seeded certification independence, migration (including the compressed month seed),
+noisy report templates, strict arguments (including prototype-property keys), read-only
+execution and ≤10 rows / ≤8192 UTF-8 bytes. It imports investigation scenarios read-only
+and builds the currently supported history/responder setup tags. No investigator inference
+or public routes exist yet; existing history-generation adapter/equivalence tests exercise
+the new pre-retention report hook with no fetch or credential reads.

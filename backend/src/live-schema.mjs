@@ -1,3 +1,4 @@
+import { CERTIFICATIONS } from './investigation-records.mjs';
 import { staffingBacklog } from './staffing-service.mjs';
 import { deterministicFixRecommendation } from './fix-evidence.mjs';
 import { fixById, fixesFor } from './fix-catalog.mjs';
@@ -50,6 +51,13 @@ export function validateLiveState(state, { previous = null } = {}) {
   const changed=(key)=>{if(!previous)return state[key]??[];if(state[key]===previous[key])return [];const old=new Set(previous[key]??[]);return (state[key]??[]).filter(row=>!old.has(row));};
   assert(state && typeof state === "object", "state must be an object");
   validateFaultTruth(state);
+  for (const responder of changed('responders')) if (responder.certifications !== undefined) {
+    assert(Array.isArray(responder.certifications) && new Set(responder.certifications).size === responder.certifications.length
+      && responder.certifications.every((value) => CERTIFICATIONS.includes(value)), 'Invalid public certifications');
+  }
+  for (const issue of changed('issues')) if (issue.reportNarrative !== undefined) {
+    assert(typeof issue.reportNarrative === 'string' && ['operator', 'simulated', 'template'].includes(issue.narrativeSource), 'Invalid report narrative');
+  }
   for (const issue of changed('issues')) if (issue.fixRecommendation) {
     const rows = issue.fixRecommendation.rankedFixes;
     assert(Array.isArray(rows) && rows.length === fixesFor(issue.issueClass).length && new Set(rows.map((r) => r.fixId)).size === rows.length && rows.every((r, i) => fixById(issue.issueClass, r.fixId) && r.rank === i + 1), 'Invalid stored fix ranking');

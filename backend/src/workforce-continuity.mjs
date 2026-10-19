@@ -1,3 +1,4 @@
+import { certificationsFor } from './investigation-records.mjs';
 import { ensureIssueFault } from './fault-truth.mjs';
 /**
  * Deterministic Workforce Continuity primitives.  This module intentionally
@@ -101,6 +102,7 @@ export function provisionWorkforce(state) {
       }
     }
   }
+  for (const responder of state.responders) responder.certifications ??= certificationsFor(responder.id);
   // Preserve the seed itself as a provenance value, not a mutable live stream.
   return state;
 }

@@ -403,3 +403,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] ui — Field reports tile fits the desktop right column
 - Inside Dockview the tile drops its duplicate heading and shows investigations as one horizontally scrolling strip; the default layout sizes it to 42% of the frame height (min 240px), so the selected investigation's detail starts in view. Phone and display-screen layouts are unchanged.
 - Pages updated: none (frontend/overview.md already describes the right column).
+
+## [2026-10-19] feature — N2 investigation evidence contracts
+- Added allowlisted DTOs and six bounded, read-only tools with host-owned cutoffs, archive-stable cases, public certifications, safety catalog data, and template/noisy synthetic narratives. Added hermetic contract, noninterference, cutoff, migration and scenario-tag coverage.
+- Pages updated: backend/investigation.md (new), backend/domain-model.md, backend/simulation.md, backend/overview.md, concepts/agent-boundary.md, operations/testing.md, index.md.

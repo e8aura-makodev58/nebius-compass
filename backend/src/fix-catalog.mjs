@@ -25,9 +25,22 @@ const procedures = {
     ['Verify operating reference', 'Compare the operating reference with the approved checklist, restore the setting, and verify stable operation.'],
   ],
 };
-export const FIX_CATALOG_VERSION = 'synthetic-fixes-v1';
+export const SAFETY_CLASSES = Object.freeze(['ROUTINE', 'ISOLATION_REQUIRED', 'SPECIALIST_ONLY']);
+export const PREREQUISITES = Object.freeze(['STATION_ISOLATED', 'LOCKOUT_CONFIRMED', 'DRIVE_DE_ENERGISED']);
+const safety = {
+  A: ['ROUTINE', 'ISOLATION_REQUIRED', 'SPECIALIST_ONLY', 'ROUTINE', 'ISOLATION_REQUIRED', 'ROUTINE'],
+  B: ['ISOLATION_REQUIRED', 'SPECIALIST_ONLY', 'ISOLATION_REQUIRED', 'SPECIALIST_ONLY', 'ROUTINE', 'ROUTINE'],
+  C: ['SPECIALIST_ONLY', 'ISOLATION_REQUIRED', 'SPECIALIST_ONLY', 'ROUTINE', 'ISOLATION_REQUIRED', 'ROUTINE'],
+};
+export const FIX_CATALOG_VERSION = 'synthetic-fixes-v2';
 export const FIX_CATALOG = Object.freeze(Object.fromEntries(Object.entries(procedures).map(([kind, rows]) => [kind,
-  Object.freeze(rows.map(([title, steps], i) => Object.freeze({ id: `FIX-${kind}-${String(i + 1).padStart(2, '0')}`, title, steps }))),
+  Object.freeze(rows.map(([title, steps], i) => Object.freeze({ id: `FIX-${kind}-${String(i + 1).padStart(2, '0')}`, title, steps,
+    safetyClass: safety[kind][i],
+    prerequisites: Object.freeze(safety[kind][i] === 'ROUTINE' ? [] :
+      kind === 'B' && i === 3 ? [...PREREQUISITES] : ['STATION_ISOLATED', 'LOCKOUT_CONFIRMED']),
+    requiredCertifications: Object.freeze(safety[kind][i] === 'ROUTINE' ? [] :
+      safety[kind][i] === 'SPECIALIST_ONLY' ? ['ISOLATION', `SPECIALIST-${kind}`] : ['ISOLATION']),
+  }))),
 ])));
 export function fixesFor(issueClass) { return FIX_CATALOG[issueClass] ?? []; }
 export function fixById(issueClass, id) { return fixesFor(issueClass).find((row) => row.id === id) ?? null; }
@@ -35,7 +48,15 @@ export function validateFixCatalog(catalog = FIX_CATALOG) {
   for (const kind of ['A', 'B', 'C']) {
     const rows = catalog[kind];
     if (!Array.isArray(rows) || rows.length < 5 || rows.length > 6 || new Set(rows.map((r) => r.id)).size !== rows.length) throw new Error('Invalid fix catalog');
-    for (const row of rows) if (!new RegExp(`^FIX-${kind}-\\d{2}$`).test(row.id) || !row.title || row.title.length > 80 || !row.steps || row.steps.length > 320 || Object.keys(row).sort().join() !== 'id,steps,title') throw new Error('Invalid fix procedure');
+    if (SAFETY_CLASSES.some((kind) => !rows.some((row) => row.safetyClass === kind))) throw new Error('Missing safety class');
+    for (const row of rows) if (!new RegExp(`^FIX-${kind}-\\d{2}$`).test(row.id) || typeof row.title !== 'string' || !row.title.trim() || row.title.length > 80 || typeof row.steps !== 'string' || !row.steps.trim() || row.steps.length > 320 || Object.keys(row).sort().join() !== 'id,prerequisites,requiredCertifications,safetyClass,steps,title'
+      || !SAFETY_CLASSES.includes(row.safetyClass)
+      || !Array.isArray(row.prerequisites) || new Set(row.prerequisites).size !== row.prerequisites.length
+      || row.prerequisites.some((value) => !PREREQUISITES.includes(value))
+      || !Array.isArray(row.requiredCertifications) || new Set(row.requiredCertifications).size !== row.requiredCertifications.length
+      || row.requiredCertifications.some((value) => !['ISOLATION', 'SPECIALIST-A', 'SPECIALIST-B', 'SPECIALIST-C'].includes(value))
+      || (row.safetyClass !== 'ROUTINE' && (!row.prerequisites.includes('STATION_ISOLATED') || !row.prerequisites.includes('LOCKOUT_CONFIRMED') || !row.requiredCertifications.includes('ISOLATION')))
+      || (row.safetyClass === 'SPECIALIST_ONLY' && !row.requiredCertifications.includes(`SPECIALIST-${kind}`))) throw new Error('Invalid fix procedure');
   }
   return true;
 }

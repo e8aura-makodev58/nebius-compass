@@ -1,3 +1,4 @@
+import { migrateInvestigationRecords } from './investigation-records.mjs';
 import { initializeFaults } from './fault-truth.mjs';
 import { LIVE_SCHEMA_VERSION, validateLiveState } from "./live-schema.mjs";
 import { createBuildingEquipment } from "../seed/floor-layout.mjs";
@@ -135,6 +136,7 @@ export function migrateLiveState(input) {
     reconcileResponderLocations(upgraded);
     upgraded.schemaVersion = LIVE_SCHEMA_VERSION;
     initializeFaults(upgraded, { recover: true });
+    migrateInvestigationRecords(upgraded);
     validateLiveState(upgraded);
     return upgraded;
   }
@@ -183,6 +185,7 @@ export function migrateLiveState(input) {
   reconcileWorkforceDuty(state);
   reconcileResponderLocations(state);
   initializeFaults(state, { recover: true });
+  migrateInvestigationRecords(state);
   validateLiveState(state);
   return state;
 }

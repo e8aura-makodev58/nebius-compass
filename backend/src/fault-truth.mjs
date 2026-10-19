@@ -1,3 +1,4 @@
+import { ensureIssueNarrative } from './investigation-records.mjs';
 /** Engine-only latent fault model. Never put these rows in an issue or audit bundle. */
 import { fixesFor } from './fix-catalog.mjs';
 const symptoms = {
@@ -32,6 +33,7 @@ export function ensureIssueFault(state, issue) {
   const symptomIndex = draw(state) < .78 ? causeIndex % 3 : (causeIndex + 1) % 3;
   const [code, text] = symptoms[issue.issueClass][symptomIndex];
   issue.symptom = { code, text };
+  ensureIssueNarrative(issue);
 }
 export function initializeFaults(state, { recover = false } = {}) {
   for (const issue of state.issues) {

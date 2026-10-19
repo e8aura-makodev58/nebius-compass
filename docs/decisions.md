@@ -1019,3 +1019,27 @@ and probes are in `docs/nebius/05_TOKEN_FACTORY_FACTS.md`. All verified Nemotron
 use native tools and `chat_template_kwargs.enable_thinking`, never an inferred reasoning
 parameter. Defaults remain in one env-overridable role table; an explicit blank still
 fails closed. Unverified replacement IDs omit thinking by default. No worker live calls.
+
+## 2026-10-19 — N2 public investigation contracts and decision-time evidence
+
+Investigation tools construct explicit public DTOs; state-row spreads and private outcome
+weights are excluded. Host-bound cutoffs accept only strictly earlier completed evidence
+and exclude the target issue. Current roster/geometry come from the host's decision
+snapshot; replay must supply that snapshot rather than infer historical availability.
+Compact issue facts plus retained observations supply stable CASE-<issueId> records
+without archive I/O. Existing room/month-seed loads migrate public certifications and
+symptom-only template narratives; historical seed artifacts need no rewrite.
+
+Responder history exposes the existing packet's three observed count fields, without
+hidden work/contribution weights. Equipment exposes issueClasses A/B/C and the count of
+supplied cutoff-filtered cases (no unstated time window). Legacy/missing-procedure cases
+remain searchable, with unknown first-time-fix and no fix-evidence contribution. Fix
+safety metadata is authoritative public catalog data; certifications come from a separate
+id-seeded RNG namespace independent of skill. N2 filters qualification only: approval,
+prerequisite confirmation, hazard policy and the investigator loop remain N3a work.
+
+Tool envelopes enforce ten total top-level rows and 8192 UTF-8 bytes, dropping whole rows
+and flagging truncation. The later loop must treat truncation under its fallback policy;
+it must never turn omitted case detail into evidence. Narrative text remains untrusted.
+Offline history generation adds deterministic noisy reports inside the mutation before
+retention, using the same hook for memory and durable stores and no model calls.
