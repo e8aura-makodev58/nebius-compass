@@ -58,7 +58,10 @@ test("Live: an override selection is stable across poll ticks", async ({ page })
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Live Simulation" }).click();
   await page.getByRole("button", { name: "Reset", exact: true }).click();
-  await page.getByRole("button", { name: "Resume" }).click();
+  // perform() ignores clicks while another room action is in flight; wait for Reset to land.
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
+  await page.locator("#pause-resume-button").click();
+  await expect(page.locator("#pause-resume-button")).toHaveText("Pause");
   await page.getByRole("button", { name: /ISS-10/ }).first().click();
   await expect(page.locator("#recommendation-panel")).toContainText("Offer sent to", { timeout: 60_000 });
 

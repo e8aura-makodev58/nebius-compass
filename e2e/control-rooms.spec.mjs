@@ -94,7 +94,7 @@ test("two simultaneous browser contexts in different rooms never see each other'
   await expect(page1.locator("#simulation-status")).toHaveText("Paused");
   await expect(page2.locator("#simulation-status")).toHaveText("Paused");
 
-  await page1.getByRole("button", { name: "Resume" }).click();
+  await page1.getByRole("button", { name: "Resume", exact: true }).click();
   await expect(page1.locator("#simulation-status")).toHaveText("Running");
 
   // Give plant-2's own poll loop time to have picked up a change if there
