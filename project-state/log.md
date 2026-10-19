@@ -543,3 +543,12 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] measurement — Live investigator evaluation run 3 (after security fixes)
 - 24/24 outcome classes, citations 60/60, 0 certification inconsistencies, abstention 8/8, policy 6/6; raw invalid 2 (run 2: 4); p50 10.5 s. `docs/evaluation.md`.
 - Pages updated: none.
+
+## [2026-10-19] ui — Wall display layout (E3) and provisional charts (E8) (round 22g)
+- Implemented CSS-only theme enhancements E3 and E8:
+  - E3: In `.display-mode` at wide viewports (≥1440px and ≥2200px), restructured Field reports, Staffing, Issues, and Event feed displays into balanced multi-column grids or constrained reading containers with enlarged typography (`1.05rem`–`1.35rem`) to eliminate excessive line measure while guaranteeing zero horizontal scroll (`overflow <= 0`).
+  - E8: Distinctly styled provisional/in-progress simulated period chart bars (`.period-bar.partial`) in Operational Analytics using reduced opacity (0.55), a diagonal hatched pattern (`repeating-linear-gradient`), a dashed rule border, and an explicit legend entry (`■ Complete   □ In-progress (provisional)`).
+- Verification: WCAG AA design-tokens-contrast test passed (2/2); hermetic `npm test` passed (448/448); full Chromium E2E suite passed (84/84) on port 3022. Captured 4 representative after-screenshots (256 KB total) in `docs/design/theme-review-2026-10/after/`. Preview and test ports released.
+- Pages updated: frontend/overview.md, log.md.
+
+

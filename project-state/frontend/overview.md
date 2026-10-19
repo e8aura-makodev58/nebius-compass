@@ -101,13 +101,16 @@ as a disabled "above recommended" option until the operator lowers it.
 
 A control room can put each panel on its own monitor. `/rooms/:id/display/:screen` shows
 one panel full screen (`DISPLAY_SCREENS` in `app.js`: `map`, `issues`, `events`,
-`dispatch`, `analytics`, `pareto`, `staffing`), with the room's simulated clock, run state and agent activity,
+`dispatch`, `analytics`, `pareto`, `staffing`, `investigation`), with the room's simulated clock, run state and agent activity,
 and none of the console controls (view tabs, mode, speed, pause, reset, search). It is
 the same page and state as the console, so panels stay interactive. Tiling is not
 started on a display screen. An unknown screen name falls back to the console. The
 console's **Screens** menu (next to Find in Control Room) opens each screen in a new
 window. Layout rules are in `layout.css` under `.display-mode`; `e2e/display-screens.spec.mjs`
-covers each screen at 1920×1080.
+covers each screen at 1920×1080. At wide viewports (≥1440px and ≥2200px), wall displays
+for Field reports, Staffing, Issues and Event feed use multi-column grids or constrained containers
+with enlarged typography to prevent excessive single-line measures at reading distance while
+guaranteeing zero horizontal scroll.
 
 ## Issue Pareto
 
@@ -214,3 +217,5 @@ known estimated spend/calls, per-role call/input/output token table, daily budge
 Unpriced calls mark estimates incomplete. The same block remains visible to tunnel visitors;
 it adds no editable controls and reuses settings/evidence-table styles. Usage is loaded with
 the settings snapshot; saving a model/credential retains the last displayed usage snapshot.
+
+In Operational Analytics period charts, provisional/in-progress simulated periods (`.period-bar.partial`) are distinguished from completed periods via reduced opacity (0.55), a diagonal hatched pattern (`repeating-linear-gradient`), a dashed rule border, and an explicit legend entry (`■ Complete   □ In-progress (provisional)`).

@@ -112,10 +112,30 @@ body.busy button { cursor: wait; }
 .period-bar.insufficient { border-left-style: dashed; }
 .period-bar.insufficient span { opacity: .3; }
 .period-bar span { display: block; width: 100%; min-height: 4px; border-radius: 4px 4px 0 0; background: var(--accent); }
-.period-bar.partial span { border: 1px dashed var(--paper-raised); opacity: .65; }
+.period-bar.partial { background: var(--paper-sunk); }
+.period-bar.partial span {
+  opacity: .55;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.45) 0,
+    rgba(255, 255, 255, 0.45) 4px,
+    transparent 4px,
+    transparent 8px
+  ) !important;
+  border: 1px dashed var(--rule-strong);
+}
+.period-bar.partial small { color: var(--ink-2); font-weight: 500; }
 .period-bar strong, .period-bar small { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: .66rem; overflow-wrap: normal; word-break: normal; }
 .period-bar small { color: var(--ink-2); white-space: normal; }
 .period-bar time { white-space: nowrap; }
+.period-chart > small { display: flex; flex-direction: column; gap: 8px; align-self: end; }
+.period-chart > small::after {
+  content: "■ Complete   □ In-progress (provisional)";
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .02em;
+}
 @media (min-width: 901px) {
   .period-chart { grid-template-columns: minmax(130px, .2fr) minmax(0, 1fr); column-gap: 18px; }
   .period-chart > .period-bars { grid-column: 2; grid-row: 1 / span 2; }
