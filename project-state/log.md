@@ -328,3 +328,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — Main agent runs from its own worktree
 - The user named Claude the main agent and runs its session in `/home/makodev58/nebius-compass-claude` (branch `claude`). `/home/makodev58/nebius-compass` stays on `master` as the integration checkout, used by the main agent only via `git -C` and suite runs, for assignments, merges (its own `claude` branch included) and the merge log. `AGENTS.md` rule 10, the `handover.md` role table, main-agent protocol, Ports/Watcher/Current-task rows, and `~/aura-harness/aura-harness.md` updated.
 - Pages updated: none (agent protocol only).
+
+## [2026-10-19] docs — Nebius hackathon plan
+- `docs/nebius/04_HACKATHON_PLAN.md` (draft v1): audit of the baseline `1e1c69c`, the new feature (Compass Investigator: Nemotron tool-using investigation with citations, safety gate, abstention and operator-approved dispatch), model tiering, evaluation harness, work packages N0–N9 with owners, risks and user blockers. Out for codex review.
+- Pages updated: none (plan only).
