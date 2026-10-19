@@ -11,7 +11,7 @@ merges finished work into `master`, and archives merged handoffs to
 | Main agent (Claude, user 2026-10-19): session and own work | `/home/makodev58/nebius-compass-claude` | `claude` |
 | Main agent: integration checkout (merges, assignments, merge log) | `/home/makodev58/nebius-compass` | `master` |
 | Codex | `/home/makodev58/nebius-compass-codex` | `codex` |
-| Gemini (**excluded from tasks** since 2026-10-17) | `/home/makodev58/nebius-compass-gemini` | `gemini` |
+| Gemini (back 2026-10-19, Gemini 3.8 Flash, light tasks) | `/home/makodev58/nebius-compass-gemini` | `gemini` |
 | CodeBuddy (**excluded from tasks** since 2026-10-17) | `/home/makodev58/nebius-compass-codebuddy` | `codebuddy` |
 
 ## Protocol
@@ -74,7 +74,7 @@ Each agent tests on **its own ports only** and frees them **immediately** after 
 |---|---|---|
 | main agent (integration checkout, `master`) | 3012 (default) | 3013 |
 | codex | 3021 | 3121 |
-| gemini | 3022 (excluded) | 3122 (excluded) |
+| gemini | 3022 | 3122 |
 | codebuddy | 3023 (excluded) | 3123 (excluded) |
 | claude (main agent's own work) | 3024 | 3124 |
 
@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | RUN (round 20) |
-| gemini | STOP (excluded from tasks) |
+| gemini | RUN (round 20g) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | Security and correctness review of the investigator path | 20 |
-| gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
+| gemini | Theme review and enhancement plan (docs only) | 20g |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
 
@@ -1005,6 +1005,47 @@ only: write findings, change no code.
   a concrete exploit or failure scenario, and a proposed fix. Mark anything you could not
   confirm as such. Fill your section, commit, then set `READY FOR MERGE`. Docs only; no
   suites needed.
+
+**Round 20g (2026-10-19) — gemini: review the current theme and plan enhancements.** Welcome
+back. The user re-enabled you for light tasks. **Start your own watcher** (poll
+`git show master:handover.md` every 300 s; act when your Current task row changes; stop
+per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on branch
+`gemini` (`AGENTS.md` rules 10–11); start with `git merge master` and `npm install`.
+
+- **gemini — theme review and enhancement plan (docs only, no code changes).**
+  - **Read first:** `docs/design/modern-light.md`, `docs/design/operational-ui-refinement.md`,
+    `frontend/tokens.css`, `frontend/investigation.css`, `project-state/frontend/overview.md`.
+  - **Look at the running app.** Start a preview server on **port 3122 only**:
+    `NODE_ENV=test COMPASS_HOST=127.0.0.1 COMPASS_PORT=3122
+    COMPASS_CONTROL_ROOMS_DATA_ROOT=/tmp/compass-gemini-preview
+    COMPASS_EVENT_PLANNER_MODE=force-failure COMPASS_LIVE_COMPASS_MODE=force-failure
+    node backend/src/server.mjs`.
+    Screenshot it with Playwright (Chromium needs
+    `LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu`) at 375,
+    1280 and 1920 px:
+    - Live Floor;
+    - the Field reports tile (submit a report, e.g. "Station 7 output keeps drifting",
+      confirm it, open the investigation);
+    - Analytics;
+    - Settings → API and Demo;
+    - one wall display (`/rooms/plant-1/display/investigation`).
+
+    **Stop the server when done** and check port 3122 is free. Never bind 3000 or 3200.
+  - **Write `docs/design/theme-review-2026-10.md`** containing:
+    1. What works, briefly.
+    2. Numbered issues, each with severity, screen/width, the selector or file:line, the
+       screenshot path and a concrete fix (token, CSS rule or markup change). Look for
+       contrast (WCAG AA), hierarchy, density, consistency between the new Field reports tile
+       and older tiles, phone usability, focus states and visual noise.
+    3. An enhancement plan of 5–10 items, ordered by value/effort. Mark which are CSS-only.
+       Keep the existing modern light direction: no new fonts, frameworks or CDNs (the app
+       must work offline).
+  - Commit the screenshots you reference under `docs/design/theme-review-2026-10/`. Keep
+    them few and compressed, under 3 MB total.
+  - Fill your `## gemini` section, commit to `gemini` and set `READY FOR MERGE`. No suites
+    needed (docs and images only); say so.
+  - **Do not touch:** `frontend/`, `backend/`, `e2e/`, `handover.md` outside your section,
+    `backend/data/`, other worktrees. No live provider calls.
 
 ### Merge log
 
