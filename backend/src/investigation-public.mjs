@@ -27,7 +27,7 @@ export function investigationDTO(row, {summary=false}={}) {
 }
 export function reportDTO(row) {
   return {id:row.id,status:row.status,origin:row.origin ?? 'FIELD_REPORT',narrationStatus:row.narrationStatus ?? null,narrativeSource:row.narrativeSource ?? 'operator',narrative:row.narrative,flags:{hazard:[...row.flags.hazard],injection:[...row.flags.injection],input:row.flags.input},revision:row.revision,
-    interpretation:{status:row.interpretation.status,source:row.interpretation.source,model:row.interpretation.model?{modelId:row.interpretation.model.modelId}:null,
+    interpretation:{status:row.interpretation.status,...(row.interpretation.fallbackReason?{fallbackReason:row.interpretation.fallbackReason}:{}),source:row.interpretation.source,model:row.interpretation.model?{modelId:row.interpretation.model.modelId}:null,
       options:row.interpretation.options.map((o)=>({optionId:o.optionId,equipmentId:o.equipmentId,equipmentName:o.equipmentName,issueClass:o.issueClass,symptomCode:o.symptomCode,symptomText:o.symptomText,rationale:o.rationale}))}};
 }
 export function publicInvestigationState(state) {

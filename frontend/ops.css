@@ -22,3 +22,8 @@
 .settings-role-grid legend { padding: 0 6px; font-size: .94rem; font-weight: 600; }
 .settings-role-grid button { width: fit-content; }
 @media (max-width: 700px) { .settings-role-grid { grid-template-columns: 1fr; } .settings-connection, .settings-role-grid fieldset { padding: 16px; } .settings-connection .panel-title { flex-wrap: wrap; } }
+
+.settings-usage { min-width: 0; }
+.settings-usage .evidence-scroll { min-width: 0; max-width: 100%; margin-top: 0; }
+.settings-usage .analytics-table { min-width: 0; }
+.settings-usage th, .settings-usage td { overflow-wrap: anywhere; }

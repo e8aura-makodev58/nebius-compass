@@ -261,8 +261,9 @@ function buildFixtureResult(candidatePacket) {
   return { ...fixture, recommendationRequestId: candidatePacket.recommendationRequestId };
 }
 
-async function callLiveModel(candidatePacket, { provider, modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl, onMetadata }, validationErrors) {
+async function callLiveModel(candidatePacket, { provider, modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl, onMetadata, usageLedger }, validationErrors) {
   return callChatCompletion({
+    role: 'compass', usageLedger,
     provider,
     modelId,
     apiKey,
@@ -311,6 +312,7 @@ export async function requestAgentRecommendation(candidatePacket, options = {}) 
       const timeoutMs = options.timeoutMs ?? (Number.parseInt(process.env.COMPASS_AGENT_TIMEOUT_MS, 10) || DEFAULT_TIMEOUT_MS);
       const deadline = now() + timeoutMs;
       const callOptions = {
+        usageLedger: options.usageLedger,
         provider,
         modelId,
         apiKey: options.apiKey ?? readProviderApiKey(provider),
@@ -329,7 +331,7 @@ export async function requestAgentRecommendation(candidatePacket, options = {}) 
       if (!valid) return { status: "unavailable", reason: "validation-failed", errors, modelInfo };
       return { status: "ok", result: raw, modelInfo };
     } catch (error) {
-      const reason = error.code === "model-not-configured" ? "model-not-configured" : error.name === "AbortError" ? "timeout" : "provider-error";
+      const reason = error.code === "budget-exhausted" ? "budget-exhausted" : error.code === "model-not-configured" ? "model-not-configured" : error.name === "AbortError" ? "timeout" : "provider-error";
       return { status: "unavailable", reason, message: error.message, modelInfo };
     }
   }

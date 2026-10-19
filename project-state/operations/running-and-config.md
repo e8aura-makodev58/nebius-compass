@@ -182,3 +182,17 @@ are not installed into existing rooms automatically; see `backend/seed/INVESTIGA
 
 `COMPASS_NARRATOR_MODE` overrides the narrator execution mode; absent it, the runtime uses
 `COMPASS_LIVE_COMPASS_MODE`, then live. Forced failure/fixture paths use templates without API calls.
+
+## Judge-period daily token budget
+
+`COMPASS_DAILY_BUDGET_USD` is unset/0 by default (unlimited). Set a positive USD estimate in
+the server environment and restart to limit new live inference after known spend reaches
+that amount per UTC day. Negative/non-finite values fail configuration. In-flight work
+finishes, then calls resume next UTC day; budget rejection uses deterministic fallback.
+Prices come from the fixed Nebius table; unknown prices and missing usage cannot provide a
+complete cost cap. Settings → API reports known estimated spend and unpriced calls explicitly.
+
+Deployment-global `provider-usage.json` is persisted in the data root with 120-day retention
+and atomic owner-only writes. Back it up with other deployment state; do not edit it through
+public settings. No prompt/response text is retained. GET /api/settings usage is readable by
+tunnel visitors, while budget configuration remains server-managed. See model-providers.md.

@@ -120,3 +120,7 @@ not hold the Live agent lane. See [investigation.md](investigation.md).
 `replay-runner.mjs` builds public rolling-origin evaluation states and paired cohorts;
 `replay-outcome-runner.mjs` is the engine-only private counterfactual boundary. Neither
 writes runtime state. See investigation.md and docs/evaluation.md for the first-fix method.
+
+`provider-usage.mjs` owns the deployment-global daily provider/model/role token and estimated
+cost ledger, 120-day atomic persistence, UTC budget gate and one-per-day exhaustion audit.
+All chat transports share it; see model-providers.md for accounting boundaries and settings API.

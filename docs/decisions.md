@@ -1154,3 +1154,19 @@ fallbacks/timeouts, exclusions, source hashes and paired denominators are retain
 measurement belongs to the main agent; no result numbers or improvement claim accompany this
 method-only change. The existing month remains the cohort; the unattended policy candidate
 from N3b remains separate.
+
+## 2026-10-19 — Daily budget over reported provider usage, with explicit incomplete estimates
+
+Account at the shared HTTP-attempt boundary before validating returned prose/tools, so
+billable usage on truncation, invalid outputs, repairs and retries is not omitted. Store
+only daily provider/model/role token aggregates in one deployment ledger; no prompts or
+responses. Known Nebius prices come from the N0 facts table. Unknown models and partial
+usage remain unpriced; known spend is preserved separately, never reset by missing prices.
+
+COMPASS_DAILY_BUDGET_USD is env-only and defaults unlimited. Check before queueing and again
+before fetch; in-flight calls finish, then deterministic fallbacks preserve budget-exhausted.
+This is an estimate-based application control, not a provider hard cap or a claim that
+unknown-model calls cost nothing. UTC completion-day accounting and 120-day retention bound
+persistence; serialized atomic writes and a durable daily log flag survive restart. Settings
+exposes these aggregates read-only to judges, including tunnel visitors, without granting
+budget/configuration authority. Hermetic test workers use memory/scratch ledgers only.

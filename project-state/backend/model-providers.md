@@ -117,3 +117,44 @@ fetch stubs; fixture and forced-failure modes do not read credentials or call pr
 provider controls and a bounded deadline. Only ObservableDTO enters its prompt. Validated
 narratives are marked simulated; invalid/unavailable output uses a deterministic template.
 Offline and forced failures do not read credentials or fetch. See investigation.md.
+
+## Deployment usage ledger and daily budget
+
+`provider-usage.mjs` aggregates calls with returned usage by UTC completion day, provider,
+model and configured role. Fix/staffing/interpretation ranking use compass; investigator,
+planner and narrator use their own roles. `model-provider.mjs` records each HTTP attempt
+before content/tool/schema validation, including truncated replies and HTTP errors that
+return usage. Retries and repair/tool turns count separately. No reported usage means no
+invented token count or cost. Discovery GETs do not return billed chat usage.
+
+The in-code price table uses `docs/nebius/05_TOKEN_FACTORY_FACTS.md`: Ultra 1/3, Super and
+Super-VL .30/.90, Lightning/Nano .06/.24 USD per million input/output tokens. Unknown models
+(including AMD without a verified price) and partial token reports retain counts with cost
+null. `knownCostUsd` preserves priced spend even when other costs are missing; nanodollar
+rounding avoids small-increment budget undercount. These are estimates, not billing records.
+
+The deployment-global `provider-usage.json` lives in COMPASS_DATA_DIR/default data root,
+uses serialized owner-only atomic/fsynced replacements and retains at most 120 UTC days.
+Only allowlisted aggregate fields are persisted; prompts, responses, credentials, request
+IDs and room data are absent. Corrupt accounting fails closed before fetch; a failed write
+keeps dirty in-memory counters and must persist before another request starts. The runtime
+has one shared ledger and one application writer per data root, matching the other JSON
+stores; this is not a multi-process provider-account meter. Node unit workers use an in-memory default and explicit scratch-file
+ledger injection tests persistence. Browser tests use their isolated data root.
+
+`COMPASS_DAILY_BUDGET_USD` defaults to 0/unlimited; invalid/negative values fail configuration.
+The limit uses today's known estimated spend. New live turns are checked before queueing and
+again immediately before each fetch, covering queued turns/retries. In-flight calls finish
+and can exceed the limit; missing/unknown prices cannot be capped from token estimates.
+Usage arriving after midnight belongs to the new UTC day, which automatically resumes calls.
+`provider_budget_exhausted` is logged once per day with a durable flag, including across
+restart. This local estimate does not reserve future cost or impose a provider account cap.
+
+Budget rejection has code budget-exhausted. Ranking failureReason/reason, investigator
+fallbackReason, report interpretation fallbackReason, planner fallback event payload and
+narrator fallback event reason preserve that label while deterministic paths remain usable.
+GET /api/settings includes public `usage:{today,last7Days,budgetUsd,exhausted}` even on the
+read-only tunnel. Daily entries include totals and byRole/byModel arrays, estimatedCostUsd
+(null when incomplete), knownCostUsd and unpricedCalls. Settings API shows a read-only Usage
+block with today's estimate, per-role calls/input/output tokens, budget and fallback status.
+Budget changes are env-only; the existing settings write endpoints cannot alter the ledger.

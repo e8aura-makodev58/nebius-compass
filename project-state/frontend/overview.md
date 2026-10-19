@@ -203,3 +203,9 @@ headline rates show an em dash with the unchanged explanation and denominator be
 API settings separate shared credentials from side-by-side role cards, stacking on narrow
 screens. The shell shows the current room identity without extra directory requests and honours reduced motion. Simulation,
 approval, metric and API semantics are unchanged.
+
+Settings → API's existing renderer now includes a read-only Usage block: UTC date, today's
+known estimated spend/calls, per-role call/input/output token table, daily budget and status.
+Unpriced calls mark estimates incomplete. The same block remains visible to tunnel visitors;
+it adds no editable controls and reuses settings/evidence-table styles. Usage is loaded with
+the settings snapshot; saving a model/credential retains the last displayed usage snapshot.

@@ -1265,7 +1265,24 @@ function renderSpeedOptions(speed) {
 }
 function reasoningEffortsFor(providerId, modelId) { return (discoveredModelsByProvider[providerId] ?? []).find((model) => model.id === modelId)?.reasoningEfforts ?? null; }
 
+let latestSettingsUsage = null;
+function renderUsage(usage) {
+  if (!usage?.today) return '<section class="settings-connection settings-usage" aria-label="Usage"><h3>Usage</h3><p class="workflow-prompt">Usage is unavailable.</p></section>';
+  const money = (value) => `$${Number(value ?? 0).toFixed(4)}`;
+  const today = usage.today;
+  const rows = SETTINGS_ROLES.map(({role,label}) => {
+    const row = today.byRole?.find((item) => item.role === role);
+    return `<tr><td>${label}</td><td>${row?.calls ?? 0}</td><td>${row?.promptTokens ?? 0}</td><td>${row?.completionTokens ?? 0}</td></tr>`;
+  }).join('');
+  return `<section class="settings-connection settings-usage" aria-label="Usage"><h3>Usage</h3>
+    <p class="workflow-prompt">${escapeHtml(today.day)} UTC · ${today.unpricedCalls ? 'Known estimated spend' : 'Estimated spend'} ${money(today.knownCostUsd)} · ${today.calls} calls</p>
+    <p class="workflow-prompt">Daily budget: ${usage.budgetUsd > 0 ? money(usage.budgetUsd) : 'Unlimited'} · ${usage.exhausted ? 'Budget exhausted — deterministic fallback' : usage.budgetUsd > 0 ? 'Within daily budget' : 'No daily budget limit'}</p>
+    ${today.unpricedCalls ? `<p class="workflow-prompt">${today.unpricedCalls} unpriced calls; the cost estimate is incomplete.</p>` : ''}
+    <div class="evidence-scroll"><table class="analytics-table"><thead><tr><th>Role</th><th>Calls</th><th>Input tokens</th><th>Output tokens</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </section>`;
+}
 function renderSettings(settings) {
+  latestSettingsUsage = settings.usage ?? latestSettingsUsage;
   if (Array.isArray(settings.models) && settings.models.length) discoveredModelsByProvider[settings.provider] = settings.models;
   if (!selectedProviderId || !(settings.providers ?? []).some((provider) => provider.id === selectedProviderId)) selectedProviderId = settings.provider;
   const offline = currentState && currentState.mode !== "LIVE";
@@ -1310,7 +1327,7 @@ function renderSettings(settings) {
     ${credentialSource}
     <label class="settings-field">Provider<select id="settings-provider">${providerOptions}</select></label>
     <button id="settings-refresh-models" type="button" class="secondary-button" ${offline ? "disabled" : ""}>${offline ? "Switch to Live Simulation to discover models" : "Refresh available models"}</button>
-    </section><div class="settings-role-grid">${rolePickers}</div>
+    </section>${renderUsage(latestSettingsUsage)}<div class="settings-role-grid">${rolePickers}</div>
     <p id="settings-feedback" class="workflow-prompt" aria-live="polite"></p>
   </section>`;
   // The server refuses settings changes from tunnel visitors; show that instead of

@@ -272,14 +272,18 @@ for (const shape of ["object", "function"]) test(`with a live provider (${shape}
   let release;
   const gate = new Promise((resolve) => { release = resolve; });
   let plannerCalls = 0;
+  let signalStarted;
+  const started = new Promise((resolve) => { signalStarted = resolve; });
   // A planner that is slow and then unavailable: the deterministic fallback creates the event.
-  const fetchImpl = async () => { plannerCalls += 1; await gate; throw new TypeError("network unavailable"); };
+  const fetchImpl = async () => { plannerCalls += 1; signalStarted(); await gate; throw new TypeError("network unavailable"); };
   // Rooms pass options as functions over the saved settings; both shapes must queue.
   const planner = { mode: "live", apiKey: "hermetic-test", fetchImpl, timeoutMs: 5_000 };
   const runtime = createLiveRuntime({ store, plannerOptions: shape === "function" ? async () => planner : planner, agentOptions: { mode: "force-failure" } });
   const before = (await store.snapshot()).issues.length;
   const forced = await Promise.race([runtime.forceNextEvent().then(() => "returned"), new Promise((resolve) => setTimeout(() => resolve("blocked"), 1_000))]);
   assert.equal(forced, "returned");
+  // The durable budget preflight may still be pending when the HTTP action returns.
+  assert.equal(await Promise.race([started.then(() => "started"), new Promise((resolve) => setTimeout(() => resolve("blocked"), 1_000))]), "started");
   assert.equal(plannerCalls, 1);
   release();
   await runtime.agentWorkIdle();
