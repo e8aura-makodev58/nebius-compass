@@ -336,6 +336,11 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — Apache-2.0 licence; plan risks updated
 - `LICENSE` (Apache-2.0) and `package.json` `license` added after the user confirmed ownership. Plan §6 and `docs/BASELINE_AND_CHANGES.md` record the user's answers (licence, AMD exclusivity not a concern, Nebius key later, GitHub login in progress); decision entry in `docs/decisions.md`.
 - Pages updated: none.
+
 ## [2026-10-19] docs — Codex review of Nebius hackathon plan
 - Added a one-pass, evidence-backed review covering authority/privacy, approval, safety, replay isolation, scope, ownership and objective acceptance criteria. No implementation behavior changed.
 - Pages updated: `docs/nebius/04_HACKATHON_PLAN_REVIEW.md`, Codex section of `handover.md`; no component wiki changes required.
+
+## [2026-10-19] docs — Nebius plan v2
+- `docs/nebius/04_HACKATHON_PLAN.md` v2 accepts codex's twelve review findings: field reports stay unresolved until code-built interpretations are confirmed by the operator; one dispatch gate on every assignment path; allowlisted DTOs with noninterference/canary/perturbation tests; public synthetic certifications; code-owned hazard/injection policy and safety prerequisites; explicit evidence grades, budgets and `asOf` cutoff; paired first-fix replay; file ownership, go/no-go gates and cut order.
+- Pages updated: none (plan only).

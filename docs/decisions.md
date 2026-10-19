@@ -981,3 +981,17 @@ Existing running attempts retain legacy actions and are labelled separately in t
   (`docs/BASELINE_AND_CHANGES.md`).
 - The Nebius API key arrives later. Until then provider work is built against the
   OpenAI-compatible API with hermetic fake-fetch tests, and model IDs are not guessed in code.
+
+## 2026-10-19 — Investigator: models rank interpretations, they do not classify (plan v2, R1)
+
+- Conflict: the hackathon guide (§4) gives "parse narrative symptoms and classify likely issue
+  types" to Nemotron. Rule 3 keeps facts with application code.
+- Decision: a field report stays an unresolved `FieldReport`. Code builds the allowed
+  interpretation options (equipment × catalog class/symptom); the model only ranks those
+  option ids; the operator confirms before code creates the issue with deterministic
+  priority. For simulated issues the engine's observable facts stay authoritative and the
+  investigator's classification is a recorded hypothesis only.
+- Also from the review: one dispatch gate on every assignment path for investigated issues;
+  explicit allowlisted DTOs (never spread state rows); public synthetic certifications seeded
+  independently of `ResponderSkill`; hazard and injection screening are code-owned, not model
+  roles. Rules 3 and 4 unchanged.

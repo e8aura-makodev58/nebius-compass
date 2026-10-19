@@ -1,244 +1,393 @@
 # ResponseCompass for Nebius x NVIDIA — Hackathon Plan
 
-**Status:** DRAFT v1 for codex review (main agent, 2026-10-19)
-**Track:** Best Apps and Agents
-**Deadline:** 2026-10-30 10:00 PT = **2026-10-31 01:00 SGT**. Internal code freeze for the
-submission build: **2026-10-28 23:59 SGT**; submission form filed by **2026-10-30 12:00 SGT**.
-**Inputs:** `01_HACKATHON_BRIEF.md`, `02_OFFICIAL_RULES.md`, `03_CODING_AGENT_GUIDE.md`,
-`AGENTS.md` (rules 3 and 4 win over the guide; conflicts go in `docs/decisions.md`).
+**Status:** v2 (main agent, 2026-10-19). Revised from codex's review
+(`04_HACKATHON_PLAN_REVIEW.md`, findings R1–R12, all accepted); each change cites its finding.
+**Track:** Best Apps and Agents.
+**Deadline:** 2026-10-30 10:00 PT = **2026-10-31 01:00 SGT**. Submission-build cutoff
+**2026-10-28 23:59 SGT**; form filed by **2026-10-30 12:00 SGT**. The cutoff fixes what the
+submission shows. It does not freeze product development (`AGENTS.md` rule 8) (R12).
+**Inputs:** `01_HACKATHON_BRIEF.md`, `02_OFFICIAL_RULES.md` (a transcription; the live rules
+page is authoritative), `03_CODING_AGENT_GUIDE.md`, `AGENTS.md`. Rules 3 and 4 win over
+the guide, and every conflict goes in `docs/decisions.md`.
 
-## 1. Audit summary (guide §3, §13.1)
+## 1. Audit summary
 
 **Repository facts.** Node.js ≥ 22, no framework: `backend/src/*.mjs` (HTTP server,
-simulation, model roles), vanilla-JS frontend in `frontend/` (Dockview tiling, vendored
-fonts), `node --test` hermetic suite (~55 files) and Playwright E2E (17 specs). Docker
-Compose deployment with an optional Cloudflare Tunnel. Synthetic, domain-neutral data only
-(issue classes A/B/C, responders `R-…`, equipment on two floors).
+simulation, model roles) and a vanilla-JS frontend in `frontend/` (Dockview tiling, vendored
+fonts). Tests: `node --test` over 54 files in `backend/tests/` (support files included) and
+Playwright over 17 files in `e2e/`. Docker Compose with an optional Cloudflare Tunnel.
+Synthetic, domain-neutral data: issue classes A/B/C, responders `R-…`, equipment on
+**three** floors (`context-engine.mjs:20–21`) (R12).
 
-**Provenance.** This repo's first commit `083fcd3` is dated 2026-10-16, inside the
-Submission Period (starts 2026-08-26 09:00 PT). It was seeded from
-`github.com/e8aura-makodev58/amd-compass` (remote `upstream`, push disabled), which was
-built for an AMD hackathon. **Baseline for the Nebius entry = `1e1c69c` (master,
-2026-10-19)**: everything after it is Nebius-entry work. We disclose the AMD-era work as
-pre-existing even though its commits are also inside the period, because the AMD submission
-used it and a judge must not mistake it for Nebius work.
+**Provenance.** Root commit `083fcd3` (2026-10-16), seeded from
+`github.com/e8aura-makodev58/amd-compass` (remote `upstream`, push disabled), which was built
+for an AMD hackathon. **Nebius baseline = `1e1c69c`.** We disclose the AMD-era work as
+pre-existing. Whether any public remote exists is **unverified** until an authorised
+`gh` check. Details: `docs/BASELINE_AND_CHANGES.md`.
 
 | Capability | State at baseline | Where |
 |---|---|---|
 | Model provider | AMD Token Factory only, OpenAI-compatible, JSON mode | `model-provider.mjs`, `provider-settings.mjs` |
 | Rate limit / 429 retry / circuit breaker | Implemented | `provider-controls.mjs` |
-| Incident ingestion | Partial: model-proposed events with short fixed descriptions; **no free-text narrative intake** | `event-planner.mjs` |
-| Historical lookup | Partial: aggregate fix evidence per symptom/class/equipment; **no case-level retrieval or citations** | `fix-evidence.mjs` |
-| Responder eligibility + ranking | Implemented (deterministic eligibility, model ranks) | `context-engine.mjs`, `agent.mjs` |
-| Fix recommendation | Implemented (rank catalog fixes from aggregate evidence) | `fix-ranking.mjs` |
+| Incident narratives | Partial: the event planner already generates bounded symptom/action prose (`event-planner.mjs:17`). **Absent:** operator free-text intake and investigation (R12) | `event-planner.mjs` |
+| Historical lookup | Partial: aggregate fix evidence per symptom/class/equipment. **No case-level retrieval or citations** | `fix-evidence.mjs` |
+| Responder eligibility | Eligibility = **availability only** (`context-engine.mjs:52–54`). No certifications (R5, R12) | `context-engine.mjs` |
+| Responder ranking | Implemented (model ranks the eligible set) | `agent.mjs` |
+| Fix recommendation | Implemented (ranks catalog fixes from aggregate evidence) | `fix-ranking.mjs` |
 | Overtime with human approval | Implemented | `staffing-*.mjs` |
-| Dispatch approval | **Absent**: offers go out automatically; operator can only override | `live-assignment-service.mjs` |
-| Safety constraints on actions | **Absent**: catalog has no safety flags/prerequisites | `fix-catalog.mjs` |
-| Abstain / escalate | **Absent** (fallback ≠ abstention) | — |
+| Dispatch approval | **Absent**: offers go out automatically, and the operator can only override | `live-assignment-service.mjs` |
+| Action safety data | **Absent**: catalog rows are `id/title/steps` only (`fix-catalog.mjs:29–40`) | `fix-catalog.mjs` |
+| Abstain / escalate | **Absent**. A fallback is not an abstention | — |
 | Tool-using agent | **Absent**: single-shot ranking calls only | — |
-| Replay evaluation harness | Partial: `evaluation.mjs` baselines, `measure-amd-models.mjs` validity only | `scripts/` |
-| Public repo, LICENSE, HACKATHON_CHANGES | **Absent** | — |
+| Evaluation | Partial: `evaluation.mjs:41–91` is a deterministic assignment soak/baseline comparison, not a fix counterfactual; `measure-amd-models.mjs` checks validity only (R12) | `backend/src/evaluation.mjs`, `scripts/` |
+| LICENSE | Added 2026-10-19 (Apache-2.0, ownership confirmed by the user) | `LICENSE` |
+| HACKATHON_CHANGES, public README sections | **Absent** | — |
 
-## 2. The significant new feature (guide §2, §13.2)
+## 2. The significant new feature
 
-**Compass Investigator: a Nemotron tool-using incident investigation agent with evidence
-citations, safety gating, abstention, and operator-approved dispatch.**
+**Compass Investigator.** A Nemotron tool-using investigation of free-text field reports,
+with evidence citations, a code-owned safety gate, abstention, and operator-approved dispatch.
 
-A field report arrives as free text ("line 2 transfer keeps stalling after restart, smells
-hot, tried clearing it twice"). Nemotron on Nebius Token Factory investigates it with
-read-only tools the application owns, then returns a structured, cited investigation:
-classification into the catalog's issue class and symptom, hypotheses tied to case IDs, a
-first **safe** corrective action from the catalog with alternatives, and the ranked
-eligible responders. Code validates every claim against the tool results. If evidence is
-thin, contradictory or unsafe, the agent **abstains or escalates** instead of guessing. The
-control room approves, edits, escalates or rejects; the decision and later outcome feed
-the audit and the evaluation.
+A field report arrives as untrusted text. Code resolves what it can (equipment, priority,
+allowed interpretations). Nemotron on Nebius Token Factory investigates with read-only,
+allowlisted tools and returns a structured investigation:
+- the supplied interpretation options, ranked;
+- observable hypotheses with evidence references;
+- the catalog fixes, ranked, with their procedure text quoted verbatim;
+- the eligible, qualified responders, ranked.
 
-Why it passes Stage One: it is new, user-visible behaviour (narrative intake, multi-step
-tool use, citations, safety gate, abstention, dispatch approval, replay evaluation), not a
-provider swap; every step runs on NVIDIA Nemotron through Token Factory at runtime; the
-deterministic/model boundary the judges score under "Quality of Idea" is the product's
-core. Provider migration is a prerequisite, not the claim.
+Code validates the output, applies safety and abstention rules, and the operator approves,
+escalates or rejects. Nothing is dispatched for a field report without an approval record.
 
-### Model tiering (track text: Ultra for reasoning, Nano/Super for fast calls)
+**Why it is meant to satisfy Stage One** (the judges decide) (R12):
+- It is new user-visible behaviour: intake, multi-step tool use, citations, safety, abstention, approval and evaluation.
+- The investigation, ranking and explanation steps run on NVIDIA Nemotron through Token Factory at runtime.
+- Validators and the deterministic fallback are application code. We say so plainly: we do not claim that "every step runs on NVIDIA".
 
-| Role | Default tier | Calls |
+### Model tiering
+
+| Role | Default tier | Calls per use |
 |---|---|---|
-| Investigator (multi-step tool loop) | Nemotron 3 **Ultra** | 1 per reported incident, ≤ 6 steps |
-| Narrative triage (intake normalisation, injection screening) | Nemotron **Nano** | 1 per report |
-| Responder / fix / staffing ranking | Nemotron **Super** | existing roles |
-| Event planner + synthetic narrative generator | Nemotron **Nano** | existing role + new |
+| Investigator (tool loop) | Nemotron 3 **Ultra** (Super if N0 shows Ultra too slow) | ≤ 6 tool steps + 1 final + 1 repair = **≤ 8 inference calls**, one shared deadline (§3.6) |
+| Responder / fix / staffing ranking, interpretation ranking | Nemotron **Super** | existing roles, 1 call + ≤ 1 repair |
+| Event planner, simulated narrative writer | Nemotron **Nano** | existing role + new |
 
-Exact model IDs, context limits, tool-calling and JSON/structured-output support, and the
-thinking toggle are **verified live from `GET /v1/models` and probe calls before any ID is
-committed** (guide §5). No guessed IDs in code: defaults live in one table in
-`model-provider.mjs` filled from the probe, overridable by env and Settings.
+There is no separate Nano "triage" role. Hazard and injection screening are code-owned
+(§3.4), and interpretation ranking is a Super ranking call (R5, R8). Model IDs, licences, context
+and rate limits, prices, tool-calling and structured-output support, and the thinking toggle
+come from **official Nebius documentation plus live `/v1/models` and probe calls**, recorded
+with links in `docs/nebius/05_TOKEN_FACTORY_FACTS.md` (N0) before any default is committed
+(R11). Until then, defaults are env-required, never guessed.
 
-## 3. Architecture (guide §4)
+## 3. Contracts (frozen before N2; codex owns their code, main consumes them)
 
-```text
-Field report (operator form, or simulated report from the narrative generator)
-  → intake: length/charset limits, store raw text as untrusted data       [code]
-  → triage: Nano → {issueClass?, symptomCode?, equipmentId?, flags}       [model, validated]
-  → investigator loop: Ultra + read-only tools                            [model proposes, code executes]
-       search_cases · get_case · equipment_history · fix_catalog ·
-       fix_evidence · eligible_responders
-  → final report: schema + citation + safety + numeric-claim validation   [code]
-       fail → one bounded repair → else deterministic investigation / ABSTAIN
-  → pending recommendation on the issue: approve · edit · escalate · reject [human]
-  → on approve: dispatch the approved responder with the approved fix      [code]
-  → outcome from the simulation engine; audit + feedback                    [code]
-```
+### 3.1 Authority over facts (R1)
 
-Boundary rules (rules 3 and 4, recorded in `docs/decisions.md`):
+- **Operator field report** → a persisted `FieldReport` (`FR-…`, status `UNRESOLVED`). It is
+  **not** an issue yet. Code builds the **interpretation options**: candidate equipment
+  (an explicit pick, or a lexical match of equipment ids/names in the text, else the
+  operator picks from the registry) × catalog `(issueClass, symptomCode)` pairs for that
+  equipment, at most 12. The model ranks only those option ids. The **operator confirms**
+  the equipment, class and symptom (top option, another option, or a manual pick). Only then
+  does code create the issue, with deterministic priority, and start the investigation. The
+  model never creates facts.
+- **Simulated report** (the event planner creates the issue as today) → engine-owned
+  equipment/class/symptom stay authoritative. The Nano narrative writer adds
+  `reportNarrative` from the observable DTO (§3.3). The investigator's classification is a
+  **hypothesis**, recorded and scored against the observable symptom, never applied.
+- Decision entry: this narrows the guide's "Nemotron parses and classifies" to "Nemotron
+  ranks code-supplied interpretations; the operator confirms".
 
-- Tools are **read-only**, argument-validated (ids must exist, limits ≤ 10 results, step cap
-  6, total deadline), and return only observed facts. No tool exposes `ResponderSkill`,
-  the hidden fault cause, or fix effectiveness; the packet scanner from round 8 runs on every
-  tool result and every model message.
-- The model may only cite case IDs that a tool returned in this run, recommend fix IDs from
-  the issue class's catalog, and name responders from `eligible_responders`. Prose carries
-  no digits except supplied IDs (existing rule). Confidence is a **categorical evidence
-  grade** computed by code (`STRONG` / `MODERATE` / `THIN` / `NONE` from case counts and
-  agreement), never a model-reported percentage.
-- **Safety gate (new, code-owned):** each catalog fix gains `prerequisites` and
-  `safetyClass` (`ROUTINE` / `ISOLATION_REQUIRED` / `SPECIALIST_ONLY`). Code rejects a
-  recommendation whose first action is `SPECIALIST_ONLY` for a non-qualified responder, and
-  narrative flags (heat, smoke, injury, "bypass") force `ESCALATE`. Safety data is public
-  procedure data, not outcome truth.
-- **Abstention (code-owned thresholds):** `ABSTAIN` when classification is ambiguous
-  (triage and investigator disagree, or no catalog symptom matches), evidence grade `NONE`,
-  or no eligible responder; `ESCALATE` on safety flags or prompt-injection detection. The
-  model may *propose* abstention; code may *force* it; code never lets a low-evidence
-  recommendation through as confident.
-- **Prompt injection:** narratives are passed as quoted data in a dedicated field, tools
-  never execute narrative content, and output validation is the real contract.
-- **Human authority:** reported incidents never auto-dispatch. Room policy
-  `investigationApproval: OPERATOR` (default) | `AUTO_APPROVE_SAFE` (only for the history
-  generator and an explicit demo toggle; audited, labelled). Overtime stays on the round 9
-  approval path.
-- **Fallback:** provider down → deterministic investigation (lexical case match + existing
-  fix evidence + existing responder baseline), clearly labelled "deterministic", and still
-  subject to approval. Dispatch never stops.
+### 3.2 Dispatch gate (R2)
 
-### New data
+- New issue field `dispatchGate`: `OPEN` (legacy and planner-origin issues, unchanged
+  autonomous dispatch) or `INVESTIGATION` (every issue created from a field report, and
+  simulated issues sampled by room setting `investigationShare`, default 0.2, seeded).
+- One function, `assertDispatchAuthorized(state, issue, responderId, purpose)`, is called
+  inside **every** assignment path:
+  - offer creation (`offerNextCandidate`);
+  - `assignInState`;
+  - manual override;
+  - offer acceptance;
+  - assistance/support assignment;
+  - rematch after a failed attempt.
 
-- **Case records** (`HistoricalCase`): derived by code from resolved issues in history
-  (+ archive compact facts): `caseId` (stable `CASE-<issueId>`), equipment, class, symptom
-  code, report narrative, fixes tried in order, outcome, minutes, timestamps. Legacy issues
-  without narratives get a code-generated templated narrative, marked as such.
-- **Narratives:** new issues carry a `reportNarrative` (≤ 600 chars). Live: the Nano
-  narrative generator writes it from the **observable** symptom, equipment and recent
-  context only (never the hidden cause); validator rejects leaked catalog cause text.
-  Offline/history generator: seeded templates with noise (misleading keywords, typos,
-  omissions).
-- **Investigation record** on the issue: triage, tool-call trace (tool, args, result ids,
-  ms), final report, validator results, evidence grade, decision (`APPROVED` /
-  `EDITED` / `ESCALATED` / `REJECTED` / `EXPIRED`), operator, timestamps, model id, tokens,
-  latency, source (`nebius-live` / `fixture` / `deterministic`).
+  A gated issue passes only with an `APPROVED` investigation whose `authorizedResponderId`
+  matches. Any other responder needs a new override record, which the operator must
+  approve. Codex audits the call sites with a test that enumerates them.
+- Approval stores `authorizedResponderId`, `authorizedFixId`, `actor` (`Central command` or
+  `policy:AUTO_APPROVE_SAFE`), `revision` and `at`. Inside one mutation it revalidates
+  eligibility, qualification, safety prerequisites, issue state and revision. If anything
+  changed it returns `409 STALE` and applies nothing.
+- **State machine:** `QUEUED → RUNNING → READY | ABSTAINED | ESCALATED | FAILED(→ deterministic READY)`.
+  From `READY`:
+  - → `APPROVED`, `REJECTED` or `ESCALATED` (operator);
+  - → `EXPIRED` at the deadline (default 30 simulated min);
+  - → `SUPERSEDED` by a re-investigation.
 
-### API (contract for parallel frontend work)
+  `ABSTAINED`/`ESCALATED` dispatch nothing until the operator either picks a responder and
+  fix manually (an audited override, safety-checked) or closes the report. A duplicate
+  approval is idempotent (same record → 200; different → 409). On restart, a `RUNNING` run
+  is re-queued with a new token, and a stale token's result is discarded.
+- `AUTO_APPROVE_SAFE` room policy: only for the history generator and an explicit, audited
+  demo toggle. It approves only `READY` results with grade ≥ `MODERATE`, no safety
+  escalation and a qualified responder, and **never** `ABSTAINED`/`ESCALATED`. It is
+  tested separately from operator approval.
 
-- `POST /api/control-rooms/:id/reports` `{ equipmentId?, narrative, reporter? }` →
-  `{ issueId, investigationId }` (creates the issue, enqueues investigation in the agent lane).
-- `GET /state` gains bounded `investigations` (open + recent 20) with the record above
-  minus raw tool payloads; `GET /api/control-rooms/:id/investigations/:invId` returns the
-  full trace.
-- `POST …/investigations/:invId/approve` `{ responderId, fixId, expectedRevision }`,
-  `/escalate` `{ reason }`, `/reject` `{ reason }`, `/feedback` `{ useful: bool, note? }`.
-  Stale revision → 409 like the override route.
+### 3.3 Allowlisted DTOs (R3, R4)
 
-### UI
+Every model-visible or public payload is built by an explicit field-by-field DTO
+constructor in a new `investigation-dto.mjs`. Nothing is spread from state rows. The
+field lists below are the whole contract:
 
-- **Report incident** form (header button + phone layout).
-- New Dockview tile **Investigation**: narrative (as quoted untrusted text), triage chips,
-  step-by-step tool trace, hypotheses with clickable case IDs (opens the case record),
-  recommended first action + alternatives with safety class, evidence grade, responder
-  ranking, provider badge (model id, latency, tokens, live/fixture/deterministic), and
-  Approve / Edit / Escalate / Reject. ABSTAIN and ESCALATE render as first-class outcomes.
-  Display screen `/rooms/:id/display/investigation`. 375 px, 1280 px, 1920×1080.
-- Event feed and audit trail entries for every step; Analytics: investigations by outcome,
-  approval vs override rate, abstention rate, first-time-fix rate investigator vs baseline
-  (thin-sample rule).
+- `CaseDTO`: `caseId` (`CASE-<issueId>`), `equipmentId`, `issueClass`, `symptomCode`,
+  `symptomText`, `reportNarrative` (+ `narrativeSource`: `operator`/`simulated`/`template`),
+  `fixesTried: [{fixId, order, outcome: FIXED|NOT_FIXED}]`, `resolvedAt`, `firstTimeFix`,
+  `totalMinutes`, `legacy`.
+- `ResponderDTO`: `responderId`, `displayName`, `certifications[]`, `availability`,
+  `shiftEndsAt`, `distanceBand`, observed history counts (as in today's packet).
+- `FixDTO`: `fixId`, `title`, `steps` (verbatim), `safetyClass`, `prerequisites[]`,
+  `requiredCertifications[]`.
+- `EquipmentDTO`: `equipmentId`, `name`, `floor`, `issueClass`es, counts of recent cases.
 
-## 4. Evaluation (guide §8)
+**Never present:**
+- draws, probabilities, duration factors, effectiveness;
+- fault-cause ids or labels;
+- `ResponderSkill` or anything derived from it.
 
-`npm run eval:investigator` (`scripts/eval-investigator.mjs`), outside `npm test`:
+**Certifications** are new **public synthetic records**, seeded from a separate RNG stream
+and independent of `ResponderSkill`. Tests:
+1. **Noninterference:** randomising hidden truth (skill, cause, effectiveness) leaves every
+   model packet, tool result, trace and public route byte-identical.
+2. **Canary scan:** planted canary values in every hidden field never appear in any packet
+   or log, including renamed keys and archive-backed cases.
+3. The same DTOs are used in repair prompts, error messages, persisted traces, fixtures and logs.
 
-- **Scenario set** (`fixtures/investigation/scenarios.json`, ~24 synthetic reports with
-  expected behaviour): historical analog, misleading keyword, missing record, contradictory
-  cases, conflicting shift, unqualified responder, overtime required, unsafe action
-  requested, safety-flag narrative, prompt injection, empty/garbled narrative, provider
-  outage.
-- **Counterfactual replay:** a held-out week of the seeded month (cases after the split are
-  hidden from the tools). For each held-out issue, the investigator's approved-by-policy
-  first fix runs through the deterministic engine on a cloned seed; compare first-time-fix
-  rate and minutes with the frequency baseline and the existing deterministic fix order.
-  Hidden truth is used only by the engine, never by the scorer's inputs to the model.
-- Metrics: classification agreement with the observable symptom code, citation validity
-  (must be 100 %), safety-gate violations (must be 0), abstention precision/recall on
-  scenarios labelled "should abstain", fallback rate, latency p50/p95, tokens per
-  investigation. Modes: `--mode fixture` (CI, recorded Nemotron responses) and
-  `--mode live` (main agent only). Results go to `docs/EVALUATION.md` with exact run
-  commands, sample sizes and limitations. No time-saved or business-outcome claims.
+**Narratives:**
+- The Nano writer receives only an `ObservableDTO` (equipment name, class, symptom text,
+  recent public events). Validators reject cause-catalog vocabulary, procedure titles and
+  skill claims.
+- Templates for legacy cases use public symptoms only.
+- **All narrative text is untrusted** wherever it appears: incoming, retrieved by tools,
+  in repairs and in the UI (rendered as text, never HTML). Hypotheses are restricted to
+  catalog `symptomCode`s plus bounded observable phrases, each with evidence refs. They
+  never name causes.
 
-## 5. Work packages and owners
+### 3.4 Safety (R5)
 
-Codex owns backend packages; the main agent owns live/provider verification, UI that
-consumes the agreed API, evaluation runs and submission. File ownership is exclusive per
-round to avoid conflicts.
+- Catalog rows gain `safetyClass` (`ROUTINE` | `ISOLATION_REQUIRED` | `SPECIALIST_ONLY`),
+  `prerequisites[]` (from a fixed enum, e.g. `STATION_ISOLATED`, `LOCKOUT_CONFIRMED`) and
+  `requiredCertifications[]`.
+- At approval, code requires that:
+  - the responder holds every required certification;
+  - the operator ticks each prerequisite as confirmed (unconfirmed or unknown → reject,
+    fail closed).
 
-| # | Package | Owner | Depends on | Target (SGT) |
+  The same rules apply to alternatives, manual picks and auto-approval.
+- **Deterministic hazard policy before inference:** a versioned lexicon (heat, smoke,
+  sparks, injury, fire, bypass/override interlock, …) plus an injection lexicon
+  ("ignore previous", role tags, tool-call syntax).
+  - A hazard match → `ESCALATED` with no model call.
+  - An injection match → the run still proceeds, flagged, with injected spans quoted.
+  - Empty, garbled or over-length input (> 600 chars, < 3 words, mostly non-letters) →
+    `ABSTAINED`.
+  - The same policy applies during a provider outage.
+- **Grounding:** the model returns structured `evidenceRefs: [{caseId, field}]`, and code
+  checks that each ref names a case the tools returned in this run and a field from
+  `CaseDTO`. Explanation prose is qualitative and bounded (≤ 400 chars per item, no digits
+  except supplied ids). We do **not** claim semantic verification of prose.
+
+### 3.5 Evidence grade and outcome precedence (R10)
+
+Let `S` = same-equipment-or-symptom cases where the recommended fix was tried (cutoff §3.7),
+`s` = how many of them it fixed, and `C` = same-class cases with that fix.
+
+- `STRONG`: `S ≥ 3` and `(s+1)/(S+2) ≥ 0.6`.
+- `MODERATE`: `S ≥ 1`, or `C ≥ 3`.
+- `THIN`: `C ∈ {1,2}`.
+- `NONE`: no case with that fix.
+
+**Precedence:** `ESCALATED` (hazard, or model-proposed escalation that code accepts) >
+`ABSTAINED` (grade `NONE` for every fix, no eligible qualified responder, ambiguous
+interpretation where the top two options are not separated and the operator has not
+confirmed, or validation failed twice with no deterministic answer) > `READY`.
+`THIN` is `READY` with a mandatory "low evidence" warning, and auto-approval is never
+allowed for it.
+
+### 3.6 Budgets
+
+| Limit | Value |
+|---|---|
+| Tool steps | ≤ 6 per run |
+| Inference calls | ≤ 8 per run |
+| Run deadline | 120 s **monotonic** (`performance.now`), shared by queueing, retries and repair |
+| Output tokens | ≤ 4096 per call |
+| Rows per tool result | ≤ 10 |
+| Bytes per tool result | ≤ 8 KB |
+| Bytes per stored trace | ≤ 64 KB |
+| Investigations in `/state` | open + last 20 |
+
+Exceeding any limit leads to the deterministic investigation, recorded with its reason.
+The lane test uses a never-resolving provider promise and asserts that ticks, `/state` and
+operator actions continue.
+
+### 3.7 Decision-time cutoff (R6)
+
+- Every tool and aggregate takes `asOf`, and uses only outcomes **completed before `asOf`**
+  and never the target issue. This covers case search, fix evidence, responder history,
+  equipment history and narrative context.
+- Live: `asOf` = investigation start. Replay: `asOf` = the held-out issue's creation time
+  (rolling origin).
+- **Future-data perturbation test:** changing or deleting any record after `asOf` leaves
+  every packet identical.
+
+### 3.8 API (codex implements; main builds UI against it, using fixture stubs in `frontend/` only)
+
+- `POST /api/control-rooms/:id/reports` `{ narrative, equipmentId?, reporter? }` → `{ reportId }`.
+  `GET …/reports/:reportId` returns status, interpretation options, ranking and source.
+  `POST …/reports/:reportId/confirm` `{ optionId | {equipmentId, issueClass, symptomCode}, expectedRevision }` → `{ issueId, investigationId }`.
+  `POST …/reports/:reportId/close` `{ reason }`.
+- `GET /state` gains bounded `fieldReports` and `investigations` (summary DTOs).
+  `GET …/investigations/:invId` returns the full trace as DTOs.
+  `GET …/cases/:caseId` returns a `CaseDTO`, honours the archive, and 404s an unknown id (R9).
+- `POST …/investigations/:invId/approve` `{ responderId, fixId, confirmedPrerequisites[], expectedRevision }`;
+  `/escalate` `{ reason }`; `/reject` `{ reason }`; `/feedback` `{ useful, note? }`. A stale revision returns 409.
+- Every response is DTO-only.
+
+### 3.9 Fixtures (R10)
+
+`fixtures/investigation/` holds three sets:
+- `scenarios.json`: synthetic inputs + expected outcome class;
+- `synthetic-responses/`: hand-written model outputs, labelled `synthetic`;
+- `recorded-live/`: real Nemotron responses captured by the main agent, each with model
+  id, date and request hash.
+
+The UI and docs never label synthetic responses as recorded Nemotron.
+
+## 4. Evaluation (R6, R7, R10)
+
+`npm run eval:investigator` (outside `npm test`; `--mode fixture|live`), main agent owns it:
+
+- **Scenario suite**: ~24 reports: historical analog, misleading keyword, missing record,
+  contradictory cases, unqualified responder, conflicting shift, overtime needed, unsafe
+  fix requested, hazard narrative, injection (incoming **and** in a retrieved case),
+  garbled/empty input, provider outage. Each scenario has its expected outcome class
+  (`READY`/`ABSTAINED`/`ESCALATED`) and its expected constraints.
+- **Paired first-fix replay** (the minimum claim): a held-out last week of the seeded month,
+  with rolling-origin `asOf`.
+  - For each held-out issue, an isolated outcome runner (application code that holds the
+    hidden truth and never serialises it) runs the first attempt three times: with the
+    investigator's first fix, the frequency-baseline fix and the existing deterministic
+    fix order.
+  - The responder, engine state, time and RNG draws are **identical** across the three
+    runs. Only the fix varies.
+  - Reported: first-time-fix rate per arm, with paired denominators.
+  - Abstained or escalated issues are excluded from the paired comparison and reported as
+    coverage. Timeouts and fallbacks are counted separately.
+  - Policy approval in replay follows §3.2 (no unsafe/abstained approval).
+  - Whole-floor minutes comparisons are **deferred**.
+- **Metrics**:
+  - interpretation agreement with the observable symptom;
+  - citation validity and safety violations **of accepted outputs** (targets 100 % / 0);
+  - separately: raw-invalid, repaired, abstained, fallback counts;
+  - abstention precision/recall on labelled scenarios (an undefined ratio is shown as "n/a (0 cases)");
+  - latency p50/p95 and tokens per investigation.
+- Results go to `docs/EVALUATION.md` with commands, sample sizes and limitations. No
+  time-saved or business-outcome claims.
+
+## 5. Work packages, file ownership and gates (R8, R9)
+
+### Ownership (exclusive per package)
+
+- **Codex:** `backend/src/**` (provider, schema, DTOs, tools, investigator, gate, routes,
+  runtime, retention, migration, backend analytics), `backend/tests/**`,
+  `scripts/generate-demo-history.mjs`, and seed data under `fixtures/` other than
+  `fixtures/investigation/`. Codex imports the main agent's scenario/fixture files read-only.
+- **Main agent:** `frontend/**`, `e2e/**`, `fixtures/investigation/**`,
+  `scripts/eval-investigator.mjs`, `scripts/probe-nebius.mjs`, `docs/nebius/**`,
+  `docs/EVALUATION.md`, `docs/DEMO_SCRIPT.md`, `README.md`, `HACKATHON_CHANGES.md`,
+  `docs/BASELINE_AND_CHANGES.md`.
+  - Prompt text lives in `backend/src/prompts/*.mjs`. Codex owns those files; the main
+    agent hands prompt edits back to codex as an assignment item, never as a direct edit.
+- **project-state:** codex updates the backend pages it changes, and the main agent updates
+  `frontend/overview.md` and operations pages. `log.md` and `docs/decisions.md` are
+  append-only: each adds its own entry at the bottom, and merge conflicts keep both.
+
+### Packages
+
+| # | Package | Owner | Gate / depends | Target (SGT) |
 |---|---|---|---|---|
-| N0 | Live Nebius probe: models, IDs, tool calling, JSON mode, thinking toggle, limits; `docs/nebius/05_TOKEN_FACTORY_FACTS.md` | main | Nebius key | 10-20 |
-| N0b | `docs/BASELINE_AND_CHANGES.md`, provenance, decisions entry, IP/licence check | main | — | 10-20 |
-| N1 | Nebius provider: `PROVIDER_IDS` gains `nebius` (default); `NEBIUS_*` env; per-provider controls config; model discovery; role table incl. `investigator` and `triage`; reasoning toggle; tool-call support in `callChatCompletion` (`tools`, `tool_calls`) behind a capability flag with a JSON-protocol fallback; metadata (model, latency, tokens) returned to callers; AMD kept as a selectable provider | codex | N0 facts | 10-21 |
-| N2 | Case records + read-only tool layer + safety fields in catalog + narrative field + migration + history-generator narratives | codex | N1 merged | 10-23 |
-| N3 | Investigator loop, triage, validators, evidence grade, abstention, deterministic fallback, approval state machine, routes, lane integration, Offline fixtures | codex | N2 | 10-25 |
-| N4 | Report form, Investigation tile, display screen, feed/audit/analytics UI, E2E with forced failure | main | API contract (§3); stubs until N3 | 10-25 |
-| N5 | Scenario fixtures + eval harness + counterfactual replay | main (harness), codex (scenario tests in `npm test`) | N3 | 10-26 |
-| N6 | Live measurement on Nebius, prompt/limit tuning, regenerate month seed with narratives + investigations (< 20 MB per file) | main + codex (seed) | N3, N5 | 10-27 |
-| N7 | Public repo (new `responsecompass-nebius`, history preserved), LICENSE (Apache-2.0), README (Nebius/NVIDIA usage), `HACKATHON_CHANGES.md`, `docs/ARCHITECTURE.md`, `EVALUATION.md`, `DEMO_SCRIPT.md`, secret scan of history | main; codex reviews | N6 | 10-28 |
-| N8 | Hosted demo (Docker + Cloudflare Tunnel, separate project/port from the AMD app on 3200), free access through 2026-12-15, idle auto-pause and per-visitor token budget | main | N6 | 10-28 |
-| N9 | Demo video < 3 min (YouTube), submission form text, Nebius/NVIDIA feedback, pre-existing disclosure | main + user | N7, N8 | 10-30 |
+| N0 | Nebius facts: docs + `/v1/models` + probes (IDs, licences, limits, prices, tools, JSON, thinking) → `05_TOKEN_FACTORY_FACTS.md` | main | **Key** | when the key arrives; **go/no-go gate** |
+| N1 | Nebius provider (`nebius` default, AMD kept selectable); `NEBIUS_*` env; per-provider controls config; discovery; roles `compass`, `event-planner`, `investigator`, `narrator`; tool-call support (`tools`/`tool_calls`) behind a capability flag, with a JSON next-action protocol on the same loop; call metadata (model, latency, tokens, provider request id) returned to callers. Built against fake fetch now; defaults filled after N0 | codex | — | 10-21 |
+| N2 | Contracts §3.3–3.4, §3.7: DTO module, certifications (separate RNG), catalog safety fields, `CaseDTO` derivation (+ archive), `asOf` everywhere, read-only tools, narrative field + migration, noninterference / canary / perturbation tests | codex | N1 merged | 10-23 |
+| N3a | **Vertical slice**: field report → interpretation ranking → confirm → investigator loop → validators → gate → approve/reject → audit; one negative (hazard ESCALATE) path; routes §3.8; Offline fixture path | codex | N2 | **10-24 slice gate** |
+| N3b | Remaining state machine (expire, supersede, restart, policy), narrator role, `investigationShare`, backend analytics, retention equality | codex | N3a | 10-26 |
+| N4 | Report form + confirm step, Investigation tile, case viewer, approval with prerequisite checkboxes, display screen, feed/audit, E2E with forced failure; built on stubs from 10-20, switched to the real API at N3a | main | §3.8 | 10-25 |
+| N5 | Scenario fixtures (by 10-21, so N2/N3 tests use them), eval harness, paired replay | main | §3.9; replay after N3a | 10-26 |
+| N6 | Live measurement and tuning; recorded-live fixtures; seed: unchanged month + a small deterministic investigation dataset (a full regeneration only if time allows) | main (+ codex for the seed) | N0, N3a | 10-27 |
+| N7 | Public repo (new `responsecompass-nebius`, history kept), secret scan of all history, README, `HACKATHON_CHANGES.md`, `docs/ARCHITECTURE.md`, `EVALUATION.md`, `DEMO_SCRIPT.md`; dependency/asset licence inventory | main; codex reviews | N6 | 10-28 |
+| N8 | Hosted demo (separate Compose project and port; not 3200), judge access plan | main | N6 | 10-28 |
+| N9 | Video < 3 min, form text, feedback, pre-existing disclosure | main + user | N7, N8 | 10-30 |
 
-Codex review rounds: plan (now), N7 docs, final pre-submission checklist.
+**Go/no-go gates.**
+- **N0:** if there is no key by 10-23, N3a ships against synthetic fixtures and N6 is
+  compressed. The live proof is still mandatory before the submission.
+- **Slice (10-24):** if N3a slips, cut in this order, cutting more items only if needed:
+  1. narrator role and `investigationShare` (operator reports only);
+  2. backend analytics comparison;
+  3. display screen;
+  4. full-month regeneration;
+  5. supersede/edit flows.
 
-### Acceptance criteria
+  **Never cut:** real Nemotron investigation, citation and safety validation, abstention,
+  the dispatch gate, approval and the paired replay.
 
-- N1: hermetic tests with fake fetch for Nebius request shape, tool-call parse, metadata,
-  provider selection and migration of AMD-era settings files; one main-agent live call
-  per role returns validated output; `npm test` stays network-free.
-- N2: no hidden data in any tool result or packet (scanner test over every tool); case ids
-  stable across reload/archive; archived/unarchived equality extended.
-- N3: tests for each scenario class in §4 using fixtures; invalid citation, unknown fix,
-  unsafe first action, digits in prose, step-cap overrun and deadline all rejected; no
-  path dispatches a reported incident without an approval record; restart-safe pending
-  approvals; lane never holds the clock.
-- N4: E2E: report → deterministic investigation (forced provider failure) → approve →
-  dispatch visible in feed and audit; ABSTAIN renders; display screen renders; 375/1280.
-- N5/N6: eval report reproducible from one command per mode; live run ≥ 20 scenarios and
-  ≥ 50 held-out replays with honest numbers.
-- N7–N9: every item in guide §11 checked with evidence links.
+### Acceptance criteria (objective)
 
-## 6. Risks and blockers (guide §13.4)
+- **N1:**
+  - fake-fetch tests: Nebius request shape, tool-call round trip, metadata, provider
+    selection, AMD-era settings files load unchanged;
+  - no network in `npm test`;
+  - after N0, the main agent gets one validated live call per role.
+- **N2:**
+  - the noninterference, canary and future-data perturbation tests pass for every tool and
+    route;
+  - case ids are stable across reload and archive;
+  - archived/unarchived equality is extended.
+- **N3a:**
+  - the call-site enumeration test proves every assignment path calls the gate;
+  - with fixtures, invalid citation, unknown fix, unqualified responder, unconfirmed
+    prerequisite, digits in prose, step-cap overrun and deadline are each rejected;
+  - the hazard input escalates with zero model calls;
+  - the never-resolving-provider lane test passes;
+  - both suites are green.
+- **N4:** E2E with forced provider failure:
+  - report → confirm → deterministic investigation → approve with prerequisites → dispatch
+    appears in feed and audit;
+  - ESCALATED and ABSTAINED render;
+  - 375 px and 1280 px layouts; the display screen renders at 1920×1080.
+- **N5/N6:**
+  - both eval modes run from one command;
+  - live: ≥ 20 scenarios and ≥ 50 paired replays, with honest numbers and limitations.
+- **N7–N9:** every guide §11 item is checked, with an evidence link.
+
+## 6. Risks and blockers
 
 | Risk | Mitigation / owner |
 |---|---|
-| **No Nebius API key yet** (blocks N0, N6, live demo); user will provide it later | Until then N1 is built against the documented OpenAI-compatible API with fake-fetch tests, model IDs left as env-required placeholders; N0 runs as soon as the key arrives. Main agent only. |
-| ~~IP ownership~~ **Resolved (user, 2026-10-19):** the application is the user's own; they share it for use at their company under Apache-2.0. `LICENSE` added. | — |
-| ~~AMD hackathon exclusivity~~ **Not a concern (user, 2026-10-19).** We still disclose the AMD-era baseline (§1). | — |
-| Public GitHub repo: `gh` not logged in | **User** is logging in (2026-10-19). |
-| Nemotron Ultra latency/cost too high for an interactive loop | Step cap, Super fallback tier for the investigator, cached tool results, measured in N0/N6. |
-| Tool calling unsupported or flaky on the chosen model | JSON "next action" protocol on the same loop (N1 flag); decided from N0 facts. |
-| Free public demo burns credits | Idle auto-pause (exists), per-room daily token budget, Offline mode default for visitors with a Live toggle; fixture replay for the video's backup. |
-| Scope creep | Cut order if late: analytics extras → display screen → triage role (Ultra does it) → edit-approval (keep approve/reject/escalate). Never cut: live Nemotron investigation, citations validation, abstention, approval, eval. |
+| **No Nebius API key yet**; the user will provide it later | N1 is built hermetically with no guessed IDs; N0 runs on arrival; gate in §5. Main agent only. |
+| ~~IP ownership~~ **Resolved (user, 2026-10-19):** the application is the user's own and is shared for use at their company under Apache-2.0. `LICENSE` added. N7 still inventories dependency and asset licences (R11). | main |
+| ~~AMD hackathon exclusivity~~ **Not a concern (user, 2026-10-19).** We still disclose the AMD-era baseline. | — |
+| Public GitHub repo | User logged in with `gh` (2026-10-19); main verifies before N7. |
+| **Judge access through 2026-12-15** (R11) | No per-visitor budget that blocks judges. A dedicated `judges` room is always Live; there are the global limiter and idle auto-pause. A spend alert and a pre-funded credit reserve are sized from N0 prices. If the provider is unavailable, the UI shows a labelled deterministic result; the recorded-live replay is a fallback for the video only and is labelled. Judge instructions live in the private testing field. |
+| Ultra latency/cost too high for the loop | Super tier for the investigator; step cap; measured in N0/N6. |
+| Tool calling unsupported or flaky | JSON next-action protocol on the same loop (N1 flag), chosen from N0 facts. |
+| Scope | Gates and cut order in §5. |
 
 ## 7. Coordination
 
-- Assignments live in `handover.md` on master; codex runs its own watcher (300 s) on
-  `git show master:handover.md`; the main agent's watcher (300 s) polls codex's branch for
-  `READY FOR MERGE` / `BLOCKED`.
-- Ports: codex 3021/3121, main 3024/3124. No one binds 3000 or 3200.
-- No live provider calls in worker worktrees; the main agent runs every live check.
-- Every merge: both suites on master, `project-state/` and `log.md` updated.
+- Assignments live in `handover.md` on master. Codex runs its own watcher (300 s) on
+  `git show master:handover.md`. The main agent's watcher (300 s) polls codex's branch.
+- Ports: codex 3021/3121, main 3024/3124. Never bind 3000 or 3200.
+- No live provider calls in worker worktrees. The main agent runs every live check.
+- Every merge: both suites on master, and `project-state/` plus `log.md` updated.
