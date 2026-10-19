@@ -1198,3 +1198,13 @@ budget/configuration authority. Hermetic test workers use memory/scratch ledgers
 - Bound decoded provider envelopes to 256 KiB before parsing, cancel oversized streams, and
   bound investigator content/arguments locally. Retain existing provider timeout/retry and
   usage boundaries. Regenerate only the synthetic lifecycle fixture for reproducibility.
+
+### Round 21 follow-up — actionable repair diagnostics
+
+Per the updated assignment after live replay C, replace generic final validation errors
+with exact item/field paths and bounded reasons. Unknown IDs and rejected text are never
+echoed; a rejected numeric token is limited to 80 digits/characters. The repair restates
+public IDs, allowed hypothesis texts and numeric metric tokens and explicitly permits
+dropping numeric rationale claims in favor of qualitative prose. Preserve the original
+one-repair deadline/call/tool budget and every acceptance rule. Live repair effectiveness
+remains for the main agent to measure after merge.

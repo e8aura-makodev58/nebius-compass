@@ -200,3 +200,44 @@ test('provider success/error envelopes enforce a streamed byte cap and cancel ov
   const good=new Response(JSON.stringify({choices:[{message:{content:'{"ok":true}'},finish_reason:'stop'}]}));
   assert.equal((await callChatTurn({...providerOptions,fetchImpl:async()=>good})).content,'{"ok":true}');
 });
+
+test('repair errors identify bounded item/field categories without echoing unknown ids or private strings',t=>{
+  const context={issue,returnedCases:new Map([['CASE-ISS-1',{}]]),returnedResponders:new Map([['FIX-A-01',[{responderId:'R-1'}]]]),groundedNumbers:new Set(['20'])};
+  const cases=[
+    ['shape',value=>value.fixes=[null],/fixes\[0\]: invalid fix shape/],
+    ['array bounds',value=>value.hypotheses=[],/hypotheses: must be an array/],
+    ['number not allowed',value=>value.fixes[0].rationale='Observed 288 cases.',/fixes\[0\]\.rationale: number 288 not allowed/],
+    ['probability claim',value=>value.responders[0].rationale='A 20% chance.',/responders\[0\]\.rationale: probability\/percentage/],
+    ['restricted prose',value=>value.fixes[0].rationale='hidden-cause-A-0',/fixes\[0\]\.rationale: restricted content/],
+    ['prose length',value=>value.fixes[0].rationale='x'.repeat(401),/fixes\[0\]\.rationale: prose exceeds 400/],
+    ['catalog text',value=>value.hypotheses[0].text='Invented observation.',/hypotheses\[0\]\.text: copy an allowedHypothesisTexts/],
+    ['unknown fix',value=>value.fixes[0].fixId='hidden-cause-A-0',/fixes\[0\]\.fixId: unknown fix/],
+    ['duplicate id',value=>value.fixes.push(structuredClone(value.fixes[0])),/fixes\[1\]\.fixId: duplicate fix id/],
+    ['qualification',value=>value.responders[0].responderId='hidden-cause-A-0',/responders\[0\]\.responderId: not qualified for the first fix/],
+    ['citation case',value=>value.fixes[0].evidenceRefs=[{caseId:'hidden-cause-A-0',field:'fixesTried'}],/fixes\[0\]\.evidenceRefs\[0\]\.caseId: case was not returned/],
+    ['citation field',value=>value.fixes[0].evidenceRefs=[{caseId:'CASE-ISS-1',field:'trueMedianMinutes'}],/fixes\[0\]\.evidenceRefs\[0\]\.field: must be a public CaseDTO field/],
+    ['outcome enum',value=>value.proposedOutcome={outcome:'APPROVE',reason:'Proceed.'},/proposedOutcome\.outcome: must be ABSTAIN or ESCALATE/],
+  ];
+  for(const [category,change,pattern] of cases) {
+    const value=final('R-1');change(value);const errors=validateInvestigationFinal(value,context);
+    assert.ok(errors.some(error=>pattern.test(error)),category);assertNoResponderSkill(errors);
+    assert.ok(errors.every(error=>error.length<250));
+  }
+  t.diagnostic(`Observed adversarial fixture error categories: ${cases.map(([category])=>category).join(', ')}`);
+});
+
+test('numeric-invalid final repairs to qualitative prose using exact field feedback and public contract data',async()=>{
+  const {state,issue:target}=await confirmed();let calls=0,feedback;
+  const result=await investigate(state,target,{mode:'live',callTurn:async({messages})=>{
+    calls++;
+    if(calls===1)return {toolCalls:[{id:'eligible',name:'eligible_responders',arguments:'{"equipmentId":"EQ-04","issueClass":"A","fixId":"FIX-A-01"}'}]};
+    if(calls===2)return {toolCalls:[],content:JSON.stringify(final(state.responders[0].id,'Observed 288 cases.'))};
+    feedback=JSON.parse(messages.at(-1).content);
+    return {toolCalls:[],content:JSON.stringify(final(state.responders[0].id,'Public evidence supports this choice.'))};
+  }});
+  assert.equal(calls,3);assert.equal(result.repaired,true);assert.equal(result.rawInvalid,true);assert.equal(result.source,'NEBIUS_MODEL');
+  assert.match(feedback.validationErrors[0],/^fixes\[0\]\.rationale: number 288 not allowed/);
+  assert.match(feedback.instruction,/drop numbers entirely/);assertNoResponderSkill(feedback);
+  assert.ok(feedback.allowedHypothesisTexts.includes('Output drifts from the operating reference.'));
+  assert.ok(!feedback.allowedMetricNumbers.includes('288'));
+});

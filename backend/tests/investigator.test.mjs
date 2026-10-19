@@ -272,7 +272,7 @@ test('supported qualified ESCALATE output is repaired once within the shared bud
     }});
     if(repairedOutput==='corrected'){
       assert.equal(result.status,'READY');assert.equal(result.source,'NEBIUS_MODEL');assert.equal(result.repaired,true);assert.equal(result.rawInvalid,true);assert.equal(calls,3);
-      const feedback=JSON.parse(messages[2].at(-1).content);assert.match(feedback.validationErrors[0],/ESCALATE conflicts/);assert.ok(feedback.validationErrors[0].length<250);
+      const feedback=JSON.parse(messages[2].at(-1).content);assert.match(feedback.validationErrors[0],/^proposedOutcome\.outcome: ESCALATE conflicts/);assert.ok(feedback.validationErrors[0].length<250);
     } else if(repairedOutput==='repeated'){
       assert.equal(result.source,'DETERMINISTIC');assert.equal(result.fallbackReason,'validation-failed');assert.equal(result.rawInvalid,true);assert.equal(result.repaired,true);assert.equal(calls,3);
     } else {
