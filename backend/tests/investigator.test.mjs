@@ -304,3 +304,13 @@ test('model ESCALATE beside a supported qualified fix is repaired once, then fal
   const safety=await run([tools,final({outcome:'ESCALATE',reason:'A safety concern needs a person before any action.'},[],[])]);
   assert.equal(safety.status,'ESCALATED');assert.equal(safety.repaired,false);
 });
+test('prose may quote numbers returned by tools in this run, never other numbers',()=>{
+  const issue={id:'ISS-9',equipmentId:'EQ-04',issueClass:'A',symptom:{code:'A-DRIFT',text:'Output drifts from the operating reference.'}};
+  const returnedCases=new Map([['CASE-ISS-1',{caseId:'CASE-ISS-1'}]]);
+  const returnedResponders=new Map([['FIX-A-01',[{responderId:'R-1'}]]]);
+  const output=(rationale)=>({hypotheses:[{symptomCode:'A-DRIFT',text:'Output drifts from the operating reference.',evidenceRefs:[{caseId:'CASE-ISS-1',field:'symptomText'}]}],fixes:[{fixId:'FIX-A-01',rationale,evidenceRefs:[]}],responders:[{responderId:'R-1',rationale:'Qualified.'}]});
+  const grounded=new Set(['209','288']);
+  assert.deepEqual(validateInvestigationFinal(output('Fixed 209 of 288 matching cases.'),{issue,returnedCases,returnedResponders,groundedNumbers:grounded}),[]);
+  assert.ok(validateInvestigationFinal(output('Fixed 210 of 288 matching cases.'),{issue,returnedCases,returnedResponders,groundedNumbers:grounded}).length);
+  assert.ok(validateInvestigationFinal(output('Fixed 209 of 288 matching cases.'),{issue,returnedCases,returnedResponders}).length);
+});

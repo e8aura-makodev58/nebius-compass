@@ -10,13 +10,17 @@ import { INVESTIGATOR_INSTRUCTION, INTERPRETATION_INSTRUCTION } from './prompts/
 const CASE_FIELDS = new Set(['caseId','equipmentId','issueClass','symptomCode','symptomText','reportNarrative','narrativeSource','fixesTried','resolvedAt','firstTimeFix','totalMinutes','legacy']);
 const gradeOrder = {NONE:0,THIN:1,MODERATE:2,STRONG:3};
 function exact(value, keys, optional = []) { return value && typeof value === 'object' && !Array.isArray(value) && keys.every((key) => Object.hasOwn(value,key)) && Object.keys(value).every((key) => keys.includes(key) || optional.includes(key)); }
-function prose(value, ids) {
+const NUMBER = /\d+(?:\.\d+)?/g;
+/** Numbers a tool returned in this run; prose may quote these and no others. */
+export function numbersIn(value) { return new Set(JSON.stringify(value).match(NUMBER) ?? []); }
+function prose(value, ids, grounded = new Set()) {
   if (typeof value !== 'string' || !value.trim() || value.length > 400 || /hidden-cause|trueMedian|trueSuccess|effectiveness|responderSkill/i.test(value)) return false;
   let rest = value;
   for (const id of [...ids].sort((a,b) => b.length-a.length)) rest = rest.split(id).join('');
-  return !/\d/.test(rest);
+  // Supplied ids may carry digits; any other number must appear verbatim in this run's tool results.
+  return (rest.match(NUMBER) ?? []).every((token) => grounded.has(token));
 }
-export function validateInvestigationFinal(output, {issue, returnedCases, returnedResponders}) {
+export function validateInvestigationFinal(output, {issue, returnedCases, returnedResponders, groundedNumbers = new Set()}) {
   const errors = [];
   if (!exact(output,['hypotheses','fixes','responders'],['proposedOutcome'])) return ['Invalid final shape'];
   const fixes = fixesFor(issue.issueClass).map((row) => row.id);
@@ -26,13 +30,13 @@ export function validateInvestigationFinal(output, {issue, returnedCases, return
   const ids = [...returnedCases.keys(),...responders,...fixes,issue.id,issue.equipmentId,issue.symptom.code];
   const refs = (rows) => Array.isArray(rows) && rows.length <= 10 && rows.every((ref) => exact(ref,['caseId','field']) && returnedCases.has(ref.caseId) && CASE_FIELDS.has(ref.field));
   if (!Array.isArray(output.hypotheses) || output.hypotheses.length > 6 || !output.hypotheses.length) errors.push('Invalid hypotheses');
-  else for (const row of output.hypotheses) if (!exact(row,['symptomCode','text','evidenceRefs']) || !(SYMPTOMS[issue.issueClass] ?? []).some(([code]) => code === row.symptomCode) || !prose(row.text,ids) || !observableTexts.has(row.text) || !refs(row.evidenceRefs)) errors.push('Invalid hypothesis or citation');
+  else for (const row of output.hypotheses) if (!exact(row,['symptomCode','text','evidenceRefs']) || !(SYMPTOMS[issue.issueClass] ?? []).some(([code]) => code === row.symptomCode) || !prose(row.text,ids,groundedNumbers) || !observableTexts.has(row.text) || !refs(row.evidenceRefs)) errors.push('Invalid hypothesis or citation');
   if (!Array.isArray(output.fixes) || output.fixes.length > 6) errors.push('Invalid fixes');
-  else if (new Set(output.fixes.map((row) => row.fixId)).size !== output.fixes.length || output.fixes.some((row) => !exact(row,['fixId','rationale','evidenceRefs']) || !fixes.includes(row.fixId) || !prose(row.rationale,ids) || !refs(row.evidenceRefs))) errors.push('Invalid fix or citation');
+  else if (new Set(output.fixes.map((row) => row.fixId)).size !== output.fixes.length || output.fixes.some((row) => !exact(row,['fixId','rationale','evidenceRefs']) || !fixes.includes(row.fixId) || !prose(row.rationale,ids,groundedNumbers) || !refs(row.evidenceRefs))) errors.push('Invalid fix or citation');
   const qualified = new Set((returnedResponders.get(output.fixes?.[0]?.fixId) ?? []).map((row) => row.responderId));
   if (!Array.isArray(output.responders) || output.responders.length > 10) errors.push('Invalid responders');
-  else if (new Set(output.responders.map((row) => row.responderId)).size !== output.responders.length || output.responders.some((row) => !exact(row,['responderId','rationale']) || !qualified.has(row.responderId) || !prose(row.rationale,ids))) errors.push('Unknown or unqualified responder');
-  if (output.proposedOutcome && (!exact(output.proposedOutcome,['outcome','reason']) || !['ABSTAIN','ESCALATE'].includes(output.proposedOutcome.outcome) || !prose(output.proposedOutcome.reason,ids))) errors.push('Invalid proposed outcome');
+  else if (new Set(output.responders.map((row) => row.responderId)).size !== output.responders.length || output.responders.some((row) => !exact(row,['responderId','rationale']) || !qualified.has(row.responderId) || !prose(row.rationale,ids,groundedNumbers))) errors.push('Unknown or unqualified responder');
+  if (output.proposedOutcome && (!exact(output.proposedOutcome,['outcome','reason']) || !['ABSTAIN','ESCALATE'].includes(output.proposedOutcome.outcome) || !prose(output.proposedOutcome.reason,ids,groundedNumbers))) errors.push('Invalid proposed outcome');
   return errors;
 }
 function timed(work, ms) {
@@ -96,7 +100,7 @@ export async function investigate(state, issue, options = {}) {
   const context = {asOf:options.asOf ?? state.simulationState.simulationTime,targetIssueId:issue.id};
   const toolHost = createInvestigationTools(state,context);
   const now = options.now ?? (() => performance.now()); const started = now(), deadline = started + Math.min(options.timeoutMs ?? 120000,120000);
-  const trace = [], returnedCases = new Map(), returnedResponders = new Map();
+  const trace = [], returnedCases = new Map(), returnedResponders = new Map(), groundedNumbers = new Set();
   const provider = options.provider ?? 'nebius', defaults = roleDefaults(provider,'investigator');
   const model = {modelId:options.modelId ?? defaults.modelId,calls:0,latencyMs:0,promptTokens:0,completionTokens:0};
   let repaired = false, rawInvalid = false, steps = 0;
@@ -137,6 +141,7 @@ export async function investigate(state, issue, options = {}) {
           if(call.name==='eligible_responders')returnedResponders.set(args.fixId,result.rows);
           trace.push({tool:call.name,args,resultIds:ids.length ? ids : result.rows.map((row) => row.fixId ?? row.responderId ?? row.equipmentId).filter(Boolean),ms:Math.max(0,now()-began)});
           if(Buffer.byteLength(JSON.stringify(trace))>64000)return fallback('trace-budget');
+          for (const token of numbersIn(result.rows)) groundedNumbers.add(token);
           messages.push({role:'tool',tool_call_id:call.id,content:JSON.stringify({untrustedToolData:result})});
           if(fixture && call.name==='search_cases')fixtureCases=result.rows;
           if(fixture && call.name==='fix_catalog')fixtureFix=result.rows.find((row) => row.safetyClass==='ROUTINE')?.fixId ?? result.rows[0].fixId;
@@ -145,7 +150,7 @@ export async function investigate(state, issue, options = {}) {
         continue;
       }
       let output; try {output=JSON.parse(turn.content);}catch{output=null;}
-      const errors=validateInvestigationFinal(output,{issue,returnedCases,returnedResponders});
+      const errors=validateInvestigationFinal(output,{issue,returnedCases,returnedResponders,groundedNumbers});
       if (!errors.length && output.proposedOutcome?.outcome==='ESCALATE' && output.fixes.length && output.responders.length) {
         const firstFix=output.fixes[0].fixId;
         const evidence=executeInvestigationTool(state,'fix_evidence',{issueClass:issue.issueClass,fixId:firstFix,equipmentId:issue.equipmentId,symptomCode:issue.symptom.code},context).rows[0];
@@ -154,7 +159,13 @@ export async function investigate(state, issue, options = {}) {
       if(errors.length) {
         rawInvalid=true;
         if(repaired || model.calls>=8)return fallback('validation-failed');
-        repaired=true; messages.push({role:'assistant',content:JSON.stringify({invalidFinalDiscarded:true})},{role:'user',content:JSON.stringify({validationErrors:errors,instruction:'Repair the final JSON using only supplied and returned ids; no more tools.'})});continue;
+        // Restate the contract and the ids this run may use: live replay showed repairs drifting
+        // to other JSON shapes and to responders queried for a different fix.
+        const qualifiedByFix = Object.fromEntries([...returnedResponders].map(([fixId, rows]) => [fixId, rows.map((row) => row.responderId)]));
+        repaired=true; messages.push({role:'assistant',content:JSON.stringify({invalidFinalDiscarded:true})},{role:'user',content:JSON.stringify({validationErrors:errors,
+          requiredShape:'{"hypotheses":[{"symptomCode","text","evidenceRefs":[{"caseId","field"}]}],"fixes":[{"fixId","rationale","evidenceRefs"}],"responders":[{"responderId","rationale"}],"proposedOutcome"?:{"outcome","reason"}}',
+          allowedFixIds:fixesFor(issue.issueClass).map((row) => row.id), qualifiedResponderIdsByFix:qualifiedByFix, returnedCaseIds:[...returnedCases.keys()].slice(0,40),
+          instruction:'Repair the final JSON in exactly requiredShape using only these ids; no more tools. The first fix must be one listed in qualifiedResponderIdsByFix, and responders must come from that fix\'s list. Quote only numbers that appeared in tool results.'})});continue;
       }
       const derived=deterministicInvestigation(state,issue,context);
       const fixRows=output.fixes.map((row) => {const fix=fixesFor(issue.issueClass).find((fix) => fix.id===row.fixId);const grade=executeInvestigationTool(state,'fix_evidence',{issueClass:issue.issueClass,fixId:fix.id,equipmentId:issue.equipmentId,symptomCode:issue.symptom.code},context).rows[0].grade;return {...createFixDTO(fix),grade,rationale:row.rationale,evidenceRefs:row.evidenceRefs};});
