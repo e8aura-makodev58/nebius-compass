@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 13) |
+| codex | RUN (round 14) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | N1b (Nebius defaults) then N2 (contracts, DTOs, tools) | 13 |
+| codex | N3a — investigator vertical slice | 14 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -643,8 +643,110 @@ in the same round; set `READY FOR MERGE` once at the end, unless N2 needs a deci
 - **main agent (meanwhile):** live re-measure of the Compass ranking roles on Nebius with
   the real Scenario A packet (after N1b merges), N5 eval harness skeleton, N4 polish.
 
+**Round 14 (2026-10-19) — codex: N3a, the investigator vertical slice.** Start with
+`git merge master`. Ports 3021/3121; keep your watcher running. This is the **slice gate**
+(target 2026-10-24 SGT). Plan v2 §3.1, §3.2, §3.4–§3.6 and §3.8 are the spec, and the
+harness contract sits at the end of §4. Commit in coherent steps with both suites green.
+
+- **codex — N3a.**
+  - **Field reports (§3.1).**
+    - `POST /reports` creates a persisted `FieldReport` (status `UNRESOLVED`).
+    - Run the code-owned **input and hazard policy** first (§3.4: a versioned lexicon; the
+      injection lexicon flags the report and quotes the spans).
+    - Hazard → the report is confirmed against the explicit or matched equipment if there
+      is one, and its investigation is created directly as `ESCALATED` with **zero model
+      calls**. Garbled, empty or over-length input → `ABSTAINED` with zero calls.
+    - Otherwise code builds the interpretation options (≤ 12), and the ranking role ranks
+      the option ids. This runs in the agent lane, uses the existing ranking validator
+      style, and has a deterministic order as fallback.
+    - `POST /reports/:id/confirm` (option id or a manual triple, plus `expectedRevision`)
+      creates the issue with deterministic priority, origin `FIELD_REPORT` and
+      `dispatchGate: INVESTIGATION`, then queues the investigation.
+    - `POST /reports/:id/close` closes the report.
+  - **Investigator loop (§3.6 budgets).**
+    - Investigator role, `callChatTurn` with native tools and `createInvestigationTools`
+      (host `asOf` = investigation start, target excluded).
+    - Limits: ≤ 6 tool steps, ≤ 8 inference calls including one bounded repair, a 120 s
+      monotonic deadline, ≤ 64 KB stored trace.
+    - Final JSON:
+      - `hypotheses[{symptomCode, text, evidenceRefs[{caseId, field}]}]`;
+      - `fixes[{fixId, rationale, evidenceRefs}]`, ranked;
+      - `responders[{responderId, rationale}]`, ranked;
+      - optional `proposedOutcome` (`ABSTAIN` | `ESCALATE` + reason).
+    - **Validators:**
+      - refs only to cases the tools returned in this run, with fields from `CaseDTO`;
+      - fix ids from the class catalog;
+      - responder ids from `eligible_responders`;
+      - prose ≤ 400 chars with no digits except supplied ids.
+    - Code computes `evidenceGrade` (§3.5 formula), `qualified` per responder and the
+      §3.5 outcome precedence.
+    - Procedure text comes from the catalog verbatim, never from the model.
+    - Failure or deadline → a labelled deterministic investigation (lexical case match +
+      existing fix evidence + baseline responder order), still `READY`/`ABSTAINED` and
+      still gated.
+  - **Dispatch gate (§3.2).**
+    - `assertDispatchAuthorized` is called inside **every** assignment path: offer
+      creation, `assignInState`, manual override, offer acceptance, assistance/support and
+      rematch.
+    - Add a test that enumerates those call sites, so a new path without the gate fails.
+    - Approval stores the authorized responder and fix, the actor, the revision and the
+      confirmed prerequisites. It revalidates eligibility, qualification, prerequisites,
+      issue state and revision in one mutation; anything stale → 409 `STALE`.
+    - Implement `reject` and `escalate` (operator) and `feedback`.
+    - Expiry, supersede, restart re-queue and the `AUTO_APPROVE_SAFE` policy are **N3b**.
+      Keep pending records restart-safe now: on boot, a `RUNNING` run is re-queued and a
+      stale token is discarded.
+  - **Routes and state (§3.8).** `GET /state` gains bounded `fieldReports` and
+    `investigations`; also `GET /investigations/:id` (full DTO trace) and
+    `GET /cases/:caseId` (archive-aware, 404 if unknown). **Field names must match the UI
+    contract already on master.** `e2e/investigation-ui.spec.mjs` and
+    `frontend/investigation-view.js` read:
+    - for reports: `id`, `status`, `narrative`, `flags{hazard[], injection[], input}`,
+      `revision`, `interpretation{status, source, model, options[{optionId, equipmentId,
+      equipmentName, issueClass, symptomCode, symptomText, rationale}]}`;
+    - for investigations: `id`, `issueId`, `reportId`, `status`, `source`
+      (`NEBIUS_MODEL`/`AMD_MODEL`/`FIXTURE`/`DETERMINISTIC`), `model{modelId, calls,
+      latencyMs, promptTokens, completionTokens}`, `fallbackReason`, `evidenceGrade`,
+      `reason`, `warnings[]`, `hypotheses`, `fixes[{fixId, title, steps, safetyClass,
+      prerequisites, requiredCertifications, grade, rationale, evidenceRefs}]`,
+      `responders[{responderId, displayName, qualified, certifications, rationale}]`,
+      `trace[{tool, args, resultIds, ms, error?}]`, `decision{status, actor, at,
+      responderId, fixId, reason, confirmedPrerequisites}`, `feedback{useful}`,
+      `revision`, plus `interpretation`, `repaired` and `rawInvalid` for the harness.
+
+    Route responses may return the new `/state`. The UI accepts either that or
+    `{message}` and then polls.
+  - **Offline/fixture path.** Fixture mode reads `fixtures/investigation/synthetic-responses/`.
+    **You may add files there** (labelled `"label": "synthetic"`, one per scenario you
+    need). This is the one exception to the fixtures ownership rule this round. Offline
+    mode stays API-free.
+  - **Harness module.** `backend/src/investigation-eval.mjs` exports
+    `runScenario(scenario, { mode, samples })` per plan §4. Then
+    `npm run eval:investigator -- --mode fixture` must run all 24 scenarios. Report its
+    table in your handoff; honest failures are fine.
+  - **Tests** (hermetic):
+    - every §5 N3a acceptance item;
+    - the call-site enumeration;
+    - hazard input escalates with 0 calls;
+    - a never-resolving provider leaves the lane, ticks and `/state` responsive;
+    - injection both in the report and in a retrieved case narrative;
+    - an invented case id, unknown fix, unqualified responder or unconfirmed prerequisite
+      is rejected;
+    - digits in prose, step-cap overrun and deadline.
+
+    No live calls.
+  - **Docs:** `backend/investigation.md`, `http-api.md`, `live-runtime.md`,
+    `agent-boundary.md`, `offline-runtime.md`, `log.md`, and a `decisions.md` entry.
+  - **Do not touch:** `frontend/`, `e2e/` (tell me what to change), `docs/nebius/`,
+    `backend/data/`, port 3200.
+
+- **main agent (meanwhile):** N5 part 2 (paired replay outcome runner design), N8
+  deployment prep, README/HACKATHON_CHANGES upkeep. After N3a merges: switch the UI E2E
+  from stubs to the real API and run the first live investigation evaluation.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `cf17c4e` → merge `d58113d`: N1b Nebius defaults (watcher moved out of the repo) and N2 investigation contracts — DTOs, public certifications, catalog safety data, case records, narratives, six bounded read-only tools with host-owned `asOf`. Clean merge. Main agent set the ranking default to thinking off (`5bc4016`). On master: `npm test` 374/374, E2E 78/78. Handoff archived.
 - 2026-10-19 — **codex** `d3a500b` → merge `b255703` + main agent `1f18284`: N1 Nebius Token Factory provider (round 12): Nebius default, AMD kept, four roles with timeouts, per-provider controls, native/JSON-protocol tool turns, call metadata; main agent added the provider E2E and Nebius labels. `project-state/log.md` conflict kept both. Combined tree tested before merge: `npm test` 356/356, E2E 78/78. Handoff archived.
 - 2026-10-19 — **main agent** `claude` → master (fast-forward to `26fe6db`): plan v2, Apache-2.0 licence, 24 investigation scenarios (N5 part 1), Field reports tile on the §3.8 contract with stubbed-route E2E (N4), Chromium libraries moved to `/home/makodev58/nebius-tools`, override/rooms spec race fix. `npm test` 342/342, E2E 78/78 on master.
 - 2026-10-19 — **codex** `534a1b1` → merge `f892d3b`: one-pass review of the Nebius plan (round 11), 12 findings, all accepted into plan v2 `a2d8373`. Docs only; `project-state/log.md` append conflict kept both. Handoff archived.
@@ -672,16 +774,9 @@ in the same round; set `READY FOR MERGE` once at the end, unless N2 needs a deci
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 13 — N1b complete separately; N2 contracts, DTOs and read-only tools complete.
-- **Changes:** Explicit Case/Responder/Fix/Equipment DTO constructors; six OpenAI-schema tools with host-bound `asOf`/target exclusion, strict args, fixed error codes, ≤10 rows and ≤8192 UTF-8 bytes. Archive-stable cases derive from compact issue facts and retained observations. Independent responder-id-seeded public certifications, catalog safety/prerequisite/qualification metadata, existing-room/month-seed migration and public-symptom narratives. Offline generator adds seeded noisy simulated reports through both adapters before retention.
-- **Files changed:** New `backend/src/investigation-{dto,records,tools}.mjs`, `backend/tests/investigation-contracts.test.mjs`; domain types, catalog/schema/migration, workforce provisioning, issue creation, history retention/generator; maintained project-state pages and appended decision/log entries. No frontend, E2E, fixture, docs/nebius or backend/data changes.
-- **Verification:** `npm test` **374/374**; `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **78/78**. Both ports 3021/3121 free. Hermetic checks include hidden-truth noninterference, renamed-key canaries, future-data perturbation, archive/reload stability, committed month-seed migration, certification independence, qualification, safety validation, tool budgets and supported history/responder scenario tags.
-- **project-state pages updated:** New `backend/investigation.md`; `backend/domain-model.md`, `backend/simulation.md`, `backend/overview.md`, `concepts/agent-boundary.md`, `operations/testing.md`, `index.md`, `log.md`.
-- **Risks / follow-ups:** N3a should use `createInvestigationTools(snapshot, {asOf,targetIssueId})`; schemas deliberately reject model-supplied cutoff/target. Host supplies the decision-time roster snapshot (no historical roster reconstruction). `truncated` requires run-budget/fallback handling, including a single oversized case. Responder DTOs expose observed count fields without outcome weights; legacy cases have unknown firstTimeFix and do not contribute fix evidence. Approval/prerequisite enforcement, hazard policy, model loop and routes remain N3a. Existing month-seed artifacts migrate on load without rewriting. See `project-state/backend/investigation.md` for exact shapes.
-- **Watcher:** Restarted `/home/makodev58/nebius-tools/watch-codex-handover.mjs --ack-current`, PID 41408, same thread, 300-second interval; remains running per master RUN control.
-- **Questions for main:** None.
+- **Task:** Round 14 (N3a) assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
