@@ -4,6 +4,21 @@
 
 ## Merged handoffs
 
+### 2026-10-19 — codex → master (branch commit `bcc1cec`, merge `767fd2c`)
+
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-19
+- **Task:** Round 21 — security fixes from `08_SECURITY_REVIEW.md` (#1 partial; #2–8 and #10).
+- **Head commit:** This handoff commit on `codex` (parent `714eae3`).
+- **Required companion change before integration/deployment:** Main agent must change `frontend/app.js`'s request helper (around line 1082) to send `Content-Type: application/json` for bodyless POST/PUT/PATCH/DELETE commands too. Exact replacement expression is in the appended Status section of `docs/nebius/08_SECURITY_REVIEW.md`. Otherwise start/pause/reset/activity receive 415. Shared Playwright JSON defaults cover test setup and browser requests, so E2E success does not prove the unmodified production helper works. Frontend/e2e source deliberately untouched per assignment.
+- **Changes:** Room mutation JSON/Origin guards (415/403 plus codes), byte-based JSON input errors; trace sanitization including legacy DTOs and full public projection validation before model publication commits, with draft-compatible snapshots; per-tool numeric metric allowlists, whole-ID boundaries and probability/percentage rejection; hazard policy v2; unsupported selected first fix abstention, and decision-time support/current-hazard checks for legacy READY records; total malformed-final validation and bounded repair; 20 submission attempts/rolling real minute plus transactionally checked 100-open-report cap; fair investigation/narration/ranking claims; closed orphan full-row reclamation with compact analytic facts and monotonic IDs; streamed 256 KiB provider envelope cap/cancellation plus investigator content/argument caps. Synthetic lifecycle fixture regenerated (only three policy versions and three report creation timestamps changed).
+- **Files changed:** Backend modules: server, investigator/prompt, investigation-public/service, live-schema, report-policy, history-retention, model-provider, replay-runner; synthetic lifecycle seed; new investigation-security tests; seven existing unit request helpers; root playwright.config.mjs; docs/decisions.md; Status append only to docs/nebius/08_SECURITY_REVIEW.md; project-state pages below; own handoff section.
+- **Verification:** Final `npm test` **448/448**. Final `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **83/83**. Thirteen new hermetic security tests include poisoned trace persistence/legacy redaction, unsafe publication rollback, malformed repair/public IDs, numeric/ID adversaries, hazards/legacy approval checks, concurrent rate/backlog limits, fair claims, orphan retention/ID continuity and streamed oversized success/error replies. No live calls or runtime data writes. Ports 3021/3121 released.
+- **project-state pages updated:** backend/investigation.md, backend/domain-model.md, backend/model-providers.md, backend/http-api.md, operations/testing.md, log.md. Decision recorded; review Status appended.
+- **Risks / follow-ups:** Authentication and authenticated actor attribution remain a user decision (#1 intentionally partial); #9 UI recovery belongs to main. Rate limiter is process-local and resets on restart; persistent open cap remains. Closed orphan full detail expires (404), while compact investigation facts and operational audit events remain. New admission limits do not discard existing open work. Existing watcher PID 41408 preserved, not restarted.
+- **Questions for main:** Apply the frontend JSON-header companion change above during integration; no other decision needed for this implementation.
+- **Main agent after merge:** frontend sends JSON on bodyless commands (`app.js` `api()`); `e2e/mutation-headers.spec.mjs` disables the config's default JSON header so E2E would catch a regression.
+
 ### 2026-10-19 — gemini → master (branch commit `28596c8`, merge `8772c74`)
 
 - **Status:** READY FOR MERGE

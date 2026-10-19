@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 21) |
+| codex | RUN (round 22) |
 | gemini | RUN (round 22g) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Security fixes from 08_SECURITY_REVIEW.md | 21 |
+| codex | Ask Compass: grounded Q&A over the room (backend) | 22 |
 | gemini | Wall-display layout (E3) and provisional chart styling (E8) | 22g |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -1119,8 +1119,68 @@ navigation buttons you reduced to 40px. Start with `git merge master`; keep your
     E2E suite on port 3022. Commit at most 4 before/after screenshots under
     `docs/design/theme-review-2026-10/after/`. Stop any server you start.
 
+**Round 22 (2026-10-19) — codex: Ask Compass, a grounded Q&A over the room (backend).** The
+user wants more features. This one lets central command ask questions in plain language
+and get answers cited to real records. Start with `git merge master`; ports 3021/3121; keep
+your watcher. Commit in steps, with both suites green.
+
+- **codex — Ask Compass backend.**
+  - **Route:** `POST /api/control-rooms/:id/ask` with
+    `{ question (≤ 400 chars), context?: { issueId?, investigationId?, responderId? }, expectedRevision? }`
+    returns
+    `{ answerId, status: READY|DECLINED|FALLBACK, text, citations: [{kind, id}], trace, source, model, reason? }`.
+    Also `GET …/ask/:answerId`, and a bounded `askHistory` (last 20) in `/state`. Same JSON
+    and Origin guard as other mutations; the call never mutates operational state.
+  - **New role `assistant`:** default `nvidia/nemotron-3-super-120b-a12b` / `off`; settings,
+    env and timeout like the other roles, with the Settings fieldset added in the existing
+    pattern. Usage ledger and budget apply.
+  - **Read-only tools, public DTOs only, host-owned `asOf` = now:**
+    - `get_issue`;
+    - `get_investigation`;
+    - `issue_events` (audit/operational events for an issue);
+    - `responder_public`;
+    - `search_cases`, reusing the investigation tool;
+    - `recent_events` (bounded);
+    - `analytics_summary` (public analytics numbers).
+
+    ≤ 4 tool steps, ≤ 6 calls, 45 s deadline, ≤ 10 rows / 8 KB per result.
+  - **Validation (rules 3 and 4):**
+    - every citation must be an id a tool returned in this run;
+    - prose may quote numbers only from allowlisted numeric fields, the same rule as your
+      round 21 work;
+    - reject probability, skill or cause language;
+    - the answer must not recommend an action as if approved;
+    - one bounded repair, then fallback.
+  - **DECLINED:** questions about hidden truth (responder skill, true fault cause,
+    effectiveness), or anything asking it to act ("assign…", "approve…"). Code-owned
+    patterns decide this before any model call, and the reason is stated.
+  - **FALLBACK:** a deterministic answer listing the relevant records the tools found,
+    clearly labelled.
+  - **Injection:** question text and every narrative are untrusted data. Test injection in
+    the question and in retrieved narratives.
+  - **Limits:** a per-room rate limit (e.g. 10 per real minute) and history retention
+    bounded like investigations.
+  - **Offline:** a fixture path; API-free.
+  - **Tests:**
+    - citation validation;
+    - decline patterns;
+    - noninterference and canary on every tool, with hidden truth unchanged;
+    - number allowlist;
+    - repair then fallback;
+    - rate limit;
+    - never mutates (compare state before and after);
+    - the JSON/Origin guard.
+  - **Docs:** `project-state` (a new section in `investigation.md` or a new
+    `backend/assistant.md`, plus `http-api.md` and `model-providers.md`), `decisions.md`
+    and `log.md`.
+  - **Do not touch:** `frontend/` beyond the Settings role fieldset (the main agent builds the
+    Ask UI against your response shape; state the final field names in your handoff),
+    `e2e/` (tell me what to change), `docs/nebius/`, `backend/data/`, port 3200. No live
+    calls.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `bcc1cec` → merge `767fd2c`: security fixes #1 (JSON/Origin guard), #2–#8, #10 with 13 security tests. Main agent added the frontend JSON header and a header-free E2E. On master: `npm test` 448/448, E2E 85/85. Deployed; 415/403 verified on the server. Handoff archived.
 - 2026-10-19 — **gemini** `28596c8` → merge `8772c74`: CSS theme enhancements E1, E2, E4–E7 in the Nebius palette. Main agent restored 44px phone touch targets. On master: `npm test` 435/435, E2E 84/84. Deployed. Handoff archived.
 - 2026-10-19 — **codex** `c301290` → merge `803792b` (security review, 10 findings; theme notes) and **gemini** `51350ec` → merge `7b913e6` (theme review and plan). Docs only. Master was rewound once to drop a user file swept in by `git add -A`; merges redone with named staging. Handoffs archived.
 - 2026-10-19 — **codex** `86dd08d` → merge `8234230`: Docker image ships fixtures, dev compose uses `/app/data`, replay pairs carry public source/fallback provenance with per-source rates. `project-state/log.md` conflict kept both. On master: `npm test` 435/435, E2E 83/83. Handoff archived.
@@ -1157,17 +1217,9 @@ navigation buttons you reduced to 40px. Start with `git merge master`; keep your
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 21 — security fixes from `08_SECURITY_REVIEW.md` (#1 partial; #2–8 and #10).
-- **Head commit:** This handoff commit on `codex` (parent `714eae3`).
-- **Required companion change before integration/deployment:** Main agent must change `frontend/app.js`'s request helper (around line 1082) to send `Content-Type: application/json` for bodyless POST/PUT/PATCH/DELETE commands too. Exact replacement expression is in the appended Status section of `docs/nebius/08_SECURITY_REVIEW.md`. Otherwise start/pause/reset/activity receive 415. Shared Playwright JSON defaults cover test setup and browser requests, so E2E success does not prove the unmodified production helper works. Frontend/e2e source deliberately untouched per assignment.
-- **Changes:** Room mutation JSON/Origin guards (415/403 plus codes), byte-based JSON input errors; trace sanitization including legacy DTOs and full public projection validation before model publication commits, with draft-compatible snapshots; per-tool numeric metric allowlists, whole-ID boundaries and probability/percentage rejection; hazard policy v2; unsupported selected first fix abstention, and decision-time support/current-hazard checks for legacy READY records; total malformed-final validation and bounded repair; 20 submission attempts/rolling real minute plus transactionally checked 100-open-report cap; fair investigation/narration/ranking claims; closed orphan full-row reclamation with compact analytic facts and monotonic IDs; streamed 256 KiB provider envelope cap/cancellation plus investigator content/argument caps. Synthetic lifecycle fixture regenerated (only three policy versions and three report creation timestamps changed).
-- **Files changed:** Backend modules: server, investigator/prompt, investigation-public/service, live-schema, report-policy, history-retention, model-provider, replay-runner; synthetic lifecycle seed; new investigation-security tests; seven existing unit request helpers; root playwright.config.mjs; docs/decisions.md; Status append only to docs/nebius/08_SECURITY_REVIEW.md; project-state pages below; own handoff section.
-- **Verification:** Final `npm test` **448/448**. Final `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **83/83**. Thirteen new hermetic security tests include poisoned trace persistence/legacy redaction, unsafe publication rollback, malformed repair/public IDs, numeric/ID adversaries, hazards/legacy approval checks, concurrent rate/backlog limits, fair claims, orphan retention/ID continuity and streamed oversized success/error replies. No live calls or runtime data writes. Ports 3021/3121 released.
-- **project-state pages updated:** backend/investigation.md, backend/domain-model.md, backend/model-providers.md, backend/http-api.md, operations/testing.md, log.md. Decision recorded; review Status appended.
-- **Risks / follow-ups:** Authentication and authenticated actor attribution remain a user decision (#1 intentionally partial); #9 UI recovery belongs to main. Rate limiter is process-local and resets on restart; persistent open cap remains. Closed orphan full detail expires (404), while compact investigation facts and operational audit events remain. New admission limits do not discard existing open work. Existing watcher PID 41408 preserved, not restarted.
-- **Questions for main:** Apply the frontend JSON-header companion change above during integration; no other decision needed for this implementation.
+- **Task:** Round 22 assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
