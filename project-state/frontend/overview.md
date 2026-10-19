@@ -14,7 +14,7 @@ and re-renders. Node serves these files directly (see [../backend/http-api.md](.
 | `workspace-nav.js` | Local phone workspace selection (Issues, Floor, Decisions, Events), pending-decision counts and selected-task reveal; reuses the existing DOM across the Dockview breakpoint. |
 | `render-lifecycle.js` | An idempotent HTML writer (`setHtml`) that preserves form state (select values, focus) across the 1.5s re-render so polling never clobbers an in-progress interaction. |
 | `map-label-layout.js` | Screen-space label layout for the floor map: lane-based collision avoidance for equipment/responder bubbles, measured against projected geometry each frame. |
-| `tokens.css` | Modern light tokens (cool-grey / white surfaces, indigo accent, radii and elevation), plus the local-font CSS import; see `docs/design/modern-light.md`. |
+| `tokens.css` | Modern light tokens (cool-grey / white surfaces, indigo accent, radii and elevation), plus the local-font CSS import; see `docs/design/modern-light.md` and, for the Nebius palette since 2026-10-19, `docs/design/nebius-theme.md`. |
 | `base.css`, `floor.css`, `panel.css`, `ops.css`, `analytics.css` | Per-area styles: shell/header/controls, the map and feeds, the context panel, Settings/Demo/Control Rooms, Analytics. |
 | `layout.css` | Responsive and bounded-workstation layout. Linked last so it overrides the area files. |
 | `tiling.js`, `tiling.css` | Dockview adapter, validated per-browser layout persistence, keyboard splitters and token-based tile chrome. |

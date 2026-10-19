@@ -490,3 +490,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Included both fixture directories in the runtime image and aligned dev Compose persistence with `/app/data`; verified a local Docker build and read-only, network-disabled fixture smoke check.
 - Replay pairs retain public investigator source/fallback labels; scoring and CLI add source-specific first-fix rates with denominators while preserving aggregate and legacy scoring.
 - Pages updated: backend/investigation.md, operations/running-and-config.md, operations/testing.md.
+
+## [2026-10-19] ui — Nebius color palette
+- By user direction the theme follows the Nebius website palette, sampled from a user-supplied screenshot (kept outside the repo; colors only, no logo or artwork): navy `#0F2B43` text and actions, lime `#E1FE3C` brand fills (brand mark, active tab, selection wash), pale blue-grey surfaces. Token-only change plus two rules in `base.css`; all text tokens stay WCAG AA (lowest 5.1:1). `docs/design/nebius-theme.md`.
+- Pages updated: frontend/overview.md (design reference).

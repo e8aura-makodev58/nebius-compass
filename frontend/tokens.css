@@ -1,36 +1,43 @@
-/* Design tokens for the "Modern light" look. See docs/design/modern-light.md.
+/* Design tokens: the "Modern light" structure (docs/design/modern-light.md) with the Nebius
+   palette (docs/design/nebius-theme.md).
    Area stylesheets use these variables and never hard-code colour or font values.
    The --paper* / --ink* / --rule* names are kept from the previous look so existing
    rules, layout.css and tiling keep working: read --paper as the page background,
    --paper-raised as a surface (cards, inputs) and --paper-sunk as a recessed fill. */
 @import url("/vendor/fonts/fonts.css");
 :root {
+  /* Nebius-inspired palette (2026-10-19): deep navy text and actions, electric lime as the
+     brand highlight, pale blue-grey surfaces. Lime is a fill only (navy text on it, 12.8:1);
+     it is never used as text on light surfaces. See docs/design/nebius-theme.md. */
   /* Surfaces */
-  --paper: #F4F6FA;
+  --paper: #EEF2F7;
   --paper-raised: #FFFFFF;
-  --paper-sunk: #EDF0F5;
+  --paper-sunk: #E4EAF1;
   /* Text */
-  --ink: #111827;
-  --ink-2: #475467;
-  --ink-3: #566274;
-  --muted: #5B6677;
+  --ink: #0F2B43;
+  --ink-2: #3B5064;
+  --ink-3: #4A5E70;
+  --muted: #506377;
   /* Borders: --rule is the soft hairline, --rule-strong the border of controls. */
-  --rule: #E3E7EE;
-  --rule-strong: #C8CFDB;
-  /* The one accent: selection, primary actions, focus, links. */
-  --accent: #4F46E5;
-  --accent-ink: #4338CA;
-  --accent-wash: #EEF0FF;
+  --rule: #DCE3EC;
+  --rule-strong: #BFCAD8;
+  /* The one accent: selection, primary actions, focus, links (Nebius navy). */
+  --accent: #0F2B43;
+  --accent-ink: #0F2B43;
+  --accent-wash: #F2FAD0;
   --on-accent: #FFFFFF;
+  /* Brand highlight fills (Nebius lime). Always pair with --ink text. */
+  --brand-lime: #E1FE3C;
+  --brand-lime-deep: #B7E218;
   /* Status colours. Marks use the base colour, text uses the -ink colour. */
   --danger: #DC3545;
-  --danger-ink: #B42330;
+  --danger-ink: #A51F2C;
   --danger-wash: #FDECEE;
   --ok: #16A34A;
-  --ok-ink: #0F7A3C;
-  --info: #0369A1;
+  --ok-ink: #0E6E36;
+  --info: #03608F;
   --warn: #D97706;
-  --warn-ink: #8F4A0B;
+  --warn-ink: #7F420A;
   /* Type */
   --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -38,15 +45,15 @@
   --radius: 10px;
   --radius-sm: 6px;
   --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, .06);
-  --shadow-md: 0 8px 24px rgba(16, 24, 40, .12);
-  --focus-ring: 0 0 0 3px rgba(79, 70, 229, .3);
+  --shadow-sm: 0 1px 2px rgba(15, 43, 67, .06);
+  --shadow-md: 0 8px 24px rgba(15, 43, 67, .12);
+  --focus-ring: 0 0 0 3px rgba(183, 226, 24, .75);
   /* Categorical chart series (Pareto pie); --chart-other is the folded tail. */
-  --chart-1: #4F46E5;
-  --chart-2: #0E9F9A;
+  --chart-1: #0F2B43;
+  --chart-2: #8DB00F;
   --chart-3: #D97706;
   --chart-4: #DB2777;
   --chart-5: #0369A1;
-  --chart-6: #65A30D;
+  --chart-6: #5E7A8F;
   --chart-other: #9AA4B2;
 }
