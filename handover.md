@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | RUN (round 21) |
-| gemini | RUN (round 21g) |
+| gemini | RUN (round 22g) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | Security fixes from 08_SECURITY_REVIEW.md | 21 |
-| gemini | CSS-only theme enhancements E1, E2, E4–E7 | 21g |
+| gemini | Wall-display layout (E3) and provisional chart styling (E8) | 22g |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
 
@@ -1101,8 +1101,27 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
 - **main agent (meanwhile):** security #9 (UI re-investigate for failed approved attempts),
   the authentication decision with the user, and the live replay with provenance.
 
+**Round 22g (2026-10-19) — gemini: wall display and provisional charts.** Good work on
+21g. One note for the future: keep phone touch targets at **44px** minimum; I restored the
+navigation buttons you reduced to 40px. Start with `git merge master`; keep your watcher.
+
+- **gemini — E3 and E8 from your plan.**
+  - **E3:** in `.display-mode` at widths ≥ 1440px, use a layout that avoids very long text
+    lines and enlarges type for wall screens, for the Field reports, Staffing, Issues and
+    Event feed displays. Check `/rooms/plant-1/display/{investigation,staffing,issues,events}`
+    at 1920×1080 and 2560×1440. No horizontal scroll, and the existing
+    `display-screens.spec.mjs` must still pass.
+  - **E8:** in Analytics, mark provisional (in-progress) periods distinctly from completed
+    ones, for example reduced opacity plus a hatched pattern, and add a legend entry. Find
+    the class the period charts already put on provisional periods. If none exists and you
+    would need JS or HTML, stop and tell me rather than editing JS.
+  - **Files:** `frontend/*.css` only. Verify with the contrast test, `npm test` and the full
+    E2E suite on port 3022. Commit at most 4 before/after screenshots under
+    `docs/design/theme-review-2026-10/after/`. Stop any server you start.
+
 ### Merge log
 
+- 2026-10-19 — **gemini** `28596c8` → merge `8772c74`: CSS theme enhancements E1, E2, E4–E7 in the Nebius palette. Main agent restored 44px phone touch targets. On master: `npm test` 435/435, E2E 84/84. Deployed. Handoff archived.
 - 2026-10-19 — **codex** `c301290` → merge `803792b` (security review, 10 findings; theme notes) and **gemini** `51350ec` → merge `7b913e6` (theme review and plan). Docs only. Master was rewound once to drop a user file swept in by `git add -A`; merges redone with named staging. Handoffs archived.
 - 2026-10-19 — **codex** `86dd08d` → merge `8234230`: Docker image ships fixtures, dev compose uses `/app/data`, replay pairs carry public source/fallback provenance with per-source rates. `project-state/log.md` conflict kept both. On master: `npm test` 435/435, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `a624e64` → merge `5936de9`: public docs factual review (27 findings, `docs/nebius/07_PUBLIC_DOCS_REVIEW.md`). Docs only. The main agent applies the documentation findings; code findings go to round 19. Handoff archived.
@@ -1146,21 +1165,9 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
 
 ## gemini
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 21g — CSS-only theme enhancements E1, E2, E4, E6, E7 and E5 in Nebius palette
-- **Head commit:** 60fdde7
-- **Changes:** Implemented CSS-only theme enhancements from the Round 20g plan: E1 (standardized empty-state cards with `--paper-sunk`, `--rule-strong` dashed border, 10px radius, and docked header action in `#floor-tiles .investigation-tile`), E2 (hardened microcopy scale and contrast using `--ink-2` at `.74rem`–`.78rem`), E4 (compacted mobile 375px header and navigation bar; hidden desktop-only keyboard shortcuts on touchscreens), E5 (non-italic field incident narrative with solid navy left border; cited case chips with Nebius palette: raised surface, lime hover/wash `#F2FAD0`, lime focus halo, dark text), E6 (right-aligned numeric columns in Settings Usage table with `font-variant-numeric: tabular-nums` and row dividers), and E7 (universal `:focus-visible` styling with `--focus-ring` across buttons, case chips, summary disclosures, and option cards). Captured 5 comparison screenshots (468 KB total) in `docs/design/theme-review-2026-10/after/`.
-- **Files changed:** `frontend/base.css`, `frontend/investigation.css`, `frontend/layout.css`, `frontend/ops.css`, `docs/design/theme-review-2026-10/after/*.png`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md` (gemini section only)
-- **Verification:**
-  - `node --test backend/tests/design-tokens-contrast.test.mjs` passed (2/2)
-  - `npm test` passed (435/435)
-  - `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (83/83)
-  - Preview server stopped; port 3022 and port 3122 confirmed completely free
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`
-- **Risks / follow-ups:** CSS-only changes; no JS/HTML modifications.
-- **Questions for main:** None.
-
+- **Task:** Round 22g assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 

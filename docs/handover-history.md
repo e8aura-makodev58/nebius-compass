@@ -4,6 +4,24 @@
 
 ## Merged handoffs
 
+### 2026-10-19 — gemini → master (branch commit `28596c8`, merge `8772c74`)
+
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-19
+- **Task:** Round 21g — CSS-only theme enhancements E1, E2, E4, E6, E7 and E5 in Nebius palette
+- **Head commit:** 60fdde7
+- **Changes:** Implemented CSS-only theme enhancements from the Round 20g plan: E1 (standardized empty-state cards with `--paper-sunk`, `--rule-strong` dashed border, 10px radius, and docked header action in `#floor-tiles .investigation-tile`), E2 (hardened microcopy scale and contrast using `--ink-2` at `.74rem`–`.78rem`), E4 (compacted mobile 375px header and navigation bar; hidden desktop-only keyboard shortcuts on touchscreens), E5 (non-italic field incident narrative with solid navy left border; cited case chips with Nebius palette: raised surface, lime hover/wash `#F2FAD0`, lime focus halo, dark text), E6 (right-aligned numeric columns in Settings Usage table with `font-variant-numeric: tabular-nums` and row dividers), and E7 (universal `:focus-visible` styling with `--focus-ring` across buttons, case chips, summary disclosures, and option cards). Captured 5 comparison screenshots (468 KB total) in `docs/design/theme-review-2026-10/after/`.
+- **Files changed:** `frontend/base.css`, `frontend/investigation.css`, `frontend/layout.css`, `frontend/ops.css`, `docs/design/theme-review-2026-10/after/*.png`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md` (gemini section only)
+- **Verification:**
+  - `node --test backend/tests/design-tokens-contrast.test.mjs` passed (2/2)
+  - `npm test` passed (435/435)
+  - `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (83/83)
+  - Preview server stopped; port 3022 and port 3122 confirmed completely free
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`
+- **Risks / follow-ups:** CSS-only changes; no JS/HTML modifications.
+- **Questions for main:** None.
+- **Main agent after merge:** restored the 44px phone navigation touch targets (Gemini had reduced them to 40px).
+
 ### 2026-10-19 — gemini → master (branch commit `51350ec`, merge `7b913e6`)
 
 - **Status:** READY FOR MERGE
