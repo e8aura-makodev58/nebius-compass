@@ -115,6 +115,7 @@ export function initTiling({ onMapResize = () => {} } = {}) {
     api.addPanel({ id: "staffing", component: "staffing", tabComponent: "tile", title: PANELS.staffing.title, position: { referencePanel: "investigation", direction: "below" }, initialHeight: Math.max(180, height * .25), ...constraints("staffing") });
     api.getPanel("context").api.setSize({ width: Math.min(440, width * .36) });
     api.getPanel("issues").api.setSize({ height: Math.max(160, height * .28) });
+    api.getPanel("investigation").api.setSize({ height: Math.max(240, height * .42) });
     api.getPanel("map").api.setActive();
   }
   function prepareDividers() {

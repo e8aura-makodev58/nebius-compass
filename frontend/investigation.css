@@ -50,3 +50,8 @@
 .inv-case-dialog::backdrop { background: rgba(16, 24, 40, .35); }
 .inv-case-dialog > div { display: grid; gap: 8px; }
 @media (max-width: 900px) { .investigation-tile { border-top: 1px solid var(--rule); } }
+/* Inside a Dockview tile the tab already names the panel; keep the list to one scrolling strip. */
+#floor-tiles .investigation-tile .inv-tile-head { justify-content: flex-end; margin-bottom: 8px; }
+#floor-tiles .investigation-tile .inv-tile-head h3 { display: none; }
+#floor-tiles .investigation-tile .inv-list { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+#floor-tiles .investigation-tile .inv-row { flex: 0 0 auto; display: grid; gap: 1px; }
