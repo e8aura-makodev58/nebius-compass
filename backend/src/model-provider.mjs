@@ -67,7 +67,7 @@ export function readProviderApiKey(provider, environment = process.env) {
 }
 // Defaults verified by the main agent in N0 (2026-10-19); see docs/nebius/05_TOKEN_FACTORY_FACTS.md.
 export const NEBIUS_ROLE_DEFAULTS = Object.freeze({
-  compass: { modelId: 'nvidia/nemotron-3-super-120b-a12b', reasoningEffort: 'default', timeoutMs: 90_000 },
+  compass: { modelId: 'nvidia/nemotron-3-super-120b-a12b', reasoningEffort: 'off', timeoutMs: 90_000 },
   'event-planner': { modelId: 'nvidia/Nemotron-3_5-Lightning', reasoningEffort: 'off', timeoutMs: 30_000 },
   investigator: { modelId: 'nvidia/Nemotron-3-Ultra-550b-a55b', reasoningEffort: 'default', timeoutMs: 120_000 },
   narrator: { modelId: 'nvidia/Nemotron-3_5-Lightning', reasoningEffort: 'off', timeoutMs: 30_000 },

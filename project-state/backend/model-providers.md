@@ -91,7 +91,7 @@ See [running and configuration](../operations/running-and-config.md) for env var
 
 ## Verified N0 role defaults (2026-10-19)
 
-- Compass: `nvidia/nemotron-3-super-120b-a12b`, provider-default thinking.
+- Compass: `nvidia/nemotron-3-super-120b-a12b`, thinking `off` (real-packet measurement 2026-10-19: 5/5 valid at 3.2 s; thinking on was 4/5 at 17.6 s).
 - Investigator: `nvidia/Nemotron-3-Ultra-550b-a55b`, provider-default thinking.
 - Event planner and narrator: `nvidia/Nemotron-3_5-Lightning`, thinking off.
 

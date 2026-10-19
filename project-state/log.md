@@ -407,3 +407,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] feature — N2 investigation evidence contracts
 - Added allowlisted DTOs and six bounded, read-only tools with host-owned cutoffs, archive-stable cases, public certifications, safety catalog data, and template/noisy synthetic narratives. Added hermetic contract, noninterference, cutoff, migration and scenario-tag coverage.
 - Pages updated: backend/investigation.md (new), backend/domain-model.md, backend/simulation.md, backend/overview.md, concepts/agent-boundary.md, operations/testing.md, index.md.
+
+## [2026-10-19] config — Nebius ranking default thinking off
+- `NEBIUS_ROLE_DEFAULTS.compass.reasoningEffort` is now `off`, as the real-packet measurement decided (Super off: 5/5 valid, 5/5 expected top, 3.2 s; on: 4/5, 2/5, 17.6 s). `.env.example` comment and `model-providers.md` updated.
+- Pages updated: backend/model-providers.md.
