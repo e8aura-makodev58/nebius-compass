@@ -165,7 +165,7 @@ test('verified N0 role defaults map native tools and thinking through the capabi
     const defaults=roleDefaults('nebius',role,{});
     await callChatTurn({provider:'nebius',...defaults,apiKey:'fake',tools:[tool],fetchImpl:async(_url,init)=>{
       const body=JSON.parse(init.body);
-      assert.deepEqual(body.chat_template_kwargs,['compass','investigator'].includes(role) ? undefined : {enable_thinking:false});
+      assert.deepEqual(body.chat_template_kwargs,role === 'investigator' ? undefined : {enable_thinking:false});
       assert.equal(body.reasoning_effort,undefined);assert.equal(body.tool_choice,'auto');assert.deepEqual(body.tools,[tool]);assert.equal(body.max_tokens,4096);
       return response({content:'{}',reasoning_content:'never retain this'});
     }});
