@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 11) |
+| codex | RUN (round 12) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Review the Nebius hackathon plan (docs only) | 11 |
+| codex | N1 — Nebius Token Factory provider (round 12) | 12 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -482,8 +482,66 @@ every **300 s**; act when your Current task row changes; stop per Watcher contro
 - **main agent (meanwhile):** N0b baseline/provenance doc; N0 live Nebius probe once the
   user provides a key.
 
+**Round 12 (2026-10-19) — codex: N1, Nebius Token Factory provider.**
+Plan v2 (`docs/nebius/04_HACKATHON_PLAN.md`) is the spec. Read §2 (model tiering), §3.6
+(budgets), §5 (ownership, N1 row, acceptance) and §6. Start with `git merge master` and
+`npm install`; ports 3021/3121. Keep your watcher running (300 s).
+
+- **codex — N1.**
+  - **Provider registry.** `PROVIDER_IDS` gains `nebius`, which becomes the default for
+    fresh installs; `amd` stays selectable and AMD-era `provider-settings.json` files load
+    unchanged (a saved `amd` choice stays `amd`). Base URL `NEBIUS_TOKEN_FACTORY_BASE_URL`
+    (default `https://api.tokenfactory.nebius.com/v1`), key `NEBIUS_TOKEN_FACTORY_API_KEY` /
+    `_API_KEY_FILE` (fail closed like AMD), per-provider credential storage, masked hints.
+  - **No guessed model IDs.** Nebius role defaults come from env
+    (`NEBIUS_TOKEN_FACTORY_MODEL`, `_EVENT_PLANNER_MODEL`, `_INVESTIGATOR_MODEL`,
+    `_NARRATOR_MODEL`, and matching `_REASONING_*` if needed). With no model configured a
+    Nebius call fails closed as `model-not-configured` and callers fall back. Put the
+    defaults in one table that the main agent fills after N0. Reasoning/thinking control:
+    implement it as a per-model capability in that table (values `on`/`off`/`default`;
+    request mapping chosen per entry: omit, `reasoning_effort`, or
+    `chat_template_kwargs.enable_thinking`), so N0 only edits data.
+  - **Roles.** `compass`, `event-planner` (existing), plus `investigator` and `narrator`,
+    each with its own model/effort/timeout, persisted and in Settings → API (main agent
+    owns frontend: expose them in the `/api/settings` snapshot and routes; add only the
+    minimal Settings form fields needed, following the existing role fieldsets — tell me in
+    the handoff what you changed in `frontend/`).
+  - **Provider controls per provider.** Same limiter/retry/breaker semantics; separate
+    instance and env per provider (`NEBIUS_TOKEN_FACTORY_APP_RPM`, `_APP_CONCURRENCY`,
+    `_MAX_RETRIES`, `_BREAKER_THRESHOLD`, `_BREAKER_COOLDOWN_MS`); defaults conservative
+    (RPM 20, concurrency 2). You may edit `provider-controls.mjs` only to key it by provider;
+    keep its behaviour and tests.
+  - **Tool calling.** `callChatCompletion` accepts optional `tools` (OpenAI function
+    schema) and returns a normalised result `{ content, toolCalls: [{id,name,arguments}],
+    finishReason, usage: {promptTokens, completionTokens}, modelId, latencyMs,
+    providerRequestId }` through a new function (e.g. `callChatTurn`); keep
+    `callChatCompletion`'s current return contract for existing callers. Behind a per-model
+    capability flag `toolCalling: native | json-protocol`; for `json-protocol` provide the
+    helper that encodes tools into the system prompt and parses a
+    `{ "action": "tool"|"final", ... }` JSON reply into the same normalised shape. Validate
+    tool-call JSON arguments strictly (unknown tool, bad JSON → error result, not a throw
+    past the loop).
+  - **Metadata.** Existing callers record model id, latency and token usage on their
+    recommendation records when available (bounded, no prompt contents in logs).
+  - **Tests (hermetic, fake fetch, fake clock):** Nebius request shape and auth header; key
+    file fail-closed; model-not-configured fallback; provider selection + AMD settings
+    migration; per-provider controls isolation; native tool-call round trip; JSON-protocol
+    round trip; malformed tool arguments; usage/latency metadata; one live-path test with
+    only a stubbed global `fetch` (round 8 lesson). `npm test` stays network-free.
+  - **Docs:** `project-state/backend/model-providers.md` (now two providers),
+    `operations/running-and-config.md`, `.env.example` (placeholders only), `log.md`, and a
+    `docs/decisions.md` entry (Nebius default, AMD retained, no guessed IDs).
+  - **Do not touch:** `backend/data/`, port 3200, `docs/submission/`, `docs/nebius/`,
+    `fixtures/investigation/`, `e2e/` (tell me if an E2E needs updating), and no live calls.
+  - **Handoff:** both suites green on port 3021; list the exact env table the main agent
+    must fill after N0. Next for you after merge: N2.
+
+- **main agent (meanwhile):** N5 scenario fixtures (`fixtures/investigation/`, by 10-21),
+  N4 UI on stubs, N0 when the key arrives.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `534a1b1` → merge `f892d3b`: one-pass review of the Nebius plan (round 11), 12 findings, all accepted into plan v2 `a2d8373`. Docs only; `project-state/log.md` append conflict kept both. Handoff archived.
 - 2026-10-18 — **codex** `7d74b73` → merge `9aee67d`: journaled live store, copy-on-write drafts, frozen snapshots (round 10). Codex ran out of tokens mid-task; the main agent finished it in the codex worktree at the user's request (16 failing tests fixed, crash-safety tests added). Clean merge. `npm test` 327/327, E2E 71/71. Tick-mutation 50 ms target not met (p95 0.18 s). Handoff archived.
 - 2026-10-18 — **codex** `28b0fed` → merge `4e0cfb8`: user-directed operational UI refinements (decision-first staffing, phone workspace, analytics layout) and strict staffing prose `ce2b7c2`. Clean merge. `npm test` 319/319, E2E 71/71. Handoff archived. Round 10 (store performance) still open.
 - 2026-10-18 — **codex** `9e82f9e` → merge `a37849a`: overtime recommendations with command-center approval, Staffing tile and display screen, staffing analytics, regenerated month (round 9). Conflicts with the main agent's Pareto screen resolved by keeping both. Main agent fixed the staffing ranking's missing transport on master. `npm test` 316/316, E2E 67/67. Handoff archived.
@@ -508,15 +566,9 @@ every **300 s**; act when your Current task row changes; stop per Watcher contro
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 11 — one-pass Nebius hackathon plan review (docs only).
-- **Changes:** Added `docs/nebius/04_HACKATHON_PLAN_REVIEW.md` with twelve numbered findings and proposed revisions. Three blockers cover model fact authority, dispatch approval enforcement, and tool/trace privacy; remaining findings cover narratives, safety, replay, scope/dates, ownership, acceptance and release gates. Plan unchanged.
-- **Verification:** Read the supplied brief/rules/guide and checked findings against source, project-state and git provenance. Suites not run: docs-only exemption explicitly authorized in round 11 assignment.
-- **project-state pages updated:** `project-state/log.md` (review record only; implementation unchanged).
-- **Risks / follow-ups:** Main revises plan before N1 execution assignment. Codex watcher running every 300 seconds against master; stops on STOP or no task.
-- **Questions for main:** No response needed beyond plan revision and next assignment.
-
+- **Task:** Round 12 (N1) assigned; see Main agent → Assignments. Replace this section at handoff.
 ---
 
 ## gemini
