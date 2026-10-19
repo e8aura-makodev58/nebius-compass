@@ -103,7 +103,7 @@ test('fresh settings default to unconfigured Nebius, with independently persiste
   const filePath=join(await directory(t),'settings.json');
   const environment={NEBIUS_TOKEN_FACTORY_REASONING_EFFORT:'default',NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_REASONING_EFFORT:'default',NEBIUS_TOKEN_FACTORY_INVESTIGATOR_REASONING_EFFORT:'default',NEBIUS_TOKEN_FACTORY_NARRATOR_REASONING_EFFORT:'default',NEBIUS_TOKEN_FACTORY_MODEL:'synthetic-ranker',NEBIUS_TOKEN_FACTORY_INVESTIGATOR_MODEL:'synthetic-investigator',NEBIUS_TOKEN_FACTORY_NARRATOR_MODEL:'synthetic-narrator',NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_MODEL:'synthetic-planner'};
   const service=createProviderSettingsService({filePath,environment,apiKeys:{amd:'amd-key',nebius:'nebius-key'},fetchImpl:async(url)=>({ok:true,json:async()=>({data:[{id:url.includes('nebius')?'synthetic-ranker':'MiMo-V2.6-Flash'}]})})});
-  const snapshot=await service.snapshot();assert.equal(snapshot.provider,'nebius');assert.equal(Object.keys(snapshot.roles).length,4);
+  const snapshot=await service.snapshot();assert.equal(snapshot.provider,'nebius');assert.equal(Object.keys(snapshot.roles).length,5);
   assert.equal((await service.requestOptions('investigator')).modelId,'synthetic-investigator');
   assert.equal((await service.requestOptions('investigator')).timeoutMs,120000);
   await service.refreshModels('amd');

@@ -71,6 +71,7 @@ export const NEBIUS_ROLE_DEFAULTS = Object.freeze({
   compass: { modelId: 'nvidia/nemotron-3-super-120b-a12b', reasoningEffort: 'off', timeoutMs: 90_000 },
   'event-planner': { modelId: 'nvidia/Nemotron-3_5-Lightning', reasoningEffort: 'off', timeoutMs: 30_000 },
   investigator: { modelId: 'nvidia/Nemotron-3-Ultra-550b-a55b', reasoningEffort: 'default', timeoutMs: 120_000 },
+  assistant: { modelId: 'nvidia/nemotron-3-super-120b-a12b', reasoningEffort: 'off', timeoutMs: 45_000 },
   narrator: { modelId: 'nvidia/Nemotron-3_5-Lightning', reasoningEffort: 'off', timeoutMs: 30_000 },
 });
 export const NEBIUS_MODEL_CAPABILITIES = Object.freeze({

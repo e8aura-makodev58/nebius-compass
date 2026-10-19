@@ -539,3 +539,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Hermetic fixture evaluation: 24/24 outcomes, 0 repaired / 0 raw-invalid. Adversarial fixtures exercised shape, array bounds, disallowed numbers, probability claims, restricted/overlength prose, catalog text, unknown/duplicate IDs, qualification, citation case/field and outcome enum. Stubbed numeric-invalid output repaired to qualitative prose; no live-model claim.
 - Pages updated: backend/investigation.md, operations/testing.md; decision and review Status follow-up appended.
 - Verification: final unit suite 450/450, forced-provider Chromium E2E 84/84 on 3021, fixture evaluator 24/24. Test ports released; watcher preserved.
+
+## [2026-10-19] feature — Ask Compass public tools and role (round 22, step 1)
+- Added seven bounded public-only read projections, explicit numeric metric allowlists and noninterference/canary tests; shared grounded-prose validation with the investigator. Added the assistant role to provider settings, env defaults, usage accounting and the existing Settings role pattern.
+- Pages updated: backend/assistant.md (new), backend/overview.md, backend/model-providers.md, index.md. The Q&A service/routes follow in step 2.
+- Step 1 verification: unit suite 452/452; forced-provider Chromium E2E 85/85 on port 3021.

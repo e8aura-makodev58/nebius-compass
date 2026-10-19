@@ -214,3 +214,6 @@ known estimated spend/calls, per-role call/input/output token table, daily budge
 Unpriced calls mark estimates incomplete. The same block remains visible to tunnel visitors;
 it adds no editable controls and reuses settings/evidence-table styles. Usage is loaded with
 the settings snapshot; saving a model/credential retains the last displayed usage snapshot.
+
+Settings includes the fifth Assistant (Ask Compass) role through the existing shared
+role-card renderer, with independent model, reasoning, timeout and save controls.

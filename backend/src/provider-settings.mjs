@@ -6,7 +6,7 @@ import { compassDataPath } from "./data-root.mjs";
 import { logEvent } from "./application-log-store.mjs";
 
 const DEFAULT_TIMEOUT_MS = 8_000;
-const MODEL_ROLES = ["compass", "event-planner", "investigator", "narrator"];
+const MODEL_ROLES = ["compass", "event-planner", "investigator", "narrator", "assistant"];
 const defaultModel = () => ({ modelId: AMD_DEFAULT_MODEL_ID, reasoningEffort: defaultReasoningEffortFor(AMD_DEFAULT_MODEL_ID) });
 
 function modelRole(value = "compass") {

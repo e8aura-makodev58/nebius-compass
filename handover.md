@@ -1218,9 +1218,13 @@ your watcher. Commit in steps, with both suites green.
 
 ## codex
 
-- **Status:** IDLE
+- **Status:** IN PROGRESS
 - **Updated:** 2026-10-19
-- **Task:** Round 22 assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 22 — Ask Compass backend.
+- **Changes:** Step 1 adds the assistant settings/env/usage role and seven bounded read-only public tools. Step 2 (service, routes, bounded history and runtime integration) remains in progress; not ready for integration yet.
+- **Verification:** Step 1 unit suite 452/452; forced-provider Chromium E2E on 3021 85/85. No live calls. Existing watcher PID 41408 preserved.
+- **project-state pages updated:** backend/assistant.md, backend/model-providers.md, backend/overview.md, frontend/overview.md, index.md, log.md.
+- **Questions for main:** None.
 
 ---
 
