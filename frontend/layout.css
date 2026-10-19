@@ -238,3 +238,156 @@
   .display-mode[data-display="staffing"] .staffing-primary-actions button { min-height: 48px; padding: 12px 18px; font-size: 1rem; }
   .display-mode[data-display="staffing"] .status-badge { font-size: .85rem; }
 }
+
+/* Wall screens (≥1440px): ergonomic layouts to prevent excessive line length and enlarge type for distance reading. */
+@media (min-width: 1440px) {
+  .display-mode .app-shell { padding: 14px 28px; }
+  .display-mode .topbar h1 { font-size: 1.35rem; }
+  .display-mode .simulation-bar { padding: 10px 16px; font-size: 1rem; }
+  .display-mode .simulation-bar strong { font-size: .95rem; }
+  .display-mode .simulation-bar .eyebrow { font-size: .72rem; }
+
+  /* Field reports (investigation) display */
+  .display-mode[data-display="investigation"] #investigation-tile {
+    max-width: 1680px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 36px;
+    font-size: 1.05rem;
+  }
+  .display-mode[data-display="investigation"] #investigation-tile > :is(.inv-tile-head, .inv-reports-list, .empty-state, .inv-callout) {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .display-mode[data-display="investigation"] .inv-tile-head h3 { font-size: 1.3rem; }
+  .display-mode[data-display="investigation"] .empty-state { padding: 28px 32px; }
+  .display-mode[data-display="investigation"] .empty-state strong { font-size: 1.25rem; }
+  .display-mode[data-display="investigation"] .empty-state p { font-size: 1rem; line-height: 1.6; max-width: 70ch; }
+  .display-mode[data-display="investigation"] .inv-detail {
+    display: grid;
+    grid-template-columns: minmax(420px, 1fr) minmax(460px, 1.15fr);
+    column-gap: 36px;
+    row-gap: 16px;
+    align-items: start;
+    max-width: 1560px;
+    margin: 0 auto;
+  }
+  .display-mode[data-display="investigation"] .inv-detail > :is(.inv-heading, .inv-status, .inv-due, .inv-narrative, .inv-cases, .inv-warnings, .inv-hypotheses) {
+    grid-column: 1;
+  }
+  .display-mode[data-display="investigation"] .inv-detail > :is(h5, .inv-card, details, .inv-options, .inv-prereqs, .inv-reason, .inv-actions, .inv-decision, .inv-callout) {
+    grid-column: 2;
+  }
+  .display-mode[data-display="investigation"] .inv-heading h4 { font-size: 1.35rem; }
+  .display-mode[data-display="investigation"] .inv-narrative {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    padding: 16px 20px;
+    max-width: 75ch;
+  }
+  .display-mode[data-display="investigation"] .inv-card { padding: 18px 20px; }
+  .display-mode[data-display="investigation"] .inv-card h5 { font-size: 1.15rem; }
+  .display-mode[data-display="investigation"] .inv-card p { font-size: .95rem; line-height: 1.5; }
+  .display-mode[data-display="investigation"] .inv-option { padding: 12px 16px; font-size: 1rem; }
+  .display-mode[data-display="investigation"] .inv-option strong { font-size: 1.05rem; }
+  .display-mode[data-display="investigation"] .inv-option small { font-size: .88rem; }
+  .display-mode[data-display="investigation"] .inv-actions button { min-height: 48px; padding: 12px 22px; font-size: 1rem; }
+
+  /* Staffing display */
+  .display-mode[data-display="staffing"] #staffing-tile {
+    max-width: 1680px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 36px;
+    font-size: 1.05rem;
+  }
+  .display-mode[data-display="staffing"] #staffing-tile > :is(.staffing-open, details, .staffing-coverage, .empty-state) {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .display-mode[data-display="staffing"] .staffing-decision-heading h3 { font-size: 1.25rem; }
+  .display-mode[data-display="staffing"] .staffing-pick > strong { font-size: 2rem; }
+  .display-mode[data-display="staffing"] :is(.staffing-rationale, .staffing-countdown, .staffing-coverage, .staffing-open table) {
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+  .display-mode[data-display="staffing"] :is(.staffing-policy-note, .staffing-tile summary, .staffing-tile details p) {
+    font-size: .98rem;
+    line-height: 1.5;
+  }
+  .display-mode[data-display="staffing"] .empty-state { padding: 28px 32px; }
+  .display-mode[data-display="staffing"] .empty-state strong { font-size: 1.25rem; }
+  .display-mode[data-display="staffing"] .empty-state p { font-size: 1rem; line-height: 1.6; max-width: 70ch; }
+
+  /* Issues display */
+  .display-mode[data-display="issues"] .floor-section { padding: 24px 32px; }
+  .display-mode[data-display="issues"] .section-heading h2,
+  .display-mode[data-display="issues"] .section-heading h3 { font-size: 1.3rem; }
+  .display-mode[data-display="issues"] .issue-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-content: start;
+    max-width: 1800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .display-mode[data-display="issues"] .issue-card {
+    padding: 16px 20px;
+    gap: 10px;
+    border-radius: var(--radius);
+  }
+  .display-mode[data-display="issues"] .issue-card .issue-row-heading strong { font-size: 1.15rem; }
+  .display-mode[data-display="issues"] .issue-card .issue-row-description { font-size: .95rem; line-height: 1.5; }
+  .display-mode[data-display="issues"] .issue-card .issue-row-meta span { font-size: .85rem; }
+  .display-mode[data-display="issues"] .issue-card span:last-child { font-size: .9rem; font-weight: 600; }
+
+  /* Event feed display */
+  .display-mode[data-display="events"] .floor-section { padding: 24px 32px; }
+  .display-mode[data-display="events"] .section-heading h2,
+  .display-mode[data-display="events"] .section-heading h3 { font-size: 1.3rem; }
+  .display-mode[data-display="events"] .event-feed {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 20px;
+    align-content: start;
+    max-width: 1800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .display-mode[data-display="events"] .feed-event {
+    grid-template-columns: 56px 1fr;
+    gap: 12px;
+    padding: 14px 16px 14px 22px;
+    font-size: 1rem;
+    border-left-width: 3px;
+    border-radius: var(--radius);
+  }
+  .display-mode[data-display="events"] .feed-event .event-marker {
+    top: 18px;
+    left: 4px;
+    width: 7px;
+    height: 7px;
+  }
+  .display-mode[data-display="events"] .feed-event time { font-size: .92rem; font-weight: 600; }
+  .display-mode[data-display="events"] .feed-event-copy strong { font-size: 1.05rem; line-height: 1.4; }
+  .display-mode[data-display="events"] .feed-event-copy > span {
+    font-size: .92rem;
+    line-height: 1.45;
+    white-space: normal;
+  }
+}
+
+@media (min-width: 2200px) {
+  .display-mode[data-display="issues"] .issue-list,
+  .display-mode[data-display="events"] .event-feed {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 2400px;
+  }
+  .display-mode[data-display="investigation"] #investigation-tile,
+  .display-mode[data-display="staffing"] #staffing-tile {
+    max-width: 2100px;
+  }
+}

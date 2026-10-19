@@ -1173,9 +1173,24 @@ navigation buttons you reduced to 40px. Start with `git merge master`; keep your
 
 ## gemini
 
-- **Status:** IDLE
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-19
-- **Task:** Round 22g assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 22g — Wall-display layout (E3) and provisional chart styling (E8)
+- **Head commit:** 2b7e6ff
+- **Changes:**
+  - E3: Implemented responsive wall-display styling (`@media (min-width: 1440px)` and `@media (min-width: 2200px)`) under `.display-mode` in `frontend/layout.css` for Field reports (`investigation`), Staffing (`staffing`), Issues (`issues`), and Event feed (`events`). Replaced single-line 1800px+ measures with 2-column (and 3-column on 2560px) grid layouts for Issues and Events, and constrained reading containers (`max-width: 1680px` centered) with 2-column operational details for Field reports and Staffing. Scaled up typography (`1.05rem`–`1.35rem`) for reading at room distance while strictly maintaining zero horizontal scroll (`overflow <= 0`).
+  - E8: In Operational Analytics period charts (`frontend/analytics.css`), distinctly styled provisional/in-progress simulated period bars (`.period-bar.partial`) using 0.55 opacity, a diagonal hatched pattern (`repeating-linear-gradient`), and dashed rule borders. Added a clear legend entry (`■ Complete   □ In-progress (provisional)`) to `.period-chart > small`.
+  - Replaced screenshots under `docs/design/theme-review-2026-10/after/` with 4 representative wall display and chart screenshots (256 KB total).
+- **Files changed:** `frontend/analytics.css`, `frontend/layout.css`, `docs/design/theme-review-2026-10/after/*.png`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md` (gemini section only)
+- **Verification:**
+  - `node --test backend/tests/design-tokens-contrast.test.mjs` passed (2/2)
+  - `npm test` passed (448/448)
+  - `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (84/84)
+  - Verified zero horizontal overflow on all display screens at 1920×1080 and 2560×1440
+  - Ports 3022 and 3122 confirmed completely free
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`
+- **Risks / follow-ups:** CSS-only changes; no JS/HTML modifications.
+- **Questions for main:** None.
 
 ---
 
