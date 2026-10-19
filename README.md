@@ -169,7 +169,7 @@ server-side key and select either provider's models, thinking settings and timeo
 Missing credentials or failed inference use the applicable deterministic fallback. Keys
 stay server-side and are never sent to the browser.
 
-Offline Demo is always hard-pinned to the committed fixture, regardless of Live environment settings, and never makes an API request.
+Offline Demo makes no provider calls. It uses the committed fixtures in a source checkout and in the Docker image, which includes `fixtures/` and `backend/fixtures/` (a test checks every runtime fixture path is packaged).
 
 ## Docker deployment
 
@@ -196,7 +196,8 @@ docker compose -p responsecompass ps
 The health check calls `GET /api/control-rooms` and passes only when every room reports
 `READY`. These names are deliberately distinct from the older Compass deployment on the
 same host (project `compass`, volume `compass-data`, port 3000); never point this file at
-that volume. `docker-compose.yml` is a separate development setup (port 3100).
+that volume. `docker-compose.yml` is a separate development setup on port 3100; it persists
+`/app/data` to `./backend/data` on the host.
 
 ### Public access through Cloudflare Tunnel
 
