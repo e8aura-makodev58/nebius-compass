@@ -55,3 +55,8 @@
 #floor-tiles .investigation-tile .inv-tile-head h3 { display: none; }
 #floor-tiles .investigation-tile .inv-list { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
 #floor-tiles .investigation-tile .inv-row { flex: 0 0 auto; display: grid; gap: 1px; }
+.inv-override { display: grid; gap: 8px; }
+.inv-override[open] { padding-bottom: 8px; }
+.inv-override label { display: grid; gap: 5px; color: var(--ink-2); font-weight: 600; font-size: .74rem; }
+.inv-override select, .inv-override input:not([type=checkbox]) { width: 100%; max-width: 100%; box-sizing: border-box; border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); padding: 8px; background: var(--paper-raised); color: var(--ink); font: inherit; font-weight: 400; }
+.inv-due { color: var(--warn-ink); }

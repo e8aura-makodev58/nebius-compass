@@ -449,3 +449,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] measurement — Live investigator evaluation run 2
 - After the ESCALATE repair: 24/24 outcome classes, citations 64/64, 0 safety violations in 12 accepted outputs, abstention 8/8 both ways, hazard/input 6/6 without a model call, p50 8.9 s / p95 29.4 s. Two genuine model fallbacks (validation-failed, tool-step-cap) still ended in the expected class. `docs/evaluation.md`.
 - Pages updated: none.
+
+## [2026-10-19] ui — Override, re-investigate, deadline, policy and analytics for investigations
+- Field reports tile: decision deadline line, Re-investigate (supersedes, follows the new run), audited manual dispatch for ABSTAINED/ESCALATED (certification-filtered responders, prerequisites, required reason; state kept across polls). Settings → Demo: field report policy (approval mode, deadline, share). Analytics: "Field report investigations" (outcomes, approval/override/abstention rates, first-fix comparison with the counterfactual caveat).
+- E2E (real routes): re-investigate → override dispatch with exact decision fields and assignment; policy save; analytics panel.
+- Pages updated: frontend/overview.md.
