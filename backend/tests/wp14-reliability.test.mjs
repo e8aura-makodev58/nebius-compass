@@ -21,7 +21,12 @@ test("latent observations converge toward hidden success and median parameters",
 // only a guard against a true hang, not a performance assertion.
 test("one-hundred-opportunity deterministic soak meets seed disagreement and integrity gates", { timeout: 120_000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), "compass-soak-"));
-  const store = createLiveStore({ filePath: join(directory, "live.json") });
+  const store = createLiveStore({ filePath: join(directory, "live.json"), seedFactory: () => {
+    const state=createLiveSeed();
+    // This experiment isolates the existing responder-ranking path, not investigation approval.
+    state.investigationPolicy.investigationShare=0;
+    return state;
+  } });
   const report = await runDeterministicSoak(store, 100);
   assert.equal(report.opportunities, 100);
   assert.ok(report.disagreementRate >= 0.25, JSON.stringify(report));

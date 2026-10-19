@@ -1,3 +1,5 @@
+import { claimInvestigationDeadlines } from './investigation-policy.mjs';
+import { finishInvestigationDeadline } from './investigation-service.mjs';
 import { createInvestigationService } from './investigation-service.mjs';
 import { publicInvestigationState } from './investigation-public.mjs';
 import { migrateInvestigationRecords } from './investigation-records.mjs';
@@ -32,7 +34,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     const state = createInitialDemoState();
     state.issues.forEach((issue) => { issue.complexity = issue.id === "ISS-104" ? "COMPLEX" : "STANDARD"; });
     const startedAt = state.issues.map((row) => row.raisedAt).sort().at(-1);
-    state.simulationState = { simulationTime: startedAt, rngStreams: { attempt: runtimeOptions.attemptSeed ?? 9_973 } };
+    state.simulationState = { status: "RUNNING", simulationTime: startedAt, rngStreams: { attempt: runtimeOptions.attemptSeed ?? 9_973 } };
     state.responderSkills = structuredClone(createLiveSeed().responderSkills);
     state.operationalEvents = [];
     state.assignments = [{ id: "offline-assignment-001", issueId: "ISS-103", responderId: "R-OPER142", attemptId: null, role: "PRIMARY", status: "ACTIVE", createdAt: startedAt, joinedAt: startedAt, endedAt: null, endReason: null, roleHistory: [{ role: "PRIMARY", startedAt, endedAt: null }] }];
@@ -57,7 +59,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
       return {label,result:structuredClone(result)};
     },
   };
-  const investigations = createInvestigationService(investigationStore,{investigatorOptions:{mode:'fixture'},rankingOptions:{mode:'fixture'}});
+  const investigations = createInvestigationService(investigationStore,{investigatorOptions:{mode:'fixture'},rankingOptions:{mode:'fixture'},narratorOptions:{mode:'fixture'}});
   async function finishInvestigationWork() { while (await investigations.runNext()) {} }
   let workflow = null;
   let requestSequence = 0;
@@ -70,6 +72,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
   function syncOfflineClock() {
     const elapsedWholeSeconds = Math.floor(Math.max(0, now() - offlineEpochRealTime) / 1_000);
     demoState.simulationState.simulationTime = new Date(offlineEpochSimulationTime + elapsedWholeSeconds * simulatedMinutesPerRealSecond * 60_000).toISOString();
+    for (const trigger of claimInvestigationDeadlines(demoState)) finishInvestigationDeadline(demoState, trigger);
   }
 
   function finalizeOfflineDueAttempts() {
@@ -240,6 +243,8 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
 
   return {
     snapshot,
+    updateInvestigationPolicy:(input)=>investigations.updatePolicy(input),
+    async reinvestigate(id,input) {const result=await investigations.reinvestigate(id,input);await finishInvestigationWork();return result;},
     async submitReport(input) { const result=await investigations.submit(input);await finishInvestigationWork();return result; },
     async confirmReport(id,input) { const result=await investigations.confirm(id,input);await finishInvestigationWork();return result; },
     closeReport:(id,input)=>investigations.close(id,input), getReport:(id)=>investigations.getReport(id),

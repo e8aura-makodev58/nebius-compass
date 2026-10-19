@@ -1,4 +1,4 @@
-import { publicInvestigationState } from './investigation-public.mjs';
+import { publicInvestigationState, investigationDTO, reportDTO } from './investigation-public.mjs';
 import { CERTIFICATIONS } from './investigation-records.mjs';
 import { staffingBacklog } from './staffing-service.mjs';
 import { deterministicFixRecommendation } from './fix-evidence.mjs';
@@ -52,12 +52,20 @@ export function validateLiveState(state, { previous = null } = {}) {
   const changed=(key)=>{if(!previous)return state[key]??[];if(state[key]===previous[key])return [];const old=new Set(previous[key]??[]);return (state[key]??[]).filter(row=>!old.has(row));};
   assert(state && typeof state === "object", "state must be an object");
   validateFaultTruth(state);
+  if(state.investigationPolicy) {
+    const policy=state.investigationPolicy;
+    assert(['OPERATOR','AUTO_APPROVE_SAFE'].includes(policy.investigationApproval),'Invalid investigation approval policy');
+    assert(Number.isFinite(policy.investigationDeadlineMinutes)&&policy.investigationDeadlineMinutes>0&&policy.investigationDeadlineMinutes<=720,'Invalid investigation deadline');
+    assert(Number.isFinite(policy.investigationShare)&&policy.investigationShare>=0&&policy.investigationShare<=1,'Invalid investigation share');
+    assert(Number.isInteger(policy.revision)&&policy.revision>=0,'Invalid investigation policy revision');
+  }
   for (const key of ['fieldReports','investigations']) if (state[key] !== undefined) {
     assert(Array.isArray(state[key]), `Invalid ${key}`);
     assertUnique(state[key], 'id', key);
   }
   for (const row of changed('investigations')) {
-    assert(['QUEUED','RUNNING','READY','ABSTAINED','ESCALATED','FAILED','APPROVED','REJECTED','EXPIRED','SUPERSEDED'].includes(row.status), 'Invalid investigation status');
+    assert(['QUEUED','RUNNING','READY','ABSTAINED','ESCALATED','FAILED','APPROVED','OVERRIDDEN','AUTO_APPROVED','REJECTED','EXPIRED','SUPERSEDED'].includes(row.status), 'Invalid investigation status');
+    if(row.status==='READY'&&row.deadline)assert(Number.isFinite(Date.parse(row.deadline))&&Boolean(row.deadlineToken)!==Boolean(row.deadlineDispatchToken),'Invalid investigation deadline token');
     assert(Number.isInteger(row.revision) && row.revision >= 0, 'Invalid investigation revision');
     assert(Buffer.byteLength(JSON.stringify(row.trace ?? [])) <= 65536, 'Investigation trace exceeds budget');
   }
@@ -364,7 +372,8 @@ export function createIssueAuditRecord(state, issueId) {
   if (!issue) return null;
   const record = structuredClone({
     issue,
-    ...((state.investigations ?? []).some((row)=>row.issueId===issueId) ? {investigations:publicInvestigationState({investigations:state.investigations.filter((row)=>row.issueId===issueId),fieldReports:[]}).investigations} : {}),
+    ...((state.fieldReports ?? []).some((row)=>row.issueId===issueId)?{fieldReports:state.fieldReports.filter((row)=>row.issueId===issueId).map(reportDTO)}:{}),
+    ...((state.investigations ?? []).some((row)=>row.issueId===issueId) ? {investigations:state.investigations.filter((row)=>row.issueId===issueId).map((row)=>investigationDTO(row))} : {}),
     equipment: state.equipment.find((entry) => entry.id === issue.equipmentId) ?? null,
     recommendations: state.recommendations.filter((entry) => entry.issueId === issueId),
     dispatchOffers: (state.dispatchOffers ?? []).filter((entry) => entry.issueId === issueId),

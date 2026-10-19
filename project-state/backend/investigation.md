@@ -2,7 +2,7 @@
 
 N2 supplies the public evidence boundary. N3a adds field reports, interpretation ranking,
 the bounded tool loop, operator decisions and gated assignment through shared Live/Offline
-services. Expiry, supersession, policy approval and simulated-issue sampling remain N3b.
+services. N3b adds restart-safe deadlines, supersession, explicit overrides, safe policy approval, simulated reports and retained analytics.
 
 ## DTO boundary
 
@@ -82,7 +82,7 @@ Missing issue narratives get public-symptom-only templates (`narrativeSource: te
 including retained compact facts. New simulation issues also have templates. The offline
 history generator wraps both store adapters to write repeatable `simulated` templates
 with misleading keywords, typos and omissions using a separate id-seeded namespace,
-before retention. Operator narratives are preserved; the live narrator is not used yet.
+before retention. Operator narratives are preserved. Live sampled reports use the bounded narrator described below.
 
 Safety catalog metadata and validation live in `fix-catalog.mjs`. `investigation-service.mjs`
 revalidates qualification and confirmed prerequisites atomically at operator approval.
@@ -152,19 +152,18 @@ or network access is needed.
 `dispatch-gate.mjs` supplies `assertDispatchAuthorized` to live assignment, offer creation,
 offer acceptance, override, assistance/review, transfer, workforce handover/queue rematch,
 and the legacy/offline writers. Missing/OPEN gates preserve existing dispatch behavior.
-A report-origin issue needs an APPROVED record for that exact responder and fix, current
+An investigation-gated issue needs an APPROVED, AUTO_APPROVED or OVERRIDDEN record for that exact responder and fix, current
 certifications and all prerequisite confirmations. Authorization is consumed by the initial
 attempt ID; support, transfers, handover replacements and failed-attempt rematches cannot
 reuse it. The existing handover engine defers an unapproved replacement instead of silently
-changing the responder. A new manual override/reinvestigation record for continuing work is
-part of the follow-on lifecycle work; no implicit replacement is authorized in this slice.
+changing the responder. Continuing work requires a new explicit override or re-investigation; no implicit replacement is authorized.
 
 Approval rechecks the issue, responder availability/active assignments, public catalog,
 certifications, prerequisite enum/completeness and investigation revision in one store
 mutation. It stores Central command, timestamp, revision and authorized IDs, then invokes
 the shared assignment engine in that mutation. `selectAttemptFix` uses exactly the approved
 fix. A same-record duplicate approval is idempotent; another choice/revision returns 409
-STALE with no mutation. An abstained/escalated run can be manually approved only with an
+STALE with no mutation. An abstained/escalated run uses the separate override route with an
 explicit reason and the same safety checks. Reject, operator escalation, report closure
 and useful/not-useful feedback are audited and cannot authorize assignment.
 
@@ -190,8 +189,8 @@ operator confirmation uses the scenario's specified manual interpretation, so in
 agreement measures the confirmed facts, not independent model classification. Fixture
 inference uses a synthetic script and reports zero tokens. The never-resolving scenario uses
 a short injected timeout; it is a deadline test, not a live latency measurement. The
-only-via-overtime scenario safely abstains with no eligible responder; the current fixture
-label expects READY and the evaluator honestly reports that mismatch. No investigator can
+only-via-overtime scenario safely abstains with no eligible responder; its corrected fixture
+label is ABSTAINED. No investigator can
 approve staffing. Live evaluation is an explicit separate command for the main agent.
 
 N3a tests: `backend/tests/investigator.test.mjs` includes native/global-fetch and
@@ -205,3 +204,37 @@ preserving snapshot readability and the hidden-truth boundary. Ordinary injectio
 spans remain accepted as quoted untrusted data. At a tool-step cap, fallback citations are
 restricted to cases already present in the retained trace; no additional cited case is
 invented to bypass the step limit.
+
+
+## Lifecycle, safe policy and simulation reports
+
+`investigation-policy.mjs` persists room `investigationPolicy`: `investigationApproval`
+OPERATOR (default) or AUTO_APPROVE_SAFE, `investigationDeadlineMinutes` (default 30),
+`investigationShare` (default 0.2), and `revision`. READY deadlines are measured from
+`readyAt` in simulated minutes. The scheduler claims durable deadline tokens, replays
+claimed work after restart, and clears the token atomically with the terminal decision.
+Late normal approvals fail; duplicate completion cannot assign twice. Re-investigation
+supersedes the old run, invalidates its tokens and creates a new run with fresh host cutoff.
+
+At the deadline AUTO_APPROVE_SAFE can approve only a READY result whose overall and first
+fix grades are MODERATE/STRONG, with a confirmed report and explicit empty hazard flags.
+It rechecks availability, certifications, issue state and prerequisites in the same mutation
+as assignment. Policy records prerequisite confirmations and actor `policy:AUTO_APPROVE_SAFE`.
+Unsafe, unsupported, unavailable or stale work expires; ABSTAINED/ESCALATED/THIN never auto-approve.
+Manual ABSTAINED/ESCALATED overrides record status OVERRIDDEN and an operator reason.
+
+Planner issues use an independent persisted investigation RNG stream to sample the share.
+Sampled issues keep engine-owned facts, origin SIMULATION and gate INVESTIGATION; they
+start directly without operator classification confirmation. `narrator.mjs` calls the narrator
+role through `callChatTurn` with a bounded timeout and only ObservableDTO: equipmentName,
+issueClass, symptomText and cutoff-filtered recentPublicEvents (eventType/at). It receives no
+responder, outcome, cause or skill data. Procedure titles, causal/skill vocabulary, hidden
+markers, malformed content and digits outside the equipment name trigger template fallback.
+Narrative publication changes prose only. Offline uses fixtures/template fallback with no API.
+
+`investigation-analytics.mjs` builds compact observed facts retained alongside closed issue
+archives. Full reports/runs remain available through archive-aware detail and audit lookups.
+See analytics-and-ethics for denominators and the unobserved baseline limitation. Synthetic
+small and month datasets, counts, reproduction and unattended queue limits are documented in
+`backend/seed/INVESTIGATION_DATASETS.md`. Lifecycle tests live in
+`backend/tests/investigation-lifecycle.test.mjs`.

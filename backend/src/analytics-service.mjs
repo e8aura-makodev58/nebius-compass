@@ -1,3 +1,4 @@
+import { buildInvestigationAnalytics } from './investigation-analytics.mjs';
 import { ISSUE_CLASSES, assertNoResponderSkill } from "./live-schema.mjs";
 import { analyticHistory } from "./history-retention.mjs";
 
@@ -204,7 +205,7 @@ function periodSummary(state, level, bounds, snapshotMs, historyStartMs = observ
   const activeAt = (at) => state.issues.filter((issue) => Date.parse(issue.raisedAt) <= at && Date.parse(issue.resolvedAt ?? new Date(snapshotMs + 1).toISOString()) > at).length;
   const staffingActions = (state.workforceContinuity?.staffingAudit ?? []).filter((entry) => Date.parse(entry.simulationTimestamp) >= bounds.start && Date.parse(entry.simulationTimestamp) < Math.min(bounds.end, snapshotMs) && staffingApplied(entry)).length;
   const status = bounds.start < historyStartMs ? "INSUFFICIENT_HISTORY" : bounds.end > snapshotMs ? "PARTIAL" : "COMPLETE";
-  return { level, start: startIso, end: endIso, status, staffingRecommendations: staffingAnalytics(state, bounds, snapshotMs), fixes: fixMetrics(state, bounds, snapshotMs), raised: eventCount("ISSUE_RAISED"), resolved: eventCount("ISSUE_RESOLVED"), reopened: eventCount("ISSUE_REOPENED"), backlogStart: activeAt(bounds.start), backlogEnd: activeAt(Math.min(bounds.end, snapshotMs)), downtimeMinutes: unionDowntime(state, bounds.start, bounds.end, snapshotMs), staffingActions };
+  return { level, start: startIso, end: endIso, status, investigations: buildInvestigationAnalytics(state,bounds,snapshotMs), staffingRecommendations: staffingAnalytics(state, bounds, snapshotMs), fixes: fixMetrics(state, bounds, snapshotMs), raised: eventCount("ISSUE_RAISED"), resolved: eventCount("ISSUE_RESOLVED"), reopened: eventCount("ISSUE_REOPENED"), backlogStart: activeAt(bounds.start), backlogEnd: activeAt(Math.min(bounds.end, snapshotMs)), downtimeMinutes: unionDowntime(state, bounds.start, bounds.end, snapshotMs), staffingActions };
 }
 
 export function buildPeriodAnalytics(state, { level = "DAY" } = {}) {
@@ -315,6 +316,7 @@ export function buildAnalytics(state) {
     compassRecords: compassRecords(state),
     workforce: workforceAnalytics(state),
     fixes: fixMetrics(state),
+    investigations: buildInvestigationAnalytics(state),
     periodAnalytics: buildPeriodAnalytics(state, { level: "DAY" }),
   };
   assertNoResponderSkill(analytics);

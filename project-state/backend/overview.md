@@ -108,3 +108,11 @@ report/run/approval mutations), `investigation-public.mjs` (explicit public proj
 `dispatch-gate.mjs` (shared authorization boundary), and `investigation-eval.mjs` (isolated
 scenario adapter). Both runtimes and room routes share the services; model waiting does
 not hold the Live agent lane. See [investigation.md](investigation.md).
+
+
+## Investigation lifecycle modules
+
+`investigation-policy.mjs` owns defaults, independent sampling and scheduler deadline claims;
+`narrator.mjs` validates ObservableDTO-only prose with bounded provider/template execution;
+`investigation-analytics.mjs` owns observed rate cohorts and compact retained facts.
+`investigation-service.mjs` coordinates explicit override, supersession and policy decisions.

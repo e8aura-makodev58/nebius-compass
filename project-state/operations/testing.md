@@ -200,3 +200,12 @@ the specified interpretation as an operator would; the agreement metric does not
 independent model classification. The overtime-only setup safely abstains without an
 eligible responder, despite its fixture's READY expectation. Live evaluation is separate
 and explicitly initiated by the main agent; it is never part of `npm test`.
+
+
+## Investigation lifecycle coverage
+
+`backend/tests/investigation-lifecycle.test.mjs` covers durable expiry/restart/idempotency,
+supersession, override and policy safety, independent RNG sampling, ObservableDTO canaries,
+narrator validation/timeouts, route revisions, retained/archived analytics equality and
+byte-repeatable offline seeds. The responder-ranking soak explicitly sets investigationShare
+zero to preserve its original 100-opportunity experiment; production defaults remain 0.2.

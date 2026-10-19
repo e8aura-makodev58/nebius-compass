@@ -104,3 +104,14 @@ Authorization is consumed by the initial attempt ID; a failed attempt cannot aut
 retry with another fix/responder. Public snapshots do not synthesize a conflicting ordinary
 fix ranking for these issues. Qualification and prerequisite checks precede assignment;
 expiry, re-investigation and policy continuation follow in N3b. See [investigation.md](investigation.md).
+
+
+## Investigation sampling and deadlines
+
+Planner issues are sampled using persisted `rngStreams.investigation`, independent of event,
+resolution and staffing streams. `investigationPolicy.investigationShare` defaults to 0.2.
+Sampled facts are engine-owned; narration cannot reclassify them. Only an exact authorized
+fix/responder can start the first attempt; a failed attempt consumes that approval. READY
+runs have durable scheduler deadlines, default 30 simulated minutes, with safe policy approval
+or expiry. Unsupported/retry work needs explicit operator intervention and can fill the
+pending-issue cap in unattended runs. See [investigation.md](investigation.md).

@@ -1,3 +1,4 @@
+import { claimInvestigationDeadlines } from './investigation-policy.mjs';
 import { advanceSimulationTime } from "./simulation-clock.mjs";
 import { claimWorkforceDueTriggers } from "./workforce-continuity.mjs";
 
@@ -166,6 +167,7 @@ async function dispatch(triggers, handlers) {
     if (trigger.kind === "RESOLUTION_DUE") await handlers.onResolutionDue(trigger);
     if (trigger.kind === "ASSISTANCE_REVIEW_DUE") await handlers.onAssistanceReviewDue(trigger);
     if (trigger.kind === "OFFER_RESPONSE_DUE") await handlers.onOfferDue(trigger);
+    if (trigger.kind === "INVESTIGATION_DEADLINE_DUE") await handlers.onInvestigationDeadline(trigger);
     if (trigger.kind === "EVENT_DUE") await handlers.onEventDue(trigger);
     if (["STAFFING_DEADLINE_DUE", "STAFFING_REVIEW_DUE", "SHIFT_HANDOVER_DUE", "STAFFING_RECHECK", "TEMPORARY_REPAIR_RECURRENCE_DUE", "EXTENSION_EXPIRY_DUE"].includes(trigger.kind)) await handlers.onWorkforceDue(trigger);
   }
@@ -177,14 +179,15 @@ export function createScheduler(store, {
   onOfferDue = async () => {},
   onAssistanceReviewDue = async () => {},
   onWorkforceDue = async () => {},
+  onInvestigationDeadline = async () => {},
 } = {}) {
-  const handlers = { onEventDue, onResolutionDue, onOfferDue, onAssistanceReviewDue, onWorkforceDue };
+  const handlers = { onEventDue, onResolutionDue, onOfferDue, onAssistanceReviewDue, onWorkforceDue, onInvestigationDeadline };
   return {
     async tick(realElapsedMilliseconds) {
       const transaction = await store.mutate("scheduler-tick", (state) => {
         advanceSimulationTime(state, realElapsedMilliseconds);
         const event = claimEventTrigger(state, { forced: false });
-        const triggers = [...claimDueResolutions(state), ...claimDueReviews(state), ...claimDueOffers(state), ...claimWorkforceDueTriggers(state)];
+        const triggers = [...claimDueResolutions(state), ...claimDueReviews(state), ...claimDueOffers(state), ...claimWorkforceDueTriggers(state), ...claimInvestigationDeadlines(state)];
         if (event.trigger) triggers.push(event.trigger);
         return { simulationTime: state.simulationState.simulationTime, eventStatus: event.status, triggers };
       });
@@ -209,6 +212,7 @@ export function createScheduler(store, {
           if (attempt.status === "ACTIVE" && attempt.reviewDispatchToken) triggers.push({ kind: "ASSISTANCE_REVIEW_DUE", token: attempt.reviewDispatchToken, attemptId: attempt.id, issueId: attempt.issueId, generation: attempt.scheduleGeneration });
         }
         for (const rec of state.workforceContinuity?.staffingRecommendations ?? []) if (rec.status === 'PENDING' && rec.deadlineDispatchToken) triggers.push({kind:'STAFFING_DEADLINE_DUE',token:rec.deadlineDispatchToken,recommendationId:rec.id});
+        for (const row of state.investigations ?? []) if (row.status==='READY' && row.deadlineDispatchToken) triggers.push({kind:'INVESTIGATION_DEADLINE_DUE',investigationId:row.id,token:row.deadlineDispatchToken});
         for (const offer of state.dispatchOffers ?? []) if (offer.status === "PENDING" && offer.responseDispatchToken) triggers.push({ kind: "OFFER_RESPONSE_DUE", token: offer.responseDispatchToken, offerId: offer.id, issueId: offer.issueId, responderId: offer.responderId });
         return { status: "RECONCILED", triggers };
       }).then(async (transaction) => { await dispatch(transaction.result.triggers, handlers); return transaction; });

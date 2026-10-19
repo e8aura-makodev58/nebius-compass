@@ -1,3 +1,6 @@
+import { ensureInvestigationPolicy, sampleInvestigation, scheduleInvestigationDeadline, clearInvestigationDeadline } from './investigation-policy.mjs';
+import { classFrequencyBaseline } from './investigation-analytics.mjs';
+import { narrateIssue } from './narrator.mjs';
 import { assertNoResponderSkill } from './live-schema.mjs';
 /** Persisted reports, gated issue creation and atomic operator decisions. No model mutations. */
 import { randomUUID } from 'node:crypto';
@@ -11,7 +14,7 @@ import { priorityForIssue } from './workforce-continuity.mjs';
 
 import { reportDTO, investigationDTO } from './investigation-public.mjs';
 export { reportDTO, investigationDTO, publicInvestigationState } from './investigation-public.mjs';
-const terminal = new Set(['APPROVED','REJECTED','EXPIRED','SUPERSEDED']);
+const terminal = new Set(['APPROVED','OVERRIDDEN','AUTO_APPROVED','REJECTED','EXPIRED','SUPERSEDED']);
 const string = (value,max=600) => {
   const text=typeof value==='string'?value.slice(0,max):'';
   try { assertNoResponderSkill(text); } catch { throw investigationError('RESTRICTED_REPORT_CONTENT',400); }
@@ -28,12 +31,14 @@ function idFor(state,collection,prefix) {
 }
 export function investigationEvent(state,type,row,detail={}) {
   const highest=state.operationalEvents.reduce((n,event)=>Math.max(n,Number(/^event-(\d+)$/.exec(event.id)?.[1]??0)),state.historyRetention?.highWater?.operationalEvents??0);
-  state.operationalEvents.push({id:`event-${String(highest+1).padStart(3,'0')}`,eventType:type,simulationTimestamp:state.simulationState.simulationTime,issueId:row.issueId??null,source:'CENTRAL_COMMAND',payload:{reportId:row.reportId??row.id,investigationId:row.issueId?row.id:null,...detail},createdAtRealTime:new Date().toISOString()});
+  if (row.id?.startsWith('INV-') && type!=='INVESTIGATION_FEEDBACK') row.updatedAt=state.simulationState.simulationTime;
+  state.operationalEvents.push({id:`event-${String(highest+1).padStart(3,'0')}`,eventType:type,simulationTimestamp:state.simulationState.simulationTime,issueId:row.issueId??null,source:row.decision?.actor==='policy:AUTO_APPROVE_SAFE'?'INVESTIGATION_POLICY':'CENTRAL_COMMAND',payload:{reportId:row.reportId??row.id,investigationId:row.issueId?row.id:null,...detail},createdAtRealTime:new Date().toISOString()});
 }
 function createRun(state, report, issue, status='QUEUED', reason='Waiting for read-only investigation.') {
   const row={id:idFor(state,'investigations','INV'),issueId:issue?.id??null,reportId:report.id,status,source:'DETERMINISTIC',model:null,
-    asOf:state.simulationState.simulationTime,revision:0,reason,warnings:report.flags.injection.length?['Instruction-like report spans are quoted untrusted data.']:[],
+    createdAt:state.simulationState.simulationTime,updatedAt:state.simulationState.simulationTime,asOf:state.simulationState.simulationTime,baselineFixId:issue?classFrequencyBaseline(state,issue,state.simulationState.simulationTime):null,resultOutcome:['ABSTAINED','ESCALATED'].includes(status)?status:null,revision:0,reason,warnings:report.flags.injection.length?['Instruction-like report spans are quoted untrusted data.']:[],
     hypotheses:[],fixes:[],responders:[],trace:[],evidenceGrade:'NONE',interpretation:issue?{equipmentId:issue.equipmentId,issueClass:issue.issueClass,symptomCode:issue.symptom.code}:null};
+  ensureInvestigationPolicy(state);
   state.investigations.push(row); return row;
 }
 function createReportedIssue(state,report,interpretation) {
@@ -54,11 +59,19 @@ function createReportedIssue(state,report,interpretation) {
   return issue;
 }
 export function recoverInvestigations(state) {
+  ensureInvestigationPolicy(state);
   state.fieldReports??=[];state.investigations??=[];
+  for (const row of state.investigations) {
+    row.createdAt ??= row.asOf ?? state.simulationState.simulationTime;
+    row.updatedAt ??= row.readyAt ?? row.createdAt;
+    row.resultOutcome ??= ['READY','ABSTAINED','ESCALATED'].includes(row.status)?row.status:['APPROVED','AUTO_APPROVED'].includes(row.status)?'READY':null;
+    if (row.status==='READY') scheduleInvestigationDeadline(state,row);
+  }
   for(const row of state.investigations) if(row.status==='RUNNING'){row.status='QUEUED';row.revision++;delete row.requestToken;}
+  for (const report of state.fieldReports) if (report.narrationStatus==='PENDING_MODEL') {report.narrationStatus=report.status==='CLOSED'?'CANCELLED':'QUEUED';delete report.narratorToken;}
   for(const report of state.fieldReports) if(report.status==='UNRESOLVED'&&['RUNNING','PENDING_MODEL'].includes(report.interpretation.status)){report.interpretation.status='QUEUED';report.revision++;delete report.requestToken;}
 }
-export function createInvestigationService(store,{ investigatorOptions={}, rankingOptions={} }={}) {
+export function createInvestigationService(store,{ investigatorOptions={}, rankingOptions={}, narratorOptions={} }={}) {
   const resolve=async(value)=>typeof value==='function'?await value():value;
   const mutate=async(label,fn)=>(await store.mutate(label,fn)).result;
   return {
@@ -109,64 +122,149 @@ export function createInvestigationService(store,{ investigatorOptions={}, ranki
       return mutate('field-report-close',(state)=>{
         const report=state.fieldReports?.find((row)=>row.id===id);if(!report)throw investigationError('REPORT_NOT_FOUND',404);
         if(input.expectedRevision!==undefined&&input.expectedRevision!==report.revision)throw investigationError('STALE');
-        if(state.investigations.some((r)=>r.reportId===id&&r.status==='APPROVED'))throw investigationError('STALE');
-        report.status='CLOSED';report.revision++;delete report.requestToken;
-        for(const row of state.investigations.filter((r)=>r.reportId===id&&!terminal.has(r.status))){row.status='REJECTED';row.revision++;delete row.requestToken;row.decision={status:'REJECTED',actor:'Central command',at:state.simulationState.simulationTime,reason:string(input.reason,360),confirmedPrerequisites:[]};}
+        if(state.investigations.some((r)=>r.reportId===id&&['APPROVED','OVERRIDDEN','AUTO_APPROVED'].includes(r.status)))throw investigationError('STALE');
+        report.status='CLOSED';report.revision++;delete report.requestToken;delete report.narratorToken;if(report.narrationStatus)report.narrationStatus='CANCELLED';
+        for(const row of state.investigations.filter((r)=>r.reportId===id&&!terminal.has(r.status))){clearInvestigationDeadline(row);row.updatedAt=state.simulationState.simulationTime;row.status='REJECTED';row.revision++;delete row.requestToken;row.decision={status:'REJECTED',actor:'Central command',at:state.simulationState.simulationTime,reason:string(input.reason,360),confirmedPrerequisites:[]};}
         investigationEvent(state,'FIELD_REPORT_CLOSED',report,{reason:string(input.reason,360)});return {reportId:id};
       });
     },
-    async getReport(id){const state=await store.snapshot();const row=state.fieldReports?.find((r)=>r.id===id);if(!row)throw investigationError('REPORT_NOT_FOUND',404);return reportDTO(row);},
-    async getInvestigation(id){const state=await store.snapshot();const row=state.investigations?.find((r)=>r.id===id);if(!row)throw investigationError('INVESTIGATION_NOT_FOUND',404);return investigationDTO(row);},
+    async getReport(id){if(store.reportRecord){const row=await store.reportRecord(id);if(!row)throw investigationError('REPORT_NOT_FOUND',404);return row;}const state=await store.snapshot();const row=state.fieldReports?.find((r)=>r.id===id);if(!row)throw investigationError('REPORT_NOT_FOUND',404);return reportDTO(row);},
+    async getInvestigation(id){if(store.investigationRecord){const row=await store.investigationRecord(id);if(!row)throw investigationError('INVESTIGATION_NOT_FOUND',404);return row;}const state=await store.snapshot();const row=state.investigations?.find((r)=>r.id===id);if(!row)throw investigationError('INVESTIGATION_NOT_FOUND',404);return investigationDTO(row);},
     async getCase(id){const state=await store.snapshot();const row=casesBefore(state,{asOf:new Date(Date.parse(state.simulationState.simulationTime)+1).toISOString()}).find((r)=>r.caseId===id);if(!row)throw investigationError('CASE_NOT_FOUND',404);return row;},
     async decide(id,input,action) {
       inputObject(input,action==='feedback'?['useful','note']:['responderId','fixId','confirmedPrerequisites','expectedRevision','reason']);
       return mutate('investigation-decision',(state)=>{
         const row=state.investigations?.find((r)=>r.id===id);if(!row)throw investigationError('INVESTIGATION_NOT_FOUND',404);
         if(action==='feedback') {if(typeof input.useful!=='boolean')throw investigationError('INVALID_FEEDBACK',400);row.feedback={useful:input.useful};row.revision++;investigationEvent(state,'INVESTIGATION_FEEDBACK',row,{useful:input.useful});return {status:'RECORDED'};}
-        if(action==='approve'&&row.status==='APPROVED') {
-          if(row.decision.responderId===input.responderId&&row.decision.fixId===input.fixId&&JSON.stringify([...row.decision.confirmedPrerequisites].sort())===JSON.stringify([...(input.confirmedPrerequisites??[])].sort())&&input.expectedRevision===row.decision.revision)return {status:'APPROVED',id};
+        if (['approve','override'].includes(action) && ['APPROVED','OVERRIDDEN','AUTO_APPROVED'].includes(row.status)) {
+          const wanted=action==='override'?'OVERRIDDEN':'APPROVED';
+          if(row.decision.status===wanted && row.decision.responderId===input.responderId && row.decision.fixId===input.fixId && JSON.stringify([...row.decision.confirmedPrerequisites].sort())===JSON.stringify([...(input.confirmedPrerequisites??[])].sort()) && input.expectedRevision===row.decision.revision && (action!=='override'||row.decision.reason===string(input.reason,360))) return {status:row.status,id};
           throw investigationError('STALE');
         }
-        if(!Number.isInteger(input.expectedRevision)||input.expectedRevision!==row.revision||terminal.has(row.status)||['QUEUED','RUNNING'].includes(row.status))throw investigationError('STALE');
-        const issue=state.issues.find((r)=>r.id===row.issueId);
-        if(action==='approve') {
-          const fix=fixById(issue?.issueClass,input.fixId),responder=state.responders.find((r)=>r.id===input.responderId);
-          const prerequisites=input.confirmedPrerequisites;
-          const manual=row.status!=='READY';
-          if(!issue||issue.dispatchGate!=='INVESTIGATION'||!['PENDING','RECOMMENDATION_READY'].includes(issue.status)||!fix||!responder||responder.availability!=='AVAILABLE'||state.assignments.some((a)=>a.responderId===responder.id&&a.status==='ACTIVE')||
-            !fix.requiredCertifications.every((cert)=>responder.certifications?.includes(cert))||!Array.isArray(prerequisites)||prerequisites.some((p)=>!PREREQUISITES.includes(p))||new Set(prerequisites).size!==prerequisites.length||!fix.prerequisites.every((p)=>prerequisites.includes(p))||
-            (manual&&!string(input.reason,360).trim())||(!manual&&!row.fixes.some((r)=>r.fixId===fix.id)))throw investigationError('STALE');
-          row.decision={status:'APPROVED',authorizedResponderId:responder.id,authorizedFixId:fix.id,responderId:responder.id,fixId:fix.id,actor:'Central command',at:state.simulationState.simulationTime,revision:row.revision,confirmedPrerequisites:[...prerequisites],reason:string(input.reason,360),manualOverride:manual,attemptId:null};
-          row.status='APPROVED';row.revision++;
-          const result=assignInState(state,{issueId:issue.id,responderId:responder.id,decision:'CONFIRMED',purpose:'INITIAL_ASSIGNMENT'});
-          if(result.status!=='ASSIGNED')throw investigationError('STALE');
-          investigationEvent(state,'INVESTIGATION_APPROVED',row,{responderId:responder.id,fixId:fix.id,actor:'Central command',confirmedPrerequisites:[...prerequisites],manualOverride:manual});return {status:'APPROVED',id};
-        }
+        if (!Number.isInteger(input.expectedRevision)||input.expectedRevision!==row.revision||terminal.has(row.status)||['QUEUED','RUNNING'].includes(row.status)) throw investigationError('STALE');
+        if (action==='approve'||action==='override') return authorizeInvestigation(state,row,input,{manual:action==='override'});
         if(!['reject','escalate'].includes(action))throw investigationError('INVALID_ACTION',400);
+        clearInvestigationDeadline(row);
         row.status=action==='reject'?'REJECTED':'ESCALATED';row.revision++;delete row.requestToken;
         row.decision={status:row.status,actor:'Central command',at:state.simulationState.simulationTime,reason:string(input.reason,360),confirmedPrerequisites:[]};
         investigationEvent(state,`INVESTIGATION_${row.status}`,row,{actor:'Central command',reason:row.decision.reason});return {status:row.status};
       });
     },
+    async reinvestigate(id,input) {
+      inputObject(input,['expectedRevision']);
+      return mutate('investigation-supersede',(state)=>{
+        const previous=state.investigations?.find((row)=>row.id===id);
+        if (!previous) throw investigationError('INVESTIGATION_NOT_FOUND',404);
+        const issue=state.issues.find((row)=>row.id===previous.issueId);
+        if (input.expectedRevision!==previous.revision || previous.status==='SUPERSEDED' || !issue || !['PENDING','RECOMMENDATION_READY'].includes(issue.status) || state.assignments.some((row)=>row.issueId===issue.id&&row.status==='ACTIVE')) throw investigationError('STALE');
+        const report=state.fieldReports.find((row)=>row.id===previous.reportId);
+        if (!report || report.status==='CLOSED') throw investigationError('STALE');
+        previous.status='SUPERSEDED';previous.revision++;delete previous.requestToken;clearInvestigationDeadline(previous);
+        investigationEvent(state,'INVESTIGATION_SUPERSEDED',previous);
+        const next=createRun(state,report,issue);next.supersedes=previous.id;
+        investigationEvent(state,'INVESTIGATION_QUEUED',next);
+        return {investigationId:next.id,issueId:issue.id,supersedes:previous.id};
+      });
+    },
+    async updatePolicy(input) {
+      inputObject(input,['expectedRevision','investigationApproval','investigationDeadlineMinutes','investigationShare']);
+      return mutate('investigation-policy',(state)=>updateInvestigationPolicy(state,input));
+    },
+    async finishDeadline(trigger) {return mutate('investigation-deadline',(state)=>finishInvestigationDeadline(state,trigger));},
     async runNext() {
       const claim=await mutate('investigation-work-claim',(state)=>{
         const report=state.fieldReports?.find((r)=>r.status==='UNRESOLVED'&&r.interpretation.status==='QUEUED');
         if(report){report.interpretation.status='PENDING_MODEL';report.revision++;report.requestToken=randomUUID();return {kind:'report',id:report.id,token:report.requestToken};}
-        const row=state.investigations?.find((r)=>r.status==='QUEUED');if(!row)return null;
-        row.status='RUNNING';row.revision++;row.requestToken=randomUUID();row.asOf=state.simulationState.simulationTime;return {kind:'investigation',id:row.id,token:row.requestToken};
+        const narration=state.fieldReports?.find((r)=>r.status!=='CLOSED'&&r.narrationStatus==='QUEUED');
+        if(narration){narration.narrationStatus='PENDING_MODEL';narration.narratorToken=randomUUID();return {kind:'narration',id:narration.id,token:narration.narratorToken};}
+        const row=state.investigations?.find((r)=>r.status==='QUEUED'&&!['QUEUED','PENDING_MODEL'].includes(state.fieldReports.find((f)=>f.id===r.reportId)?.narrationStatus));if(!row)return null;
+        row.status='RUNNING';row.revision++;row.requestToken=randomUUID();row.asOf=state.simulationState.simulationTime;row.updatedAt=row.asOf;row.baselineFixId=classFrequencyBaseline(state,state.issues.find((issue)=>issue.id===row.issueId),row.asOf);return {kind:'investigation',id:row.id,token:row.requestToken};
       });
       if(!claim)return false;
       const state=await store.snapshot();
-      if(claim.kind==='report') {
+      if(claim.kind==='narration') {
+        const report=state.fieldReports.find((row)=>row.id===claim.id),issue=state.issues.find((row)=>row.id===report.issueId);
+        if(!issue)return false;
+        const output=await narrateIssue(state,issue,await resolve(narratorOptions));
+        await mutate('simulation-report-narrated',(draft)=>{
+          const report=draft.fieldReports?.find((row)=>row.id===claim.id),issue=draft.issues.find((row)=>row.id===report?.issueId);
+          if(report?.narratorToken!==claim.token || !issue || report.status==='CLOSED')return;
+          delete report.narratorToken;report.narrationStatus='READY';report.narrative=output.narrative;report.narrativeSource=output.narrativeSource;report.narratorModel=output.model;report.revision++;
+          issue.reportNarrative=output.narrative;issue.narrativeSource=output.narrativeSource;
+          investigationEvent(draft,'SIMULATION_REPORT_NARRATED',{id:report.id,issueId:issue.id,reportId:report.id},{narrativeSource:output.narrativeSource,reason:output.reason});
+        });
+      } else if(claim.kind==='report') {
         const report=state.fieldReports.find((r)=>r.id===claim.id);const output=await rankInterpretations(report,await resolve(rankingOptions));
         await mutate('interpretation-ranked',(draft)=>{const report=draft.fieldReports?.find((r)=>r.id===claim.id);if(report?.requestToken!==claim.token||report.status!=='UNRESOLVED')return;delete report.requestToken;report.interpretation={status:'READY',source:output.source,model:output.model,options:output.options};report.revision++;});
       } else {
         const run=state.investigations.find((r)=>r.id===claim.id);const issue=state.issues.find((r)=>r.id===run.issueId);
         if(!issue)return false;
         const output=await investigate(state,issue,{...await resolve(investigatorOptions),asOf:run.asOf});
-        await mutate('investigation-completed',(draft)=>{const row=draft.investigations?.find((r)=>r.id===claim.id);const issue=draft.issues.find((r)=>r.id===run.issueId);if(row?.requestToken!==claim.token||row.status!=='RUNNING'||!issue||issue.status==='RESOLVED')return;delete row.requestToken;Object.assign(row,output);row.revision++;investigationEvent(draft,'INVESTIGATION_COMPLETED',row,{status:row.status,source:row.source});});
+        await mutate('investigation-completed',(draft)=>{const row=draft.investigations?.find((r)=>r.id===claim.id);const issue=draft.issues.find((r)=>r.id===run.issueId);if(row?.requestToken!==claim.token||row.status!=='RUNNING'||!issue||issue.status==='RESOLVED')return;delete row.requestToken;Object.assign(row,output);row.resultOutcome=output.status;row.revision++;if(row.status==='READY')scheduleInvestigationDeadline(draft,row);investigationEvent(draft,'INVESTIGATION_COMPLETED',row,{status:row.status,source:row.source});});
       }
       return true;
     },
   };
+}
+
+/** Shared operator/policy mutation. All checks precede the assignment write. */
+export function authorizeInvestigation(state,row,input,{manual=false,policy=false}={}) {
+  const issue=state.issues.find((item)=>item.id===row.issueId);
+  const fix=fixById(issue?.issueClass,input.fixId),responder=state.responders.find((item)=>item.id===input.responderId);
+  const prerequisites=input.confirmedPrerequisites;
+  const validStatus=manual?['ABSTAINED','ESCALATED'].includes(row.status):row.status==='READY';
+  const reason=string(input.reason,360);
+  if (!validStatus || input.expectedRevision!==row.revision || (!manual&&!policy&&row.deadline&&Date.parse(state.simulationState.simulationTime)>=Date.parse(row.deadline)) ||
+      !issue || issue.dispatchGate!=='INVESTIGATION' || !['PENDING','RECOMMENDATION_READY'].includes(issue.status) || !fix || !responder || responder.availability!=='AVAILABLE' ||
+      state.assignments.some((item)=>item.status==='ACTIVE'&&(item.responderId===responder.id||item.issueId===issue.id)) || state.resolutionAttempts.some((item)=>item.issueId===issue.id&&item.status==='ACTIVE') ||
+      !fix.requiredCertifications.every((cert)=>responder.certifications?.includes(cert)) || !Array.isArray(prerequisites) || prerequisites.some((value)=>!PREREQUISITES.includes(value)) || new Set(prerequisites).size!==prerequisites.length || !fix.prerequisites.every((value)=>prerequisites.includes(value)) ||
+      (manual&&!reason.trim()) || (!manual&&!row.fixes.some((item)=>item.fixId===fix.id))) throw investigationError('STALE');
+  const status=policy?'AUTO_APPROVED':manual?'OVERRIDDEN':'APPROVED';
+  const actor=policy?'policy:AUTO_APPROVE_SAFE':'Central command';
+  row.decision={status,authorizedResponderId:responder.id,authorizedFixId:fix.id,responderId:responder.id,fixId:fix.id,actor,at:state.simulationState.simulationTime,revision:row.revision,confirmedPrerequisites:[...prerequisites],reason,manualOverride:manual,attemptId:null};
+  row.status=status;row.revision++;clearInvestigationDeadline(row);
+  const result=assignInState(state,{issueId:issue.id,responderId:responder.id,decision:manual?'OVERRIDDEN':'CONFIRMED',purpose:'INITIAL_ASSIGNMENT'});
+  if(result.status!=='ASSIGNED')throw investigationError('ASSIGNMENT_INVARIANT',500);
+  investigationEvent(state,`INVESTIGATION_${status}`,row,{responderId:responder.id,fixId:fix.id,actor,confirmedPrerequisites:[...prerequisites],manualOverride:manual});
+  return {status,id:row.id};
+}
+export function finishInvestigationDeadline(state,trigger) {
+  const row=state.investigations?.find((item)=>item.id===trigger.investigationId);
+  if(!row || row.status!=='READY' || !trigger.token || row.deadlineDispatchToken!==trigger.token || Date.parse(row.deadline)>Date.parse(state.simulationState.simulationTime)) return {status:'DUPLICATE_OR_STALE'};
+  const config=ensureInvestigationPolicy(state),report=state.fieldReports.find((item)=>item.id===row.reportId);
+  const first=row.fixes[0];
+  if(config.investigationApproval==='AUTO_APPROVE_SAFE' && ['MODERATE','STRONG'].includes(row.evidenceGrade) && ['MODERATE','STRONG'].includes(first?.grade) && report?.status==='CONFIRMED' && Array.isArray(report.flags?.hazard) && report.flags.hazard.length===0 && !report.flags.input) {
+    const issue=state.issues.find((item)=>item.id===row.issueId),fix=fixById(issue?.issueClass,first.fixId);
+    const responder=row.responders.find((candidate)=>candidate.qualified && state.responders.some((item)=>item.id===candidate.responderId&&item.availability==='AVAILABLE'&&fix?.requiredCertifications.every((cert)=>item.certifications?.includes(cert))));
+    if(fix&&responder) {
+      try{return authorizeInvestigation(state,row,{fixId:fix.id,responderId:responder.responderId,confirmedPrerequisites:[...fix.prerequisites],expectedRevision:row.revision,reason:'Approved at deadline by explicit safe investigation policy.'},{policy:true});}
+      catch(error){if(error.code!=='STALE')throw error;}
+    }
+  }
+  row.status='EXPIRED';row.revision++;clearInvestigationDeadline(row);
+  row.decision={status:'EXPIRED',actor:'system:deadline',at:state.simulationState.simulationTime,reason:'Investigation deadline elapsed without a lawful approval.',confirmedPrerequisites:[]};
+  investigationEvent(state,'INVESTIGATION_EXPIRED',row);
+  return {status:'EXPIRED',id:row.id};
+}
+export function updateInvestigationPolicy(state,input) {
+  const current=ensureInvestigationPolicy(state);
+  if(!Number.isInteger(input.expectedRevision)||input.expectedRevision!==current.revision)throw investigationError('STALE');
+  if(input.investigationApproval!==undefined&&!['OPERATOR','AUTO_APPROVE_SAFE'].includes(input.investigationApproval))throw investigationError('INVALID_POLICY',400);
+  if(input.investigationDeadlineMinutes!==undefined&&(!Number.isFinite(input.investigationDeadlineMinutes)||input.investigationDeadlineMinutes<=0||input.investigationDeadlineMinutes>720))throw investigationError('INVALID_POLICY',400);
+  if(input.investigationShare!==undefined&&(!Number.isFinite(input.investigationShare)||input.investigationShare<0||input.investigationShare>1))throw investigationError('INVALID_POLICY',400);
+  for(const key of ['investigationApproval','investigationDeadlineMinutes','investigationShare'])if(input[key]!==undefined)current[key]=input[key];
+  current.revision++;
+  investigationEvent(state,'INVESTIGATION_POLICY_CHANGED',{id:'investigation-policy'},{actor:'Central command',investigationApproval:current.investigationApproval,investigationDeadlineMinutes:current.investigationDeadlineMinutes,investigationShare:current.investigationShare});
+  return {investigationApproval:current.investigationApproval,investigationDeadlineMinutes:current.investigationDeadlineMinutes,investigationShare:current.investigationShare,revision:current.revision};
+}
+export function registerSimulatedInvestigation(state,issue) {
+  if(!sampleInvestigation(state)) {issue.dispatchGate='OPEN';return null;}
+  state.fieldReports??=[];state.investigations??=[];
+  issue.dispatchGate='INVESTIGATION';issue.origin='SIMULATION';
+  const report={id:idFor(state,'fieldReports','FR'),issueId:issue.id,equipmentId:issue.equipmentId,status:'CONFIRMED',origin:'SIMULATION',narrationStatus:'QUEUED',narrative:issue.reportNarrative,flags:{hazard:[],injection:[],input:null},revision:0,
+    interpretation:{status:'READY',source:'DETERMINISTIC',model:null,options:[]}};
+  state.fieldReports.push(report);issue.fieldReportId=report.id;
+  const row=createRun(state,report,issue);
+  investigationEvent(state,'SIMULATION_INVESTIGATION_QUEUED',row);
+  return row.id;
 }
