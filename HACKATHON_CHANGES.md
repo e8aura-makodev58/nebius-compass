@@ -40,6 +40,8 @@ table with file references: plan §1.
 | Nebius Token Factory verified live: five Nemotron models, JSON, native tool calls, thinking control | `8ff664d` | `scripts/probe-nebius.mjs` (manual, live) | `docs/nebius/05_TOKEN_FACTORY_FACTS.md` |
 | Nebius Token Factory provider (default), four model roles, per-provider controls, tool turns, call metadata | `d3a500b`, `1f18284` | `backend/tests/nebius-provider.test.mjs`, `e2e/provider-settings.spec.mjs` | — |
 
+| Investigation contracts: explicit DTOs, public certifications, catalog safety classes and prerequisites, case records, report narratives, six bounded read-only tools with a host-owned decision cutoff (N2) | `cf17c4e` | `backend/tests/investigation-contracts.test.mjs` (noninterference, canary, future-data perturbation) | — |
+| Evaluation scoring and harness (N5 part 1) | `3a445ca` | `backend/tests/eval-score.test.mjs` | `npm run eval:investigator` |
 | Real-packet Nebius measurement; ranking default Super with thinking off | `see log 2026-10-19` | `npm run measure:amd -- --provider nebius` (manual, live) | `docs/nebius/05_TOKEN_FACTORY_FACTS.md` |
 | Git history secret scan: no keys, tokens or private keys in any commit | — | scan patterns in `project-state/log.md` | — |
 
