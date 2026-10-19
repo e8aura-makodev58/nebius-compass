@@ -1,11 +1,11 @@
 /** Versioned deterministic input policy and public symptom registry. No hidden truth. */
-export const REPORT_POLICY_VERSION = 'field-report-policy-v1';
+export const REPORT_POLICY_VERSION = 'field-report-policy-v2';
 export const SYMPTOMS = Object.freeze({
   A: [['A-DRIFT', 'Output drifts from the operating reference.'], ['A-UNSTABLE', 'Output readings fluctuate during a cycle.'], ['A-INTERRUPT', 'Output is interrupted intermittently.']],
   B: [['B-SLOW', 'Transfer progresses intermittently.'], ['B-STOP', 'Transfer stops before the expected endpoint.'], ['B-IRREGULAR', 'Transfer spacing becomes irregular.']],
   C: [['C-UNSTABLE', 'The mechanism moves inconsistently.'], ['C-MISMATCH', 'Movement and detection disagree during a cycle.'], ['C-INTERRUPT', 'The cycle is interrupted intermittently.']],
 });
-const hazards = /\b(?:heat|hot|overheat\w*|smoke|sparks?|injur\w*|fire|burning|bypass\w*)\b|\boverride\s+(?:the\s+)?interlock\b/gi;
+const hazards = /\b(?:heat\w*|hot|overheat\w*|smok\w*|spark\w*|injur\w*|fire|flames?|burn\w*|fumes?|arcing|electrocut\w*|bypass\w*)\b|\boverride\s+(?:the\s+)?interlock\b/gi;
 const injections = /ignore\s+(?:all\s+)?previous(?:\s+instructions)?|<\/?(?:system|assistant|tool|user)>|\[\/?INST\]|tool_calls?|\bassign\s+R-[\w-]+/gi;
 export function reportPolicy(narrative) {
   const value = typeof narrative === 'string' ? narrative : '';

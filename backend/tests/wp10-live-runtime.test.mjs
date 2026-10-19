@@ -27,7 +27,7 @@ async function invoke(handler, method, url, body = null) {
   const request = {
     method,
     url,
-    headers: { host: "localhost" },
+    headers: { host: "localhost", "content-type": "application/json" },
     async *[Symbol.asyncIterator]() { if (body !== null) yield Buffer.from(JSON.stringify(body)); },
   };
   await handler(request, response);

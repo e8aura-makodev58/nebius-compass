@@ -185,7 +185,7 @@ test('room routes execute report/confirm/investigate/approve/audit with real ser
   const store=createLiveStore({filePath:path});const runtime=createLiveRuntime({store,agentOptions:{mode:'fixture'},plannerOptions:{mode:'force-failure'},investigatorOptions:{mode:'fixture'}});
   const handler=createRequestHandler({getRoom:(id)=>id==='plant-1'?{id,health:'READY',applicationRuntime:runtime}:null});
   async function request(method,path,payload){let body;const res={statusCode:0,writeHead(status){this.statusCode=status;},end(value){body=JSON.parse(String(value));}};
-    await handler({url:`/api/control-rooms/plant-1${path}`,method,headers:{host:'localhost'},async *[Symbol.asyncIterator](){if(payload!==undefined)yield JSON.stringify(payload);}},res);return {status:res.statusCode,body};}
+    await handler({url:`/api/control-rooms/plant-1${path}`,method,headers:{host:'localhost','content-type':'application/json'},async *[Symbol.asyncIterator](){if(payload!==undefined)yield JSON.stringify(payload);}},res);return {status:res.statusCode,body};}
   const submitted=await request('POST','/reports',scenario.input);assert.equal(submitted.status,202);await runtime.agentWorkIdle();
   const report=(await request('GET',`/reports/${submitted.body.reportId}`)).body;
   const stale=await request('POST',`/reports/${report.id}/confirm`,{...scenario.expected.interpretation,expectedRevision:-1});assert.equal(stale.status,409);assert.equal(stale.body.code,'STALE');

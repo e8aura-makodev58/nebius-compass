@@ -14,6 +14,8 @@ export default defineConfig({
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     trace: "retain-on-failure",
+    // Room mutations require JSON even when a command has no body.
+    extraHTTPHeaders: { "Content-Type": "application/json" },
   },
   webServer: {
     command: "npm run dev",

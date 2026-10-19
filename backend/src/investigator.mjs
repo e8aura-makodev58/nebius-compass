@@ -1,4 +1,6 @@
 import { calculateDistance, calculateFloorDelta, calculateTravelTimeMinutes } from './context-engine.mjs';
+import { assertNoResponderSkill } from './live-schema.mjs';
+import { sanitizeInvestigationTrace } from './investigation-public.mjs';
 import { readFile } from 'node:fs/promises';
 import { callChatTurn, callChatCompletion, readProviderApiKey, roleDefaults } from './model-provider.mjs';
 import { createInvestigationTools, executeInvestigationTool } from './investigation-tools.mjs';
@@ -11,13 +13,25 @@ const CASE_FIELDS = new Set(['caseId','equipmentId','issueClass','symptomCode','
 const gradeOrder = {NONE:0,THIN:1,MODERATE:2,STRONG:3};
 function exact(value, keys, optional = []) { return value && typeof value === 'object' && !Array.isArray(value) && keys.every((key) => Object.hasOwn(value,key)) && Object.keys(value).every((key) => keys.includes(key) || optional.includes(key)); }
 const NUMBER = /\d+(?:\.\d+)?/g;
-/** Numbers a tool returned in this run; prose may quote these and no others. */
-export function numbersIn(value) { return new Set(JSON.stringify(value).match(NUMBER) ?? []); }
+const METRIC_FIELDS = {
+  fix_evidence:['sameClassCases','matchingCases','matchingSuccesses'],
+  search_cases:['totalMinutes'], get_case:['totalMinutes'],
+  equipment_history:['recentCaseCount','totalMinutes'],
+  eligible_responders:['sameIssueHistoricalCount','soloHistoricalCount','assistedHistoricalCount'],
+};
+/** Only finite, nonnegative numeric metric fields; never narrative/id/time digits. */
+export function numbersIn(rows, tool) {
+  return new Set((Array.isArray(rows)?rows:[]).flatMap((row)=>(METRIC_FIELDS[tool]??[])
+    .flatMap((key)=>typeof row?.[key]==='number'&&Number.isFinite(row[key])&&row[key]>=0?[String(row[key])]:[])));
+}
 function prose(value, ids, grounded = new Set()) {
-  if (typeof value !== 'string' || !value.trim() || value.length > 400 || /hidden-cause|trueMedian|trueSuccess|effectiveness|responderSkill/i.test(value)) return false;
+  if (typeof value !== 'string' || !value.trim() || value.length > 400 || /hidden-cause|trueMedian|trueSuccess|effectiveness|responderSkill|%|\b(?:probabilit(?:y|ies)|chances?|likelihood|percent(?:age)?s?)\b/i.test(value)) return false;
+  try { assertNoResponderSkill(value); } catch { return false; }
   let rest = value;
-  for (const id of [...ids].sort((a,b) => b.length-a.length)) rest = rest.split(id).join('');
-  // Supplied ids may carry digits; any other number must appear verbatim in this run's tool results.
+  for (const id of [...ids].filter((id)=>typeof id==='string'&&id).sort((a,b) => b.length-a.length)) {
+    const escaped=id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    rest=rest.replace(new RegExp(`(?<![\\p{L}\\p{N}_-])${escaped}(?![\\p{L}\\p{N}_-])`,'gu'),'');
+  }
   return (rest.match(NUMBER) ?? []).every((token) => grounded.has(token));
 }
 export function validateInvestigationFinal(output, {issue, returnedCases, returnedResponders, groundedNumbers = new Set()}) {
@@ -32,11 +46,11 @@ export function validateInvestigationFinal(output, {issue, returnedCases, return
   if (!Array.isArray(output.hypotheses) || output.hypotheses.length > 6 || !output.hypotheses.length) errors.push('Invalid hypotheses');
   else for (const row of output.hypotheses) if (!exact(row,['symptomCode','text','evidenceRefs']) || !(SYMPTOMS[issue.issueClass] ?? []).some(([code]) => code === row.symptomCode) || !prose(row.text,ids,groundedNumbers) || !observableTexts.has(row.text) || !refs(row.evidenceRefs)) errors.push('Invalid hypothesis or citation');
   if (!Array.isArray(output.fixes) || output.fixes.length > 6) errors.push('Invalid fixes');
-  else if (new Set(output.fixes.map((row) => row.fixId)).size !== output.fixes.length || output.fixes.some((row) => !exact(row,['fixId','rationale','evidenceRefs']) || !fixes.includes(row.fixId) || !prose(row.rationale,ids,groundedNumbers) || !refs(row.evidenceRefs))) errors.push('Invalid fix or citation');
+  else if (new Set(output.fixes.map((row) => row?.fixId)).size !== output.fixes.length || output.fixes.some((row) => !exact(row,['fixId','rationale','evidenceRefs']) || !fixes.includes(row.fixId) || !prose(row.rationale,ids,groundedNumbers) || !refs(row.evidenceRefs))) errors.push('Invalid fix or citation');
   const qualified = new Set((returnedResponders.get(output.fixes?.[0]?.fixId) ?? []).map((row) => row.responderId));
   if (!Array.isArray(output.responders) || output.responders.length > 10) errors.push('Invalid responders');
-  else if (new Set(output.responders.map((row) => row.responderId)).size !== output.responders.length || output.responders.some((row) => !exact(row,['responderId','rationale']) || !qualified.has(row.responderId) || !prose(row.rationale,ids,groundedNumbers))) errors.push('Unknown or unqualified responder');
-  if (output.proposedOutcome && (!exact(output.proposedOutcome,['outcome','reason']) || !['ABSTAIN','ESCALATE'].includes(output.proposedOutcome.outcome) || !prose(output.proposedOutcome.reason,ids,groundedNumbers))) errors.push('Invalid proposed outcome');
+  else if (new Set(output.responders.map((row) => row?.responderId)).size !== output.responders.length || output.responders.some((row) => !exact(row,['responderId','rationale']) || !qualified.has(row.responderId) || !prose(row.rationale,ids,groundedNumbers))) errors.push('Unknown or unqualified responder');
+  if (Object.hasOwn(output,'proposedOutcome') && (!exact(output.proposedOutcome,['outcome','reason']) || !['ABSTAIN','ESCALATE'].includes(output.proposedOutcome.outcome) || !prose(output.proposedOutcome.reason,ids,groundedNumbers))) errors.push('Invalid proposed outcome');
   return errors;
 }
 function timed(work, ms) {
@@ -126,6 +140,8 @@ export async function investigate(state, issue, options = {}) {
       } else turn = await timed(() => (options.callTurn ?? callChatTurn)({...options,role:'investigator',provider,modelId:model.modelId,reasoningEffort:options.reasoningEffort ?? defaults.reasoningEffort,apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,
         messages,tools:toolHost.tools,timeoutMs:Math.max(1,deadline-now())}),deadline-now());
       if (now() >= deadline) return fallback('deadline');
+      if (typeof turn?.content==='string' && Buffer.byteLength(turn.content)>65536) return fallback('response-too-large');
+      if (turn?.toolCalls?.some((call)=>Buffer.byteLength(typeof call?.arguments==='string'?call.arguments:JSON.stringify(call?.arguments??null))>8192)) return fallback('invalid-tool-arguments');
       model.promptTokens += turn.usage?.promptTokens ?? 0; model.completionTokens += turn.usage?.completionTokens ?? 0;
       if (turn.error) return fallback('invalid-tool-call');
       if (turn.toolCalls?.length) {
@@ -139,9 +155,9 @@ export async function investigate(state, issue, options = {}) {
           const ids=[];
           for(const row of result.rows) if(row.caseId) {returnedCases.set(row.caseId,row);ids.push(row.caseId);if(reportPolicy(row.reportNarrative).injection.length && !warnings.includes('Retrieved narrative contains instruction-like text; treated as quoted data.'))warnings.push('Retrieved narrative contains instruction-like text; treated as quoted data.');}
           if(call.name==='eligible_responders')returnedResponders.set(args.fixId,result.rows);
-          trace.push({tool:call.name,args,resultIds:ids.length ? ids : result.rows.map((row) => row.fixId ?? row.responderId ?? row.equipmentId).filter(Boolean),ms:Math.max(0,now()-began)});
+          trace.push(...sanitizeInvestigationTrace([{tool:call.name,args,resultIds:ids.length ? ids : result.rows.map((row) => row.fixId ?? row.responderId ?? row.equipmentId).filter(Boolean),ms:Math.max(0,now()-began)}]));
           if(Buffer.byteLength(JSON.stringify(trace))>64000)return fallback('trace-budget');
-          for (const token of numbersIn(result.rows)) groundedNumbers.add(token);
+          for (const token of numbersIn(result.rows,call.name)) groundedNumbers.add(token);
           messages.push({role:'tool',tool_call_id:call.id,content:JSON.stringify({untrustedToolData:result})});
           if(fixture && call.name==='search_cases')fixtureCases=result.rows;
           if(fixture && call.name==='fix_catalog')fixtureFix=result.rows.find((row) => row.safetyClass==='ROUTINE')?.fixId ?? result.rows[0].fixId;
@@ -165,14 +181,13 @@ export async function investigate(state, issue, options = {}) {
         repaired=true; messages.push({role:'assistant',content:JSON.stringify({invalidFinalDiscarded:true})},{role:'user',content:JSON.stringify({validationErrors:errors,
           requiredShape:'{"hypotheses":[{"symptomCode","text","evidenceRefs":[{"caseId","field"}]}],"fixes":[{"fixId","rationale","evidenceRefs"}],"responders":[{"responderId","rationale"}],"proposedOutcome"?:{"outcome","reason"}}',
           allowedFixIds:fixesFor(issue.issueClass).map((row) => row.id), qualifiedResponderIdsByFix:qualifiedByFix, returnedCaseIds:[...returnedCases.keys()].slice(0,40),
-          instruction:'Repair the final JSON in exactly requiredShape using only these ids; no more tools. The first fix must be one listed in qualifiedResponderIdsByFix, and responders must come from that fix\'s list. Quote only numbers that appeared in tool results.'})});continue;
+          instruction:'Repair the final JSON in exactly requiredShape using only these ids; no more tools. The first fix must be one listed in qualifiedResponderIdsByFix, and responders must come from that fix\'s list. Quote only allowlisted numeric counts or minutes from tool results; never narrative, id or timestamp digits. No percentages, probability, chance or likelihood claims.'})});continue;
       }
-      const derived=deterministicInvestigation(state,issue,context);
       const fixRows=output.fixes.map((row) => {const fix=fixesFor(issue.issueClass).find((fix) => fix.id===row.fixId);const grade=executeInvestigationTool(state,'fix_evidence',{issueClass:issue.issueClass,fixId:fix.id,equipmentId:issue.equipmentId,symptomCode:issue.symptom.code},context).rows[0].grade;return {...createFixDTO(fix),grade,rationale:row.rationale,evidenceRefs:row.evidenceRefs};});
       const first=fixRows[0];
       const eligible=first ? returnedResponders.get(first.fixId) ?? [] : [];
       const responders=output.responders.map((row) => {const source=eligible.find((item) => item.responderId===row.responderId);return {responderId:source.responderId,displayName:source.displayName,qualified:true,certifications:source.certifications,rationale:row.rationale};});
-      const status=output.proposedOutcome?.outcome==='ESCALATE' ? 'ESCALATED' : output.proposedOutcome?.outcome==='ABSTAIN' || !first || derived.fixes.every((row)=>row.grade==='NONE') || !responders.length ? 'ABSTAINED' : 'READY';
+      const status=output.proposedOutcome?.outcome==='ESCALATE' ? 'ESCALATED' : output.proposedOutcome?.outcome==='ABSTAIN' || !first || first.grade==='NONE' || !responders.length ? 'ABSTAINED' : 'READY';
       return {status,source:fixture ? 'FIXTURE' : provider==='nebius'?'NEBIUS_MODEL':'AMD_MODEL',model:{...model,latencyMs:Math.max(0,now()-started)},fallbackReason:null,evidenceGrade:first?.grade ?? 'NONE',
         reason:output.proposedOutcome?.reason ?? (status==='READY'?'Public evidence supports an action for approval.':'No grounded action with an eligible qualified responder.'),hypotheses:output.hypotheses,fixes:fixRows,responders,trace,repaired,rawInvalid,warnings:[...warnings,...shiftWarnings(eligible,context.asOf),...(first?.grade==='THIN'?['Low evidence; operator approval required.']:[])]};
     }

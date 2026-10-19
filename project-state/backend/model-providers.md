@@ -158,3 +158,13 @@ read-only tunnel. Daily entries include totals and byRole/byModel arrays, estima
 (null when incomplete), knownCostUsd and unpricedCalls. Settings API shows a read-only Usage
 block with today's estimate, per-role calls/input/output tokens, budget and fallback status.
 Budget changes are env-only; the existing settings write endpoints cannot alter the ledger.
+
+## Response byte boundary
+
+`model-provider.mjs` bounds provider success and error envelopes to 262,144 decoded bytes
+before JSON parsing. Native fetch bodies are read incrementally and cancelled on overflow;
+a declared oversized Content-Length is rejected immediately. In-memory json/text transport
+adapters are checked after serialization. Overflow has code `response-too-large` and is not
+retried as a service failure. Unreadable error bodies still preserve their HTTP status.
+Investigator final content also has a 65,536-byte cap, with 8,192 bytes per proposed tool
+argument before its local parsing/trace path. Oversized replies never execute proposed work.

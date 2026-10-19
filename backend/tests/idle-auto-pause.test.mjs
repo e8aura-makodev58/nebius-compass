@@ -28,7 +28,7 @@ async function status(manager, id) {
 }
 
 async function invoke(handler, method, url) {
-  const request = { method, url, headers: { host: "localhost" }, async *[Symbol.asyncIterator]() {} };
+  const request = { method, url, headers: { host: "localhost", "content-type": "application/json" }, async *[Symbol.asyncIterator]() {} };
   const response = { statusCode: 200, body: "", writeHead(code) { this.statusCode = code; }, end(body = "") { this.body = body; } };
   await handler(request, response);
   return { status: response.statusCode, body: response.body ? JSON.parse(response.body) : null };

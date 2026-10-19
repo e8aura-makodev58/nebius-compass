@@ -504,6 +504,13 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added `docs/design/nebius-theme-codex-notes.md` at the user's request: brand/semantic token roles, accessible inverse text and focus, Field reports/Staffing consistency, phone actions and shared-view validation. Recommendations only; no UI behavior or CSS changed.
 - Pages updated: log.md.
 
+## [2026-10-19] fix — Investigator security boundaries (round 21)
+- Hardened room mutation media type/Origin checks, per-tool numeric grounding and public traces; model publications validate their complete public projection before commit. Expanded deterministic hazard policy, required evidence for the selected first fix, and routed malformed finals through bounded repair.
+- Added 20/min room-service admission and a persistent 100-open-report cap, fair work scheduling, closed-orphan full-row reclamation with compact facts/monotonic IDs, and streamed provider response byte limits. Regenerated the synthetic lifecycle fixture (only report policy version/creation timestamps changed).
+- Added security regressions and updated JSON mutation headers in unit helpers and shared Playwright setup. Frontend/e2e source untouched; main agent must add JSON headers to production bodyless room requests before integration/deployment. Authentication remains a user decision.
+- Pages updated: backend/investigation.md, backend/domain-model.md, backend/model-providers.md, backend/http-api.md, operations/testing.md. Decision recorded in docs/decisions.md; review status appended to docs/nebius/08_SECURITY_REVIEW.md.
+- Verification: final hermetic unit suite 448/448; forced-provider Chromium E2E 83/83 on Codex port 3021. Test ports released; existing watcher preserved.
+
 ## [2026-10-19] measurement — Replay run C with per-pair source
 - Same code as run B: investigator 45/60, deterministic 46/60, baseline 41/60; 23/60 fallbacks (every raw-invalid answer also failed repair). By source: model 29/37 (78.4%), deterministic 16/23 (69.6%), on different issues, so not paired. Fallback rate varies strongly between runs; recorded in `docs/evaluation.md`.
 - Pages updated: none.
