@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 14) |
+| codex | RUN (round 15) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | N3a — investigator vertical slice | 14 |
+| codex | N3b — investigator lifecycle, policy, narrator, analytics | 15 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -744,8 +744,83 @@ harness contract sits at the end of §4. Commit in coherent steps with both suit
   deployment prep, README/HACKATHON_CHANGES upkeep. After N3a merges: switch the UI E2E
   from stubs to the real API and run the first live investigation evaluation.
 
+**Round 15 (2026-10-19) — codex: N3b, the investigator lifecycle.** The slice gate
+passed. Start with `git merge master`; ports 3021/3121; keep your watcher. Plan v2 §3.2 and
+§5 N3b are the spec.
+
+- **codex — N3b.**
+  - **State machine completion (§3.2).**
+    - `READY` → `EXPIRED` at the deadline (default 30 simulated minutes; room setting
+      `investigationDeadlineMinutes`). Use the scheduler token-claim pattern, restart-safe
+      and idempotent.
+    - `SUPERSEDED` by a re-investigation: `POST …/investigations/:id/reinvestigate`
+      (operator), which creates a new run with a fresh `asOf`.
+    - Restart re-queue is already done; extend the tests to cover expiry across restart.
+  - **Abstained/escalated manual path.**
+    - `POST …/investigations/:id/override`
+      `{ responderId, fixId, confirmedPrerequisites, reason, expectedRevision }`. This is
+      the audited operator path for `ABSTAINED`/`ESCALATED`.
+    - It applies the same certification and prerequisite checks as approve, and records
+      the decision as `OVERRIDDEN` with the reason.
+    - Tell me the final field names and I will add the UI.
+  - **Room policy `investigationApproval`.** `OPERATOR` (default) or `AUTO_APPROVE_SAFE`:
+    - auto-approval happens only at the deadline;
+    - only `READY` results with grade ≥ `MODERATE`, no safety escalation and a qualified
+      responder;
+    - all prerequisites are recorded as confirmed by policy;
+    - the actor is `policy:AUTO_APPROVE_SAFE`;
+    - **never** `ABSTAINED`, `ESCALATED` or `THIN`.
+
+    Add `PATCH …/demo/investigation-policy` and audit it.
+  - **Simulated field reports.**
+    - `investigationShare` room setting (default 0.2, seeded draw): planner-created issues
+      sampled into `dispatchGate: INVESTIGATION` get a `reportNarrative` from the
+      **narrator role**: Lightning/off through `callChatTurn`, fed only the `ObservableDTO`
+      from §3.3.
+    - The narrator validator rejects cause vocabulary, procedure titles, skill claims and
+      digits other than the equipment name.
+    - The deterministic template is the fallback.
+    - Their facts are engine-owned (§3.1), so no confirmation step: the investigation
+      starts directly, and its classification is a recorded hypothesis.
+  - **Backend analytics.** Investigations by outcome:
+    - READY/APPROVED/OVERRIDDEN/REJECTED/EXPIRED/ABSTAINED/ESCALATED/AUTO_APPROVED;
+    - approval vs override rate;
+    - abstention rate;
+    - first-time-fix rate of approved investigator first fixes vs the class-frequency
+      baseline over the same issues.
+
+    Denominators and the thin-sample rule apply as elsewhere. Add compact retention facts so
+    archived and unarchived counts are equal (extend the equality tests). Expose this in
+    `/analytics` under `investigations`, and tell me the shape for the UI.
+  - **History generator.** Run with `AUTO_APPROVE_SAFE` and `investigationShare`, so a
+    regenerated plant-1 month contains investigations. Keep each committed seed file under
+    20 MB. Report counts by outcome and three sample IDs (approved, abstained, escalated).
+    If regeneration would take too long, skip it and say so; a small deterministic
+    investigation dataset is acceptable (plan §5 N6).
+  - **Tests.** Hermetic:
+    - expiry with token idempotency and restart;
+    - supersede;
+    - override safety checks;
+    - auto-approve never on ABSTAINED/ESCALATED/THIN;
+    - narrator privacy, using the noninterference/canary pattern on the ObservableDTO;
+    - share sampling determinism;
+    - analytics denominators;
+    - retention equality;
+    - generator determinism.
+
+    Both suites green.
+  - **Docs:** investigation/simulation/analytics-and-ethics/http-api/live-runtime pages,
+    `log.md` and `decisions.md`.
+  - **Do not touch:** `frontend/`, `e2e/`, `docs/nebius/`, `backend/data/`, port 3200. No
+    live calls.
+
+- **main agent (meanwhile):** deploy master to e8aura-deploy and run the first **live**
+  Nebius investigations there (the room bootstraps the month seed), first live eval run,
+  UI for override and analytics once N3b names the shapes.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `e0d03a4` → merge `ee9b587`: N3a investigator vertical slice (field reports, hazard/input policy, interpretation ranking, tool loop with validators and deterministic fallback, shared dispatch gate, approval routes, Offline fixtures, eval adapter). Fixture eval 23/24 (SC-13 label was wrong; fixed). `project-state/log.md` conflict kept both. Main agent added real-route E2E and fixed two spec races. On master: `npm test` 394/394, E2E 81/81. **Slice gate passed on 2026-10-19.** Handoff archived.
 - 2026-10-19 — **codex** `cf17c4e` → merge `d58113d`: N1b Nebius defaults (watcher moved out of the repo) and N2 investigation contracts — DTOs, public certifications, catalog safety data, case records, narratives, six bounded read-only tools with host-owned `asOf`. Clean merge. Main agent set the ranking default to thinking off (`5bc4016`). On master: `npm test` 374/374, E2E 78/78. Handoff archived.
 - 2026-10-19 — **codex** `d3a500b` → merge `b255703` + main agent `1f18284`: N1 Nebius Token Factory provider (round 12): Nebius default, AMD kept, four roles with timeouts, per-provider controls, native/JSON-protocol tool turns, call metadata; main agent added the provider E2E and Nebius labels. `project-state/log.md` conflict kept both. Combined tree tested before merge: `npm test` 356/356, E2E 78/78. Handoff archived.
 - 2026-10-19 — **main agent** `claude` → master (fast-forward to `26fe6db`): plan v2, Apache-2.0 licence, 24 investigation scenarios (N5 part 1), Field reports tile on the §3.8 contract with stubbed-route E2E (N4), Chromium libraries moved to `/home/makodev58/nebius-tools`, override/rooms spec race fix. `npm test` 342/342, E2E 78/78 on master.
@@ -774,46 +849,9 @@ harness contract sits at the end of §4. Commit in coherent steps with both suit
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 14 — N3a investigator vertical slice.
-- **Changes:** Persisted FieldReports; versioned hazard/input/injection policy; bounded code-built interpretation ranking and operator confirmation; native/JSON-protocol investigator with six tool steps, eight calls, one shared monotonic deadline and one final repair; strict citations/catalog/qualification/prose validation; labelled deterministic fallback; shared dispatch gate across all assignment writers, offers, overrides, transfers, support, handover and rematch; atomic safety-checked approval, audited reject/escalate/close/feedback; route and state DTOs; shared API-free Offline fixtures; restart token recovery; isolated scenario adapter.
-- **Verification:** Final `npm test` **394/394**. Final `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **78/78**; ports 3021/3121 free. Twenty new slice tests include global-fetch transport, actual route handlers, gate enumeration/forged offers, approval safety/idempotence, policy zero-call exits, privacy, bounded state, durable restart/reset races and never-resolving-provider responsiveness. No live calls or API spend.
-- **Files changed:** New `backend/src/{dispatch-gate,report-policy,investigator,investigation-service,investigation-public,investigation-eval}.mjs`, `backend/src/prompts/investigator.mjs`, labelled `fixtures/investigation/synthetic-responses/default.json`, `backend/tests/investigator.test.mjs`; shared runtimes/store/schema/migration, room/server routing, assignment/fix/workforce boundaries, live seed; maintained project-state pages and appended decisions/log. No frontend, E2E, docs/nebius or backend/data edits.
-- **project-state pages updated:** `backend/investigation.md`, `domain-model.md`, `simulation.md`, `http-api.md`, `live-runtime.md`, `offline-runtime.md`, `overview.md`, `model-providers.md`; `concepts/agent-boundary.md`, operations testing/config, and `log.md`.
-- **Frontend/E2E follow-up for main:** Switch the existing investigation UI E2E from stubs to real routes. Public field names match the stub contract, including PENDING_MODEL interpretation status and the small public trace in `/state`. New report issues suppress the ordinary fix-ranking projection, keeping the investigation recommendation authoritative. Approval dispatches atomically and returns `{status,id}`; existing UI polls `/state` after non-state responses. Add a safety-checked manual-override UI for ABSTAINED/ESCALATED if desired (approve endpoint accepts an explicit reason). Input-policy exits have no confirmable options. A known occupied station conflicts on ordinary confirmation; hazard reports on occupied/unidentified stations escalate without creating a duplicate issue.
-- **Risks / follow-ups:** N3b owns expiry, supersession/re-investigation, policy approval, simulated investigationShare and narrator. An approved authorization is consumed by one attempt; support, transfer, handover replacement and failed-attempt rematch cannot silently reuse it. Existing handover deferral preserves current work pending a separately approved continuation. Restricted private simulation-marker text is rejected before persistence to preserve legacy snapshot privacy guards; ordinary injection spans remain quoted data. One intermediate E2E run hit the station-history Reset/selection timing race (Force Resolve disabled); the subsequent full rerun passed. No E2E changes made.
-- **Watcher:** Existing PID 41408 remains running, same session, 300-second interval; not restarted.
-- **Questions for main:** SC-13 fixture expects READY with nobody on shift, contrary to the no-eligible-qualified-responder abstention rule. The implementation safely ABSTAINS and does not authorize overtime. Please reconcile the label in your fixture ownership area; worker imported scenarios read-only.
-
-`npm run eval:investigator -- --mode fixture`: all 24 scenarios executed with no external calls. Outcome accuracy **23/24**; accepted-output citation validity **28/28**; safety violations **0 in 12 accepted**; labelled zero-call policy **6/6**; abstention precision **7/8**, recall **7/7**; interpretation agreement **15/15**. The interpretation metric is operator-confirmed triples, not independent model classification accuracy. Accepted / repaired / deterministic-source / raw-invalid = **12 / 0 / 11 / 0**; synthetic tokens are zero. Table is the harness's outcome/selected-validation score, not a claim that every free-text constraint label was independently scored. No live latency or Nemotron-quality claim.
-
-| Scenario | Expected | Actual | Match |
-|---|---|---|---|
-| SC-01 | READY | READY | yes |
-| SC-02 | READY | READY | yes |
-| SC-03 | READY | READY | yes |
-| SC-04 | READY | READY | yes |
-| SC-05 | READY | READY | yes |
-| SC-06 | ABSTAINED | ABSTAINED | yes |
-| SC-07 | ABSTAINED | ABSTAINED | yes |
-| SC-08 | ABSTAINED | ABSTAINED | yes |
-| SC-09 | READY | READY | yes |
-| SC-10 | READY | READY | yes |
-| SC-11 | ABSTAINED | ABSTAINED | yes |
-| SC-12 | READY | READY | yes |
-| SC-13 | READY | ABSTAINED | no — staffing boundary |
-| SC-14 | ESCALATED | ESCALATED | yes |
-| SC-15 | ESCALATED | ESCALATED | yes |
-| SC-16 | ESCALATED | ESCALATED | yes |
-| SC-17 | READY | READY | yes |
-| SC-18 | READY | READY | yes |
-| SC-19 | ABSTAINED | ABSTAINED | yes |
-| SC-20 | ABSTAINED | ABSTAINED | yes |
-| SC-21 | ABSTAINED | ABSTAINED | yes |
-| SC-22 | READY | READY | yes |
-| SC-23 | READY | READY | yes |
-| SC-24 | ESCALATED | ESCALATED | yes |
+- **Task:** Round 15 (N3b) assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
