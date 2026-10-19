@@ -53,7 +53,7 @@ button.is-loading { cursor: wait; }
 .topbar h1 .brand-mark { margin-left: 2px; padding: 0 .28em; border-radius: var(--radius-sm); background: var(--brand-lime); color: var(--ink); }
 /* Text fields and selects share one form style with a visible focus ring. */
 input[type="text"], input[type="password"], input[type="search"], input:not([type]), select { border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); background: var(--paper-raised); color: var(--ink); font: inherit; transition: border-color .12s ease, box-shadow .12s ease; }
-input:focus-visible, select:focus-visible { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible, [role="button"]:focus-visible { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
 select { appearance: none; padding-right: 30px; background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%); background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 input[type="text"], input[type="password"], input:not([type]) { padding: 8px 9px; }
@@ -62,7 +62,7 @@ input::placeholder { color: var(--ink-3); }
 /* Shared operational components: one rhythm across the console. */
 .status-badge { display: inline-flex; align-items: center; width: fit-content; gap: 5px; padding: 3px 7px; border: 1px solid var(--rule); border-radius: var(--radius-sm); color: var(--ink-2); background: var(--paper); font: 600 .7rem/1.35 var(--font-sans); white-space: nowrap; }
 .status-badge.status-attention { color: var(--danger-ink); border-color: var(--danger); background: var(--danger-wash); }
-.empty-state { display: grid; gap: 6px; padding: 16px; border: 1px dashed var(--rule-strong); border-radius: var(--radius-sm); color: var(--ink-2); background: var(--paper); font-size: .82rem; line-height: 1.5; }
+.empty-state { display: grid; gap: 6px; padding: 14px 16px; border: 1px dashed var(--rule-strong); border-radius: var(--radius); color: var(--ink-2); background: var(--paper-sunk); font-size: .82rem; line-height: 1.5; }
 .empty-state strong { color: var(--ink); font-weight: 600; }
 .empty-state p { margin: 0; }
 .room-identity { flex: 1 1 100px; }

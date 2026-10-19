@@ -507,3 +507,14 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] measurement — Replay run C with per-pair source
 - Same code as run B: investigator 45/60, deterministic 46/60, baseline 41/60; 23/60 fallbacks (every raw-invalid answer also failed repair). By source: model 29/37 (78.4%), deterministic 16/23 (69.6%), on different issues, so not paired. Fallback rate varies strongly between runs; recorded in `docs/evaluation.md`.
 - Pages updated: none.
+
+## [2026-10-19] ui — Theme enhancements E1, E2, E4–E7 (round 21g)
+- Implemented CSS-only theme enhancements from the round 20g plan:
+  - E1: Harmonized tile empty-state styling with `--paper-sunk`, `--rule-strong` dashed borders, 10px radius, and docked header action in the Field reports tile.
+  - E2: Hardened microcopy typography scale and contrast, shifting secondary labels and chips to `--ink-2` (`#3B5064`, >4.9:1) and bumping sizes to `.74rem`–`.78rem`.
+  - E4: Compacted mobile 375px header and navigation bar; hid desktop-only keyboard shortcuts (`⌘K`, `/`) on touchscreens.
+  - E5: Restyled field incident narratives with solid navy left borders and non-italic layout; updated cited case chips (`.inv-case`) with Nebius palette (raised surface, lime hover/wash `#F2FAD0`, lime focus halo, dark text).
+  - E6: Right-aligned numeric columns in the Settings Usage table with `font-variant-numeric: tabular-nums` and row dividers.
+  - E7: Enforced universal `:focus-visible` styling with `--focus-ring` (Nebius lime halo) across all buttons, case chips, summary disclosures, and option cards.
+- Pages updated: frontend/overview.md, log.md.
+
