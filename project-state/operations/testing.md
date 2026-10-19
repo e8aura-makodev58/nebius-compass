@@ -234,3 +234,9 @@ Playwright's shared config supplies JSON headers for bodyless mutation setup com
 request-guard rejection tests explicitly omit/override those headers in unit handler tests.
 The synthetic lifecycle fixture is regenerated with `node backend/seed/create-investigation-dataset.mjs`
 when policy/report schema changes, and the lifecycle suite checks byte reproducibility.
+
+Repair diagnostic regressions exercise precise array/item/field paths and privacy-safe
+messages for shape/bounds, numeric/probability/restricted/overlength prose, catalog text,
+unknown/duplicate IDs, qualification, citation case/field and outcome-enum failures. A
+stubbed numeric-invalid final repairs to qualitative prose within the original budget;
+this establishes contract handling, not real-model repair success.

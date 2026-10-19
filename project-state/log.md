@@ -529,3 +529,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
   - E7: Enforced universal `:focus-visible` styling with `--focus-ring` (Nebius lime halo) across all buttons, case chips, summary disclosures, and option cards.
 - Pages updated: frontend/overview.md, log.md.
 
+
+## [2026-10-19] fix — Precise investigator repair feedback (round 21 follow-up)
+- Synced master, preserving both sides of the append-only log conflict and all authorized security/theme work. Updated final validation to report exact item/field paths, bounded non-echoing error categories, and qualitative fallback guidance; repair echoes only public IDs, allowed hypothesis texts and allowlisted metric numbers.
+- Hermetic fixture evaluation: 24/24 outcomes, 0 repaired / 0 raw-invalid. Adversarial fixtures exercised shape, array bounds, disallowed numbers, probability claims, restricted/overlength prose, catalog text, unknown/duplicate IDs, qualification, citation case/field and outcome enum. Stubbed numeric-invalid output repaired to qualitative prose; no live-model claim.
+- Pages updated: backend/investigation.md, operations/testing.md; decision and review Status follow-up appended.
+- Verification: final unit suite 450/450, forced-provider Chromium E2E 84/84 on 3021, fixture evaluator 24/24. Test ports released; watcher preserved.

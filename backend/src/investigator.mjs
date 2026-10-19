@@ -24,35 +24,76 @@ export function numbersIn(rows, tool) {
   return new Set((Array.isArray(rows)?rows:[]).flatMap((row)=>(METRIC_FIELDS[tool]??[])
     .flatMap((key)=>typeof row?.[key]==='number'&&Number.isFinite(row[key])&&row[key]>=0?[String(row[key])]:[])));
 }
-function prose(value, ids, grounded = new Set()) {
-  if (typeof value !== 'string' || !value.trim() || value.length > 400 || /hidden-cause|trueMedian|trueSuccess|effectiveness|responderSkill|%|\b(?:probabilit(?:y|ies)|chances?|likelihood|percent(?:age)?s?)\b/i.test(value)) return false;
-  try { assertNoResponderSkill(value); } catch { return false; }
+function proseError(value, ids, grounded = new Set()) {
+  if (typeof value !== 'string' || !value.trim()) return 'prose must be a nonempty string';
+  if (value.length > 400) return 'prose exceeds 400 characters';
+  if (/hidden-cause|trueMedian|trueSuccess|effectiveness|responderSkill/i.test(value)) return 'restricted content is forbidden';
+  if (/%|\b(?:probabilit(?:y|ies)|chances?|likelihood|percent(?:age)?s?)\b/i.test(value)) return 'probability/percentage claims are forbidden; use qualitative prose';
+  try { assertNoResponderSkill(value); } catch { return 'restricted content is forbidden'; }
   let rest = value;
   for (const id of [...ids].filter((id)=>typeof id==='string'&&id).sort((a,b) => b.length-a.length)) {
     const escaped=id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     rest=rest.replace(new RegExp(`(?<![\\p{L}\\p{N}_-])${escaped}(?![\\p{L}\\p{N}_-])`,'gu'),'');
   }
-  return (rest.match(NUMBER) ?? []).every((token) => grounded.has(token));
+  const invalid=(rest.match(NUMBER) ?? []).find((token)=>!grounded.has(token));
+  return invalid ? `number ${invalid.slice(0,80)} not allowed; use qualitative prose without numbers` : null;
 }
+const prose=(value,ids,grounded)=>proseError(value,ids,grounded)===null;
 export function validateInvestigationFinal(output, {issue, returnedCases, returnedResponders, groundedNumbers = new Set()}) {
   const errors = [];
-  if (!exact(output,['hypotheses','fixes','responders'],['proposedOutcome'])) return ['Invalid final shape'];
+  if (!exact(output,['hypotheses','fixes','responders'],['proposedOutcome'])) return ['final: invalid shape; use the required fields only'];
   const fixes = fixesFor(issue.issueClass).map((row) => row.id);
   const responders = new Set([...returnedResponders.values()].flatMap((rows) => rows.map((row) => row.responderId)));
   const observableTexts = new Set((SYMPTOMS[issue.issueClass] ?? []).map(([,text])=>text));
   observableTexts.add('The reported observations resemble the recorded public symptom.');
   const ids = [...returnedCases.keys(),...responders,...fixes,issue.id,issue.equipmentId,issue.symptom.code];
-  const refs = (rows) => Array.isArray(rows) && rows.length <= 10 && rows.every((ref) => exact(ref,['caseId','field']) && returnedCases.has(ref.caseId) && CASE_FIELDS.has(ref.field));
-  if (!Array.isArray(output.hypotheses) || output.hypotheses.length > 6 || !output.hypotheses.length) errors.push('Invalid hypotheses');
-  else for (const row of output.hypotheses) if (!exact(row,['symptomCode','text','evidenceRefs']) || !(SYMPTOMS[issue.issueClass] ?? []).some(([code]) => code === row.symptomCode) || !prose(row.text,ids,groundedNumbers) || !observableTexts.has(row.text) || !refs(row.evidenceRefs)) errors.push('Invalid hypothesis or citation');
-  if (!Array.isArray(output.fixes) || output.fixes.length > 6) errors.push('Invalid fixes');
-  else if (new Set(output.fixes.map((row) => row?.fixId)).size !== output.fixes.length || output.fixes.some((row) => !exact(row,['fixId','rationale','evidenceRefs']) || !fixes.includes(row.fixId) || !prose(row.rationale,ids,groundedNumbers) || !refs(row.evidenceRefs))) errors.push('Invalid fix or citation');
+  const fail=(path,message)=>errors.push(`${path}: ${message}`);
+  const text=(value,path)=>{const error=proseError(value,ids,groundedNumbers);if(error)fail(path,error);};
+  const refs=(rows,path)=>{
+    if(!Array.isArray(rows)||rows.length>10){fail(path,'must be an array of at most 10 references');return;}
+    rows.forEach((ref,index)=>{
+      const item=`${path}[${index}]`;
+      if(!exact(ref,['caseId','field'])){fail(item,'invalid reference shape');return;}
+      if(!returnedCases.has(ref.caseId))fail(`${item}.caseId`,'case was not returned; choose returnedCaseIds');
+      if(!CASE_FIELDS.has(ref.field))fail(`${item}.field`,'must be a public CaseDTO field');
+    });
+  };
+  const array=(value,path,min,max,visit)=>{
+    if(!Array.isArray(value)||value.length<min||value.length>max){fail(path,`must be an array with ${min} to ${max} items`);return;}
+    value.forEach((row,index)=>visit(row,`${path}[${index}]`));
+  };
+  array(output.hypotheses,'hypotheses',1,6,(row,path)=>{
+    if(!exact(row,['symptomCode','text','evidenceRefs'])){fail(path,'invalid hypothesis shape');return;}
+    if(!(SYMPTOMS[issue.issueClass]??[]).some(([code])=>code===row.symptomCode))fail(`${path}.symptomCode`,'must be a supplied class symptom code');
+    text(row.text,`${path}.text`);
+    if(!observableTexts.has(row.text))fail(`${path}.text`,'copy an allowedHypothesisTexts entry verbatim');
+    refs(row.evidenceRefs,`${path}.evidenceRefs`);
+  });
+  const seenFixes=new Set();
+  array(output.fixes,'fixes',0,6,(row,path)=>{
+    if(!exact(row,['fixId','rationale','evidenceRefs'])){fail(path,'invalid fix shape');return;}
+    if(!fixes.includes(row.fixId))fail(`${path}.fixId`,'unknown fix; choose allowedFixIds');
+    if(seenFixes.has(row.fixId))fail(`${path}.fixId`,'duplicate fix id');seenFixes.add(row.fixId);
+    text(row.rationale,`${path}.rationale`);refs(row.evidenceRefs,`${path}.evidenceRefs`);
+  });
   const qualified = new Set((returnedResponders.get(output.fixes?.[0]?.fixId) ?? []).map((row) => row.responderId));
-  if (!Array.isArray(output.responders) || output.responders.length > 10) errors.push('Invalid responders');
-  else if (new Set(output.responders.map((row) => row?.responderId)).size !== output.responders.length || output.responders.some((row) => !exact(row,['responderId','rationale']) || !qualified.has(row.responderId) || !prose(row.rationale,ids,groundedNumbers))) errors.push('Unknown or unqualified responder');
-  if (Object.hasOwn(output,'proposedOutcome') && (!exact(output.proposedOutcome,['outcome','reason']) || !['ABSTAIN','ESCALATE'].includes(output.proposedOutcome.outcome) || !prose(output.proposedOutcome.reason,ids,groundedNumbers))) errors.push('Invalid proposed outcome');
+  const seenResponders=new Set();
+  array(output.responders,'responders',0,10,(row,path)=>{
+    if(!exact(row,['responderId','rationale'])){fail(path,'invalid responder shape');return;}
+    if(!qualified.has(row.responderId))fail(`${path}.responderId`,'not qualified for the first fix; choose qualifiedResponderIdsByFix');
+    if(seenResponders.has(row.responderId))fail(`${path}.responderId`,'duplicate responder id');seenResponders.add(row.responderId);
+    text(row.rationale,`${path}.rationale`);
+  });
+  if(Object.hasOwn(output,'proposedOutcome')) {
+    if(!exact(output.proposedOutcome,['outcome','reason']))fail('proposedOutcome','invalid outcome shape');
+    else {
+      if(!['ABSTAIN','ESCALATE'].includes(output.proposedOutcome.outcome))fail('proposedOutcome.outcome','must be ABSTAIN or ESCALATE');
+      text(output.proposedOutcome.reason,'proposedOutcome.reason');
+    }
+  }
   return errors;
 }
+
 function timed(work, ms) {
   let timer;
   return Promise.race([Promise.resolve().then(work), new Promise((_,reject) => { timer = setTimeout(() => reject(Object.assign(new Error('deadline'),{code:'deadline'})), Math.max(1,ms)); })]).finally(() => clearTimeout(timer));
@@ -170,7 +211,7 @@ export async function investigate(state, issue, options = {}) {
       if (!errors.length && output.proposedOutcome?.outcome==='ESCALATE' && output.fixes.length && output.responders.length) {
         const firstFix=output.fixes[0].fixId;
         const evidence=executeInvestigationTool(state,'fix_evidence',{issueClass:issue.issueClass,fixId:firstFix,equipmentId:issue.equipmentId,symptomCode:issue.symptom.code},context).rows[0];
-        if (['MODERATE','STRONG'].includes(evidence.grade)) errors.push('ESCALATE conflicts with a supported first fix and qualified responder. Omit proposedOutcome when recommending; routine approval is not escalation.');
+        if (['MODERATE','STRONG'].includes(evidence.grade)) errors.push('proposedOutcome.outcome: ESCALATE conflicts with a supported first fix and qualified responder. Omit proposedOutcome when recommending; routine approval is not escalation.');
       }
       if(errors.length) {
         rawInvalid=true;
@@ -180,8 +221,9 @@ export async function investigate(state, issue, options = {}) {
         const qualifiedByFix = Object.fromEntries([...returnedResponders].map(([fixId, rows]) => [fixId, rows.map((row) => row.responderId)]));
         repaired=true; messages.push({role:'assistant',content:JSON.stringify({invalidFinalDiscarded:true})},{role:'user',content:JSON.stringify({validationErrors:errors,
           requiredShape:'{"hypotheses":[{"symptomCode","text","evidenceRefs":[{"caseId","field"}]}],"fixes":[{"fixId","rationale","evidenceRefs"}],"responders":[{"responderId","rationale"}],"proposedOutcome"?:{"outcome","reason"}}',
+          allowedHypothesisTexts:[...new Set((SYMPTOMS[issue.issueClass]??[]).map(([,text])=>text))],allowedMetricNumbers:[...groundedNumbers],
           allowedFixIds:fixesFor(issue.issueClass).map((row) => row.id), qualifiedResponderIdsByFix:qualifiedByFix, returnedCaseIds:[...returnedCases.keys()].slice(0,40),
-          instruction:'Repair the final JSON in exactly requiredShape using only these ids; no more tools. The first fix must be one listed in qualifiedResponderIdsByFix, and responders must come from that fix\'s list. Quote only allowlisted numeric counts or minutes from tool results; never narrative, id or timestamp digits. No percentages, probability, chance or likelihood claims.'})});continue;
+          instruction:'Repair the final JSON in exactly requiredShape using only these ids; no more tools. The first fix must be one listed in qualifiedResponderIdsByFix, and responders must come from that fix\'s list. Quote only allowlisted numeric counts or minutes from tool results; never narrative, id or timestamp digits. No percentages, probability, chance or likelihood claims. If a rationale fails numeric validation, drop numbers entirely and use a short qualitative rationale such as Public evidence supports this choice. Keep required ids and arrays; do not invent a new shape.'})});continue;
       }
       const fixRows=output.fixes.map((row) => {const fix=fixesFor(issue.issueClass).find((fix) => fix.id===row.fixId);const grade=executeInvestigationTool(state,'fix_evidence',{issueClass:issue.issueClass,fixId:fix.id,equipmentId:issue.equipmentId,symptomCode:issue.symptom.code},context).rows[0].grade;return {...createFixDTO(fix),grade,rationale:row.rationale,evidenceRefs:row.evidenceRefs};});
       const first=fixRows[0];

@@ -306,3 +306,27 @@ The frontend helper change must accompany integration before deployment.
 Final backend verification: `npm test` 448/448; Chromium E2E on Codex port 3021
 83/83, with forced providers and the shared JSON request-header default described
 above. Test servers stopped; no live calls or runtime data writes.
+
+### Status follow-up — actionable repair diagnostics
+
+Updated round 21 scope adds exact validation paths, e.g.
+`fixes[0].rationale: number 288 not allowed`, with guidance to replace numeric prose
+with a short qualitative rationale. Error messages do not echo rejected IDs or
+restricted text. The existing public-ID repair echo now also restates allowed
+hypothesis texts and allowlisted metric numbers. Acceptance checks and the single
+repair/tool/deadline budget remain enforced.
+
+Hermetic fixture evaluation: all 24 expected outcomes matched, with zero repaired
+or raw-invalid outputs. Adversarial unit fixtures exercised shape, array bounds,
+disallowed numbers, probability claims, restricted prose, prose length, catalog
+text, unknown fix, duplicate ID, qualification, citation case, citation field and
+outcome enum errors. A stubbed numeric-invalid final repaired to qualitative prose.
+These checks do not establish real-model repair quality; main-agent live remeasurement
+remains necessary. The required production frontend JSON-header companion change
+documented above remains outstanding in the synced source.
+
+Supported-action / ESCALATE contradictions also identify `proposedOutcome.outcome`
+in repair feedback, covered by the existing contradiction fixtures.
+
+Follow-up verification: unit suite 450/450; forced-provider Chromium E2E 84/84
+on Codex port 3021; fixture evaluator 24/24. No live calls; test ports released.

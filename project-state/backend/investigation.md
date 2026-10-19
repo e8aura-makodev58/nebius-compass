@@ -143,8 +143,11 @@ Unknown keys, invented IDs, duplicate rankings and prose over 400 characters or 
 digits outside complete supplied ID tokens or allowlisted numeric tool metrics fail validation.
 Numeric grounding uses only per-tool count fields and case `totalMinutes`; narrative, ID
 and timestamp digits are excluded. Percentage/probability/chance/likelihood claims always
-fail, even if the same number occurs in a metric. One repair shares the original budget and
-cannot execute further tools. Procedures always come verbatim from the catalog.
+fail, even if the same number occurs in a metric. Repair errors identify the exact bounded item/field path and category, without echoing
+unknown IDs or private/restricted strings. Repair also restates public allowed hypothesis
+texts, numeric metrics and IDs; rejected numeric prose may drop numbers entirely for a
+short qualitative rationale. One repair shares the original budget and cannot execute
+further tools. Procedures always come verbatim from the catalog.
 
 Code computes grades and qualification. A model ESCALATE paired with a MODERATE/STRONG
 first fix and supplied qualified responder is contradictory final output: bounded validation
@@ -319,3 +322,6 @@ window expire too. Associated orphan investigations become compact lifetime anal
 facts; operational audit events remain retained. Sequence high-water marks prevent ID reuse.
 Full orphan report/run lookup returns 404 after reclamation; issue-linked records retain
 the existing issue archive path. Active/pending records are never reclaimed by this policy.
+
+Supported-action / ESCALATE contradictions also identify `proposedOutcome.outcome`
+in repair feedback, covered by the existing contradiction fixtures.
