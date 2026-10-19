@@ -50,7 +50,7 @@ Services do not implicitly discover at initialization; boot tests explicitly ena
 ## End-to-end — Playwright
 
 ```sh
-LD_LIBRARY_PATH=/home/makodev58/rendertest/libs/usr/lib/x86_64-linux-gnu npm run test:e2e
+LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e
 ```
 
 Runs `playwright test` (Chromium). The E2E suite **forces provider failure** so it proves
@@ -58,6 +58,14 @@ the deterministic fallback still dispatches — it makes no real provider call a
 nothing. It runs against an isolated `/tmp` data root, not real `backend/data/`. The
 `LD_LIBRARY_PATH` prefix supplies Chromium's system libraries in this environment; plain
 `npm run test:e2e` works where those libraries are already present.
+
+**Fresh machine setup (2026-10-19).** `npx playwright install chromium-headless-shell`
+(downloads to `~/.cache/ms-playwright`). Without sudo, the missing libraries are extracted
+from Ubuntu 24.04 packages: `apt-get download libatk1.0-0t64 libatk-bridge2.0-0t64
+libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2t64 libatspi2.0-0t64
+libxrender1 libxi6` in `/home/makodev58/nebius-tools/debs`, then `dpkg -x <deb>
+/home/makodev58/nebius-tools/libs` for each. A fresh clone also needs a `.cache/`
+directory for several unit tests until those tests create it themselves.
 
 **Port.** The server binds `COMPASS_E2E_PORT` (default `3012`), and its data root is
 `/tmp/compass-playwright-control-rooms-<port>`, so several worktrees can run the suite at

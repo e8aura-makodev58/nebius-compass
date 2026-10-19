@@ -353,3 +353,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - `frontend/investigation-view.js` + `investigation.css`: report form, interpretation confirmation, investigation detail with case citations, safety class, qualified responders, prerequisite checkboxes, approve/escalate/reject, feedback, tool trace and a case dialog. Sixth Dockview tile (right column: context, Field reports, Staffing; frame min-height 560px), display screen `/rooms/:id/display/investigation`, phone Decisions view and count include open reports and investigations.
 - `e2e/investigation-ui.spec.mjs` stubs the not-yet-built routes exactly to plan §3.8; replaced by a real-API spec when N3a merges. Tile-count assertions updated in tiling, display-screen and workspace specs; `tiling-layout.test.mjs` covers the five-tile reset.
 - Pages updated: frontend/overview.md.
+
+## [2026-10-19] ops — Chromium libraries moved to `/home/makodev58/nebius-tools`
+- The old `rendertest` library folder is gone on this machine. Playwright's headless shell is installed in `~/.cache/ms-playwright` and its missing system libraries are extracted (no sudo) into `/home/makodev58/nebius-tools/libs`. `AGENTS.md` rules 9 and 11, `handover.md`, README and the testing page now name that path.
+- Pages updated: operations/testing.md.

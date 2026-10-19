@@ -78,7 +78,7 @@ Each agent tests on **its own ports only** and frees them **immediately** after 
 | codebuddy | 3023 (excluded) | 3123 (excluded) |
 | claude (main agent's own work) | 3024 | 3124 |
 
-- **E2E:** run `COMPASS_E2E_PORT=<your port> LD_LIBRARY_PATH=/home/makodev58/rendertest/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`.
+- **E2E:** run `COMPASS_E2E_PORT=<your port> LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`.
   Playwright starts the server and stops it when the run ends, using its own
   `/tmp/compass-playwright-control-rooms-<port>` data folder.
 - **Manual preview server** (screenshots, visual checks): start it on your preview port with
