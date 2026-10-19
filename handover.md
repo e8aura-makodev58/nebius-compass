@@ -984,9 +984,15 @@ needed.
 
 ## codex
 
-- **Status:** IDLE
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-19
-- **Task:** Round 18 assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 18 — factual review of public documentation (N7).
+- **Output:** docs/nebius/07_PUBLIC_DOCS_REVIEW.md: all eight assigned files reviewed at master 9b2a76e, with 27 numbered findings (1 blocker, 17 major, 9 minor), source file:line, repository evidence and exact replacement text. Coverage matrix distinguishes supported code/history claims from historical measurements that were not re-probed.
+- **Principal findings:** Docker quickstart lacks mandatory Nebius secret-path setup; image omits fixture directories and development Compose mounts a different directory from the image's data root. Local instructions still say AMD-only; approval/fallback/retry and three-issue-limit claims are stale. Evaluation timing includes injected cases, interpretation agreement compares operator-supplied expected facts, and safety/citation metrics need narrower labels. Public judge links remain placeholders; private operations details should not be public-facing. Native-probe sample scope, live demo's impossible unqualified row, fresh local seed/test prerequisites, N0 provenance hash, stale counts, costs/defaults and licence provenance also have concrete replacements.
+- **Preserved scope:** None of README.md, HACKATHON_CHANGES.md, docs/evaluation.md, N0 facts, submission draft, DEMO_SCRIPT.md, deployment README or .env.example was edited. No implementation edits. Added the review and project-state/log.md entry; only this handover section changed.
+- **Verification:** Docs-only; no suites required by round-18 assignment and none run. Read code/tests and Git objects/history; checked listed hashes/ancestry and baseline count semantics, aggregate evidence definitions, defaults/env/route names and packaging. git diff --check passes. No provider calls, remote inspection, external licence certification or new exhaustive secret scan. No actual credential value found in the assigned documents; intentionally approved author email distinguished from private deployment details.
+- **Risks / follow-ups:** Main agent applies or rejects findings; this review does not silently fix the reviewed files or invent missing public URLs/live results. Re-run a sanitized publication scan at the eventual public revision. Existing 300-second watcher PID 41408 remains running; no restart or second worker.
+- **Questions for main:** None.
 
 ---
 

@@ -466,3 +466,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] feature — Deployment usage ledger and UTC daily inference budget
 - Added per-provider/model/role token and estimated-cost accounting at the HTTP-attempt boundary, 120-day atomic persistence, pre-fetch/queued/retry budget enforcement, durable daily exhaustion log, exact reason propagation and public settings aggregates. Settings API includes a read-only Usage table/status; unknown costs remain explicit and live work already in flight finishes.
 - Pages updated: backend model-providers, http-api, overview; operations running-and-config/testing; frontend overview; .env.example documents env-only budget.
+
+
+## [2026-10-19] docs — N7 factual public documentation review
+- Reviewed eight assigned public documents at master 9b2a76e against implementation, tests and Git history; added docs/nebius/07_PUBLIC_DOCS_REVIEW.md with numbered severities, source locations/evidence and exact replacement text. Reviewed files unchanged; no suites or live calls (round-18 docs-only instruction).
+- Pages updated: this log only; review artifact is in docs/nebius/.
