@@ -411,3 +411,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] config — Nebius ranking default thinking off
 - `NEBIUS_ROLE_DEFAULTS.compass.reasoningEffort` is now `off`, as the real-packet measurement decided (Super off: 5/5 valid, 5/5 expected top, 3.2 s; on: 4/5, 2/5, 17.6 s). `.env.example` comment and `model-providers.md` updated.
 - Pages updated: backend/model-providers.md.
+
+## [2026-10-19] ops — Deployment server e8aura-deploy
+- New architecture (user): develop on e8aura-dev, deploy on e8aura-deploy (Ubuntu 24.04, Tailscale 100.91.9.126). Installed Docker Engine 29.9.1 and Compose v5.6.0 from Docker's apt repository; `makodev58` is in the `docker` group. Nebius key at `~/secrets/nebius.token` (mode 600); runtime `.env` at `~/nebius-compass-env/.env` (no secrets).
+- `compose.yaml`: required Nebius key secret, optional AMD key (`/dev/null` when unset), `COMPASS_BIND`/`COMPASS_HOST_PORT` for the published address. `scripts/deploy/deploy.sh` pushes a commit to the server's bare repo, rebuilds, and waits for health; layout in `scripts/deploy/README.md`.
+- Pages updated: operations/running-and-config.md.

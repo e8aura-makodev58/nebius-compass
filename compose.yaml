@@ -12,8 +12,9 @@ services:
     image: responsecompass:latest
     container_name: responsecompass
     ports:
-      # Host 3200 -> container 3000.
-      - "3200:3000"
+      # Host port and bind address from .env. On e8aura-deploy, COMPASS_BIND is the
+      # Tailscale address so the app is reachable only over Tailscale until it goes public.
+      - "${COMPASS_BIND:-0.0.0.0}:${COMPASS_HOST_PORT:-3200}:3000"
     env_file:
       - path: .env
         required: false
@@ -21,13 +22,15 @@ services:
       COMPASS_HOST: 0.0.0.0
       COMPASS_PORT: "3000"
       COMPASS_DATA_DIR: /app/data
-      # The host key path in .env is not visible inside the container; the key is
+      # Host key paths in .env are not visible inside the container; each key is
       # mounted read-only as a Compose secret and read from here instead.
+      NEBIUS_TOKEN_FACTORY_API_KEY_FILE: /run/secrets/nebius_token_factory_key
       AMD_TOKEN_FACTORY_API_KEY_FILE: /run/secrets/amd_token_factory_key
       # Copies the tracked paused demo seed only into an empty volume. It
       # never overwrites existing runtime state after a pull or restart.
       COMPASS_BOOTSTRAP_DEMO_SEED: "true"
     secrets:
+      - nebius_token_factory_key
       - amd_token_factory_key
     volumes:
       - responsecompass-data:/app/data
@@ -69,9 +72,13 @@ secrets:
   responsecompass_tunnel_token:
     # Host path of the tunnel token file, from RESPONSECOMPASS_TUNNEL_TOKEN_FILE in .env.
     file: ${RESPONSECOMPASS_TUNNEL_TOKEN_FILE:-./.tunnel-token-not-configured}
+  nebius_token_factory_key:
+    # Host path of the Nebius key file, taken from NEBIUS_TOKEN_FACTORY_API_KEY_FILE in .env.
+    file: ${NEBIUS_TOKEN_FACTORY_API_KEY_FILE:?set NEBIUS_TOKEN_FACTORY_API_KEY_FILE in .env to the host key file}
   amd_token_factory_key:
-    # Host path of the key file, taken from AMD_TOKEN_FACTORY_API_KEY_FILE in .env.
-    file: ${AMD_TOKEN_FACTORY_API_KEY_FILE:?set AMD_TOKEN_FACTORY_API_KEY_FILE in .env to the host key file}
+    # Optional: AMD stays selectable in Settings. Without a key file the empty /dev/null
+    # mount means "no key", so AMD calls fail closed and fall back.
+    file: ${AMD_TOKEN_FACTORY_API_KEY_FILE:-/dev/null}
 
 volumes:
   responsecompass-data:

@@ -141,7 +141,18 @@ The committed plant-1 seed is now a gzip manifest plus payload. Bootstrap and
 JSON and copy its archives; use the command in `docs/demo-history.md`, after backing up the
 whole target room. The compressed artifact does not compress runtime storage or memory.
 
-## Production container (m920)
+## Deployment server (e8aura-deploy, Nebius build)
+
+Since 2026-10-19 (user): all development happens on `e8aura-dev` and all deployments on
+`e8aura-deploy` (Tailscale 100.91.9.126), both on the Proxmox host. `scripts/deploy/deploy.sh`
+pushes a commit to a bare repo on the server and rebuilds the Compose project there; see
+[scripts/deploy/README.md](../../scripts/deploy/README.md) for the server layout. `compose.yaml`
+mounts the Nebius key as the required secret `nebius_token_factory_key`; the AMD key is an
+optional secret (`/dev/null` when unset, so AMD fails closed). `COMPASS_BIND` and
+`COMPASS_HOST_PORT` choose the published address; on the server the app listens on the
+Tailscale address only, until the public URL is set up after the AMD hackathon 3.
+
+## Production container (m920, AMD build)
 
 Since 2026-10-18 ResponseCompass runs on m920 as the Docker Compose project
 `responsecompass` (container `responsecompass`, host port 3200, volume
@@ -158,4 +169,4 @@ tunnel visitors (`COMPASS_PUBLIC_SETTINGS`), so the shared key can only be chang
 host or LAN at port 3200.
 
 
-Blank Nebius model/effort environment values use the built-in N0 defaults; an explicitly empty model ID supplied directly to the transport fails closed. Super/Ultra use provider-default thinking, while Lightning explicitly disables thinking.
+Blank Nebius model/effort environment values use the built-in N0 defaults; an explicitly empty model ID supplied directly to the transport fails closed. Ultra (investigator) uses provider-default thinking; Super (ranking) and Lightning (planner, narrator) send `enable_thinking: false`.
