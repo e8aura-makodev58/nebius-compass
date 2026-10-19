@@ -43,6 +43,8 @@ table with file references: plan §1.
 
 | Investigation contracts: explicit DTOs, public certifications, catalog safety classes and prerequisites, case records, report narratives, six bounded read-only tools with a host-owned decision cutoff (N2) | `cf17c4e` | `backend/tests/investigation-contracts.test.mjs` (noninterference, canary, future-data perturbation) | — |
 | Evaluation scoring and harness (N5 part 1) | `3a445ca` | `backend/tests/eval-score.test.mjs` | `npm run eval:investigator` |
+| **Compass Investigator vertical slice (N3a):** field reports, code-owned hazard/input/injection policy, Nemotron-ranked interpretations confirmed by the operator, Ultra tool loop with citation/catalog/qualification/prose validation and deterministic fallback, one dispatch gate on every assignment path, safety-checked approval | `e0d03a4` | `backend/tests/investigator.test.mjs`, `e2e/investigation-real.spec.mjs` | Live run on e8aura-deploy and first live eval: `docs/evaluation.md` |
+| Deployment server e8aura-deploy (Docker, Nebius key secret, deploy script) | `40e7a6a` | — | `scripts/deploy/README.md` |
 | Real-packet Nebius measurement; ranking default Super with thinking off | `see log 2026-10-19` | `npm run measure:amd -- --provider nebius` (manual, live) | `docs/nebius/05_TOKEN_FACTORY_FACTS.md` |
 | Git history secret scan: no keys, tokens or private keys in any commit | — | scan patterns in `project-state/log.md` | — |
 
