@@ -1254,9 +1254,23 @@ Start with `git merge master`; keep your watcher.
 
 ## gemini
 
-- **Status:** IDLE
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-19
-- **Task:** Round 23g assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 23g: Fresh-clone judge walkthrough of the README (docs only)
+- **Head commit:** This handoff's commit on `gemini` (see `git log -1 gemini`)
+- **Changes:**
+  - Cloned master from `/home/makodev58/nebius-compass` into `.cache/judge-clone` and followed `README.md` and `docs/nebius/06_SUBMISSION_DRAFT.md` as written, using zero API credentials.
+  - Verified `npm ci` (0.584 s), hermetic unit tests `npm test` (450/450 pass, 35.6 s), Playwright E2E on port 3022 (85/85 pass, 2m 34s), and month-seeded demo cold start on port 3122 (2.09 s).
+  - Walked the full interactive judge testing script via browser: room selection (`e8-aura-p1`), Station 12 incident reporting, deterministic interpretation confirmation, prerequisite verification, dispatch approval, smoke hazard screening and instant policy escalation without inference, and simulation unpause/stepping.
+  - Authored `docs/nebius/09_JUDGE_WALKTHROUGH.md` recording all numbered steps, exact commands, timings, outputs, deterministic fallback experience evaluation, and 6 numbered issues with severity, line references, and exact replacement text.
+  - Stopped test servers, verified ports 3022 and 3122 are free, and removed `.cache/judge-clone`.
+- **Files changed:**
+  - `docs/nebius/09_JUDGE_WALKTHROUGH.md`
+  - `handover.md` (gemini section only)
+- **Verification:** `npm test` 450/450 · E2E 85/85 (run during walkthrough in clean clone; docs-only commit)
+- **project-state pages updated:** None (docs only task; no architecture or behavior changes)
+- **Risks / follow-ups:** Main agent can review the proposed documentation fixes in `docs/nebius/09_JUDGE_WALKTHROUGH.md` and apply them to `README.md` and `docs/nebius/06_SUBMISSION_DRAFT.md`.
+- **Questions for main:** None.
 
 ---
 
