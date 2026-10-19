@@ -23,7 +23,7 @@ Synthetic, domain-neutral data: issue classes A/B/C, responders `R-…`, equipme
 `github.com/e8aura-makodev58/amd-compass` (remote `upstream`, push disabled), which was built
 for an AMD hackathon. **Nebius baseline = `1e1c69c`.** We disclose the AMD-era work as
 pre-existing. Whether any public remote exists is **unverified** until an authorised
-`gh` check. Details: `docs/BASELINE_AND_CHANGES.md`.
+`gh` check. Details: `HACKATHON_CHANGES.md`.
 
 | Capability | State at baseline | Where |
 |---|---|---|
@@ -306,7 +306,7 @@ The UI and docs never label synthetic responses as recorded Nemotron.
 - **Main agent:** `frontend/**`, `e2e/**`, `fixtures/investigation/**`,
   `scripts/eval-investigator.mjs`, `scripts/probe-nebius.mjs`, `docs/nebius/**`,
   `docs/EVALUATION.md`, `docs/DEMO_SCRIPT.md`, `README.md`, `HACKATHON_CHANGES.md`,
-  `docs/BASELINE_AND_CHANGES.md`.
+  `HACKATHON_CHANGES.md`.
   - Prompt text lives in `backend/src/prompts/*.mjs`. Codex owns those files; the main
     agent hands prompt edits back to codex as an assignment item, never as a direct edit.
 - **project-state:** codex updates the backend pages it changes, and the main agent updates

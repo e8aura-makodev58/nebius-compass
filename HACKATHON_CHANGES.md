@@ -1,8 +1,8 @@
-# Baseline and changes — Nebius x NVIDIA Global AI Hackathon
+# Hackathon changes — Nebius x NVIDIA Global AI Hackathon
 
 This file separates what ResponseCompass was before the Nebius entry from what was built for
 it. Only committed work is listed under **After**; each row links its commits, tests and
-demo proof once they exist. Plan: [`docs/nebius/04_HACKATHON_PLAN.md`](nebius/04_HACKATHON_PLAN.md).
+demo proof once they exist. Plan: [`docs/nebius/04_HACKATHON_PLAN.md`](docs/nebius/04_HACKATHON_PLAN.md).
 
 ## Provenance
 
@@ -39,5 +39,8 @@ table with file references: plan §1.
 | Field reports tile (UI for the investigator, on the API contract) | `90f0638` | `e2e/investigation-ui.spec.mjs` (stubbed routes until N3a) | — |
 | Nebius Token Factory verified live: five Nemotron models, JSON, native tool calls, thinking control | `8ff664d` | `scripts/probe-nebius.mjs` (manual, live) | `docs/nebius/05_TOKEN_FACTORY_FACTS.md` |
 | Nebius Token Factory provider (default), four model roles, per-provider controls, tool turns, call metadata | `d3a500b`, `1f18284` | `backend/tests/nebius-provider.test.mjs`, `e2e/provider-settings.spec.mjs` | — |
+
+| Real-packet Nebius measurement; ranking default Super with thinking off | `see log 2026-10-19` | `npm run measure:amd -- --provider nebius` (manual, live) | `docs/nebius/05_TOKEN_FACTORY_FACTS.md` |
+| Git history secret scan: no keys, tokens or private keys in any commit | — | scan patterns in `project-state/log.md` | — |
 
 Rows are added as packages N1–N9 merge.

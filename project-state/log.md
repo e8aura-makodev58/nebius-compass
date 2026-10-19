@@ -373,3 +373,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] measurement — Nebius ranking and planner on the real Compass packets
 - `scripts/measure-amd-models.mjs` gains `--provider nebius` (defaults to the Nebius ranking model). Five samples per setting on the Scenario A ranking packet and the planner packet: Super with thinking off was 5/5 valid with the expected top pick 5/5 at 3.2 s; Super with thinking on was 4/5, 2/5, 17.6 s with one truncation. The ranking default becomes Super / off (codex applies it in N1b). Table in `docs/nebius/05_TOKEN_FACTORY_FACTS.md`.
 - Pages updated: none (codex updates model-providers.md in N1b).
+
+## [2026-10-19] docs — README Nebius section; HACKATHON_CHANGES.md at the root; history secret scan
+- `docs/BASELINE_AND_CHANGES.md` moved to `HACKATHON_CHANGES.md` (guide §10 name, one record). README gains "Nebius Token Factory and NVIDIA Nemotron" (roles, models, thinking, why Token Factory, credentials) and a Live demo section that defers the Nebius URL to N8 and points to the AMD-era media. The ranking default it states (Super / off) lands with codex's N1b.
+- Secret scan of all git history (`rc-…`, `sk-…`, `v1.…`, JWT, AWS, GitHub tokens, private keys) found nothing; the Nebius key string appears in no file or commit in either worktree.
+- Pages updated: none.
