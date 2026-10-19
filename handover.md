@@ -578,9 +578,12 @@ Plan v2 (`docs/nebius/04_HACKATHON_PLAN.md`) is the spec. Read §2 (model tierin
 
 ## codex
 
-- **Status:** IDLE
+- **Status:** IN PROGRESS
 - **Updated:** 2026-10-19
-- **Task:** Round 12 (N1) assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 12 — N1 Nebius provider. Synced master and installed dependencies; implementation underway.
+- **Watcher repair:** User requested automatic resumption. `scripts/watch-codex-handover.mjs` now queues a follow-up to this exact existing session using `codex queue` on active assignment changes (including detail edits). Polls every 300s, deduplicates accepted delivery, retries failed delivery, stops on STOP/no task. The old log-only watcher was stopped. CLI self-test accepted message `01a152f0-548b-7b20-a01b-71ca6074cad9`.
+- **Verification:** Watcher parser/delivery tests 2/2; full suites will run with N1 before READY FOR MERGE.
+- **Risks / follow-ups:** Queue delivery requires the local Codex daemon/session to remain available; errors are logged under ignored `.cache/codex-watcher/`.
 
 ---
 

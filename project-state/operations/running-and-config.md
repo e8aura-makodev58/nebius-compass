@@ -121,3 +121,14 @@ port is opened for it. The app has no authentication; provider settings are read
 tunnel visitors (`COMPASS_PUBLIC_SETTINGS`), so the shared key can only be changed from the
 host or LAN at port 3200.
 
+
+## Codex handover watcher
+
+`scripts/watch-codex-handover.mjs` polls `git show master:handover.md` every 300 seconds.
+Run it in the Codex worktree with `CODEX_THREAD_ID` set to that existing worker session.
+It sends changed active assignments through the installed `codex queue --thread … --message …`
+command, which can start the next turn; plain log-only polling cannot wake an idle agent.
+`--ack-current` acknowledges work already underway when starting it. Ignored
+`.cache/codex-watcher/<thread>.json` deduplicates successfully queued assignments; failed
+delivery retries. STOP, no task, or a missing control/assignment stops the watcher.
+The local Codex daemon/session must remain available. Logs and PID stay in the ignored cache.

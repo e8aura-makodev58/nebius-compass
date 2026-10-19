@@ -357,3 +357,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] ops — Chromium libraries moved to `/home/makodev58/nebius-tools`
 - The old `rendertest` library folder is gone on this machine. Playwright's headless shell is installed in `~/.cache/ms-playwright` and its missing system libraries are extracted (no sudo) into `/home/makodev58/nebius-tools/libs`. `AGENTS.md` rules 9 and 11, `handover.md`, README and the testing page now name that path.
 - Pages updated: operations/testing.md.
+
+## [2026-10-19] fix — Wake Codex on changed handover assignments
+- Replaced log-only polling with a 300-second watcher that queues a follow-up to the existing Codex session, deduplicates accepted delivery, retries errors and obeys STOP/no task. Added hermetic parser/delivery tests.
+- Pages updated: `operations/running-and-config.md`, Codex section of `handover.md`.
