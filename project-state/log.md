@@ -369,3 +369,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] measurement — Nebius Token Factory N0 probe
 - Team key verified (HTTP 200). `docs/nebius/05_TOKEN_FACTORY_FACTS.md` records catalog facts (five Nemotron models with context, price, limits), JSON mode, thinking control via `chat_template_kwargs.enable_thinking`, native tool calling on every Nemotron model, 5-run validity tables, and role defaults: investigator Ultra (thinking on), ranking Super (on), planner/narrator Lightning (off). `scripts/probe-nebius.mjs` is the manual, credit-spending probe (never in `npm test`).
 - Pages updated: none yet (codex updates model-providers.md in N1).
+
+## [2026-10-19] feature — Adopt verified N0 Nemotron defaults
+- Filled the centralized role/capability tables from the main agent's live probes: Ultra investigator, Super ranking, Lightning planner/narrator; native tools, explicit thinking mapping and 4096-token cap. Retained fail-closed explicit blanks and env overrides.
+- Pages updated: `backend/model-providers.md`, `operations/running-and-config.md`, `.env.example`, `docs/decisions.md`.

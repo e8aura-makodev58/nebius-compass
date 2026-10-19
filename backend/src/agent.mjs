@@ -296,7 +296,7 @@ export async function requestAgentRecommendation(candidatePacket, options = {}) 
   const mode = options.mode ?? process.env.COMPASS_DEMO_INFERENCE_MODE ?? "fixture";
   const provider = options.provider ?? "amd";
   const modelId = options.modelId ?? roleDefaults(provider, "compass").modelId;
-  const reasoningEffort = options.reasoningEffort ?? (provider === "nebius" ? roleDefaults(provider, "compass").reasoningEffort : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId)));
+  const reasoningEffort = options.reasoningEffort ?? (provider === "nebius" ? (modelId === roleDefaults(provider, "compass").modelId ? roleDefaults(provider, "compass").reasoningEffort : "default") : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId)));
   const modelInfo = { provider, modelId, mode, ...(reasoningEffort ? { reasoningEffort } : {}) };
 
   if (mode === "force-failure") {

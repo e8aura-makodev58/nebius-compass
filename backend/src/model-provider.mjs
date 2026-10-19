@@ -65,15 +65,19 @@ export function readNebiusApiKey(environment = process.env) {
 export function readProviderApiKey(provider, environment = process.env) {
   return provider === 'nebius' ? readNebiusApiKey(environment) : readAmdApiKey(environment);
 }
-// N0 fills only this data table after documented live probes. No guessed model IDs.
+// Defaults verified by the main agent in N0 (2026-10-19); see docs/nebius/05_TOKEN_FACTORY_FACTS.md.
 export const NEBIUS_ROLE_DEFAULTS = Object.freeze({
-  compass: { modelId: '', reasoningEffort: 'default', timeoutMs: 90_000 },
-  'event-planner': { modelId: '', reasoningEffort: 'default', timeoutMs: 30_000 },
-  investigator: { modelId: '', reasoningEffort: 'default', timeoutMs: 120_000 },
-  narrator: { modelId: '', reasoningEffort: 'default', timeoutMs: 30_000 },
+  compass: { modelId: 'nvidia/nemotron-3-super-120b-a12b', reasoningEffort: 'on', timeoutMs: 90_000 },
+  'event-planner': { modelId: 'nvidia/Nemotron-3_5-Lightning', reasoningEffort: 'off', timeoutMs: 30_000 },
+  investigator: { modelId: 'nvidia/Nemotron-3-Ultra-550b-a55b', reasoningEffort: 'on', timeoutMs: 120_000 },
+  narrator: { modelId: 'nvidia/Nemotron-3_5-Lightning', reasoningEffort: 'off', timeoutMs: 30_000 },
 });
 export const NEBIUS_MODEL_CAPABILITIES = Object.freeze({
-  // '<verified-id>': { toolCalling: 'native', thinking: 'chat_template_kwargs.enable_thinking', jsonMode: true }
+  'nvidia/nemotron-3-super-120b-a12b': { toolCalling: 'native', thinking: 'chat_template_kwargs.enable_thinking', jsonMode: true },
+  'nvidia/Nemotron-3-Ultra-550b-a55b': { toolCalling: 'native', thinking: 'chat_template_kwargs.enable_thinking', jsonMode: true },
+  'nvidia/Nemotron-3_5-Lightning': { toolCalling: 'native', thinking: 'chat_template_kwargs.enable_thinking', jsonMode: true },
+  'nvidia/Nemotron-3.5-Super-VL': { toolCalling: 'native', thinking: 'chat_template_kwargs.enable_thinking', jsonMode: true },
+  'nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B': { toolCalling: 'native', thinking: 'chat_template_kwargs.enable_thinking', jsonMode: true },
 });
 export function modelCapabilities(provider, modelId) {
   return provider === 'nebius'
@@ -84,11 +88,13 @@ export function roleDefaults(provider, role, environment = process.env) {
   const prefix = provider === 'nebius' ? 'NEBIUS_TOKEN_FACTORY' : 'AMD_TOKEN_FACTORY';
   const suffix = role === 'compass' ? '' : `_${role.replaceAll('-', '_').toUpperCase()}`;
   const base = provider === 'nebius' ? NEBIUS_ROLE_DEFAULTS[role] : { modelId: AMD_DEFAULT_MODEL_ID, timeoutMs: role === 'compass' ? 90_000 : 30_000 };
-  const modelId = environment[`${prefix}${suffix}_MODEL`] || (role === 'compass' ? environment[`${prefix}_MODEL`] : '') || (provider === 'amd' ? environment[`${prefix}_MODEL`] : '') || base.modelId;
-  const sharedModel = environment[`${prefix}_MODEL`] || (provider === 'amd' ? AMD_DEFAULT_MODEL_ID : '');
+  const modelId = provider === 'nebius'
+    ? (environment[`${prefix}${suffix}_MODEL`] ?? base.modelId).trim()
+    : environment[`${prefix}${suffix}_MODEL`] || environment[`${prefix}_MODEL`] || base.modelId;
+  const sharedModel = environment[`${prefix}_MODEL`] ?? (provider === 'amd' ? AMD_DEFAULT_MODEL_ID : NEBIUS_ROLE_DEFAULTS.compass.modelId);
   const sharedEffort = modelId === sharedModel ? environment[`${prefix}_REASONING_EFFORT`] : '';
   const timeout = Number(environment[`${prefix}${suffix}_TIMEOUT_MS`] ?? environment[role === 'compass' ? 'COMPASS_AGENT_TIMEOUT_MS' : role === 'event-planner' ? 'COMPASS_EVENT_PLANNER_TIMEOUT_MS' : `COMPASS_${role.toUpperCase()}_TIMEOUT_MS`]);
-  return { modelId, reasoningEffort: environment[`${prefix}${suffix}_REASONING_EFFORT`] || sharedEffort || base.reasoningEffort || defaultReasoningEffortFor(modelId),
+  return { modelId, reasoningEffort: environment[`${prefix}${suffix}_REASONING_EFFORT`] || sharedEffort || (modelId === base.modelId ? base.reasoningEffort : '') || defaultReasoningEffortFor(modelId),
     timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : base.timeoutMs };
 }
 export function safeModelMetadata(value = {}) {
@@ -201,7 +207,7 @@ export async function callChatTurn({ provider = 'amd', modelId, apiKey, reasonin
   let turnMessages = messages ?? [{ role: 'system', content: instruction }, { role: 'user', content: userContent }];
   if (tools.length && !native) turnMessages = [{ role: 'system', content: jsonToolInstruction(tools) }, ...turnMessages];
   const request = def.buildBody({ modelId, reasoningEffort, messages: turnMessages, capabilities });
-  if (native) { request.tools = tools; delete request.response_format; }
+  if (native) { request.tools = tools; request.tool_choice = "auto"; delete request.response_format; }
   const body = JSON.stringify(request), started = now(), deadline = started + timeoutMs;
   controls ??= providerControlsFor(fetchImpl, process.env, provider);
   try {

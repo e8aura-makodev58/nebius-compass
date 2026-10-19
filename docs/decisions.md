@@ -1010,3 +1010,12 @@ mutate operational state. Rules 3/4 remain unchanged: models rank bounded suppli
 and no hidden truth enters this integration. Limiter, 429-only retries and breaker behavior
 remain unchanged, isolated by provider and transport. Metadata is allowlisted and excludes
 prompts, secrets and reasoning traces. The guide creates no additional authority exception.
+
+## 2026-10-19 — N1 adopts completed N0 facts
+
+Supersedes the temporary blank Nebius defaults above. N0 verified the Ultra investigator
+(thinking on), Super Compass ranker (on), and Lightning planner/narrator (off); exact IDs
+and probes are in `docs/nebius/05_TOKEN_FACTORY_FACTS.md`. All verified Nemotron entries
+use native tools and `chat_template_kwargs.enable_thinking`, never an inferred reasoning
+parameter. Defaults remain in one env-overridable role table; an explicit blank still
+fails closed. Unverified replacement IDs omit thinking by default. No worker live calls.

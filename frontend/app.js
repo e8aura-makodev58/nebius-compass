@@ -1279,7 +1279,7 @@ function renderSettings(settings) {
     const efforts = reasoningEffortsFor(selectedProviderId, draft.modelId) ?? [draft.reasoningEffort || "default"];
     const effortOptions = efforts.map((effort) => `<option value="${escapeHtml(effort)}" ${effort === draft.reasoningEffort ? "selected" : ""}>${escapeHtml(effort)}</option>`).join("");
     const validation = saved.modelValidation ?? settings.modelValidation;
-    const changed = draft.modelId !== saved.modelId || draft.reasoningEffort !== saved.reasoningEffort;
+    const changed = draft.modelId !== saved.modelId || draft.reasoningEffort !== saved.reasoningEffort || draft.timeoutMs !== (saved.timeoutMs ?? 30000);
     const status = changed ? "Unsaved selection."
       : validation?.status === "MISSING" ? (validation.effectiveModelId ? `Saved model unavailable. Live requests use ${validation.effectiveModelId}.` : "Saved model unavailable. Live requests use deterministic fallback.")
       : validation?.status === "VALID" ? "Saved model is available."
