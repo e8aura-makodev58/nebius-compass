@@ -446,3 +446,6 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] fix — Validate contradictory model escalation before outcome selection
 - Live-eval follow-up: a MODERATE/STRONG first fix plus a qualified responder cannot also propose ESCALATE. Request one bounded repair inside existing budgets; preserve unsupported and code-owned hazard escalation. Clarified prompt, labelled every deterministic public/eval result, and extended hermetic flags/repair/policy tests. Refreshed the small synthetic seed for persisted policy reasons; counts unchanged.
 - Pages updated: backend/investigation.md; live results still require a separate measurement.
+## [2026-10-19] fix — Model ESCALATE beside a supported recommendation is repaired
+- `investigator.mjs`: a model `ESCALATE` with a supported (MODERATE/STRONG) first fix and a qualified responder is a validation error (one repair, then `validation-failed` fallback); prompt reserves ESCALATE for blocking safety concerns. Test in `investigator.test.mjs`. Main agent did this right after merging N3b, with codex idle.
+- Pages updated: backend/investigation.md.

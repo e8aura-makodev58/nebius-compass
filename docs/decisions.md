@@ -1123,3 +1123,12 @@ Without a supported qualified action, model escalation remains valid; determinis
 policy is unchanged and still makes no model call. Every deterministic public result exposes
 a fallback reason, including policy exits and unresolved eval interpretations. This corrects
 the contract; no claim of improved live outcome agreement is made without another live run.
+## 2026-10-19 — Model ESCALATE is not accepted beside a supported recommendation
+
+- Live evaluation run 1: 8 of 24 scenarios became `ESCALATED` because Ultra returned a
+  supported, qualified recommendation together with `proposedOutcome: ESCALATE`, and the
+  investigator accepted any model escalation.
+- Decision: models may still propose escalation, and code still decides (rule 3). An
+  `ESCALATE` beside a `MODERATE`/`STRONG` first fix with a qualified responder is a
+  validation error that gets one repair; repeated, it falls back deterministically. The
+  prompt reserves `ESCALATE` for safety concerns. Nothing can auto-dispatch either way.
