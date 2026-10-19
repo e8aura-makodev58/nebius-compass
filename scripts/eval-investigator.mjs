@@ -37,6 +37,7 @@ if (values.replay) {
   console.log(`| Coverage | ${formatRatio(score.coverage)} |`);
   for (const [reason,count] of Object.entries(score.excluded)) console.log(`| Excluded ${reason} | ${count}/${score.heldOut} |`);
   for (const [arm,rate] of Object.entries(score.firstTimeFix)) console.log(`| First-time fix: ${arm} | ${formatRatio(rate)} |`);
+  for (const [source,rate] of Object.entries(score.investigatorBySource)) console.log(`| Investigator first-time fix by source: ${source} | ${formatRatio(rate)} |`);
   for (const [name,counts] of Object.entries({baseline:score.discordantVsBaseline,deterministic:score.discordantVsDeterministic})) console.log(`| Discordant vs ${name} | ${JSON.stringify(counts)} (${score.coverage.numerator} pairs) |`);
   console.log(`| Fallback / timeout / repaired / raw invalid | ${result.meta.counts.fallback} / ${result.meta.counts.timeouts} / ${result.meta.counts.repaired} / ${result.meta.counts.rawInvalid} (of ${score.heldOut}) |`);
   console.log(`| Seed SHA-256 | ${result.meta.seedHash} |`);

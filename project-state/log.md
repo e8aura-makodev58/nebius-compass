@@ -485,3 +485,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] measurement — Live paired first-fix replay, 60 held-out issues
 - Run A (before the prose/repair fix): investigator 49/60, deterministic 46/60, baseline 41/60, but 34/60 investigator choices were deterministic fallbacks. Run B (after `8a76993`): investigator 46/60, deterministic 46/60, baseline 41/60, 7/60 fallbacks; discordant vs baseline 7/2, vs deterministic 2/2. Recorded with limits in `docs/evaluation.md`; per-pair source provenance is codex's round 19.
 - Pages updated: none.
+
+## [2026-10-19] fix — Docker fixture packaging and replay provenance (round 19)
+- Included both fixture directories in the runtime image and aligned dev Compose persistence with `/app/data`; verified a local Docker build and read-only, network-disabled fixture smoke check.
+- Replay pairs retain public investigator source/fallback labels; scoring and CLI add source-specific first-fix rates with denominators while preserving aggregate and legacy scoring.
+- Pages updated: backend/investigation.md, operations/running-and-config.md, operations/testing.md.

@@ -196,3 +196,8 @@ Deployment-global `provider-usage.json` is persisted in the data root with 120-d
 and atomic owner-only writes. Back it up with other deployment state; do not edit it through
 public settings. No prompt/response text is retained. GET /api/settings usage is readable by
 tunnel visitors, while budget configuration remains server-managed. See model-providers.md.
+
+The runtime `Dockerfile` copies both root `fixtures/` and `backend/fixtures/` so
+Offline and fixture paths are available under the same relative paths as a checkout.
+Development `docker-compose.yml` explicitly sets `COMPASS_DATA_DIR=/app/data` and
+binds `./backend/data` there, matching the image persistence directory.

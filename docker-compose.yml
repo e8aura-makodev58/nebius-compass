@@ -11,6 +11,7 @@ services:
       # the external binding. These override any HOST/PORT values from .env.
       COMPASS_HOST: "0.0.0.0"
       COMPASS_PORT: "3000"
+      COMPASS_DATA_DIR: "/app/data"
     env_file:
       # Loads model credentials and runtime config from .env on the host.
       # If .env doesn't exist the container still starts (required: false).
@@ -18,5 +19,5 @@ services:
         required: false
     volumes:
       # Persist live simulation state and settings across container restarts.
-      - ./backend/data:/app/backend/data
+      - ./backend/data:/app/data
     restart: unless-stopped

@@ -10,6 +10,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --chown=node:node backend/src ./backend/src
 COPY --chown=node:node backend/seed ./backend/seed
+COPY --chown=node:node fixtures ./fixtures
+COPY --chown=node:node backend/fixtures ./backend/fixtures
 COPY --chown=node:node frontend ./frontend
 
 ENV NODE_ENV=production \
