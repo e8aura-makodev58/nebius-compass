@@ -67,9 +67,9 @@ export function readProviderApiKey(provider, environment = process.env) {
 }
 // Defaults verified by the main agent in N0 (2026-10-19); see docs/nebius/05_TOKEN_FACTORY_FACTS.md.
 export const NEBIUS_ROLE_DEFAULTS = Object.freeze({
-  compass: { modelId: 'nvidia/nemotron-3-super-120b-a12b', reasoningEffort: 'on', timeoutMs: 90_000 },
+  compass: { modelId: 'nvidia/nemotron-3-super-120b-a12b', reasoningEffort: 'default', timeoutMs: 90_000 },
   'event-planner': { modelId: 'nvidia/Nemotron-3_5-Lightning', reasoningEffort: 'off', timeoutMs: 30_000 },
-  investigator: { modelId: 'nvidia/Nemotron-3-Ultra-550b-a55b', reasoningEffort: 'on', timeoutMs: 120_000 },
+  investigator: { modelId: 'nvidia/Nemotron-3-Ultra-550b-a55b', reasoningEffort: 'default', timeoutMs: 120_000 },
   narrator: { modelId: 'nvidia/Nemotron-3_5-Lightning', reasoningEffort: 'off', timeoutMs: 30_000 },
 });
 export const NEBIUS_MODEL_CAPABILITIES = Object.freeze({
@@ -89,7 +89,7 @@ export function roleDefaults(provider, role, environment = process.env) {
   const suffix = role === 'compass' ? '' : `_${role.replaceAll('-', '_').toUpperCase()}`;
   const base = provider === 'nebius' ? NEBIUS_ROLE_DEFAULTS[role] : { modelId: AMD_DEFAULT_MODEL_ID, timeoutMs: role === 'compass' ? 90_000 : 30_000 };
   const modelId = provider === 'nebius'
-    ? (environment[`${prefix}${suffix}_MODEL`] ?? base.modelId).trim()
+    ? (environment[`${prefix}${suffix}_MODEL`]?.trim() || base.modelId)
     : environment[`${prefix}${suffix}_MODEL`] || environment[`${prefix}_MODEL`] || base.modelId;
   const sharedModel = environment[`${prefix}_MODEL`] ?? (provider === 'amd' ? AMD_DEFAULT_MODEL_ID : NEBIUS_ROLE_DEFAULTS.compass.modelId);
   const sharedEffort = modelId === sharedModel ? environment[`${prefix}_REASONING_EFFORT`] : '';

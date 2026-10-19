@@ -383,3 +383,6 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Model and credential updates now share the settings save queue; concurrent AMD/Nebius key updates cannot collide on one temporary file or lose a provider's credential. In-memory credentials change only after persistence succeeds. Added a simultaneous-save/reload/remove regression.
 - Pages updated: `backend/model-providers.md`, Codex handoff in `handover.md`.
 
+
+## [2026-10-19] chore — N1b defaults and agent tooling
+- Applied round-13 defaults (Super/Ultra default thinking, Lightning off; blank env seeds use built-ins); moved the running agent watcher and its tests to `/home/makodev58/nebius-tools/` without restarting it. Updated provider/configuration pages.

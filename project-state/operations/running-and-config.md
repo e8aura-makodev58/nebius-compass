@@ -57,7 +57,7 @@ baselines.
 ### Nebius Token Factory
 
 Fresh installs select Nebius. Existing persisted AMD selections remain AMD.
-Role defaults use the verified N0 models; explicitly blank IDs cause
+Role defaults use the verified N0 models; an explicitly empty transport model ID causes
 `model-not-configured` and deterministic fallback. No runtime model IDs are guessed.
 
 | Variable | Default | Purpose |
@@ -68,8 +68,8 @@ Role defaults use the verified N0 models; explicitly blank IDs cause
 | `NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_MODEL` | `nvidia/Nemotron-3_5-Lightning` | Event planner model seed. |
 | `NEBIUS_TOKEN_FACTORY_INVESTIGATOR_MODEL` | `nvidia/Nemotron-3-Ultra-550b-a55b` | Investigator model seed (runtime added in later packages). |
 | `NEBIUS_TOKEN_FACTORY_NARRATOR_MODEL` | `nvidia/Nemotron-3_5-Lightning` | Narrator model seed (runtime added in later packages). |
-| `NEBIUS_TOKEN_FACTORY_REASONING_EFFORT` | `on` | Ranking thinking seed: default/on/off; explicit on/off require a verified capability entry. |
-| `NEBIUS_TOKEN_FACTORY_{EVENT_PLANNER,INVESTIGATOR,NARRATOR}_REASONING_EFFORT` | `off` / `on` / `off` | Independent role thinking seeds; shared effort inherits only for the same configured model. |
+| `NEBIUS_TOKEN_FACTORY_REASONING_EFFORT` | `default` | Ranking thinking seed: default/on/off; explicit on/off require a verified capability entry. |
+| `NEBIUS_TOKEN_FACTORY_{EVENT_PLANNER,INVESTIGATOR,NARRATOR}_REASONING_EFFORT` | `off` / `default` / `off` | Independent role thinking seeds; shared effort inherits only for the same configured model. |
 | `NEBIUS_TOKEN_FACTORY_TIMEOUT_MS` | `90000` | Ranking timeout seed (ms). |
 | `NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_TIMEOUT_MS` | `30000` | Planner timeout seed (ms). |
 | `NEBIUS_TOKEN_FACTORY_INVESTIGATOR_TIMEOUT_MS` | `120000` | Investigator timeout seed (ms). |
@@ -158,13 +158,4 @@ tunnel visitors (`COMPASS_PUBLIC_SETTINGS`), so the shared key can only be chang
 host or LAN at port 3200.
 
 
-## Codex handover watcher
-
-`scripts/watch-codex-handover.mjs` polls `git show master:handover.md` every 300 seconds.
-Run it in the Codex worktree with `CODEX_THREAD_ID` set to that existing worker session.
-It sends changed active assignments through the installed `codex queue --thread … --message …`
-command, which can start the next turn; plain log-only polling cannot wake an idle agent.
-`--ack-current` acknowledges work already underway when starting it. Ignored
-`.cache/codex-watcher/<thread>.json` deduplicates successfully queued assignments; failed
-delivery retries. STOP, no task, or a missing control/assignment stops the watcher.
-The local Codex daemon/session must remain available. Logs and PID stay in the ignored cache.
+Blank Nebius model/effort environment values use the built-in N0 defaults; an explicitly empty model ID supplied directly to the transport fails closed. Super/Ultra use provider-default thinking, while Lightning explicitly disables thinking.

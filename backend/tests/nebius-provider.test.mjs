@@ -165,12 +165,12 @@ test('verified N0 role defaults map native tools and thinking through the capabi
     const defaults=roleDefaults('nebius',role,{});
     await callChatTurn({provider:'nebius',...defaults,apiKey:'fake',tools:[tool],fetchImpl:async(_url,init)=>{
       const body=JSON.parse(init.body);
-      assert.deepEqual(body.chat_template_kwargs,{enable_thinking:['compass','investigator'].includes(role)});
+      assert.deepEqual(body.chat_template_kwargs,['compass','investigator'].includes(role) ? undefined : {enable_thinking:false});
       assert.equal(body.reasoning_effort,undefined);assert.equal(body.tool_choice,'auto');assert.deepEqual(body.tools,[tool]);assert.equal(body.max_tokens,4096);
       return response({content:'{}',reasoning_content:'never retain this'});
     }});
   }
-  assert.equal(roleDefaults('nebius','compass',{NEBIUS_TOKEN_FACTORY_MODEL:''}).modelId,'');
+  assert.equal(roleDefaults('nebius','compass',{NEBIUS_TOKEN_FACTORY_MODEL:''}).modelId,NEBIUS_ROLE_DEFAULTS.compass.modelId);
 });
 
 test('simultaneous provider credential saves persist both keys and survive reload', async t => {

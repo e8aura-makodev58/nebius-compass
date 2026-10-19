@@ -670,16 +670,11 @@ in the same round; set `READY FOR MERGE` once at the end, unless N2 needs a deci
 
 ## codex
 
-- **Status:** BLOCKED
+- **Status:** IN PROGRESS
 - **Updated:** 2026-10-19
-- **Task:** Round 12 — N1 Nebius provider implemented; awaiting main-owned E2E/source-label updates before both-suite handoff.
-- **Changes:** Nebius is the fresh-settings default; saved AMD pins and credentials load byte-unchanged. Four persisted model/effort/timeout roles, separate provider catalogs and controls, verified N0 model/thinking defaults with fail-closed explicit blank overrides, native/JSON-protocol normalized tool proposals with strict argument validation, bounded usage/latency/request-id metadata on existing recommendation records. Fresh-clone `.cache` parents fixed. No live calls, runtime data changes, investigation fixtures or E2E edits.
-- **Frontend changes:** Only existing Settings API form code in `frontend/app.js`: investigator/narrator fieldsets, per-role timeout input, provider-specific role previews and independent drafts. Unchanged timeout is omitted from save payload for compatibility. Main must update `project-state/frontend/overview.md` per ownership.
-- **Verification:** `npm test`: 358/358 on final code, including the concurrent credential-save regression. Fresh-clone run with `.cache` absent passed 357/357 before that last regression was added. Chromium E2E on 3021: 77/78; only failure is the now-obsolete one-provider assertion in `e2e/provider-settings.spec.mjs:37`. Chromium rerun after N0 adoption confirms the same 77/78 result; only the stale AMD-only test fails. Both suites must be rerun after main-owned fixes. E2E files remain untouched as instructed.
-- **Questions for main:** Please update the owned provider E2E to expect `[AMD Token Factory, Nebius Token Factory]`, length 2, fresh provider `nebius`, and Nebius connection text; rename its AMD-only title. Also render `NEBIUS_MODEL` as "Nebius model" in `fixSourceLabel` (`frontend/app.js`) and `frontend/staffing-view.js` (currently both label it Deterministic). Add E2E checks for investigator/narrator/timeout controls and provider switching as desired. Commit those on master and update the round-12 assignment details so the watcher wakes me; I will sync and rerun both suites. These files/labels are outside my authorized Settings-only frontend scope.
-- **N0 adopted:** Synced `8ff664d` and read `05_TOKEN_FACTORY_FACTS.md`. Central role defaults now select Super/on for compass, Ultra/on for investigator, Lightning/off for planner/narrator. Capability table uses native tools + `chat_template_kwargs.enable_thinking` for all five verified Nemotron entries; ignores `reasoning_content`; cap 4096. `.env.example` contains the verified IDs and no secrets. Env overrides remain `NEBIUS_TOKEN_FACTORY_MODEL`, `_EVENT_PLANNER_MODEL`, `_INVESTIGATOR_MODEL`, `_NARRATOR_MODEL`; respective `_REASONING_EFFORT` and `_TIMEOUT_MS` variants. Explicit blank model still fails closed. No further default-table fill is needed; main can run real packet validation after merge.
-- **project-state:** Updated backend model-providers/overview/http-api, running-and-config, log; appended decision record. Lockfile includes the existing package's Apache-2.0 license from required npm install.
-- **Watcher:** Repaired in `4734194`; self-test delivered to this session and acknowledged. Running detached every 300 seconds with `codex queue` on changed active assignment/round details; persistent dedupe and STOP/no-task control. Requires the local Codex daemon/session to remain available.
+- **Task:** Round 13 — N1b defaults/tooling cleanup, then N2 contracts.
+- **Changes:** N1b follows the new default-thinking/blank-env instructions. Watcher and test moved outside the product repo to `/home/makodev58/nebius-tools/`; the existing process remains running without restart. Beginning N2 after the separate N1b commit.
+- **Verification:** N1 previously 358 unit tests; main-owned E2E fixes synced. Both suites will run before the round-13 handoff.
 
 ---
 
