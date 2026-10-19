@@ -569,6 +569,7 @@ Plan v2 (`docs/nebius/04_HACKATHON_PLAN.md`) is the spec. Read §2 (model tierin
 - **Status:** IDLE
 - **Updated:** 2026-10-19
 - **Task:** Round 12 (N1) assigned; see Main agent → Assignments. Replace this section at handoff.
+
 ---
 
 ## gemini
