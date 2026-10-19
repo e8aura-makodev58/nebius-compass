@@ -544,6 +544,19 @@ Plan v2 (`docs/nebius/04_HACKATHON_PLAN.md`) is the spec. Read §2 (model tierin
   - **Frontend note:** master now has the Field reports tile (`frontend/investigation-view.js`,
     sixth Dockview tile). Keep your Settings changes inside the existing Settings → API role
     fieldsets in `app.js`; do not touch the investigation files or `tiling.js`.
+  - **N0 is done (2026-10-19)** — read `docs/nebius/05_TOKEN_FACTORY_FACTS.md`. Use these
+    facts directly instead of leaving placeholders:
+    - thinking control = `chat_template_kwargs: { enable_thinking: true|false }` (not
+      `reasoning_effort`, not `/no_think`);
+    - `toolCalling: native` for all Nemotron models;
+    - reasoning arrives in `message.reasoning_content` and is ignored like today;
+    - role defaults: investigator `nvidia/Nemotron-3-Ultra-550b-a55b` on, compass
+      `nvidia/nemotron-3-super-120b-a12b` on, event-planner and narrator
+      `nvidia/Nemotron-3_5-Lightning` off;
+    - keep `max_tokens` 4096.
+
+    Defaults still go in the one table and stay env-overridable. No live calls from your
+    worktree.
   - **Handoff:** both suites green on port 3021; list the exact env table the main agent
     must fill after N0. Next for you after merge: N2.
 
