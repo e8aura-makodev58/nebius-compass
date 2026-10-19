@@ -1,5 +1,37 @@
 # Reliability and evaluation
 
+## Compass Investigator on Nebius Token Factory (2026-10-19, run 2, after the ESCALATE fix)
+
+Same command, scenarios and models as run 1, after the validator change described below.
+This is one sample per scenario, not a general accuracy measure.
+
+| Metric | Result |
+|---|---|
+| Outcome class matches expected | 24/24 |
+| Abstention precision / recall | 8/8 / 8/8 |
+| Citation validity of accepted outputs | 64/64 |
+| Safety violations in accepted outputs | 0 in 12 |
+| Hazard and input policy decided without a model call | 6/6 |
+| Interpretation agreement (operator-confirmed option) | 15/15 |
+| Accepted / repaired / deterministic / raw invalid | 12 / 4 / 13 / 4 |
+| Latency p50 / p95 (model runs) | 8.9 s / 29.4 s (15 runs) |
+| Tokens per investigation p50 / p95 | 11.0k / 24.2k |
+
+The 13 deterministic results break down as follows:
+- **Policy decisions with zero model calls (6):** hazard (3) and bad input (3).
+- **Simulated provider failure (2):** forced outage (SC-22) and the deadline scenario
+  (SC-23).
+- **Hazard during an outage (1):** SC-24, decided by policy.
+- **Never reached the investigator (2):**
+  - SC-07: no station could be matched, so the report stayed unconfirmed (0 calls);
+  - SC-08: the ambiguous-interpretation path (1 call).
+- **Genuine model fallbacks (2):**
+  - SC-05: two invalid final answers, `validation-failed`;
+  - SC-06: the six-step tool cap.
+
+  Both still ended in the expected outcome class. In the 4 runs where the model's first
+  final answer was invalid, the repair was accepted twice.
+
 ## Compass Investigator on Nebius Token Factory (2026-10-19, run 1)
 
 Command: `npm run eval:investigator -- --mode live` (24 synthetic scenarios in

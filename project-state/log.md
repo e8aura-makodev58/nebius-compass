@@ -445,3 +445,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] fix — Model ESCALATE beside a supported recommendation is repaired
 - `investigator.mjs`: a model `ESCALATE` with a supported (MODERATE/STRONG) first fix and a qualified responder is a validation error (one repair, then `validation-failed` fallback); prompt reserves ESCALATE for blocking safety concerns. Test in `investigator.test.mjs`. Main agent did this right after merging N3b, with codex idle.
 - Pages updated: backend/investigation.md.
+
+## [2026-10-19] measurement — Live investigator evaluation run 2
+- After the ESCALATE repair: 24/24 outcome classes, citations 64/64, 0 safety violations in 12 accepted outputs, abstention 8/8 both ways, hazard/input 6/6 without a model call, p50 8.9 s / p95 29.4 s. Two genuine model fallbacks (validation-failed, tool-step-cap) still ended in the expected class. `docs/evaluation.md`.
+- Pages updated: none.

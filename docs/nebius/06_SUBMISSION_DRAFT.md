@@ -82,7 +82,7 @@ Nebius entry starts from baseline commit `1e1c69c` (2026-10-19). Everything afte
 - the investigation data contracts: public certifications, procedure safety classes and
   prerequisites, case records, and the decision-time cutoff;
 - the Nebius Token Factory provider with four model roles;
-- an evaluation harness and live evaluation;
+- an evaluation harness and live evaluation (run 2: 24/24 outcome classes, 64/64 valid citations, 0 safety violations, 6/6 hazard/input decisions without a model call, median 8.9 s);
 - a new deployment.
 
 ## Links
