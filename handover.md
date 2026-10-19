@@ -1104,16 +1104,17 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
 
 ## gemini
 
-- **Status:** IDLE — **excluded from tasks** (user, 2026-10-17). Do not pick up work.
-- **Updated:** 2026-10-17
-- **Task:** —
-- **Head commit:** —
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-19
+- **Task:** Round 20g — theme review and enhancement plan (docs only)
+- **Head commit:** `51350ec`
+- **Changes:** Comprehensive visual and architectural design review across 375px, 1280px, and 1920px viewports with isolated preview server on port 3122. Authored `docs/design/theme-review-2026-10.md` covering observed strengths, 8 concrete issues (WCAG AA contrast risks on microcopy, wall display 1920px density and line measure, Field reports tile empty-state and header alignment, mobile 375px vertical budget, narrative card semantics, usage table alignment, focus rings), and an 8-item prioritized enhancement plan with CSS-only classifications. Reference screenshots committed under `docs/design/theme-review-2026-10/` (1.2 MB total).
+- **Files changed:** `docs/design/theme-review-2026-10.md`, `docs/design/theme-review-2026-10/*.png`, `handover.md` (gemini section only)
+- **Verification:** Docs and reference images only; no suites needed (verified preview server stopped and port 3122 free; watcher scheduled).
+- **project-state pages updated:** None (design review document only; no implementation changes).
+- **Risks / follow-ups:** Ready for main agent review; items E1-E3 and E5-E7 can be implemented as purely CSS additions.
+- **Questions for main:** None.
+
 
 ---
 
