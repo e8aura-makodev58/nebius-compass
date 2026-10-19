@@ -1088,9 +1088,17 @@ per Watcher control). Work only in `/home/makodev58/nebius-compass-gemini` on br
 
 ## codex
 
-- **Status:** IDLE
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-19
-- **Task:** Round 20 assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 20 — security and correctness review of the investigator path.
+- **Head commit:** This docs-only handoff commit on `codex` (parent `194da5f`).
+- **Changes:** `docs/nebius/08_SECURITY_REVIEW.md`: ten numbered findings (five High, four Medium, one Low), each with locations, concrete scenarios, verification limits and proposed fixes. High findings: unauthenticated operator authority / cross-origin text/plain mutations; model trace poisoning that persists and breaks public snapshots; numeric grounding from untrusted narratives and unrelated IDs; missed `sparking` hazard; unbounded report admission and starvation. Also covers unsupported READY fixes, orphan retention, malformed-final repair/classification, failed-attempt UI recovery and upstream byte bounds. Negative checks cover repair public IDs, shared gate, revision races, DTO private truth and UI escaping.
+- **Files changed:** docs/nebius/08_SECURITY_REVIEW.md, project-state/log.md, own handover section only. No implementation changes.
+- **Verification:** Synthetic transactional in-memory store, stubbed model turns, direct request-handler invocation and source tracing. Reproduced findings and uncertainty labels are explicit in the report. Concurrent approve/reinvestigate returned APPROVED / STALE; captured repair passed hidden-truth guard. No live calls, runtime data writes or application server. Both suites intentionally omitted per round 20's explicit docs-only instruction.
+- **project-state pages updated:** log.md (behavior unchanged).
+- **Risks / follow-ups:** Findings require separate implementation assignments. Upstream deployment authentication, real-model injection compliance, load thresholds and full browser exploitation were not confirmed. Watcher PID 41408 remains running without restart.
+- **Additional user-requested input:** `docs/design/nebius-theme-codex-notes.md` contains six recommendations for Gemini’s Nebius color enhancement proposal, including the user’s updated palette direction. Separate supplement avoids editing Gemini’s report or worktree. Docs only; no suites needed.
+- **Questions for main:** None.
 
 ---
 

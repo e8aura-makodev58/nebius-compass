@@ -494,3 +494,12 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] ui — Nebius color palette
 - By user direction the theme follows the Nebius website palette, sampled from a user-supplied screenshot (kept outside the repo; colors only, no logo or artwork): navy `#0F2B43` text and actions, lime `#E1FE3C` brand fills (brand mark, active tab, selection wash), pale blue-grey surfaces. Token-only change plus two rules in `base.css`; all text tokens stay WCAG AA (lowest 5.1:1). `docs/design/nebius-theme.md`.
 - Pages updated: frontend/overview.md (design reference).
+
+## [2026-10-19] docs — Investigator security and correctness review (round 20)
+- Reviewed untrusted reports/cases/model replies, repair/public boundaries, dispatch authorization, revision races, UI escaping and resource bounds at `194da5f`; recorded ten findings with verification limits and proposed fixes in `docs/nebius/08_SECURITY_REVIEW.md`.
+- Synthetic in-memory and direct-handler checks reproduced operator impersonation, persisted trace poisoning, numeric claim acceptance, unsupported READY fixes, backlog/retention gaps and malformed-final classification. No application code changed; suites omitted under the round's explicit docs-only instruction.
+- Pages updated: log.md; component behavior is unchanged.
+
+## [2026-10-19] docs — Codex input to Gemini's Nebius theme review
+- Added `docs/design/nebius-theme-codex-notes.md` at the user's request: brand/semantic token roles, accessible inverse text and focus, Field reports/Staffing consistency, phone actions and shared-view validation. Recommendations only; no UI behavior or CSS changed.
+- Pages updated: log.md.
