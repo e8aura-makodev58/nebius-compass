@@ -320,3 +320,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-18] fix — Versioned asset URLs; locked settings read clearly as unavailable
 - Cloudflare's zone Browser Cache TTL overrode `no-cache` and its edge kept old CSS, so the server now appends a content hash (`?v=`) to every app stylesheet/script in `index.html` and to relative module imports; each deploy uses URLs no cache has seen, unchanged deploys keep theirs. `/vendor/` is untouched. The read-only settings tab adds `.settings-locked`, which greys every control, including the accent Save buttons. Tests: `static-cache.test.mjs`.
 - Pages updated: backend/http-api.md.
+
+## [2026-10-19] docs — Agents stay inside `nebius` folders
+- By user direction the `amd` folder rules are obsolete. `AGENTS.md` rules 10–11, the `handover.md` role table and protocol, and `~/aura-harness/aura-harness.md` now name `/home/makodev58/nebius-compass` (master) and `/home/makodev58/nebius-compass-<agent>` worktrees (e.g. `nebius-compass-claude`, `nebius-compass-codex`); agents never touch folders without `nebius` in the name, including `~/amd-compass`.
+- Pages updated: none (agent protocol only).

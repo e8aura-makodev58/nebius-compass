@@ -8,18 +8,18 @@ merges finished work into `master`, and archives merged handoffs to
 
 | Agent | Worktree | Branch |
 |---|---|---|
-| Main agent (Claude, unless the user says otherwise) | `/home/makodev58/amd-compass` | `master` |
-| Codex | `/home/makodev58/amd-compass-codex` | `codex` |
-| Gemini (**excluded from tasks** since 2026-10-17) | `/home/makodev58/amd-compass-gemini` | `gemini` |
-| CodeBuddy (**excluded from tasks** since 2026-10-17) | `/home/makodev58/amd-compass-codebuddy` | `codebuddy` |
-| Claude worker (**not used** since 2026-10-17; the main agent is Claude) | `/home/makodev58/amd-compass-claude` | `claude` |
+| Main agent (Claude, unless the user says otherwise) | `/home/makodev58/nebius-compass` | `master` |
+| Codex | `/home/makodev58/nebius-compass-codex` | `codex` |
+| Gemini (**excluded from tasks** since 2026-10-17) | `/home/makodev58/nebius-compass-gemini` | `gemini` |
+| CodeBuddy (**excluded from tasks** since 2026-10-17) | `/home/makodev58/nebius-compass-codebuddy` | `codebuddy` |
+| Claude worker (**not used** since 2026-10-17; the main agent is Claude) | `/home/makodev58/nebius-compass-claude` | `claude` |
 
 ## Protocol
 
-**All agents (`AGENTS.md` rule 11):** stay inside `amd` folders. Work only in
-`/home/makodev58/amd-compass` and the `amd-compass-<agent>` worktrees. Never read, create,
-edit, move, or delete anything in a folder without `amd` in its name (for example
-`/home/makodev58/compass` or `/home/makodev58/ResponseCompass`) unless the user explicitly
+**All agents (`AGENTS.md` rule 11):** stay inside `nebius` folders. Work only in
+`/home/makodev58/nebius-compass` and the `nebius-compass-<agent>` worktrees. Never read, create,
+edit, move, or delete anything in a folder without `nebius` in its name (for example
+`/home/makodev58/amd-compass`, `/home/makodev58/compass` or `/home/makodev58/ResponseCompass`) unless the user explicitly
 asks. Exceptions: installed tooling and the read-only Chromium library path in rule 9.
 
 **Worker agents (codex; gemini and codebuddy are excluded and the claude worker is unused
@@ -124,7 +124,7 @@ service is back up. Start with `git merge master` (protocol step 1).
 - Do not touch `AGENTS.md`, `handover.md` outside your section, `docs/handover-history.md`,
   or the dated entries in `docs/decisions.md` / `project-state/log.md`. Those files are
   append-only: add your own new entry at the bottom.
-- Stay inside `amd` folders (`AGENTS.md` rule 11).
+- Stay inside `nebius` folders (`AGENTS.md` rule 11).
 - **No live AMD calls.** Worker worktrees have no key and must not get one. Use mocked
   `fetchImpl` / fake clocks. `npm test` stays hermetic (rule 9). The main agent runs any
   live check.
