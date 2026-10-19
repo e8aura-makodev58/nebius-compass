@@ -570,7 +570,9 @@ in the same round; set `READY FOR MERGE` once at the end, unless N2 needs a deci
 
 - **codex — N1b: fill the Nebius defaults from N0** (`docs/nebius/05_TOKEN_FACTORY_FACTS.md`).
   - `NEBIUS_ROLE_DEFAULTS`:
-    - compass `nvidia/nemotron-3-super-120b-a12b` / `default`;
+    - compass `nvidia/nemotron-3-super-120b-a12b` / **`off`** (changed 2026-10-19 after the
+      real-packet measurement in `05_TOKEN_FACTORY_FACTS.md`: off 5/5 valid at 3.2 s, on 4/5 at
+      17.6 s);
     - event-planner `nvidia/Nemotron-3_5-Lightning` / `off`;
     - investigator `nvidia/Nemotron-3-Ultra-550b-a55b` / `default`;
     - narrator `nvidia/Nemotron-3_5-Lightning` / `off`.

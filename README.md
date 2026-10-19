@@ -8,19 +8,42 @@ The governing boundary is:
 
 > Code establishes the evidence. Compass ranks the match. Responders accept asynchronously. Central command may override.
 
+## Nebius Token Factory and NVIDIA Nemotron
+
+ResponseCompass runs its model roles on **NVIDIA Nemotron models served by Nebius Token
+Factory** (OpenAI-compatible API, `https://api.tokenfactory.nebius.com/v1`). Each role has
+its own model, thinking setting and timeout, chosen from live measurements on the app's own
+requests ([docs/nebius/05_TOKEN_FACTORY_FACTS.md](docs/nebius/05_TOKEN_FACTORY_FACTS.md)):
+
+| Role | Default model | Thinking | What it does |
+|---|---|---|---|
+| Compass ranking (responders, fixes, overtime options) | `nvidia/nemotron-3-super-120b-a12b` | off | Ranks only the eligible candidates code supplies, with qualitative tradeoffs. |
+| Investigator (in development) | `nvidia/Nemotron-3-Ultra-550b-a55b` | on | Investigates a free-text field report with read-only tools and cited past cases. |
+| Event planner, narrator | `nvidia/Nemotron-3_5-Lightning` | off | Proposes the next simulated event; writes simulated field reports. |
+
+Token Factory made the agent practical to run live: a ranking returns in about 3 s
+(the previous provider took 20–60 s), native tool calling works on every Nemotron model,
+and per-model pricing and limits are published in the model catalog. Every model output is
+validated by application code. If a call is slow, invalid or unavailable, a deterministic
+path takes over, so dispatch never stops. AMD Token Factory remains selectable in
+Settings. Changes made for this hackathon are listed in [HACKATHON_CHANGES.md](HACKATHON_CHANGES.md).
+
+Set `NEBIUS_TOKEN_FACTORY_API_KEY` (or `NEBIUS_TOKEN_FACTORY_API_KEY_FILE`); see
+[.env.example](.env.example). Live mode spends Nebius credit. Offline mode and both test
+suites make no model calls.
+
 ## Live demo
 
-**<https://compass.makodev58.com>**: pick a control room (e8-aura-p1 has a month of
-simulated history). Rooms start paused: press **Resume** to run the simulation live on AMD
-Token Factory, or **Trigger Next Event** for one issue at a time. A running room pauses
-itself after 10 minutes with nobody using it, so an unattended tab does not spend tokens.
-**Offline Demo** replays a fixed scenario with no API calls.
+The hosted Nebius demo URL is added here when it is deployed (plan N8). A running room
+pauses itself after 10 minutes with nobody using it, so an unattended tab does not spend
+tokens. **Offline Demo** replays a fixed scenario with no API calls.
 
-Submission media: [demo video](docs/submission/ResponseCompass-demo.webm),
-[slide deck (PDF)](docs/submission/ResponseCompass-deck.pdf), and the
-[slide-by-slide notes](docs/submission/pitch-deck.md).
+ResponseCompass was first built for an earlier AMD hackathon; that submission's media
+remain in [docs/submission/](docs/submission/). What is new for Nebius is listed in
+[HACKATHON_CHANGES.md](HACKATHON_CHANGES.md).
 
-This is a net-new, synthetic project. It contains no LOCI source, proprietary facility context, real personnel data, or production credentials.
+This is a synthetic project. It contains no proprietary facility context, real personnel
+data, or production credentials.
 
 ## What is implemented
 
