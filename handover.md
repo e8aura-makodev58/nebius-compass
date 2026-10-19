@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | STOP (no open task) |
+| codex | RUN (round 11) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | none | — |
+| codex | Review the Nebius hackathon plan (docs only) | 11 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -455,6 +455,32 @@ queues behind that chain.
     Installing on 3200 stays with the main agent.
 
 - **main agent (meanwhile):** live AMD capture on 3200, deck and video revision.
+
+**Round 11 (2026-10-19) — Nebius x NVIDIA hackathon. codex: review the plan once.**
+The user made Claude the manager (main agent) for the Nebius entry. Gemini stays paused;
+codex is the only worker. **Start your watcher now** (poll `git show master:handover.md`
+every **300 s**; act when your Current task row changes; stop per Watcher control).
+
+- **codex — Review `docs/nebius/04_HACKATHON_PLAN.md` (one review pass, docs only).**
+  Start with `git merge master` in `/home/makodev58/nebius-compass-codex`.
+  - Read `docs/nebius/01_HACKATHON_BRIEF.md`, `02_OFFICIAL_RULES.md`,
+    `03_CODING_AGENT_GUIDE.md`, then the plan, and check it against the real code
+    (`backend/src/`, `project-state/`). Do not change implementation code.
+  - Write your review to a new file `docs/nebius/04_HACKATHON_PLAN_REVIEW.md`: numbered
+    findings, each with severity (blocker / major / minor), the plan section, the evidence
+    (file:line or rule quote) and a concrete proposed change. Cover at least: rule
+    compliance and Stage One fit; whether the audit table is factually right; feasibility
+    of N1–N6 by the dates given; rules 3/4 leaks in the tool layer, narratives, eval replay
+    and case records; file-ownership conflicts between your packages and the main agent's
+    N4/N5; acceptance criteria that are not objectively testable; anything to cut.
+  - Do **not** edit the plan itself; the main agent revises it from your review.
+  - Fill your `## codex` section, commit to `codex`, set `READY FOR MERGE`. No suites
+    needed for a docs-only change; say so in Verification.
+  - After that, keep the watcher running: your execution assignment (N1 first) will appear
+    here after the main agent revises the plan.
+
+- **main agent (meanwhile):** N0b baseline/provenance doc; N0 live Nebius probe once the
+  user provides a key.
 
 ### Merge log
 
