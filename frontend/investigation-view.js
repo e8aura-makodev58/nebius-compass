@@ -31,6 +31,9 @@ export function needsNewAuthorization(inv, state) {
 }
 const isOpen = (inv, state) => OPEN_INVESTIGATION.has(inv.status) || needsNewAuthorization(inv, state);
 
+/** Select an investigation from elsewhere (Ask Compass citations); the next render shows it. */
+export function selectInvestigation(id) { selectedId = id; lastFeedback = ''; }
+
 export function openInvestigations(state) {
   return (state.fieldReports ?? []).filter((r) => OPEN_REPORT.has(r.status)).length
     + (state.investigations ?? []).filter((i) => ['READY', 'ABSTAINED', 'ESCALATED'].includes(i.status) || needsNewAuthorization(i, state)).length;

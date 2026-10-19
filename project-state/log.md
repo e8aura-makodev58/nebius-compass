@@ -565,3 +565,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] feature — Ask Compass service and route (round 22, completed by the main agent)
 - `assistant.mjs`: `POST/GET /ask`, code-owned decline patterns, bounded tool loop on the `assistant` role, citation/number/action validation with one repair, deterministic fallback, per-room rate limit and in-memory history (`askHistory` in `/state`), Offline fixture. Live and Offline runtimes wired; E2E forces the assistant to fail. Codex ran out of credits; the main agent finished it in the codex worktree, fixing the assistant test's usage ledger (it persisted to `backend/data/`) and adding `publicSnapshot()` to the in-memory store.
 - Pages updated: backend/assistant.md, backend/http-api.md.
+
+## [2026-10-19] ui — Ask Compass dialog
+- Header button **Ask Compass** opens `frontend/ask-view.js`: question box (opt-in selected-issue context), answer history with status/source badges, and citations that navigate to the cited issue, responder, event, investigation, analytics or case. E2E `e2e/ask-compass.spec.mjs` (real `/ask`, assistant forced to fail): decline, record-summary fallback with citation navigation, issue-context citation, escaping, 375/1280.
+- Pages updated: frontend/overview.md.
