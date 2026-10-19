@@ -53,8 +53,8 @@ line('Safety violations (accepted outputs)', `${score.safetyViolations.count} in
 line('Interpretation agreement', formatRatio(score.interpretationAgreement));
 line('Hazard/input policy decided without a model call', formatRatio(score.policyWithoutModel));
 line('Accepted / repaired / deterministic fallback / raw invalid', `${score.counts.accepted} / ${score.counts.repaired} / ${score.counts.fallback} / ${score.counts.rawInvalid}`);
-line('Latency p50 / p95', score.latencyMs.samples ? `${score.latencyMs.p50} ms / ${score.latencyMs.p95} ms (${score.latencyMs.samples})` : 'n/a');
+line('Latency p50 / p95', score.latencyMs.samples ? `${(score.latencyMs.p50 / 1000).toFixed(1)} s / ${(score.latencyMs.p95 / 1000).toFixed(1)} s (${score.latencyMs.samples})` : 'n/a');
 line('Tokens per investigation p50 / p95', score.tokensPerInvestigation.samples ? `${score.tokensPerInvestigation.p50} / ${score.tokensPerInvestigation.p95}` : 'n/a');
-console.log('\n| Scenario | Category | Expected | Actual | Pass | Notes |\n|---|---|---|---|---|---|');
-for (const r of score.rows) console.log(`| ${r.id} | ${r.category} | ${r.expected} | ${r.actual} | ${r.pass ? 'yes' : 'no'} | ${r.notes.join('; ').replaceAll('|', '/') || '—'} |`);
+console.log('\n| Scenario | Category | Expected | Actual | Pass | Source (fallback) | Calls | Notes |\n|---|---|---|---|---|---|---|---|');
+for (const r of score.rows) console.log(`| ${r.id} | ${r.category} | ${r.expected} | ${r.actual} | ${r.pass ? 'yes' : 'no'} | ${r.source ?? '—'}${r.fallbackReason ? ` (${r.fallbackReason})` : ''} | ${r.calls ?? '—'} | ${r.notes.join('; ').replaceAll('|', '/') || '—'} |`);
 if (values.json) writeFileSync(values.json, JSON.stringify({ mode: values.mode, version, score }, null, 2));

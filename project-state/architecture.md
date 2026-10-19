@@ -17,8 +17,15 @@ single most important thing to preserve when changing ResponseCompass. See
 
 - Application code owns: time, facts, eligibility, geometry, metrics, baselines,
   validation, simulation outcomes, and every state mutation.
-- A model may only: propose **one** bounded next event (the event planner), or **rank the
-  eligible candidates it is handed** with qualitative tradeoffs (the Compass agent).
+- A model may only:
+  - propose **one** bounded next event (the event planner);
+  - **rank the eligible candidates or interpretations it is handed**, with qualitative
+    tradeoffs (the Compass agent, fix, staffing and interpretation ranking);
+  - **investigate a field report with read-only tools** (the Compass Investigator, since
+    2026-10-19). Tool results are bounded public DTOs with a host-owned decision cutoff.
+    Code validates every citation, fix and responder, computes the evidence grade and
+    outcome, and a person approves through the single dispatch gate. See
+    [backend/investigation.md](backend/investigation.md).
 - Every model output is validated against a strict contract and is never trusted as
   authoritative. If a model is unavailable, invalid, or slow, the system falls back to a
   deterministic baseline and keeps running.
@@ -44,6 +51,13 @@ flowchart TD
     Resolution --> Store
     Store --> UI[Shared Live / Offline control room UI]
     Store --> Analytics[Fixed-snapshot analytics]
+    Report[Field report] --> Policy[Hazard / input policy]
+    Policy --> Interp[Interpretation ranking + operator confirmation]
+    Interp --> Investigator[Investigator + read-only tools]
+    Investigator --> Checks[Validators + evidence grade]
+    Checks --> Approval[Central command approval]
+    Approval --> Gate[Dispatch gate]
+    Gate --> Dispatch
 ```
 
 ## The major pieces

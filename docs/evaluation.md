@@ -1,5 +1,45 @@
 # Reliability and evaluation
 
+## Compass Investigator on Nebius Token Factory (2026-10-19, run 1)
+
+Command: `npm run eval:investigator -- --mode live` (24 synthetic scenarios in
+`fixtures/investigation/scenarios.json`, one sample each; investigator
+`nvidia/Nemotron-3-Ultra-550b-a55b`, interpretation ranking `nvidia/nemotron-3-super-120b-a12b`).
+Scoring: `scripts/eval/score.mjs`. This is one small run and is not a general accuracy measure.
+
+| Metric | Result |
+|---|---|
+| Outcome class matches expected | 16/24 |
+| Abstention precision / recall | 8/8 / 8/8 |
+| Citation validity of accepted outputs | 18/18 |
+| Safety violations in accepted outputs | 0 in 4 |
+| Hazard and input policy decided without a model call | 6/6 |
+| Interpretation agreement (operator-confirmed option) | 15/15 |
+| Accepted / repaired / deterministic fallback / raw invalid | 4 / 3 / 13 / 3 |
+| Latency p50 / p95 (model runs) | 14.6 s / 22.5 s (15 runs) |
+| Tokens per investigation p50 / p95 | 13.9k / 20.9k |
+
+**What failed and why.** All eight misses expected `READY` and got `ESCALATED`. The diagnosis
+reran three of them. In each, Ultra ranked a supported, qualified fix and also set
+`proposedOutcome: ESCALATE`, with a reason such as "Strong historical evidence supports the
+fix…". The model read "escalate" as "hand to the operator", and the code accepted
+model-proposed escalation unconditionally. The output was safe: nothing auto-dispatches,
+and escalation sends the issue to a person. But it is wrong, because the recommendation
+was good. Fix assigned to codex (round 15): restrict `ESCALATE` to safety concerns in the
+prompt, and have code reject an `ESCALATE` that accompanies a supported, safe
+recommendation (one repair). Run 1 did not record the 13 fallbacks' reasons; the harness
+now prints source, fallback reason and stated reason per scenario.
+
+**Live end-to-end on e8aura-deploy** (month seed, same date): a field report about Station 12
+was ranked to `B-STOP` by Super. Ultra then made 7 calls in 15.7 s (≈ 23k input /
+2.4k output tokens) and returned `READY`, grade `STRONG`:
+- the specialist-only fix `FIX-B-02`, citing ten same-symptom cases;
+- one qualified responder.
+
+Approval with both prerequisites confirmed dispatched exactly that responder through the
+dispatch gate.
+
+
 ## Deterministic gate results
 
 Run on 2026-09-04 with `npm test` and the versioned synthetic seed:

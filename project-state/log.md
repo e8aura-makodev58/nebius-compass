@@ -430,3 +430,14 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] feature — N3b investigation lifecycle and observed analytics
 - Added durable expiry/supersession, audited override/safe policy, sampled ObservableDTO-only narration, retained analytics and repeatable synthetic small/month seeds. Alternative baseline outcomes remain explicitly unobserved; the separately staged month exposes unattended queue saturation.
 - Pages updated: backend investigation, simulation, live-runtime, offline-runtime, http-api, domain-model, overview, model-providers; concepts analytics-and-ethics; operations testing and running-and-config.
+## [2026-10-19] measurement — First live investigator evaluation and live end-to-end run
+- Live eval (24 scenarios, one sample): 16/24 outcome match; abstention 8/8 both ways; citations 18/18; 0 safety violations; hazard/input policy 6/6 with no model call; p50 14.6 s. All misses were READY→ESCALATED, because Ultra sets `proposedOutcome: ESCALATE` alongside a good recommendation and code accepted it; fix assigned to codex in round 15. Results and diagnosis in `docs/evaluation.md`.
+- On e8aura-deploy (month seed), a live report → Super interpretation → Ultra investigation (7 calls, 15.7 s, STRONG, specialist fix, qualified responder) → approval dispatched through the gate.
+- Harness rows now show source, fallback reason, calls and the stated reason for misses; latency in seconds.
+- Pages updated: none.
+
+## [2026-10-19] docs — README investigator section; submission draft; demo script
+- README: "New for Nebius: Compass Investigator" (flow, boundary, fallback, eval pointer), diagram gains the field-report path, boundary sentence updated, test counts refreshed.
+- `docs/nebius/06_SUBMISSION_DRAFT.md`: track, descriptions, Nebius/NVIDIA usage, pre-existing disclosure, judge testing instructions and feedback, with ⟨…⟩ blanks for URLs, the city event and one claim that waits for the ESCALATE fix to merge.
+- `docs/DEMO_SCRIPT.md`: a 2:45 walkthrough recorded on a live run, with a recording checklist.
+- Pages updated: none.
