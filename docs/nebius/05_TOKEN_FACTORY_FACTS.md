@@ -25,7 +25,16 @@ Small samples (1 + 5 per setting). Re-measure on the real Compass packets after 
 | `nvidia/Nemotron-3_5-Lightning` | 1,048,576 | 0.06 / 0.24 | 600 / 400k | tools, reasoning | eu-north1 |
 | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | 262,144 | 0.06 / 0.24 | 100 / 800k | tools, reasoning | eu-north1 |
 
-Model licences are not in the API. Check NVIDIA's model cards before N7 and link them here.
+**Licences** (from the Hugging Face model-card front matter, read 2026-10-19). We call the
+models through Token Factory's API and do not redistribute weights. Licences are listed
+here so the README states them accurately.
+
+| Model family (card checked) | Licence |
+|---|---|
+| Nemotron 3 Ultra (`nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-NVFP4`) | [OpenMDW 1.1](https://openmdw.ai/license/1-1/) |
+| Nemotron 3.5 Lightning (`nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16`) | [OpenMDW 1.1](https://openmdw.ai/license/1-1/) |
+| Nemotron 3 Super (`nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-Base-BF16`; the instruct card was not in the search results) | [NVIDIA Nemotron Open Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-nemotron-open-model-license/) |
+| Nemotron 3 Nano (`nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8`) | NVIDIA Nemotron Open Model License |
 
 ## Request behaviour (live probe)
 
