@@ -4,6 +4,19 @@
 
 ## Merged handoffs
 
+### 2026-10-19 — codex → master (branch commit `86dd08d`, merge `8234230`)
+
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-19
+- **Task:** Round 19 — code fixes from docs review; replay pair provenance.
+- **Head commit:** This handoff commit on `codex` (parent `c085871`).
+- **Changes:** Docker image now includes root and backend fixture directories. Dev Compose explicitly uses `/app/data` with its existing host data bind. Included replay investigator arms expose `{fixed, source, fallbackReason}` using public allowlisted labels; unknown labels normalize safely. Scorer adds source-specific rates with independent denominators, preserves aggregate/legacy scoring, and CLI prints all sources (including zero-case sources). Excluded pairs retain exclusion-only shape because no outcome exists.
+- **Files changed:** Dockerfile, docker-compose.yml, backend/src/replay-runner.mjs, scripts/eval-investigator.mjs, scripts/eval/score.mjs, backend/tests/{docker-fixtures,eval-score,replay-runner}.test.mjs, project-state pages below, this section.
+- **Verification:** `npm test` **434/434**; `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **83/83**. Local `docker build -t compass-codex-r19:fixtures .` passed; all five distinct runtime fixture files parsed as node user in a read-only, network-disabled container. Docker fixture coverage regression test scans runtime URL literals. Ports 3021/3121 released; no live calls.
+- **project-state pages updated:** backend/investigation.md, operations/running-and-config.md, operations/testing.md, log.md.
+- **Risks / follow-ups:** Main-owned investigator files and all prohibited paths untouched. Future fallback reason labels should be added to replay's public allowlist; unknown diagnostics remain redacted. Existing watcher PID 41408 preserved, not restarted.
+- **Questions for main:** None.
+
 ### 2026-10-19 — codex → master (branch commit `a624e64`, merge `5936de9`)
 
 - **Status:** READY FOR MERGE

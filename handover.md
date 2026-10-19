@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 19) |
+| codex | RUN (round 20) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Code fixes from the docs review; replay pair provenance | 19 |
+| codex | Security and correctness review of the investigator path | 20 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -977,8 +977,38 @@ for grounded numbers in prose and a stricter repair message, after the live repl
     `docs/nebius/`, `docs/evaluation.md`, `docs/DEMO_SCRIPT.md`, `HACKATHON_CHANGES.md`,
     `frontend/`, `e2e/`, `backend/data/`, port 3200. No live calls.
 
+**Round 20 (2026-10-19) — codex: security and correctness review of the investigator path.**
+Before the repo goes public. Start with `git merge master`; keep your watcher. Review
+only: write findings, change no code.
+
+- **codex — review.** Focus on what a hostile report author, a hostile retrieved case
+  narrative, or a malformed model reply could do. Scope:
+  - `report-policy.mjs`;
+  - `investigator.mjs`, including the main agent's `8a76993`: grounded numbers in prose and
+    the repair message, which now echoes allowed ids;
+  - `prompts/investigator.mjs`;
+  - `investigation-service.mjs`, `investigation-public.mjs`, `dispatch-gate.mjs`;
+  - the routes in `server.mjs`;
+  - `frontend/investigation-view.js` (escaping and `innerHTML` sinks).
+
+  Check in particular:
+  - Can a tool result or narrative smuggle digits or ids that the grounded-number rule then
+    lets into prose?
+  - Can the repair message leak anything beyond public ids?
+  - Any path to dispatch a gated issue without a recorded authorization.
+  - Revision races on approve/override/reinvestigate.
+  - DTO leaks of hidden truth.
+  - XSS in the UI.
+  - Unbounded inputs or responses.
+  - Denial-of-service via report flooding (no rate limit on `POST /reports`?).
+- **Output:** `docs/nebius/08_SECURITY_REVIEW.md` with numbered findings: severity, file:line,
+  a concrete exploit or failure scenario, and a proposed fix. Mark anything you could not
+  confirm as such. Fill your section, commit, then set `READY FOR MERGE`. Docs only; no
+  suites needed.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `86dd08d` → merge `8234230`: Docker image ships fixtures, dev compose uses `/app/data`, replay pairs carry public source/fallback provenance with per-source rates. `project-state/log.md` conflict kept both. On master: `npm test` 435/435, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `a624e64` → merge `5936de9`: public docs factual review (27 findings, `docs/nebius/07_PUBLIC_DOCS_REVIEW.md`). Docs only. The main agent applies the documentation findings; code findings go to round 19. Handoff archived.
 - 2026-10-19 — **codex** `4538dfd` → merge `dafe5a2`: deployment-global provider usage ledger, daily budget fallback (`budget-exhausted`), Settings Usage card. Clean merge. On master: `npm test` 431/431, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `c9ae284` → merge `d90c3c8`: paired first-fix replay runner and `--replay` CLI (N5 part 2); ESCALATE check consolidated into the validator path. `project-state/log.md` conflict kept both. Main agent fixed a Reset race across E2E specs. On master: `npm test` 421/421, E2E 83/83. Handoff archived.
@@ -1012,16 +1042,9 @@ for grounded numbers in prose and a stricter repair message, after the live repl
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 19 — code fixes from docs review; replay pair provenance.
-- **Head commit:** This handoff commit on `codex` (parent `c085871`).
-- **Changes:** Docker image now includes root and backend fixture directories. Dev Compose explicitly uses `/app/data` with its existing host data bind. Included replay investigator arms expose `{fixed, source, fallbackReason}` using public allowlisted labels; unknown labels normalize safely. Scorer adds source-specific rates with independent denominators, preserves aggregate/legacy scoring, and CLI prints all sources (including zero-case sources). Excluded pairs retain exclusion-only shape because no outcome exists.
-- **Files changed:** Dockerfile, docker-compose.yml, backend/src/replay-runner.mjs, scripts/eval-investigator.mjs, scripts/eval/score.mjs, backend/tests/{docker-fixtures,eval-score,replay-runner}.test.mjs, project-state pages below, this section.
-- **Verification:** `npm test` **434/434**; `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **83/83**. Local `docker build -t compass-codex-r19:fixtures .` passed; all five distinct runtime fixture files parsed as node user in a read-only, network-disabled container. Docker fixture coverage regression test scans runtime URL literals. Ports 3021/3121 released; no live calls.
-- **project-state pages updated:** backend/investigation.md, operations/running-and-config.md, operations/testing.md, log.md.
-- **Risks / follow-ups:** Main-owned investigator files and all prohibited paths untouched. Future fallback reason labels should be added to replay's public allowlist; unknown diagnostics remain redacted. Existing watcher PID 41408 preserved, not restarted.
-- **Questions for main:** None.
+- **Task:** Round 20 assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
