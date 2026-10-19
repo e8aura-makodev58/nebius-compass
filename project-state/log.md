@@ -344,3 +344,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — Nebius plan v2
 - `docs/nebius/04_HACKATHON_PLAN.md` v2 accepts codex's twelve review findings: field reports stay unresolved until code-built interpretations are confirmed by the operator; one dispatch gate on every assignment path; allowlisted DTOs with noninterference/canary/perturbation tests; public synthetic certifications; code-owned hazard/injection policy and safety prerequisites; explicit evidence grades, budgets and `asOf` cutoff; paired first-fix replay; file ownership, go/no-go gates and cut order.
 - Pages updated: none (plan only).
+
+## [2026-10-19] fixtures — Investigation scenarios (N5, part 1)
+- `fixtures/investigation/scenarios.json`: 24 synthetic field reports with expected outcome (`READY`/`ABSTAINED`/`ESCALATED`), the operator-confirmed interpretation where one exists, setup tags and constraint names; `fixtures/investigation/README.md` defines the tags and constraint vocabulary. Codex imports them read-only for N2/N3 tests.
+- Pages updated: none (fixtures only; no code reads them yet).
