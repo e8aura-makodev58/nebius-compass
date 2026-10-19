@@ -1,11 +1,7 @@
 import { ensureIssueNarrative } from './investigation-records.mjs';
 /** Engine-only latent fault model. Never put these rows in an issue or audit bundle. */
 import { fixesFor } from './fix-catalog.mjs';
-const symptoms = {
-  A: [['A-DRIFT', 'Output drifts from the operating reference.'], ['A-UNSTABLE', 'Output readings fluctuate during a cycle.'], ['A-INTERRUPT', 'Output is interrupted intermittently.']],
-  B: [['B-SLOW', 'Transfer progresses intermittently.'], ['B-STOP', 'Transfer stops before the expected endpoint.'], ['B-IRREGULAR', 'Transfer spacing becomes irregular.']],
-  C: [['C-UNSTABLE', 'The mechanism moves inconsistently.'], ['C-MISMATCH', 'Movement and detection disagree during a cycle.'], ['C-INTERRUPT', 'The cycle is interrupted intermittently.']],
-};
+import { SYMPTOMS as symptoms } from './report-policy.mjs';
 const privateCauses = Object.fromEntries(['A', 'B', 'C'].map((kind) => [kind, [0, 1, 2, 3].map((i) => `hidden-cause-${kind}-${i}`)]));
 // Rows are causes; columns are the public catalog order. Only this engine module reads them.
 const effectiveness = [

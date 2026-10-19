@@ -1,7 +1,8 @@
 # Investigation contracts and read-only tools
 
-N2 supplies the public evidence boundary for the future investigator. It does not run a
-model loop, create routes, approve procedures or dispatch responders.
+N2 supplies the public evidence boundary. N3a adds field reports, interpretation ranking,
+the bounded tool loop, operator decisions and gated assignment through shared Live/Offline
+services. Expiry, supersession, policy approval and simulated-issue sampling remain N3b.
 
 ## DTO boundary
 
@@ -59,8 +60,8 @@ schemas), `executeInvestigationTool` and the bound `createInvestigationTools` ad
 
 Results are `{ok:true, rows, truncated}` with ≤10 total top-level rows and ≤8192 UTF-8
 bytes, including the envelope. Whole rows are dropped to meet the byte budget, never
-partial procedures. A caller must handle `truncated` (including a single oversized case)
-under the future run's budget/fallback policy. Errors are `{ok:false,error:{code}}` with
+partial procedures. The loop can use the bounded subset of a truncated result and cite only returned cases.
+A single oversized row producing no usable result triggers deterministic fallback. Errors are `{ok:false,error:{code}}` with
 fixed codes, never exception messages or echoed arguments/state. Argument objects and
 JSON strings are validated strictly; unknown keys/tools, malformed JSON and missing
 cutoffs return errors. Tools perform no writes or provider calls.
@@ -83,9 +84,124 @@ history generator wraps both store adapters to write repeatable `simulated` temp
 with misleading keywords, typos and omissions using a separate id-seeded namespace,
 before retention. Operator narratives are preserved; the live narrator is not used yet.
 
-Safety catalog metadata and validation live in `fix-catalog.mjs`. Qualification filters
-are available now; prerequisite confirmation and approval enforcement belong to N3a.
+Safety catalog metadata and validation live in `fix-catalog.mjs`. `investigation-service.mjs`
+revalidates qualification and confirmed prerequisites atomically at operator approval.
 
 Tests: `backend/tests/investigation-contracts.test.mjs` covers canaries/noninterference,
 cutoffs, archive identities, migration (including the committed month seed), safety,
 qualification, budgets, noisy templates, and read-only scenario setup tags.
+
+## Field reports and interpretation
+
+`report-policy.mjs` owns the versioned hazard/injection lexicons and the public symptom
+registry shared with the fault engine. Hazards (heat, smoke, sparks, injury, fire,
+burning, bypass, override interlock) take precedence over input rejection, and create an
+ESCALATED investigation without resolving provider settings or calling a model. A known,
+unoccupied station creates a gated issue directly; an occupied/unidentified station is
+recorded as an escalation without inventing a duplicate incident. Input that is empty,
+over 600 characters, under three words or mostly nonletters gets ABSTAINED without calls.
+Overlength reports retain at most 601 characters, sufficient to show the policy violation.
+Injection spans remain quoted strings in public flags and model input; retrieved narrative
+is wrapped as untrusted tool data. Neither narrative path can dispatch or approve overtime.
+
+Ordinary submissions persist UNRESOLVED FieldReports. Code builds at most twelve options
+from explicit equipment or lexical station/ID matches crossed with public symptom pairs.
+The Compass ranking role may only order these option IDs with bounded qualitative prose;
+invalid output/outage uses the deterministic lexical order. While ranking, the interpretation
+status is PENDING_MODEL, matching the existing UI's disabled confirmation state. No matched
+equipment leaves the report unresolved for an explicit manual triple or closure.
+
+The operator confirms an option or a valid equipment/class/symptom triple, guarded by the
+report revision. Code creates the issue, priority band, origin FIELD_REPORT and gate
+INVESTIGATION. Latent fault assignment never overwrites the confirmed public symptom.
+An already occupied station rejects ordinary confirmation with a conflict.
+
+## Investigator and validation
+
+`investigator.mjs` uses the investigator role, `callChatTurn` and the host-bound N2 tools.
+Native and JSON-protocol turns use the same loop. JSON-protocol history is encoded as
+ordinary assistant/user JSON messages; native histories serialize function arguments as
+strings. Live transport defaults to global fetch and uses the existing provider controls.
+Prompts live in `backend/src/prompts/investigator.mjs`.
+
+Each run has a shared monotonic deadline (maximum 120 seconds), at most six proposed tool
+executions and eight inference calls, including at most one final-output repair. Each
+provider promise is raced against the remaining deadline, so a transport that ignores its
+own timeout still cannot pin the work lane. Persisted traces contain only schema-validated
+arguments, returned IDs, elapsed times and fixed errors, with a 64 KiB limit. Invalid raw
+model text is discarded; `rawInvalid` is a boolean, not stored prose.
+
+Final hypotheses use class symptom codes and an allowlist of public observable phrases.
+Fixes are catalog IDs; responder IDs must have been returned by eligible_responders for
+the first fix. Citations name only CaseDTO fields and cases actually returned in this run.
+Unknown keys, invented IDs, duplicate rankings and prose over 400 characters or containing
+digits outside supplied IDs fail validation. One repair shares the original budget and
+cannot execute further tools. Procedures always come verbatim from the catalog.
+
+Code computes grades and qualification. Accepted model escalation takes precedence;
+otherwise an explicit abstention, no supported fix or no eligible qualified responder
+produces ABSTAINED. THIN produces a low-evidence warning and still requires approval.
+Code also shows approaching duty endpoints as public facts. Failures use labelled
+DETERMINISTIC output: lexical case overlap, observed fix evidence and nearest qualified
+responder order. No fallback opens the dispatch gate. Fixture mode reads the labelled
+synthetic script in `fixtures/investigation/synthetic-responses/default.json`; no credential
+or network access is needed.
+
+## Dispatch and operator decisions
+
+`dispatch-gate.mjs` supplies `assertDispatchAuthorized` to live assignment, offer creation,
+offer acceptance, override, assistance/review, transfer, workforce handover/queue rematch,
+and the legacy/offline writers. Missing/OPEN gates preserve existing dispatch behavior.
+A report-origin issue needs an APPROVED record for that exact responder and fix, current
+certifications and all prerequisite confirmations. Authorization is consumed by the initial
+attempt ID; support, transfers, handover replacements and failed-attempt rematches cannot
+reuse it. The existing handover engine defers an unapproved replacement instead of silently
+changing the responder. A new manual override/reinvestigation record for continuing work is
+part of the follow-on lifecycle work; no implicit replacement is authorized in this slice.
+
+Approval rechecks the issue, responder availability/active assignments, public catalog,
+certifications, prerequisite enum/completeness and investigation revision in one store
+mutation. It stores Central command, timestamp, revision and authorized IDs, then invokes
+the shared assignment engine in that mutation. `selectAttemptFix` uses exactly the approved
+fix. A same-record duplicate approval is idempotent; another choice/revision returns 409
+STALE with no mutation. An abstained/escalated run can be manually approved only with an
+explicit reason and the same safety checks. Reject, operator escalation, report closure
+and useful/not-useful feedback are audited and cannot authorize assignment.
+
+## Persistence, modes, API and evaluation
+
+`investigation-service.mjs` persists `fieldReports`, `investigations` and monotone ID
+sequences in the room state. Run tokens stay private. On load RUNNING investigations and
+interrupted report rankings return to QUEUED with old tokens removed. Late responses cannot
+publish after reset, closure or a changed token. The Live agent lane starts a tracked pump
+and yields during provider waits; snapshots, ticks and operator actions remain responsive.
+Offline wraps the same service and assignment logic in its in-memory store, with fixture
+options fixed for both roles.
+
+`investigation-public.mjs` constructs explicit public report/investigation/decision/trace
+fields. `/state` contains open investigations plus the last twenty terminal records and
+linked/unresolved reports, including the small public trace needed by the existing UI.
+Full investigation lookup and case lookup are available separately. Issue audits include
+public investigation records, including for archived issues. See [http-api.md](http-api.md).
+
+`investigation-eval.mjs` implements `runScenario(scenario,{mode,samples})` over an isolated
+scratch store. History/responder setup tags create disclosed synthetic public observations;
+operator confirmation uses the scenario's specified manual interpretation, so interpretation
+agreement measures the confirmed facts, not independent model classification. Fixture
+inference uses a synthetic script and reports zero tokens. The never-resolving scenario uses
+a short injected timeout; it is a deadline test, not a live latency measurement. The
+only-via-overtime scenario safely abstains with no eligible responder; the current fixture
+label expects READY and the evaluator honestly reports that mismatch. No investigator can
+approve staffing. Live evaluation is an explicit separate command for the main agent.
+
+N3a tests: `backend/tests/investigator.test.mjs` includes native/global-fetch and
+JSON-protocol transport, real route handlers, safety/approval, policy exits, gating call-site
+scanner and forged offers, cutoffs/privacy, fixture Offline mode, durable restart and
+late-token protection, budgets, repair and a never-resolving-provider responsiveness test.
+
+New report and operator-reason text is checked against the shared privacy guard before
+persistence. Restricted simulation-marker content returns 400 RESTRICTED_REPORT_CONTENT,
+preserving snapshot readability and the hidden-truth boundary. Ordinary injection-like
+spans remain accepted as quoted untrusted data. At a tool-step cap, fallback citations are
+restricted to cases already present in the retained trace; no additional cited case is
+invented to bypass the step limit.

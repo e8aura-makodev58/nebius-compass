@@ -1,3 +1,4 @@
+import { recoverInvestigations } from './investigation-service.mjs';
 import { migrateInvestigationRecords } from './investigation-records.mjs';
 import { initializeFaults } from './fault-truth.mjs';
 import { LIVE_SCHEMA_VERSION, validateLiveState } from "./live-schema.mjs";
@@ -137,6 +138,7 @@ export function migrateLiveState(input) {
     upgraded.schemaVersion = LIVE_SCHEMA_VERSION;
     initializeFaults(upgraded, { recover: true });
     migrateInvestigationRecords(upgraded);
+    recoverInvestigations(upgraded);
     validateLiveState(upgraded);
     return upgraded;
   }
@@ -186,6 +188,7 @@ export function migrateLiveState(input) {
   reconcileResponderLocations(state);
   initializeFaults(state, { recover: true });
   migrateInvestigationRecords(state);
+  recoverInvestigations(state);
   validateLiveState(state);
   return state;
 }

@@ -1,3 +1,4 @@
+import { assertDispatchAuthorized, approvedInvestigation, gatedResult } from './dispatch-gate.mjs';
 import { originalLength } from "./history-retention.mjs";
 import { buildCandidatePacket } from "./context-engine.mjs";
 import { activeRoster, createAttempt, replanAttempt, settleAttempt } from "./attempt-engine.mjs";
@@ -86,9 +87,10 @@ function appendRosterEvent(state, eventType, issue, responderId, payload = {}) {
     createdAtRealTime: new Date().toISOString() });
 }
 
-function assignInState(state, { issueId, responderId, decision, eligibleResponderIds, acceptedOfferId = null, purpose = "INITIAL_ASSIGNMENT" }) {
+export function assignInState(state, { issueId, responderId, decision, eligibleResponderIds, acceptedOfferId = null, purpose = "INITIAL_ASSIGNMENT" }) {
   const issue = state.issues.find((entry) => entry.id === issueId);
   if (!issue) return { status: "INVALID", reason: "ISSUE_NOT_FOUND" };
+  if (!assertDispatchAuthorized(state, issue, responderId, purpose)) return gatedResult();
   const assistance = purpose === "ASSISTANCE";
   if (assistance ? issue.status !== "ASSIGNED" : !["PENDING", "RECOMMENDATION_READY", "OFFER_PENDING"].includes(issue.status)) return { status: "INVALID", reason: "ISSUE_NOT_ASSIGNABLE" };
   const responder = state.responders.find((entry) => entry.id === responderId);
@@ -134,6 +136,7 @@ function assignInState(state, { issueId, responderId, decision, eligibleResponde
     appendRosterEvent(state, "RESOLUTION_REPLANNED", issue, responder.id, { attemptId: attempt.id, reason: "RESPONDER_JOINED", qualitativeImpact: "ACCELERATED" });
   }
   issue.assignedResponderId = activeRoster(state, issue.id).find((row) => row.role === "PRIMARY")?.responderId;
+  if (issue.dispatchGate === 'INVESTIGATION') approvedInvestigation(state, issue).decision.attemptId = attempt.id;
   appendAssignmentEvent(state, issue, responder, decision);
   return { status: "ASSIGNED", issueId: issue.id, responderId: responder.id, assignmentId: assignment.id, attemptId: attempt.id, role: assignment.role, decision };
 }
@@ -189,6 +192,7 @@ export function createLiveAssignmentService(store) {
           if (purpose === "INITIAL_ASSIGNMENT") issue.rematchNotBefore = new Date(Date.parse(state.simulationState.simulationTime) + 2 * 60_000).toISOString();
           return { status: "EXHAUSTED", issueId: issue.id, recommendationId };
         }
+        if (!assertDispatchAuthorized(state, issue, responderId, purpose)) return gatedResult();
         const responder = state.responders.find((entry) => entry.id === responderId);
         const evidence = recommendation.candidateEvidenceSnapshot.find((entry) => entry.responderId === responderId);
         const rank = rankedResponderIds(recommendation).indexOf(responderId) + 1;
@@ -232,6 +236,7 @@ export function createLiveAssignmentService(store) {
             ? { status: "REJECTED", reason: "OPERATING_STATE_CHANGED", issueId: offer.issueId, recommendationId: recommendation.id, offerId: offer.id, responderId: offer.responderId }
             : { status: "DUPLICATE_OR_STALE" };
         }
+        if (!assertDispatchAuthorized(state, issue, offer.responderId, offer.purpose)) { cancelPendingOffer(state, issue, "INVESTIGATION_GATE"); if (offer.purpose !== "ASSISTANCE") issue.status = "PENDING"; return gatedResult(); }
         const accepted = nextDispatchRandom(state) < offer.acceptanceProbability;
         offer.status = accepted ? "ACCEPTED" : "REJECTED";
         offer.completedAt = state.simulationState.simulationTime;
@@ -263,6 +268,7 @@ export function createLiveAssignmentService(store) {
         const issue = state.issues.find((row) => row.id === issueId);
         const attempt = state.resolutionAttempts.find((row) => row.issueId === issueId && row.status === "ACTIVE");
         if (!issue || !attempt) return { status: "INVALID", reason: "ACTIVE_ATTEMPT_NOT_FOUND" };
+        if (!assertDispatchAuthorized(state, issue, null, "ASSISTANCE")) return gatedResult();
         if (activeRoster(state, issueId).length !== 1) return { status: "CONFLICT", reason: "SUPPORT_SLOT_UNAVAILABLE" };
         if (attempt.assistance.status === "REQUESTED") return { status: "CONFLICT", reason: "ASSISTANCE_ALREADY_REQUESTED" };
         if (attempt.assistance.cooldownUntil && Date.parse(attempt.assistance.cooldownUntil) > Date.parse(state.simulationState.simulationTime)) return { status: "CONFLICT", reason: "ASSISTANCE_COOLDOWN" };
@@ -276,6 +282,7 @@ export function createLiveAssignmentService(store) {
         const attempt = state.resolutionAttempts.find((row) => row.id === trigger.attemptId);
         if (!attempt || attempt.status !== "ACTIVE" || attempt.scheduleGeneration !== trigger.generation || attempt.reviewDispatchToken !== trigger.token) return { status: "STALE" };
         attempt.reviewDispatchToken = null;
+        if (!assertDispatchAuthorized(state, state.issues.find((row) => row.id === attempt.issueId), null, "ASSISTANCE")) return gatedResult();
         settleAttempt(state, attempt); replanAttempt(state, attempt);
         const baseline = Date.parse(attempt.initialPlannedCompletionAt) - Date.parse(attempt.startedAt);
         const projected = Date.parse(attempt.resolutionDueAt) - Date.parse(attempt.startedAt);
@@ -317,6 +324,7 @@ export function createLiveAssignmentService(store) {
         if (target.status === "RESOLVED" || activeRoster(state, targetIssueId).length >= 2) return { status: "CONFLICT", reason: target.status === "RESOLVED" ? "TARGET_RESOLVED" : "TARGET_FULL" };
         const moving = activeRoster(state, sourceIssueId).find((row) => row.responderId === responderId);
         if (!moving) return { status: "CONFLICT", reason: "RESPONDER_NOT_ON_SOURCE" };
+        if (!assertDispatchAuthorized(state, target, responderId, "TRANSFER")) return gatedResult();
         settleAttempt(state, sourceAttempt); if (targetAttempt) settleAttempt(state, targetAttempt);
         moving.status = "RELEASED"; moving.endedAt = state.simulationState.simulationTime; moving.endReason = "TRANSFERRED"; moving.roleHistory.at(-1).endedAt = state.simulationState.simulationTime;
         const sourceRemaining = activeRoster(state, sourceIssueId)[0];
@@ -352,6 +360,7 @@ export function createLiveAssignmentService(store) {
           return { status: "INVALID", reason: "CONFIRMATION_MUST_USE_COMPASS_WINNER" };
         }
         if (!["CONFIRMED", "OVERRIDDEN"].includes(decision)) return { status: "INVALID", reason: "DECISION_UNSUPPORTED" };
+        if (!assertDispatchAuthorized(state, state.issues.find((row) => row.id === recommendation.issueId), responderId, recommendation.purpose)) return gatedResult();
         const assigned = assignInState(state, {
           issueId: recommendation.issueId,
           responderId,

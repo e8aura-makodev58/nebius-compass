@@ -278,7 +278,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Applied the round 8 transport lesson to staffing ranking: live calls and their bounded
   repair default to global fetch. Rationales reject all digits except supplied option IDs,
   even when a number appears in the packet; authoritative numbers stay in the UI tables.
-- Pages updated: backend/live-runtime.md, concepts/agent-boundary.md, operations/testing.md.
+- Pages updated: backend/live-runtime.md, concepts/agent-boundary.md, operations/testing.md, operations/running-and-config.md.
 ## [2026-10-18] fix — Busy responders stay lawful extension options
 - `lawfulStaffingOptions` only offered an extension to a responder who was idle at that moment, so a recommendation made while the top option was between jobs went STALE when central command approved it a minute later, after the responder had picked up work. Found in a live AMD check on 3200. Extensions now require only that the responder is on duty, on the current crew and within the duty limits; the 16 h duty, 12 h rest, staff-cap and surge rules are unchanged. Regression test in `staffing.test.mjs`; the stale-approval test now uses a responder who has gone off duty.
 - Pages updated: none (rules unchanged in backend/simulation.md).
@@ -416,3 +416,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - New architecture (user): develop on e8aura-dev, deploy on e8aura-deploy (Ubuntu 24.04, Tailscale 100.91.9.126). Installed Docker Engine 29.9.1 and Compose v5.6.0 from Docker's apt repository; `makodev58` is in the `docker` group. Nebius key at `~/secrets/nebius.token` (mode 600); runtime `.env` at `~/nebius-compass-env/.env` (no secrets).
 - `compose.yaml`: required Nebius key secret, optional AMD key (`/dev/null` when unset), `COMPASS_BIND`/`COMPASS_HOST_PORT` for the published address. `scripts/deploy/deploy.sh` pushes a commit to the server's bare repo, rebuilds, and waits for health; layout in `scripts/deploy/README.md`.
 - Pages updated: operations/running-and-config.md.
+
+## [2026-10-19] feature — N3a investigator vertical slice
+- Added persisted field reports, interpretation ranking/confirmation, bounded investigator tools and repair, deterministic policy/fallback, shared dispatch authorization, atomic safety-checked approval, routes, Offline fixtures and the scenario adapter. Added native/JSON-protocol transport, gate/offer, policy, privacy, restart, race and responsiveness coverage.
+- Pages updated: backend/investigation.md, backend/domain-model.md, backend/simulation.md, backend/http-api.md, backend/live-runtime.md, backend/offline-runtime.md, backend/overview.md, backend/model-providers.md, concepts/agent-boundary.md, operations/testing.md, operations/running-and-config.md.

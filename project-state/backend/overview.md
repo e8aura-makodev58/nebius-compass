@@ -100,3 +100,11 @@ manifest. Bootstrap and generation use it; live persistence remains plain JSON.
   host-bound cutoff/target, qualification and evidence counts, bounded tool envelopes.
 
 See [investigation.md](investigation.md) for contracts; loop/routes/approval follow in N3a.
+
+N3a adds `report-policy.mjs` (public symptoms, lexical interpretation options and hazard/input
+policy), `investigator.mjs` (budgeted read-only loop and deterministic fallback),
+`prompts/investigator.mjs` (model instructions), `investigation-service.mjs` (persisted
+report/run/approval mutations), `investigation-public.mjs` (explicit public projections),
+`dispatch-gate.mjs` (shared authorization boundary), and `investigation-eval.mjs` (isolated
+scenario adapter). Both runtimes and room routes share the services; model waiting does
+not hold the Live agent lane. See [investigation.md](investigation.md).

@@ -182,3 +182,21 @@ execution and ≤10 rows / ≤8192 UTF-8 bytes. It imports investigation scenari
 and builds the currently supported history/responder setup tags. No investigator inference
 or public routes exist yet; existing history-generation adapter/equivalence tests exercise
 the new pre-retention report hook with no fetch or credential reads.
+
+## Investigator slice (N3a)
+
+`backend/tests/investigator.test.mjs` exercises the real report/confirmation/investigation/
+approval service, native and JSON-protocol history with stubbed global fetch, actual route
+handlers, policy zero-call exits, strict final validation/repair, tool/deadline caps,
+qualification and prerequisite failures, manual override, idempotence and stale safety,
+assignment-writer enumeration and forged offer acceptance, privacy noninterference, bounded
+public retention, interrupted durable reload and reset races. A never-resolving provider
+must leave snapshots, the agent lane, ticks and operator actions responsive. Offline uses
+the same fixture flow without network/credential access.
+
+`npm run eval:investigator -- --mode fixture` uses the N3a `runScenario` adapter for all
+24 synthetic scenarios, without touching runtime rooms or spending API calls. It confirms
+the specified interpretation as an operator would; the agreement metric does not measure
+independent model classification. The overtime-only setup safely abstains without an
+eligible responder, despite its fixture's READY expectation. Live evaluation is separate
+and explicitly initiated by the main agent; it is never part of `npm test`.

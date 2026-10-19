@@ -1,3 +1,4 @@
+import { createInvestigationService } from './investigation-service.mjs';
 import {cloneDraftValue} from './live-draft.mjs';
 import { createStaffingService, createStaffingReview, finishStaffingDeadline, decideStaffing, updateStaffingPolicy } from './staffing-service.mjs';
 import { createFixRecommendationService } from './fix-recommendation-service.mjs';
@@ -21,6 +22,7 @@ export function createLiveRuntime({
   requestRecommendation,
   requestFixRecommendation,
   requestStaffingRecommendation,
+  investigatorOptions = { mode: process.env.COMPASS_INVESTIGATOR_MODE ?? process.env.COMPASS_LIVE_COMPASS_MODE ?? "live" },
   logger = null,
 } = {}) {
   const clock = createSimulationClock(store);
@@ -30,6 +32,25 @@ export function createLiveRuntime({
   const assignments = createLiveAssignmentService(store);
   const fixRecommendations = createFixRecommendationService(store, { agentOptions, ...(requestFixRecommendation ? { requestRanking: requestFixRecommendation } : {}) });
   const staffingService = createStaffingService(store, { agentOptions, ...(requestStaffingRecommendation ? { requestRanking: requestStaffingRecommendation } : {}) });
+  const investigations = createInvestigationService(store, { investigatorOptions, rankingOptions: agentOptions });
+  let investigationWork = null;
+  let investigationQueued = false;
+  function scheduleInvestigationWork() {
+    if (investigationWork || investigationQueued) return;
+    investigationQueued = true;
+    agentQueue.push(() => {
+      investigationQueued = false;
+      let failed = false;
+      investigationWork = (async () => { while (await investigations.runNext()) {} })()
+        .catch(() => { failed = true; /* Persisted claims recover on restart; never log model text. */ })
+        .finally(async () => {
+          const snapshot = await store.snapshot();
+          investigationWork = null;
+          if (!failed && (snapshot.investigations?.some((row)=>row.status==='QUEUED') || snapshot.fieldReports?.some((row)=>row.status==='UNRESOLVED'&&row.interpretation.status==='QUEUED'))) scheduleInvestigationWork();
+        });
+    });
+    startAgentLane();
+  }
   let staffingWork = null;
   let staffingWorkQueued = false;
   let fixWork = null;
@@ -220,7 +241,7 @@ export function createLiveRuntime({
   }
 
   async function rankNextFix() {
-    const select = (state) => state.simulationState.status !== 'RUNNING' ? null : state.issues.find((row) => row.status !== 'RESOLVED' && row.fixRecommendation?.status !== 'PENDING_MODEL' && !row.fixRecommendation?.modelAttempted)?.id;
+    const select = (state) => state.simulationState.status !== 'RUNNING' ? null : state.issues.find((row) => row.dispatchGate !== 'INVESTIGATION' && row.status !== 'RESOLVED' && row.fixRecommendation?.status !== 'PENDING_MODEL' && !row.fixRecommendation?.modelAttempted)?.id;
     const issueId = store.project ? await store.project(select) : select(await store.snapshot());
     if (!issueId) return;
     return trackAgent('fixes', `Ranking supplied fixes for ${issueId}.`, () => fixRecommendations.recommend(issueId),
@@ -264,6 +285,7 @@ export function createLiveRuntime({
       });
     }
     await scheduleFixWork();
+    if ((await store.snapshot()).investigations?.some((row)=>row.status==='QUEUED')) scheduleInvestigationWork();
     return transaction.result;
   }
 
@@ -296,6 +318,13 @@ export function createLiveRuntime({
     mode: "LIVE",
     store,
     async snapshot() { return withState(null); },
+    async submitReport(input) { const result = await investigations.submit(input); scheduleInvestigationWork(); return result; },
+    async confirmReport(id,input) { const result = await investigations.confirm(id,input); scheduleInvestigationWork(); return result; },
+    closeReport: (id,input) => investigations.close(id,input),
+    getReport: (id) => investigations.getReport(id),
+    getInvestigation: (id) => investigations.getInvestigation(id),
+    getCase: (id) => investigations.getCase(id),
+    decideInvestigation: (id,input,action) => investigations.decide(id,input,action),
     async analytics() { return { mode: "LIVE", ...(store.project ? await store.project(buildAnalytics) : buildAnalytics(await store.snapshot())) }; },
     async analyticsPeriod(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildPeriodAnalytics(state, query)) : buildPeriodAnalytics(await store.snapshot(), query)) }; },
     async analyticsPareto(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildParetoAnalytics(state, query)) : buildParetoAnalytics(await store.snapshot(), query)) }; },
@@ -365,10 +394,10 @@ export function createLiveRuntime({
     },
     advanceSimulation,
     async tick(realElapsedMilliseconds) { return withState(await advanceSimulation(realElapsedMilliseconds)); },
-    async reconcileStartup() { const result = await scheduler.reconcileClaimedTriggers(); await drainDeferredAgentWork(); return result; },
+    async reconcileStartup() { const result = await scheduler.reconcileClaimedTriggers(); await drainDeferredAgentWork(); scheduleInvestigationWork(); return result; },
     runScheduledTick,
     /** Resolves once model-bound work started by the real-time loop has finished. */
-    async agentWorkIdle() { while (agentLane || fixWork || staffingWork) { if (agentLane) await agentLane; if (fixWork) await fixWork; if (staffingWork) await staffingWork; } },
+    async agentWorkIdle() { while (agentLane || fixWork || staffingWork || investigationWork || investigationQueued) { if (agentLane) await agentLane; if (fixWork) await fixWork; if (staffingWork) await staffingWork; if (investigationWork) await investigationWork; } },
     // Retained as a standalone capability (e.g. a single-runtime test or a
     // consumer with no Control Room manager) — never called from the
     // production boot path, which drives every room from one shared
@@ -419,6 +448,13 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
       mode = nextMode;
       return this.snapshot();
     },
+    async submitReport(input) { return active().submitReport(input); },
+    async confirmReport(id,input) { return active().confirmReport(id,input); },
+    async closeReport(id,input) { return active().closeReport(id,input); },
+    async getReport(id) { return active().getReport(id); },
+    async getInvestigation(id) { return active().getInvestigation(id); },
+    async getCase(id) { return active().getCase(id); },
+    async decideInvestigation(id,input,action) { return active().decideInvestigation(id,input,action); },
     async reset() { return mode === "LIVE" ? liveRuntime.reset() : { mode: "OFFLINE", ...offlineRuntime.reset() }; },
     async analytics() { return mode === "LIVE" ? liveRuntime.analytics() : { mode: "OFFLINE", available: false }; },
     async analyticsPeriod(query) { return mode === "LIVE" ? liveRuntime.analyticsPeriod(query) : { mode: "OFFLINE", available: false }; },

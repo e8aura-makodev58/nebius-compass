@@ -1,3 +1,4 @@
+import { assertDispatchAuthorized } from './dispatch-gate.mjs';
 /**
  * Deterministic assignment mutation boundary (WP7).
  *
@@ -26,6 +27,7 @@ export function assignResponder(state, issueId, responderId) {
     return { status: "stale", reason: "responder-not-available", responderId };
   }
 
+  if (!assertDispatchAuthorized(state, issue, responderId, "INITIAL_ASSIGNMENT")) return { status: "gated", reason: "investigation-approval-required" };
   issue.status = "ASSIGNED";
   issue.assignedResponderId = responder.id;
   responder.availability = "ASSIGNED";

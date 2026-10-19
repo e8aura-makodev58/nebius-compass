@@ -97,3 +97,10 @@ Certifications use an independent responder-id-seeded RNG namespace and never re
 New issues get public-symptom template reports; the offline history generator writes
 id-seeded noisy synthetic reports before compaction through both store adapters. This
 consumes no engine RNG and calls no narrator. See [investigation.md](investigation.md).
+
+Field-report issues are gated: `selectAttemptFix` freezes exactly the operator-authorized
+procedure from the approved investigation, rather than the ordinary fix recommendation.
+Authorization is consumed by the initial attempt ID; a failed attempt cannot automatically
+retry with another fix/responder. Public snapshots do not synthesize a conflicting ordinary
+fix ranking for these issues. Qualification and prerequisite checks precede assignment;
+expiry, re-investigation and policy continuation follow in N3b. See [investigation.md](investigation.md).

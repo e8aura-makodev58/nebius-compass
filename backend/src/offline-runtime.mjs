@@ -1,3 +1,7 @@
+import { createInvestigationService } from './investigation-service.mjs';
+import { publicInvestigationState } from './investigation-public.mjs';
+import { migrateInvestigationRecords } from './investigation-records.mjs';
+import { assertDispatchAuthorized } from './dispatch-gate.mjs';
 import { initializeFaults } from './fault-truth.mjs';
 import { deterministicFixRecommendation, buildFixPacket } from './fix-evidence.mjs';
 import { requestFixRanking } from './fix-ranking.mjs';
@@ -39,9 +43,22 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     moveResponderToIssue(state, state.responders.find((row) => row.id === "R-OPER142"), state.issues.find((row) => row.id === "ISS-103"), "PRIMARY", "STATE_RECONCILIATION");
     offlineEpochRealTime = now();
     offlineEpochSimulationTime = Date.parse(startedAt);
-    return state;
+    state.fieldReports = []; state.investigations = []; state.dispatchOffers ??= []; state.recommendations ??= [];
+    return migrateInvestigationRecords(state);
   }
   let demoState = initializeOfflineState();
+  const investigationStore = {
+    snapshot: async () => structuredClone(demoState),
+    async mutate(label, mutation) {
+      const draft = structuredClone(demoState);
+      const result = mutation(draft);
+      if (result?.then) throw new Error('Offline investigation mutations must be synchronous');
+      demoState = draft;
+      return {label,result:structuredClone(result)};
+    },
+  };
+  const investigations = createInvestigationService(investigationStore,{investigatorOptions:{mode:'fixture'},rankingOptions:{mode:'fixture'}});
+  async function finishInvestigationWork() { while (await investigations.runNext()) {} }
   let workflow = null;
   let requestSequence = 0;
   let offerDueAtRealTime = null;
@@ -70,6 +87,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     syncOfflineClock();
     const issue = demoState.issues.find((row) => row.id === issueId); const responder = demoState.responders.find((row) => row.id === responderId);
     if (!issue || !responder || responder.availability !== "AVAILABLE" || offlineRoster(issueId).length >= 2) return { status: "stale", reason: "responder-not-available" };
+    if (!assertDispatchAuthorized(demoState, issue, responderId, role === "SUPPORT" ? "SUPPORT" : "INITIAL_ASSIGNMENT")) return { status: "gated" };
     let attempt = offlineAttempt(issueId);
     if (attempt) settleAttempt(demoState, attempt);
     const joinedAt = demoState.simulationState.simulationTime;
@@ -166,12 +184,12 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
       supportOfferDueAtRealTime = null;
       offlineRematchPromise = null;
     }
-    const { responderSkills, faultTruth, ...publicState } = structuredClone(demoState);
+    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, ...publicState } = structuredClone(demoState);
     const { rngStreams, ...publicSimulationState } = publicState.simulationState;
     publicState.simulationState = publicSimulationState;
     publicState.resolutionAttempts = publicState.resolutionAttempts.map(redactAttempt);
     publicState.resolutionHistory = publicState.resolutionHistory.map((record) => record.participants ? { ...record, participants: record.participants.map(({ contributionShare, ...participant }) => participant) } : record);
-    return structuredClone({ ...publicState, workflow });
+    return structuredClone({ ...publicState, ...publicInvestigationState(demoState), workflow });
   }
 
   async function completeRecommendation(issueId) {
@@ -222,6 +240,11 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
 
   return {
     snapshot,
+    async submitReport(input) { const result=await investigations.submit(input);await finishInvestigationWork();return result; },
+    async confirmReport(id,input) { const result=await investigations.confirm(id,input);await finishInvestigationWork();return result; },
+    closeReport:(id,input)=>investigations.close(id,input), getReport:(id)=>investigations.getReport(id),
+    getInvestigation:(id)=>investigations.getInvestigation(id), getCase:(id)=>investigations.getCase(id),
+    decideInvestigation:(id,input,action)=>investigations.decide(id,input,action),
     reset() {
       demoState = initializeOfflineState();
       workflow = null;

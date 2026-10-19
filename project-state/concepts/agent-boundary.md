@@ -84,3 +84,20 @@ completed evidence must precede the cutoff strictly, including archive-backed ca
 Tools use public qualifications, never skill or outcome weights, for eligibility.
 Narratives are untrusted data. Canary, hidden-truth noninterference and future-data
 perturbation tests cover these contracts. See [../backend/investigation.md](../backend/investigation.md).
+
+## Investigator vertical slice (N3a)
+
+Field reports are not facts until code supplies interpretation options and the operator
+confirms a catalog triple. The Compass role ranks only those option IDs. The investigator
+uses read-only DTO tools, class-scoped catalog IDs, allowlisted observable hypothesis text
+and references to cases actually returned in that run. Code computes evidence grades,
+qualifications and outcome precedence; model text cannot provide procedure steps, staffing,
+priority or approval. Raw invalid content is discarded and never persisted in traces.
+
+A versioned code-owned hazard/input policy runs before any model call, including during
+outage. Report and retrieved injection spans remain untrusted quoted evidence. Every
+assignment writer invokes the same gate, including support, transfers and handovers.
+Operator approval atomically rechecks revision, availability, certifications and each
+prerequisite before assigning the approved procedure. Fallback, abstention and escalation
+never open the gate; an explicit safety-checked manual override needs an audit reason.
+See [../backend/investigation.md](../backend/investigation.md) for exact budgets and lifecycle scope.

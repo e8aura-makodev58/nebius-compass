@@ -205,7 +205,14 @@ export async function callChatTurn({ provider = 'amd', modelId, apiKey, reasonin
   const native = tools.length && capabilities.toolCalling === 'native';
   const instruction = jsonSchema ? systemMessageWithSchema(systemInstruction, jsonSchemaName, jsonSchema) : systemInstruction;
   let turnMessages = messages ?? [{ role: 'system', content: instruction }, { role: 'user', content: userContent }];
-  if (tools.length && !native) turnMessages = [{ role: 'system', content: jsonToolInstruction(tools) }, ...turnMessages];
+  if (tools.length && !native) turnMessages = [{ role: 'system', content: jsonToolInstruction(tools) }, ...turnMessages.map((message) => {
+    if (message.role === 'assistant' && message.tool_calls?.length) {
+      const call = message.tool_calls[0];
+      return { role: 'assistant', content: JSON.stringify({ action: 'tool', id: call.id, name: call.function.name, arguments: JSON.parse(call.function.arguments) }) };
+    }
+    if (message.role === 'tool') return { role: 'user', content: JSON.stringify({ untrustedToolResult: message.content, toolCallId: message.tool_call_id }) };
+    return message;
+  })];
   const request = def.buildBody({ modelId, reasoningEffort, messages: turnMessages, capabilities });
   if (native) { request.tools = tools; request.tool_choice = "auto"; delete request.response_format; }
   const body = JSON.stringify(request), started = now(), deadline = started + timeoutMs;
@@ -234,7 +241,7 @@ function matchesSchema(value, schema) {
     case 'object':
       if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
       if ((schema.required ?? []).some(k => !Object.hasOwn(value,k))) return false;
-      return Object.entries(value).every(([k,v]) => schema.properties?.[k] ? matchesSchema(v,schema.properties[k]) : schema.additionalProperties === true);
+      return Object.entries(value).every(([k,v]) => Object.hasOwn(schema.properties ?? {}, k) ? matchesSchema(v,schema.properties[k]) : schema.additionalProperties === true);
     case 'array': return Array.isArray(value) && value.length <= (schema.maxItems ?? 10) && value.length >= (schema.minItems ?? 0) && value.every(v => matchesSchema(v,schema.items));
     case 'string': return typeof value === 'string' && value.length >= (schema.minLength ?? 0) && value.length <= (schema.maxLength ?? 8192);
     case 'integer': return Number.isSafeInteger(value) && value >= (schema.minimum ?? -Infinity) && value <= (schema.maximum ?? Infinity);

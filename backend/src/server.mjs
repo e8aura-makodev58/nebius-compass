@@ -38,7 +38,7 @@ function requestErrorStatus(error, fallbackStatus) {
 }
 
 function mutationResponse(response, result) {
-  const conflict = result?.action?.status === "CONFLICT" ? result.action : null;
+  const conflict = ["CONFLICT", "GATED"].includes(result?.action?.status) ? result.action : null;
   return conflict ? sendJson(response, 409, { error: conflict.reason, code: conflict.reason, conflict }) : sendJson(response, 200, result);
 }
 
@@ -112,11 +112,11 @@ async function serveStatic(pathname, response) {
   }
 }
 
-async function readJsonBody(request) {
+async function readJsonBody(request, maxLength = 2000) {
   let body = "";
   for await (const chunk of request) {
     body += chunk;
-    if (body.length > 2_000) throw new Error("Request body is too large");
+    if (body.length > maxLength) throw new Error("Request body is too large");
   }
   return body ? JSON.parse(body) : {};
 }
@@ -130,6 +130,21 @@ async function readJsonBody(request) {
  * prefix existed).
  */
 async function handleRoomScopedRoute({ request, response, path, runtime, logger, url }) {
+  if (request.method === 'POST' && path === '/reports') return sendJson(response, 202, await runtime.submitReport(await readJsonBody(request, 12000)));
+  const reportMatch = /^\/reports\/([^/]+)(?:\/(confirm|close))?$/.exec(path);
+  if (reportMatch) {
+    const id = decodeURIComponent(reportMatch[1]);
+    if (request.method === 'GET' && !reportMatch[2]) return sendJson(response, 200, await runtime.getReport(id));
+    if (request.method === 'POST' && reportMatch[2]) return sendJson(response, 200, await runtime[reportMatch[2] === 'confirm' ? 'confirmReport' : 'closeReport'](id, await readJsonBody(request)));
+  }
+  const investigationMatch = /^\/investigations\/([^/]+)(?:\/(approve|reject|escalate|feedback))?$/.exec(path);
+  if (investigationMatch) {
+    const id = decodeURIComponent(investigationMatch[1]);
+    if (request.method === 'GET' && !investigationMatch[2]) return sendJson(response, 200, await runtime.getInvestigation(id));
+    if (request.method === 'POST' && investigationMatch[2]) return sendJson(response, 200, await runtime.decideInvestigation(id, await readJsonBody(request), investigationMatch[2]));
+  }
+  const caseMatch = /^\/cases\/([^/]+)$/.exec(path);
+  if (request.method === 'GET' && caseMatch) return sendJson(response, 200, await runtime.getCase(decodeURIComponent(caseMatch[1])));
   const stationHistoryMatch = /^\/equipment\/([^/]+)\/issues$/.exec(path);
   if (request.method === "GET" && stationHistoryMatch) {
     return sendJson(response, 200, await runtime.stationHistory(decodeURIComponent(stationHistoryMatch[1]), { before: url.searchParams.get("before"), limit: Number(url.searchParams.get("limit") ?? 100) }));
@@ -432,6 +447,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     logger,
     plannerOptions: () => settingsService.requestOptions("event-planner"),
     agentOptions: () => settingsService.requestOptions("compass"),
+    investigatorOptions: () => settingsService.requestOptions("investigator"),
   });
   // createControlRoomManager already reconciled each READY room once during
   // construction; this is the same reconcile-before-serve discipline the

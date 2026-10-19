@@ -102,3 +102,10 @@ Unknown replacement model IDs default to omitted thinking unless explicitly conf
 Source: `docs/nebius/05_TOKEN_FACTORY_FACTS.md`; no worker live calls were made.
 
 Blank model/effort env seeds use built-in defaults (N1b); direct empty transport IDs still fail closed. Agent-only watcher code and its tests live under `/home/makodev58/nebius-tools/`, outside the product repository.
+
+The N3a investigator uses `callChatTurn` with the investigator role and the existing
+per-provider controls. Native tool history serializes arguments as JSON strings;
+JSON-protocol history converts tool-role messages to ordinary quoted JSON user messages
+and assistant action objects, so providers without native tools receive a valid history.
+Interpretation ranking uses the Compass role. Both paths are exercised through global
+fetch stubs; fixture and forced-failure modes do not read credentials or call providers.
