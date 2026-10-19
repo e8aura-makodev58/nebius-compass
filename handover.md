@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 18) |
+| codex | RUN (round 19) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Factual review of the public docs (N7) | 18 |
+| codex | Code fixes from the docs review; replay pair provenance | 19 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -950,8 +950,36 @@ needed.
   finding gets a severity (blocker / major / minor), file:line, the evidence and the exact
   replacement text. Fill your section, commit, then set `READY FOR MERGE`.
 
+**Round 19 (2026-10-19) — codex: code fixes from the docs review, plus replay provenance.**
+Start with `git merge master`; ports 3021/3121; keep your watcher. **The main agent owns
+`backend/src/investigator.mjs` and `prompts/investigator.mjs` this round.** It changed them
+for grounded numbers in prose and a stricter repair message, after the live replay showed
+34/60 fallbacks. Do not edit those two files; tell me if you need a change there.
+
+- **codex.**
+  - **Review #3 — Docker image fixtures.** The `Dockerfile` must include `fixtures/` and
+    `backend/fixtures/`, so Offline and fixture paths behave the same as in a source
+    checkout. Verify with `docker build` locally (Docker is installed on e8aura-dev), and
+    add a test that every fixture path the runtime reads lies under a directory the
+    Dockerfile copies.
+  - **Review #4 — dev compose persistence.** `docker-compose.yml` should mount the
+    directory the image actually uses (`/app/data`), or set `COMPASS_DATA_DIR`
+    consistently.
+  - **Replay provenance.** Each pair in `runPairedReplay` gets
+    `investigator: { fixed, source, fallbackReason }`, using public labels only.
+    `scorePairedReplay` must not break; a nested field is fine. Add a split of the
+    investigator arm by `source` to the replay CLI output (model vs deterministic
+    first-fix rates, each with denominators). You may edit `scripts/eval-investigator.mjs`
+    and `scripts/eval/score.mjs` for this; extend `eval-score.test.mjs` to match.
+  - **Tests and docs:** both suites green; `log.md`; `project-state` pages for what you
+    change.
+  - **Do not touch:** `investigator.mjs`, `prompts/investigator.mjs`, `README.md`,
+    `docs/nebius/`, `docs/evaluation.md`, `docs/DEMO_SCRIPT.md`, `HACKATHON_CHANGES.md`,
+    `frontend/`, `e2e/`, `backend/data/`, port 3200. No live calls.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `a624e64` → merge `5936de9`: public docs factual review (27 findings, `docs/nebius/07_PUBLIC_DOCS_REVIEW.md`). Docs only. The main agent applies the documentation findings; code findings go to round 19. Handoff archived.
 - 2026-10-19 — **codex** `4538dfd` → merge `dafe5a2`: deployment-global provider usage ledger, daily budget fallback (`budget-exhausted`), Settings Usage card. Clean merge. On master: `npm test` 431/431, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `c9ae284` → merge `d90c3c8`: paired first-fix replay runner and `--replay` CLI (N5 part 2); ESCALATE check consolidated into the validator path. `project-state/log.md` conflict kept both. Main agent fixed a Reset race across E2E specs. On master: `npm test` 421/421, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `135b782` → merge `4f6d562`: N3b investigator lifecycle (expiry, supersede, override, safe auto-approval policy, simulated narration, retained analytics, lifecycle dataset, staged month). Clean merge. Main agent added the ESCALATE repair the branch missed. On master: `npm test` 413/413, E2E 81/81. Staged month `backend/seed/investigation-month/` **not adopted** (unattended run fills the queue; existing month stays). Handoff archived.
@@ -984,15 +1012,9 @@ needed.
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 18 — factual review of public documentation (N7).
-- **Output:** docs/nebius/07_PUBLIC_DOCS_REVIEW.md: all eight assigned files reviewed at master 9b2a76e, with 27 numbered findings (1 blocker, 17 major, 9 minor), source file:line, repository evidence and exact replacement text. Coverage matrix distinguishes supported code/history claims from historical measurements that were not re-probed.
-- **Principal findings:** Docker quickstart lacks mandatory Nebius secret-path setup; image omits fixture directories and development Compose mounts a different directory from the image's data root. Local instructions still say AMD-only; approval/fallback/retry and three-issue-limit claims are stale. Evaluation timing includes injected cases, interpretation agreement compares operator-supplied expected facts, and safety/citation metrics need narrower labels. Public judge links remain placeholders; private operations details should not be public-facing. Native-probe sample scope, live demo's impossible unqualified row, fresh local seed/test prerequisites, N0 provenance hash, stale counts, costs/defaults and licence provenance also have concrete replacements.
-- **Preserved scope:** None of README.md, HACKATHON_CHANGES.md, docs/evaluation.md, N0 facts, submission draft, DEMO_SCRIPT.md, deployment README or .env.example was edited. No implementation edits. Added the review and project-state/log.md entry; only this handover section changed.
-- **Verification:** Docs-only; no suites required by round-18 assignment and none run. Read code/tests and Git objects/history; checked listed hashes/ancestry and baseline count semantics, aggregate evidence definitions, defaults/env/route names and packaging. git diff --check passes. No provider calls, remote inspection, external licence certification or new exhaustive secret scan. No actual credential value found in the assigned documents; intentionally approved author email distinguished from private deployment details.
-- **Risks / follow-ups:** Main agent applies or rejects findings; this review does not silently fix the reviewed files or invent missing public URLs/live results. Re-run a sanitized publication scan at the eventual public revision. Existing 300-second watcher PID 41408 remains running; no restart or second worker.
-- **Questions for main:** None.
+- **Task:** Round 19 assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
