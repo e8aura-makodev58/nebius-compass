@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 15) |
+| codex | RUN (round 16) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | N3b — investigator lifecycle, policy, narrator, analytics | 15 |
+| codex | N5 part 2 — paired first-fix replay outcome runner | 16 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -833,8 +833,56 @@ passed. Start with `git merge master`; ports 3021/3121; keep your watcher. Plan 
   Nebius investigations there (the room bootstraps the month seed), first live eval run,
   UI for override and analytics once N3b names the shapes.
 
+**Round 16 (2026-10-19) — codex: N5 part 2, the paired first-fix replay.** Start with
+`git merge master`; ports 3021/3121; keep your watcher. Plan v2 §4 ("Paired first-fix
+replay") is the spec. Scoring already exists in `scripts/eval/score.mjs`
+(`scorePairedReplay`, which reads `[{ issueId, investigator, baseline, deterministic,
+excluded }]` with each arm `{ fixed: boolean }`).
+
+- **codex — Paired replay outcome runner.**
+  - **New module `backend/src/replay-runner.mjs`**, exporting
+    `runPairedReplay({ mode, heldOutDays = 7, limit, investigate })` → `{ pairs, meta }`.
+  - **Held-out set.** Take the committed month seed. The held-out set is the last
+    `heldOutDays` of resolved issues that have a public symptom and a catalog fix.
+  - **Per held-out issue:**
+    - Build the decision state as of the issue's `raisedAt` (rolling origin). Only outcomes
+      completed before that instant are visible, and the target is excluded. Reuse the
+      `asOf`/`casesBefore` machinery, and assert future-data invariance in a test.
+    - Run the investigator in `mode` (`fixture` | `live`) on that state with the
+      engine-owned interpretation (§3.1 simulated path). It gets **no** approval policy
+      shortcuts.
+    - If the result is not `READY`, set `excluded` to its status (`ABSTAINED`,
+      `ESCALATED`, `FAILED`) and continue.
+    - Otherwise run the **first attempt three times** in an isolated outcome runner with
+      the investigator's first fix, the class-frequency baseline fix (as frozen at that
+      instant, catalog-order ties) and the existing deterministic fix order's first fix.
+    - The responder, engine state, simulated time and **RNG draws are identical** across
+      the three arms; only the fix differs. Use the responder the issue actually had
+      first, so responder choice cannot confound the comparison.
+    - Each arm reports `{ fixed }`.
+  - **Hidden truth stays inside the outcome runner.** Cause and effectiveness are used only
+    there. Never serialise them into pairs, meta, traces, fixtures or logs. Extend the
+    canary/noninterference tests: changing hidden truth changes outcomes, never packets.
+  - **`meta`:** held-out window, counts, seed hash, mode, model ids and run time. No hidden
+    data.
+  - **`scripts/eval-investigator.mjs`:** add a `--replay [--held-out-days N] [--limit N]`
+    path that calls the runner and prints `scorePairedReplay` with denominators: coverage,
+    exclusions by reason, first-time fix per arm, discordant pairs. You may edit this
+    script for that flag only. Fixture mode must run hermetically, and a small
+    `--limit 5` fixture replay goes in a test.
+  - **Docs:** `docs/evaluation.md` gets a "Paired replay" method section. **No result
+    numbers;** the main agent runs it live. Also update `backend/investigation.md`,
+    `log.md` and a `decisions.md` entry on why the hidden truth is used here and why that
+    is consistent with rule 4 (the engine owns outcomes; the scorer never sees causes).
+  - **Do not touch:** `frontend/`, `e2e/`, `docs/nebius/`, `backend/data/`, port 3200. No
+    live calls.
+
+- **main agent (meanwhile):** UI for override, re-investigate, policy and investigation
+  analytics (N3b shapes); live evaluation run 2; deploy.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `135b782` → merge `4f6d562`: N3b investigator lifecycle (expiry, supersede, override, safe auto-approval policy, simulated narration, retained analytics, lifecycle dataset, staged month). Clean merge. Main agent added the ESCALATE repair the branch missed. On master: `npm test` 413/413, E2E 81/81. Staged month `backend/seed/investigation-month/` **not adopted** (unattended run fills the queue; existing month stays). Handoff archived.
 - 2026-10-19 — **codex** `e0d03a4` → merge `ee9b587`: N3a investigator vertical slice (field reports, hazard/input policy, interpretation ranking, tool loop with validators and deterministic fallback, shared dispatch gate, approval routes, Offline fixtures, eval adapter). Fixture eval 23/24 (SC-13 label was wrong; fixed). `project-state/log.md` conflict kept both. Main agent added real-route E2E and fixed two spec races. On master: `npm test` 394/394, E2E 81/81. **Slice gate passed on 2026-10-19.** Handoff archived.
 - 2026-10-19 — **codex** `cf17c4e` → merge `d58113d`: N1b Nebius defaults (watcher moved out of the repo) and N2 investigation contracts — DTOs, public certifications, catalog safety data, case records, narratives, six bounded read-only tools with host-owned `asOf`. Clean merge. Main agent set the ranking default to thinking off (`5bc4016`). On master: `npm test` 374/374, E2E 78/78. Handoff archived.
 - 2026-10-19 — **codex** `d3a500b` → merge `b255703` + main agent `1f18284`: N1 Nebius Token Factory provider (round 12): Nebius default, AMD kept, four roles with timeouts, per-provider controls, native/JSON-protocol tool turns, call metadata; main agent added the provider E2E and Nebius labels. `project-state/log.md` conflict kept both. Combined tree tested before merge: `npm test` 356/356, E2E 78/78. Handoff archived.
@@ -864,17 +912,9 @@ passed. Start with `git merge master`; ports 3021/3121; keep your watcher. Plan 
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 15 N3b — investigator lifecycle, safe policy, simulated narration, retained analytics and datasets.
-- **Changes:** READY expiry uses durable simulated-time scheduler claims (default 30 minutes), replay/idempotency across restart. Re-investigation supersedes the old run, invalidates tokens and gets a fresh cutoff. Explicit ABSTAINED/ESCALATED overrides use identical atomic qualification/prerequisite/availability checks. AUTO_APPROVE_SAFE acts only at the deadline on confirmed hazard-free MODERATE/STRONG READY results, recording prerequisite confirmations and actor `policy:AUTO_APPROVE_SAFE`; unsafe/stale READY expires, never auto-dispatching abstention/escalation/thin work. Independent persisted RNG samples planner issues (default share .2); engine facts remain fixed and narration receives only ObservableDTO, with strict validation/bounded provider/template fallback. Live/Offline share all services; no live calls made.
-- **UI contract:** room-scoped `POST /investigations/:id/override` body `{responderId, fixId, confirmedPrerequisites, reason, expectedRevision}` returns `{status:'OVERRIDDEN', id}`. Public decision has status/actor/at/responderId/fixId/reason/confirmedPrerequisites. `POST /investigations/:id/reinvestigate` body `{expectedRevision}` returns `{investigationId, issueId, supersedes}`. Public run adds createdAt/asOf/readyAt/deadline/supersedes. `PATCH /demo/investigation-policy` body `{expectedRevision, investigationApproval?, investigationDeadlineMinutes?, investigationShare?}` returns the policy with incremented revision, also `/state.investigationPolicy` (defaults OPERATOR/30/.2).
-- **Analytics contract:** `/analytics.investigations` and each period's investigations contain `{total, byOutcome, approvalRate, overrideRate, abstentionRate, firstFixComparison, definition}`. byOutcome includes requested statuses plus QUEUED/RUNNING/FAILED/SUPERSEDED. Each rate is `{numerator, denominator, rate, status}` (under three => null/INSUFFICIENT_DATA). Approval/override denominator is dispatched APPROVED/AUTO_APPROVED/OVERRIDDEN decisions; approval includes AUTO. Abstention denominator is evaluated READY/ABSTAINED/ESCALATED results. firstFixComparison is `{issues, investigator, classFrequencyBaseline, baselineAgreement, definition}`; baseline adds observed/unobserved. It freezes strictly earlier same-class observed fix frequency at run start, catalog-order ties. Same-issue alternative baseline outcomes are unobserved: rate null/COUNTERFACTUAL_NOT_OBSERVED rather than sampling hidden truth. Main's paired replay must supply causal comparison separately. Counts/periods/DTO context/detail/audits survive retention and reload.
-- **Datasets:** `backend/seed/investigation-lifecycle.json` reproducible four-hour synthetic example: APPROVED 1, AUTO_APPROVED 2, ABSTAINED 7, ESCALATED 1; sample INV-0001 approved, INV-0002 abstained, INV-0003 escalated. Also regenerated the month in ~14 seconds under safe policy/share .2: 23 AUTO_APPROVED, 2 EXPIRED, 1 ABSTAINED (no fabricated hazard); 612 issues/833 attempts/593 archived. Staged separately in `backend/seed/investigation-month/` to preserve existing paired-replay seed. The unattended run fills the pending queue after failed/unsupported work accumulates; its final weeks are quiet and it is not an improvement claim or replacement replay cohort. All files <20MB. README contains reproduction, exact sizes/hash and limits; generator supports `--investigation-share` and both-provider credential guards.
-- **Verification:** `npm test` 412/412; `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` 81/81 (final tree, 2.4m); fixture evaluation 24/24 outcome matches, 15/15 operator-confirmed interpretation agreement (not independent classifier accuracy), zero API calls. Lifecycle focused tests 18/18. Ranking-only reliability soak explicitly uses share zero to retain its original opportunity experiment; production default unchanged. No edits in frontend/, e2e/, docs/nebius/ or backend/data/.
-- **project-state pages updated:** investigation, simulation, live-runtime, offline-runtime, http-api, domain-model, overview, model-providers, analytics-and-ethics, testing, running-and-config, log; decisions appended.
-- **Risks / follow-ups:** Add UI for the named policy/override/re-investigate/analytics shapes; paired replay required for missing alternative baseline outcomes. Review staged month before any seed adoption; operator intervention is required after consumed/unsupported authorizations. Existing watcher PID 41408 retained; no second worker or watcher started. Codex ports 3021/3121 verified free after testing. The always-running Offline clock also delivers deadlines through the shared claim/completion helpers.
-- **Questions for main:** None.
+- **Task:** Round 16 assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
