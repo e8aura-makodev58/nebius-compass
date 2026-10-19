@@ -164,7 +164,7 @@ export async function requestEventProposal(packet, options = {}) {
   const mode = options.mode ?? process.env.COMPASS_EVENT_PLANNER_MODE ?? process.env.COMPASS_DEMO_INFERENCE_MODE ?? "fixture";
   const provider = options.provider ?? "amd";
   const modelId = options.modelId ?? roleDefaults(provider, "event-planner").modelId;
-  const reasoningEffort = options.reasoningEffort ?? (provider === "nebius" ? roleDefaults(provider, "event-planner").reasoningEffort : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId)));
+  const reasoningEffort = options.reasoningEffort ?? (provider === "nebius" ? (modelId === roleDefaults(provider, "event-planner").modelId ? roleDefaults(provider, "event-planner").reasoningEffort : "default") : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId)));
   const modelInfo = { provider, modelId, mode, ...(reasoningEffort ? { reasoningEffort } : {}) };
   if (mode === "force-failure") return { status: "unavailable", reason: "forced-failure", modelInfo };
   try {

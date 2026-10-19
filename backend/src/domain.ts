@@ -35,10 +35,15 @@ export interface Equipment extends Position {
   status: "NORMAL" | "ISSUE_ACTIVE" | "ATTENTION_REQUIRED" | "OFFLINE";
 }
 
+export type Certification = "ISOLATION" | "SPECIALIST-A" | "SPECIALIST-B" | "SPECIALIST-C";
+export type SafetyClass = "ROUTINE" | "ISOLATION_REQUIRED" | "SPECIALIST_ONLY";
+export type FixPrerequisite = "STATION_ISOLATED" | "LOCKOUT_CONFIRMED" | "DRIVE_DE_ENERGISED";
+
 export interface Responder extends Position {
   id: string;
   name: string;
   availability: Availability;
+  certifications?: Certification[];
   currentIssueId?: string;
   currentOfferId?: string;
 }
@@ -56,6 +61,8 @@ export interface Issue {
   /** Legacy planner text retained as an incident note, not the applied procedure. */
   responseAction?: string;
   symptom?: { code: string; text: string };
+  reportNarrative?: string;
+  narrativeSource?: "operator" | "simulated" | "template";
   fixRecommendation?: FixRecommendation;
   assignedResponderId?: string;
   pendingOfferId?: string;
@@ -250,7 +257,13 @@ export interface OperationalEvent {
 }
 
 /** Public procedure; effectiveness and latent diagnosis are deliberately absent. */
-export interface AppliedFix { id: string; title: string; steps: string }
+export interface AppliedFix {
+  id: string; title: string; steps: string;
+  /** Optional only for historical attempts frozen before the safety catalog. */
+  safetyClass?: SafetyClass;
+  prerequisites?: FixPrerequisite[];
+  requiredCertifications?: Certification[];
+}
 export interface FixEvidence {
   attempts: number; successes: number; firstAttempts: number; firstTimeSuccesses: number;
   smoothedSuccess: number; medianMinutes: number | null; lastUsed: string | null;

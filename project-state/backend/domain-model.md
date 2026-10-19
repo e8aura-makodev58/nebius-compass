@@ -116,3 +116,14 @@ packets are bounded to thirty closed plus one pending record; `/state` returns f
 plus the pending one. `staffingAudit` retains compact terminal comparison/outcome facts.
 Migration adds defaults, preserves legacy audit and never reopens an old review. Interrupted
 new inference is retryable; claimed deadline dispatch tokens survive restart.
+
+## Investigation public records
+
+Responders have public `certifications[]` (ISOLATION / SPECIALIST-A/B/C), generated in an
+independent id-seeded RNG namespace, never from skill. Issues have `reportNarrative` and
+`narrativeSource` (operator/simulated/template). Migration fills missing certification
+arrays and public-symptom-only narratives in current issues and compact archived facts;
+operator reports survive unchanged. The portable month seed uses the same load migration.
+Case identity is `CASE-<issueId>` and is derived from resolved public issue facts plus
+observed completed attempts, never hidden truth. See [investigation.md](investigation.md)
+for the explicit Case/Responder/Fix/Equipment DTO fields and legacy handling.

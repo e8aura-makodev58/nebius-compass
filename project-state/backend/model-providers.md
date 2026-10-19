@@ -12,20 +12,18 @@ outcomes or mutations; validators and deterministic fallback remain in the calle
 `investigator`, and `narrator`. Fix and staffing ranking reuse `compass`. Investigator and
 narrator settings are transport preparation; the investigation runtime is a later package.
 Each role stores model ID, reasoning effort and timeout; API saves accept 1000–120000 ms.
-Legacy flat AMD selections populate the two existing roles. Settings saves serialize
-atomic owner-only writes; a model save does not rewrite the separate credential file.
+Legacy flat AMD selections populate the two existing roles. Model and credential saves share a serialized queue for
+atomic owner-only writes; in-memory credentials change only after persistence succeeds; a model save does not rewrite the separate credential file.
 
 Nebius has **no guessed model defaults**. `NEBIUS_ROLE_DEFAULTS` is the single role-default
-table, initially with blank IDs; `roleDefaults` applies environment overrides. Blank or
+table, populated from the main agent’s N0 probes on 2026-10-19; `roleDefaults` applies environment overrides. Explicitly empty transport IDs or
 catalog-confirmed-missing Nebius models fail closed as `model-not-configured`; the live
 ranking/planner callers use deterministic fallback. AMD retains measured
 `MiMo-V2.6-Flash` / `none` defaults. Those AMD measurements are historical evidence, not
 measurements of Nebius or of new investigation behavior.
 
-`NEBIUS_MODEL_CAPABILITIES` is the per-model capability table that the main agent fills
-after N0. It selects `native` or `json-protocol` tool calling, JSON mode, and thinking
-mapping (`omit`, `reasoning_effort`, or `chat_template_kwargs.enable_thinking`). Until
-verified, thinking controls are omitted and tool proposals use a JSON protocol. Explicit
+`NEBIUS_MODEL_CAPABILITIES` is the per-model capability table populated from N0. It selects `native` or `json-protocol` tool calling, JSON mode, and thinking
+mapping (`omit`, `reasoning_effort`, or `chat_template_kwargs.enable_thinking`). For unverified model IDs, thinking controls are omitted and tool proposals use a JSON protocol. Explicit
 unsupported thinking controls fail closed. Nebius UI efforts are `default` and, only for
 verified thinking-capable models, `on`/`off`; optional `reasoningValues` maps on/off to the
 verified wire values. No live capability or license claim follows from discovery alone.
@@ -86,8 +84,21 @@ semantics. Only 429 retries, honoring Retry-After or bounded exponential jitter 
 caller's original deadline. Other failures return promptly; service failures affect only
 that provider's breaker. Application validation happens outside controls.
 
-Offline fixture paths remain API-free; forced failure remains deterministic. N0/live
-validation belongs to the main agent, never the unit suite or worker worktree.
+Offline fixture paths remain API-free; forced failure remains deterministic. Live validation belongs to the main agent, never the unit suite or worker worktree.
 Hermetic coverage: `amd-provider.test.mjs`, `nebius-provider.test.mjs`,
 `provider-controls.test.mjs`, `provider-settings.test.mjs`, and existing ranking tests.
 See [running and configuration](../operations/running-and-config.md) for env variables.
+
+## Verified N0 role defaults (2026-10-19)
+
+- Compass: `nvidia/nemotron-3-super-120b-a12b`, provider-default thinking.
+- Investigator: `nvidia/Nemotron-3-Ultra-550b-a55b`, provider-default thinking.
+- Event planner and narrator: `nvidia/Nemotron-3_5-Lightning`, thinking off.
+
+All use native tool calling and `chat_template_kwargs.enable_thinking`; output cap 4096.
+`reasoning_content` is discarded alongside other separate reasoning fields. The capability
+table also includes the verified Super-VL and Nano models for operator selection.
+Unknown replacement model IDs default to omitted thinking unless explicitly configured.
+Source: `docs/nebius/05_TOKEN_FACTORY_FACTS.md`; no worker live calls were made.
+
+Blank model/effort env seeds use built-in defaults (N1b); direct empty transport IDs still fail closed. Agent-only watcher code and its tests live under `/home/makodev58/nebius-tools/`, outside the product repository.

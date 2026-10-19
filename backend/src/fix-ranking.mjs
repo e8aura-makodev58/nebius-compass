@@ -29,7 +29,7 @@ export async function requestFixRanking(packet, options = {}) {
   const mode = options.mode ?? 'fixture';
   const provider = options.provider ?? 'amd';
   const modelId = options.modelId ?? roleDefaults(provider, 'compass').modelId;
-  const modelInfo = { provider, modelId, mode, reasoningEffort: options.reasoningEffort ?? (provider === 'nebius' ? roleDefaults(provider, 'compass').reasoningEffort : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId))) };
+  const modelInfo = { provider, modelId, mode, reasoningEffort: options.reasoningEffort ?? (provider === 'nebius' ? (modelId === roleDefaults(provider, 'compass').modelId ? roleDefaults(provider, 'compass').reasoningEffort : 'default') : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId))) };
   if (mode === 'force-failure') return { status: 'unavailable', reason: 'forced-failure', modelInfo };
   try {
     let result;

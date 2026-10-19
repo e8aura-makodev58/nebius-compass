@@ -672,9 +672,16 @@ in the same round; set `READY FOR MERGE` once at the end, unless N2 needs a deci
 
 ## codex
 
-- **Status:** IDLE
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-19
-- **Task:** Round 13 assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 13 — N1b complete separately; N2 contracts, DTOs and read-only tools complete.
+- **Changes:** Explicit Case/Responder/Fix/Equipment DTO constructors; six OpenAI-schema tools with host-bound `asOf`/target exclusion, strict args, fixed error codes, ≤10 rows and ≤8192 UTF-8 bytes. Archive-stable cases derive from compact issue facts and retained observations. Independent responder-id-seeded public certifications, catalog safety/prerequisite/qualification metadata, existing-room/month-seed migration and public-symptom narratives. Offline generator adds seeded noisy simulated reports through both adapters before retention.
+- **Files changed:** New `backend/src/investigation-{dto,records,tools}.mjs`, `backend/tests/investigation-contracts.test.mjs`; domain types, catalog/schema/migration, workforce provisioning, issue creation, history retention/generator; maintained project-state pages and appended decision/log entries. No frontend, E2E, fixture, docs/nebius or backend/data changes.
+- **Verification:** `npm test` **374/374**; `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **78/78**. Both ports 3021/3121 free. Hermetic checks include hidden-truth noninterference, renamed-key canaries, future-data perturbation, archive/reload stability, committed month-seed migration, certification independence, qualification, safety validation, tool budgets and supported history/responder scenario tags.
+- **project-state pages updated:** New `backend/investigation.md`; `backend/domain-model.md`, `backend/simulation.md`, `backend/overview.md`, `concepts/agent-boundary.md`, `operations/testing.md`, `index.md`, `log.md`.
+- **Risks / follow-ups:** N3a should use `createInvestigationTools(snapshot, {asOf,targetIssueId})`; schemas deliberately reject model-supplied cutoff/target. Host supplies the decision-time roster snapshot (no historical roster reconstruction). `truncated` requires run-budget/fallback handling, including a single oversized case. Responder DTOs expose observed count fields without outcome weights; legacy cases have unknown firstTimeFix and do not contribute fix evidence. Approval/prerequisite enforcement, hazard policy, model loop and routes remain N3a. Existing month-seed artifacts migrate on load without rewriting. See `project-state/backend/investigation.md` for exact shapes.
+- **Watcher:** Restarted `/home/makodev58/nebius-tools/watch-codex-handover.mjs --ack-current`, PID 41408, same thread, 300-second interval; remains running per master RUN control.
+- **Questions for main:** None.
 
 ---
 

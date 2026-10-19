@@ -86,3 +86,14 @@ its private effectiveness multiplies team success (clamped at the existing cap) 
 scales duration through segment rates. Roster changes preserve the same fix and draw.
 Failure reopens the issue and selects the next untried fix; after exhausting the catalog,
 the sequence restarts. Legacy running attempts keep their pre-upgrade mechanics.
+
+## Investigation procedure metadata and synthetic reports
+
+The v2 public fix catalog adds validated safety classes, prerequisite enums and required
+certifications, with routine, isolation-required and specialist-only procedures in each
+class. Investigation eligibility requires availability and all procedure certifications;
+operator prerequisite confirmation belongs to the later approval implementation.
+Certifications use an independent responder-id-seeded RNG namespace and never read skill.
+New issues get public-symptom template reports; the offline history generator writes
+id-seeded noisy synthetic reports before compaction through both store adapters. This
+consumes no engine RNG and calls no narrator. See [investigation.md](investigation.md).

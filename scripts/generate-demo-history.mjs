@@ -70,12 +70,20 @@ async function generate(options) {
   const { validateLiveState, createPublicLiveSnapshot, assertNoResponderSkill } = await import("../backend/src/live-schema.mjs");
   const { createLiveRuntime } = await import("../backend/src/live-runtime.mjs");
   const { createSimulationClock } = await import("../backend/src/simulation-clock.mjs");
+  const { ensureIssueNarrative } = await import("../backend/src/investigation-records.mjs");
   const { compactHistory, retentionDays } = await import("../backend/src/history-retention.mjs");
   const { writeHistoryArchive, copyHistoryArchive, assertHistoryArchivePresent } = await import("../backend/src/history-archive.mjs");
   const days = retentionDays(options.retentionDays ?? process.env.COMPASS_HISTORY_RETENTION_DAYS);
   const archiveRoot = `${out}.history`;
   if (`${from}.history` !== archiveRoot) await copyHistoryArchive(`${from}.history`, archiveRoot);
   state = migrateLiveState(state);
+  const narrate = (draft) => {
+    for (const issue of draft.issues) if (issue.narrativeSource === 'template' || !issue.reportNarrative) {
+      delete issue.reportNarrative;
+      ensureIssueNarrative(issue, { noisy: true });
+    }
+  };
+  narrate(state);
   // Explicit history-generation policy: retain autonomous surge behavior with audit.
   const { updateStaffingPolicy, decideStaffing } = await import('../backend/src/staffing-service.mjs');
   updateStaffingPolicy(state, { staffingApproval: 'AUTO_APPROVE_TOP', expectedRevision: state.workforceContinuity.staffingPolicyRevision });
@@ -92,6 +100,7 @@ async function generate(options) {
     async publicSnapshot() { return createPublicLiveSnapshot(state); },
     async mutate(label, mutation) {
       const result = await mutation(state);
+      narrate(state);
       state.revision += 1;
       await writeHistoryArchive(archiveRoot, state, compactHistory(state, days));
       return { label, revision: state.revision, result: structuredClone(result) };
@@ -102,7 +111,12 @@ async function generate(options) {
   if (options.durableStorePath) {
     const { createLiveStore } = await import("../backend/src/live-store.mjs");
     await writeFile(options.durableStorePath, `${JSON.stringify(state, null, 2)}\n`);
-    store = createLiveStore({ filePath: options.durableStorePath, historyRetentionDays: days, archiveRoot });
+    const durable = createLiveStore({ filePath: options.durableStorePath, historyRetentionDays: days, archiveRoot });
+    store = { ...durable, mutate: (label, mutation) => durable.mutate(label, async (draft) => {
+      const result = await mutation(draft);
+      narrate(draft);
+      return result;
+    }) };
   }
   const offline = { mode: "force-failure" };
   const runtime = createLiveRuntime({ store, plannerOptions: offline, agentOptions: offline });

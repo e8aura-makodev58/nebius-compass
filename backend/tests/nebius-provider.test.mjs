@@ -3,7 +3,7 @@ import test from 'node:test';
 import { mkdtemp, readFile, writeFile, stat, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { callChatTurn, callChatCompletion, readNebiusApiKey, nebiusBaseUrl, NEBIUS_DEFAULT_BASE_URL, roleDefaults, safeModelMetadata } from '../src/model-provider.mjs';
+import { callChatTurn, callChatCompletion, readNebiusApiKey, nebiusBaseUrl, NEBIUS_DEFAULT_BASE_URL, roleDefaults, safeModelMetadata, NEBIUS_ROLE_DEFAULTS } from '../src/model-provider.mjs';
 import { providerControlsFor, readProviderControlSettings } from '../src/provider-controls.mjs';
 import { createProviderSettingsService } from '../src/provider-settings.mjs';
 import { requestAgentRecommendation } from '../src/agent.mjs';
@@ -25,8 +25,8 @@ test('Nebius URL and key-file bootstrap fail closed and never guess a model', as
   assert.equal(readNebiusApiKey({ NEBIUS_TOKEN_FACTORY_API_KEY_FILE: file }), 'synthetic-file-key');
   assert.equal(readNebiusApiKey({ NEBIUS_TOKEN_FACTORY_API_KEY: ' direct ', NEBIUS_TOKEN_FACTORY_API_KEY_FILE: file }), 'direct');
   assert.equal(readNebiusApiKey({ NEBIUS_TOKEN_FACTORY_API_KEY_FILE: join(dir,'missing') }), '');
-  assert.equal(roleDefaults('nebius','compass',{}).modelId, '');
-  for (const role of ['event-planner','investigator','narrator']) assert.equal(roleDefaults('nebius',role,{}).modelId, '');
+  assert.equal(roleDefaults('nebius','compass',{}).modelId, NEBIUS_ROLE_DEFAULTS.compass.modelId);
+  for (const role of ['event-planner','investigator','narrator']) assert.equal(roleDefaults('nebius',role,{}).modelId, NEBIUS_ROLE_DEFAULTS[role].modelId);
   let called = false;
   await assert.rejects(callChatTurn({ ...base, modelId: '', fetchImpl: async () => { called = true; } }), { code: 'model-not-configured' });
   await assert.rejects(callChatTurn({ ...base, apiKey: '', fetchImpl: async () => { called = true; } }), /NEBIUS_TOKEN_FACTORY_API_KEY/);
@@ -101,7 +101,7 @@ test('controls isolate providers on the same transport, with independent environ
 });
 test('fresh settings default to unconfigured Nebius, with independently persisted roles and provider catalogs', async t => {
   const filePath=join(await directory(t),'settings.json');
-  const environment={NEBIUS_TOKEN_FACTORY_MODEL:'synthetic-ranker',NEBIUS_TOKEN_FACTORY_INVESTIGATOR_MODEL:'synthetic-investigator',NEBIUS_TOKEN_FACTORY_NARRATOR_MODEL:'synthetic-narrator',NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_MODEL:'synthetic-planner'};
+  const environment={NEBIUS_TOKEN_FACTORY_REASONING_EFFORT:'default',NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_REASONING_EFFORT:'default',NEBIUS_TOKEN_FACTORY_INVESTIGATOR_REASONING_EFFORT:'default',NEBIUS_TOKEN_FACTORY_NARRATOR_REASONING_EFFORT:'default',NEBIUS_TOKEN_FACTORY_MODEL:'synthetic-ranker',NEBIUS_TOKEN_FACTORY_INVESTIGATOR_MODEL:'synthetic-investigator',NEBIUS_TOKEN_FACTORY_NARRATOR_MODEL:'synthetic-narrator',NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_MODEL:'synthetic-planner'};
   const service=createProviderSettingsService({filePath,environment,apiKeys:{amd:'amd-key',nebius:'nebius-key'},fetchImpl:async(url)=>({ok:true,json:async()=>({data:[{id:url.includes('nebius')?'synthetic-ranker':'MiMo-V2.6-Flash'}]})})});
   const snapshot=await service.snapshot();assert.equal(snapshot.provider,'nebius');assert.equal(Object.keys(snapshot.roles).length,4);
   assert.equal((await service.requestOptions('investigator')).modelId,'synthetic-investigator');
@@ -126,7 +126,7 @@ test('saved AMD settings and credentials load byte-unchanged while fresh Nebius 
   assert.equal((await service.requestOptions()).provider,'amd');assert.equal((await service.requestOptions()).modelId,'saved-amd');assert.equal(await readFile(filePath,'utf8'),bytes);
   const fresh=createProviderSettingsService({filePath:join(dir,'fresh.json'),apiKeys:{},environment:{}});
   assert.equal((await fresh.snapshot()).provider,'nebius');
-  for(const role of ['compass','event-planner','investigator','narrator'])assert.equal((await fresh.requestOptions(role)).modelId,'');
+  for(const role of ['compass','event-planner','investigator','narrator'])assert.equal((await fresh.requestOptions(role)).modelId,NEBIUS_ROLE_DEFAULTS[role].modelId);
   const options={mode:'live',provider:'nebius',modelId:'',apiKey:'fake',fetchImpl:async()=>{throw Error('unexpected network');}};
   assert.equal((await requestAgentRecommendation({},options)).reason,'model-not-configured');
   assert.equal((await requestEventProposal({},options)).reason,'model-not-configured');
@@ -135,7 +135,7 @@ test('existing live ranking uses stubbed global fetch and retains Nebius metadat
   const state=createLiveSeed(),issue=state.issues.find(row=>row.symptom),packet=buildFixPacket(state,issue.id);
   const original=globalThis.fetch;t.after(()=>{globalThis.fetch=original;});
   globalThis.fetch=async(url)=>{assert.match(url,/tokenfactory.nebius.com/);return response({content:JSON.stringify({schemaVersion:'1.0',rankedFixes:packet.candidates.map((row,i)=>({fixId:row.fixId,rank:i+1,rationale:'Observed evidence supports this procedure.'}))})});};
-  const result=await requestFixRanking(packet,{mode:'live',provider:'nebius',modelId:base.modelId,apiKey:'fake'});
+  const result=await requestFixRanking(packet,{mode:'live',provider:'nebius',modelId:base.modelId,reasoningEffort:'default',apiKey:'fake'});
   assert.equal(result.status,'ok');assert.equal(result.modelInfo.provider,'nebius');assert.equal(result.modelInfo.usage.promptTokens,12);
   assert.ok(result.modelInfo.latencyMs>=0);
   assert.equal((await requestStaffingRanking({candidates:[]},{mode:'live',provider:'nebius',modelId:'',apiKey:'fake'})).reason,'model-not-configured');
@@ -158,4 +158,30 @@ test('recommendation persistence keeps Nebius source and bounded usage metadata'
   await service.recommend('ISS-104');const record=state.issues.find(row=>row.id==='ISS-104').fixRecommendation;
   assert.equal(record.source,'NEBIUS_MODEL');assert.deepEqual(record.modelInfo.usage,{promptTokens:4,completionTokens:3});
   assert.equal(record.modelInfo.prompt,undefined);
+});
+
+test('verified N0 role defaults map native tools and thinking through the capability table', async () => {
+  for(const role of ['compass','event-planner','investigator','narrator']) {
+    const defaults=roleDefaults('nebius',role,{});
+    await callChatTurn({provider:'nebius',...defaults,apiKey:'fake',tools:[tool],fetchImpl:async(_url,init)=>{
+      const body=JSON.parse(init.body);
+      assert.deepEqual(body.chat_template_kwargs,['compass','investigator'].includes(role) ? undefined : {enable_thinking:false});
+      assert.equal(body.reasoning_effort,undefined);assert.equal(body.tool_choice,'auto');assert.deepEqual(body.tools,[tool]);assert.equal(body.max_tokens,4096);
+      return response({content:'{}',reasoning_content:'never retain this'});
+    }});
+  }
+  assert.equal(roleDefaults('nebius','compass',{NEBIUS_TOKEN_FACTORY_MODEL:''}).modelId,NEBIUS_ROLE_DEFAULTS.compass.modelId);
+});
+
+test('simultaneous provider credential saves persist both keys and survive reload', async t => {
+  const filePath=join(await directory(t),'settings.json');
+  const service=createProviderSettingsService({filePath,environment:{},apiKeys:{}});
+  await Promise.all([service.updateCredential({provider:'amd',apiKey:'synthetic-amd-key'}),service.updateCredential({provider:'nebius',apiKey:'synthetic-nebius-key'})]);
+  const saved=JSON.parse(await readFile(join(filePath,'..','provider-credentials.json'),'utf8'));
+  assert.deepEqual(saved,{amd:'synthetic-amd-key',nebius:'synthetic-nebius-key'});
+  const reloaded=createProviderSettingsService({filePath,environment:{},apiKeys:{}});
+  const snapshot=await reloaded.snapshot();assert.equal(snapshot.providers.every(row=>row.credentialConfigured),true);
+  assert.equal(JSON.stringify(snapshot).includes('synthetic-nebius-key'),false);
+  await Promise.all([service.removeCredential('amd'),service.updateCredential({provider:'nebius',apiKey:'replacement'})]);
+  assert.deepEqual(JSON.parse(await readFile(join(filePath,'..','provider-credentials.json'),'utf8')),{nebius:'replacement'});
 });

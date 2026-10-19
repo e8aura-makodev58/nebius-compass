@@ -358,6 +358,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - The old `rendertest` library folder is gone on this machine. Playwright's headless shell is installed in `~/.cache/ms-playwright` and its missing system libraries are extracted (no sudo) into `/home/makodev58/nebius-tools/libs`. `AGENTS.md` rules 9 and 11, `handover.md`, README and the testing page now name that path.
 - Pages updated: operations/testing.md.
 
+
 ## [2026-10-19] measurement — Nebius Token Factory N0 probe
 - Team key verified (HTTP 200). `docs/nebius/05_TOKEN_FACTORY_FACTS.md` records catalog facts (five Nemotron models with context, price, limits), JSON mode, thinking control via `chat_template_kwargs.enable_thinking`, native tool calling on every Nemotron model, 5-run validity tables, and role defaults: investigator Ultra (thinking on), ranking Super (on), planner/narrator Lightning (off). `scripts/probe-nebius.mjs` is the manual, credit-spending probe (never in `npm test`).
 - Pages updated: none yet (codex updates model-providers.md in N1).
@@ -370,6 +371,21 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added Nebius as the fresh-settings default, preserving AMD selections/credentials; introduced four independent model roles, capability-driven thinking/tools, provider-isolated controls and bounded usage/latency metadata. Fixed cache-parent creation for fresh-clone unit tests.
 - Pages updated: `backend/model-providers.md`, `backend/overview.md`, `backend/http-api.md`, `operations/running-and-config.md`, `.env.example`, `docs/decisions.md`; frontend changes limited to Settings API role fields.
 
+## [2026-10-19] measurement — Nebius Token Factory N0 probe
+- Team key verified (HTTP 200). `docs/nebius/05_TOKEN_FACTORY_FACTS.md` records catalog facts (five Nemotron models with context, price, limits), JSON mode, thinking control via `chat_template_kwargs.enable_thinking`, native tool calling on every Nemotron model, 5-run validity tables, and role defaults: investigator Ultra (thinking on), ranking Super (on), planner/narrator Lightning (off). `scripts/probe-nebius.mjs` is the manual, credit-spending probe (never in `npm test`).
+- Pages updated: none yet (codex updates model-providers.md in N1).
+
+## [2026-10-19] feature — Adopt verified N0 Nemotron defaults
+- Filled the centralized role/capability tables from the main agent's live probes: Ultra investigator, Super ranking, Lightning planner/narrator; native tools, explicit thinking mapping and 4096-token cap. Retained fail-closed explicit blanks and env overrides.
+- Pages updated: `backend/model-providers.md`, `operations/running-and-config.md`, `.env.example`, `docs/decisions.md`.
+
+## [2026-10-19] fix — Serialize provider credential saves
+- Model and credential updates now share the settings save queue; concurrent AMD/Nebius key updates cannot collide on one temporary file or lose a provider's credential. In-memory credentials change only after persistence succeeds. Added a simultaneous-save/reload/remove regression.
+- Pages updated: `backend/model-providers.md`, Codex handoff in `handover.md`.
+
+
+## [2026-10-19] chore — N1b defaults and agent tooling
+- Applied round-13 defaults (Super/Ultra default thinking, Lightning off; blank env seeds use built-ins); moved the running agent watcher and its tests to `/home/makodev58/nebius-tools/` without restarting it. Updated provider/configuration pages.
 ## [2026-10-19] measurement — Nebius ranking and planner on the real Compass packets
 - `scripts/measure-amd-models.mjs` gains `--provider nebius` (defaults to the Nebius ranking model). Five samples per setting on the Scenario A ranking packet and the planner packet: Super with thinking off was 5/5 valid with the expected top pick 5/5 at 3.2 s; Super with thinking on was 4/5, 2/5, 17.6 s with one truncation. The ranking default becomes Super / off (codex applies it in N1b). Table in `docs/nebius/05_TOKEN_FACTORY_FACTS.md`.
 - Pages updated: none (codex updates model-providers.md in N1b).
@@ -387,3 +403,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] ui — Field reports tile fits the desktop right column
 - Inside Dockview the tile drops its duplicate heading and shows investigations as one horizontally scrolling strip; the default layout sizes it to 42% of the frame height (min 240px), so the selected investigation's detail starts in view. Phone and display-screen layouts are unchanged.
 - Pages updated: none (frontend/overview.md already describes the right column).
+
+## [2026-10-19] feature — N2 investigation evidence contracts
+- Added allowlisted DTOs and six bounded, read-only tools with host-owned cutoffs, archive-stable cases, public certifications, safety catalog data, and template/noisy synthetic narratives. Added hermetic contract, noninterference, cutoff, migration and scenario-tag coverage.
+- Pages updated: backend/investigation.md (new), backend/domain-model.md, backend/simulation.md, backend/overview.md, concepts/agent-boundary.md, operations/testing.md, index.md.

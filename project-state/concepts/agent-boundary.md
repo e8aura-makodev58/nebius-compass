@@ -74,3 +74,13 @@ If you are tempted to let a model decide *whether* to act, *what* the outcome is
 is eligible*, stop — that belongs in application code. The model's role is to choose among
 already-established options and explain the choice. Keeping this line is what makes ResponseCompass
 auditable and safe to run unattended.
+
+## Investigation evidence boundary
+
+`investigation-dto.mjs` constructs explicit public Case/Responder/Fix/Equipment fields;
+`investigation-tools.mjs` exposes six read-only schema-validated tools, bounded to ten
+rows and eight KiB per result. The host binds `asOf` and the excluded target issue;
+completed evidence must precede the cutoff strictly, including archive-backed cases.
+Tools use public qualifications, never skill or outcome weights, for eligibility.
+Narratives are untrusted data. Canary, hidden-truth noninterference and future-data
+perturbation tests cover these contracts. See [../backend/investigation.md](../backend/investigation.md).
