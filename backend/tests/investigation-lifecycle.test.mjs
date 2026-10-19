@@ -175,7 +175,7 @@ test('policy and re-investigate/override routes use the same room service and re
   const {store,ids,record}=await ready();
   const runtime=createLiveRuntime({store,agentOptions:{mode:'fixture'},plannerOptions:{mode:'force-failure'},investigatorOptions:{mode:'force-failure',now:()=>0},narratorOptions:{mode:'fixture'}});
   const handler=createRequestHandler({getRoom:(id)=>({id,health:'READY',applicationRuntime:runtime})});
-  async function request(method,path,body){let result;const response={writeHead(code){this.code=code;},end(data){result={code:this.code,body:JSON.parse(data)};}};await handler({url:`/api/control-rooms/plant-1${path}`,headers:{host:'localhost'},method,async *[Symbol.asyncIterator](){yield JSON.stringify(body);}},response);return result;}
+  async function request(method,path,body){let result;const response={writeHead(code){this.code=code;},end(data){result={code:this.code,body:JSON.parse(data)};}};await handler({url:`/api/control-rooms/plant-1${path}`,headers:{host:'localhost','content-type':'application/json'},method,async *[Symbol.asyncIterator](){yield JSON.stringify(body);}},response);return result;}
   const policy=await request('PATCH','/demo/investigation-policy',{expectedRevision:0,investigationShare:0,investigationApproval:'AUTO_APPROVE_SAFE'});assert.equal(policy.code,200);assert.equal(policy.body.revision,1);
   assert.equal((await request('PATCH','/demo/investigation-policy',{expectedRevision:0,investigationShare:1})).code,409);
   const next=await request('POST',`/investigations/${record.id}/reinvestigate`,{expectedRevision:record.revision});assert.equal(next.code,200);await runtime.agentWorkIdle();

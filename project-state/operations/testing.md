@@ -225,3 +225,12 @@ Node test workers never use the production ledger file; no live provider is adde
 that each existing fixture is covered by a Dockerfile COPY at its expected relative path.
 Replay tests cover public provenance labels and sanitization; `eval-score.test.mjs` checks
 source-specific denominators, excluded cases, zero-case sources and legacy pairs.
+
+`investigation-security.test.mjs` covers room Origin/media-type guards, numeric metric
+allowlisting and ID boundaries, trace poison/legacy redaction, total final validation and
+public repair IDs, unsupported-first-fix abstention, hazard variants, concurrent rate/backlog
+limits, fair work claims, orphan reclamation/ID continuity, and streamed provider byte caps.
+Playwright's shared config supplies JSON headers for bodyless mutation setup commands;
+request-guard rejection tests explicitly omit/override those headers in unit handler tests.
+The synthetic lifecycle fixture is regenerated with `node backend/seed/create-investigation-dataset.mjs`
+when policy/report schema changes, and the lifecycle suite checks byte reproducibility.

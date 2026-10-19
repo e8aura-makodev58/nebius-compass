@@ -13,7 +13,7 @@ import { crewForTime, ROTATION_ANCHOR } from './workforce-continuity.mjs';
 import { assertNoResponderSkill } from './live-schema.mjs';
 import { createReplayOutcomeRunner } from './replay-outcome-runner.mjs';
 const PUBLIC_SOURCES = new Set(['NEBIUS_MODEL','AMD_MODEL','DETERMINISTIC','FIXTURE']);
-const PUBLIC_FALLBACK_REASONS = new Set(['forced-failure','invalid-fixture','missing-fixture','deadline','invalid-tool-call','tool-step-cap','trace-budget','validation-failed','inference-call-cap','tool-result-budget','invalid-tool-arguments','budget-exhausted','provider-error']);
+const PUBLIC_FALLBACK_REASONS = new Set(['forced-failure','invalid-fixture','missing-fixture','deadline','invalid-tool-call','tool-step-cap','trace-budget','validation-failed','inference-call-cap','tool-result-budget','invalid-tool-arguments','budget-exhausted','provider-error','response-too-large']);
 function provenance(result) {
   return {source:PUBLIC_SOURCES.has(result?.source)?result.source:'UNKNOWN',
     fallbackReason:result?.fallbackReason == null ? null : PUBLIC_FALLBACK_REASONS.has(result.fallbackReason)?result.fallbackReason:'unknown'};

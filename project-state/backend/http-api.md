@@ -178,3 +178,16 @@ readable even with tunnel settings locked. Today/last7Days daily entries carry d
 promptTokens, completionTokens, knownCostUsd, estimatedCostUsd (null if incomplete),
 unpricedCalls, byRole and byModel. Role entries have totals; model rows identify provider,
 model and role. This exposes aggregates only, never prompts/credentials. Budget is env-only.
+
+## Room mutation request boundary
+
+Every non-GET/HEAD/OPTIONS request under `/api/control-rooms/:id` requires media type
+`application/json` (parameters allowed), including commands with no body. Otherwise the
+server returns 415 / `JSON_CONTENT_TYPE_REQUIRED`. A supplied Origin must exactly match
+the request's scheme and Host; a reverse proxy may supply a single `X-Forwarded-Proto`
+value for the external scheme. Cross-origin, null and malformed origins return 403 /
+`CROSS_ORIGIN_MUTATION` before recording activity or touching the runtime. Missing Origin
+is allowed for CLI/testing. These guards provide no identity authentication or operator
+authorization. Report flooding additionally returns 429 / `REPORT_RATE_LIMIT` or
+`REPORT_BACKLOG_FULL`; see investigation.md. JSON body limits are byte-based and return
+413 / `REQUEST_TOO_LARGE`; malformed JSON returns 400 / `INVALID_JSON`.

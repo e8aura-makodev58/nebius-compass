@@ -1,3 +1,4 @@
+import { cloneDraftValue } from './live-draft.mjs';
 import { publicInvestigationState, investigationDTO, reportDTO } from './investigation-public.mjs';
 import { CERTIFICATIONS } from './investigation-records.mjs';
 import { staffingBacklog } from './staffing-service.mjs';
@@ -320,14 +321,14 @@ export function createPublicLiveSnapshot(state, { validated = false } = {}) {
     const latest = state.recommendations.findLast((row) => row.issueId === issue.id && ["READY", "UNAVAILABLE", "PENDING_MODEL"].includes(row.status));
     if (latest) recommendationIds.add(latest.id);
   }
-  const publicState = structuredClone({ ...base, ...publicInvestigationState(state),
+  const publicState = structuredClone(cloneDraftValue({ ...base, ...publicInvestigationState(state),
     issues: [...state.issues.filter((row) => issueIds.has(row.id)), ...(state.historyRetention?.facts.issues ?? []).filter((row) => issueIds.has(row.id))].map((row) => row.dispatchGate !== "INVESTIGATION" && row.status !== "RESOLVED" && row.symptom && !row.fixRecommendation ? { ...row, fixRecommendation: deterministicFixRecommendation(state, row) } : row),
     assignments: state.assignments.filter((row) => row.status === "ACTIVE"),
     resolutionAttempts: state.resolutionAttempts.filter((row) => row.status === "ACTIVE"),
     recommendations: state.recommendations.filter((row) => recommendationIds.has(row.id)),
     dispatchOffers: [...new Map([...(state.dispatchOffers ?? []).slice(-30), ...(state.dispatchOffers ?? []).filter((row) => row.status === "PENDING")].map((row) => [row.id, row])).values()],
     operationalEvents: eventTail,
-  });
+  }));
   if (publicState.workforceContinuity) {
     delete publicState.workforceContinuity.workforceProvisioningSeed;
     delete publicState.workforceContinuity.rotationAnchor;

@@ -131,7 +131,7 @@ test('room staffing HTTP routes reject policy bypass, map revisions/stale/invali
  const {createRequestHandler}=await import('../src/server.mjs');const {wrapRuntimeAsSingleRoomManager,roomUrl}=await import('./helpers/single-room-manager.mjs');const {createLiveRuntime}=await import('../src/live-runtime.mjs');
  const s=seed(),rec=review(s),store=memory(s);store.publicSnapshot=async()=>createPublicLiveSnapshot(s);
  const handler=createRequestHandler(wrapRuntimeAsSingleRoomManager(createLiveRuntime({store,plannerOptions:{mode:'force-failure'},agentOptions:{mode:'force-failure'}})));
- const invoke=async(method,path,body)=>{let raw;const response={status:0,writeHead(status){this.status=status;},end(value){raw=value;}};await handler({method,url:roomUrl(path),headers:{host:'localhost'},async *[Symbol.asyncIterator](){yield Buffer.from(JSON.stringify(body??{}));}},response);return {status:response.status,body:JSON.parse(raw)};};
+ const invoke=async(method,path,body)=>{let raw;const response={status:0,writeHead(status){this.status=status;},end(value){raw=value;}};await handler({method,url:roomUrl(path),headers:{host:'localhost','content-type':'application/json'},async *[Symbol.asyncIterator](){yield Buffer.from(JSON.stringify(body??{}));}},response);return {status:response.status,body:JSON.parse(raw)};};
  assert.equal((await invoke('POST',`/staffing/${rec.id}/approve`,{optionId:rec.rankedOptions[0].optionId,automatic:true})).status,409);
  assert.equal((await invoke('POST',`/staffing/${rec.id}/approve`,{optionId:'invented',expectedRevision:0})).status,400);
  assert.equal((await invoke('POST','/staffing/missing/reject',{expectedRevision:0})).status,404);

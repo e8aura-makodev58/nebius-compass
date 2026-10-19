@@ -282,6 +282,31 @@ export function normalizeChatTurn(payload, { tools = [], native = false, modelId
   } catch { return invalid(); }
 }
 
+export const PROVIDER_RESPONSE_MAX_BYTES = 262144;
+/** Bound streamed success/error envelopes before parsing, including chunked bodies. */
+async function boundedResponseText(response) {
+  const oversized=()=>Object.assign(new Error('Provider response exceeds byte limit'),{code:'response-too-large',serviceFailure:false});
+  const declared=Number(response.headers?.get?.('content-length'));
+  if(declared>PROVIDER_RESPONSE_MAX_BYTES) {response.body?.cancel?.().catch(()=>{});throw oversized();}
+  if(response.body?.getReader) {
+    const reader=response.body.getReader(),chunks=[];let size=0;
+    try {
+      while(true) {
+        const {done,value}=await reader.read();if(done)break;
+        size+=value.byteLength;
+        if(size>PROVIDER_RESPONSE_MAX_BYTES) {reader.cancel().catch(()=>{});throw oversized();}
+        chunks.push(Buffer.from(value));
+      }
+      return Buffer.concat(chunks,size).toString('utf8');
+    } finally {reader.releaseLock();}
+  }
+  // In-memory transport adapters used by hermetic callers may expose only json/text.
+  // Native fetch responses always take the streamed path above.
+  const text=response.text?await response.text():JSON.stringify(await response.json());
+  if(Buffer.byteLength(text)>PROVIDER_RESPONSE_MAX_BYTES)throw oversized();
+  return text;
+}
+
 async function attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel, timeoutMs, usageLedger, provider, modelId, role, deadline, now }) {
   await usageLedger.beforeStart();
   timeoutMs=Math.min(timeoutMs,Math.max(0,deadline-now()));
@@ -297,11 +322,14 @@ async function attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel,
       signal: controller.signal,
     });
     reachedService = true;
+    let responseText;
+    try {responseText=await boundedResponseText(response);}
+    catch(error) {if(response.ok||error.code==='response-too-large')throw error;responseText='';}
     if (!response.ok) {
       // The provider's own words are the only thing that distinguishes a bad
       // parameter from a bad key from a retired model. Bounded, and never
       // includes the request body or headers.
-      const text = await response.text().catch(() => "");
+      const text = responseText;
       let payload;try {payload=JSON.parse(text);} catch {}
       if(payload)await usageLedger.record({provider,model:payload.model ?? modelId,role,usage:payload.usage});
       const detail = upstreamErrorDetail(text);
@@ -312,7 +340,7 @@ async function attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel,
         serviceFailure: response.status === 429 || response.status >= 500,
       });
     }
-    const payload = await response.json();
+    const payload = JSON.parse(responseText);
     await usageLedger.record({provider,model:payload?.model ?? modelId,role,usage:payload?.usage});
     const choice = payload?.choices?.[0];
     if (choice?.finish_reason === "length") throw new Error(`${errorLabel} response was truncated at the output-token limit`);

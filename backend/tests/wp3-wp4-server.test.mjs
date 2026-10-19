@@ -20,7 +20,7 @@ function responseCapture() {
 
 async function invoke(handler, method, url) {
   const response = responseCapture();
-  await handler({ method, url, headers: { host: "localhost" } }, response);
+  await handler({ method, url, headers: { host: "localhost", "content-type": "application/json" } }, response);
   return { ...response.capture, json: JSON.parse(response.capture.body) };
 }
 

@@ -1,14 +1,25 @@
+import { assertNoResponderSkill } from './live-schema.mjs';
 import { INVESTIGATION_TOOLS } from './investigation-tools.mjs';
 /** Explicit public report, investigation and trace constructors. */
 const terminal = new Set(['APPROVED','OVERRIDDEN','AUTO_APPROVED','REJECTED','EXPIRED','SUPERSEDED']);
-const string = (value,max=600) => typeof value==='string'?value.slice(0,max):'';
+const string = (value,max=600) => {
+  const text=typeof value==='string'?value.slice(0,max):'';
+  try { assertNoResponderSkill(text); return text; } catch { return '[redacted]'; }
+};
 function publicArgs(tool,args) {
   const properties = INVESTIGATION_TOOLS.find((row)=>row.function.name===tool)?.function.parameters.properties ?? {};
   return Object.fromEntries(Object.entries(properties).flatMap(([key,spec])=>{
     const value = args?.[key];
     if (!Object.hasOwn(args??{},key)) return [];
     if (spec.type === 'integer') return Number.isSafeInteger(value) ? [[key,value]] : [];
-    return typeof value === 'string' ? [[key,value.slice(0,spec.maxLength??120)]] : [];
+    return typeof value === 'string' ? [[key,string(value,spec.maxLength??120)]] : [];
+  }));
+}
+/** Model arguments remain quoted data; reserved markers cannot poison public snapshots. */
+export function sanitizeInvestigationTrace(rows) {
+  return (rows??[]).slice(0,6).filter((t)=>INVESTIGATION_TOOLS.some((row)=>row.function.name===t?.tool)).map((t)=>({
+    tool:t.tool,args:publicArgs(t.tool,t.args),resultIds:(t.resultIds??[]).slice(0,10).map((id)=>string(id,120)),
+    ms:Number.isFinite(t.ms)?Math.max(0,t.ms):0,...(t.error?{error:string(t.error,120)}:{}),
   }));
 }
 function copyRefs(rows) { return (rows??[]).map((row) => ({caseId:row.caseId,field:row.field})); }
@@ -19,7 +30,7 @@ export function investigationDTO(row, {summary=false}={}) {
     hypotheses:(row.hypotheses??[]).map((h)=>({symptomCode:h.symptomCode,text:h.text,evidenceRefs:copyRefs(h.evidenceRefs)})),
     fixes:(row.fixes??[]).map((f)=>({fixId:f.fixId,title:f.title,steps:f.steps,safetyClass:f.safetyClass,prerequisites:[...f.prerequisites],requiredCertifications:[...f.requiredCertifications],grade:f.grade,rationale:f.rationale,evidenceRefs:copyRefs(f.evidenceRefs)})),
     responders:(row.responders??[]).map((r)=>({responderId:r.responderId,displayName:r.displayName,qualified:r.qualified,certifications:[...r.certifications],rationale:r.rationale})),
-    trace:(row.trace??[]).map((t)=>({tool:t.tool,args:publicArgs(t.tool,t.args),resultIds:[...t.resultIds],ms:t.ms,...(t.error?{error:t.error}:{})})),
+    trace:sanitizeInvestigationTrace(row.trace),
     decision:row.decision ? {status:row.decision.status,actor:row.decision.actor,at:row.decision.at,responderId:row.decision.responderId,fixId:row.decision.fixId,reason:row.decision.reason,confirmedPrerequisites:[...(row.decision.confirmedPrerequisites??[])]}:null,
     feedback:row.feedback?{useful:row.feedback.useful}:null,revision:row.revision,
     interpretation:row.interpretation ? {equipmentId:row.interpretation.equipmentId,issueClass:row.interpretation.issueClass,symptomCode:row.interpretation.symptomCode}:null,

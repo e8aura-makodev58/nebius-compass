@@ -1170,3 +1170,31 @@ unknown-model calls cost nothing. UTC completion-day accounting and 120-day rete
 persistence; serialized atomic writes and a durable daily log flag survive restart. Settings
 exposes these aggregates read-only to judges, including tunnel visitors, without granting
 budget/configuration authority. Hermetic test workers use memory/scratch ledgers only.
+
+## 2026-10-19 — Round 21 investigator security boundaries
+
+- Room mutations require JSON media type, including bodyless commands, and reject a supplied
+  cross-origin/null/malformed Origin. Compare against Host and the external protocol
+  (`X-Forwarded-Proto` when present). Missing Origin remains valid for CLI callers. This is
+  partial hardening, not authentication: login, authenticated actors and endpoint permissions
+  remain an explicit user decision. Frontend bodyless mutation callers must send JSON headers.
+- Replaced broad digit harvesting with per-tool numeric metric allowlists (evidence counts,
+  case/historical counts, case minutes). Strip supplied IDs only at whole-token boundaries.
+  Reject percentage/probability/chance/likelihood claims even when a metric contains those
+  digits. Repair retains public catalog/returned IDs and cannot execute further tools.
+- Sanitize model-origin trace strings and legacy DTO traces; validate the complete public room
+  projection before model results commit. Unsupported first-fix grade NONE yields ABSTAINED;
+  normal approvals recheck selected-fix grade and the current report hazard policy, including
+  saved legacy READY records. Safe deadline approval rechecks current report hazards too.
+  Malformed array elements consume the existing bounded repair instead of becoming provider
+  errors. Hazard policy v2 covers common inflections, flames, fumes and arcing.
+- Choose conservative room-service admission defaults: 20 submission attempts per rolling
+  real minute, process-local, plus 100 open reports checked transactionally and persistent
+  across service restarts. Rotate work kinds so rankings cannot starve investigations.
+- Closed orphan reports cannot enter issue archives without inventing an issue. Reclaim full
+  orphan report/run rows after the simulated retention window or above 100 closed records;
+  preserve compact analytic outcomes, operational audit events and monotonic IDs. Full orphan
+  detail expires (404); linked issue archives are unchanged. No runtime data migration/write.
+- Bound decoded provider envelopes to 256 KiB before parsing, cancel oversized streams, and
+  bound investigator content/arguments locally. Retain existing provider timeout/retry and
+  usage boundaries. Regenerate only the synthetic lifecycle fixture for reproducibility.

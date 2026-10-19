@@ -134,7 +134,7 @@ Room state may contain `fieldReports`, `investigations` and private monotone
 `investigationSequences`. Report status is UNRESOLVED/CONFIRMED/CLOSED; interpretation
 ranking has QUEUED/PENDING_MODEL/READY with a private request identity. Investigation
 states are QUEUED/RUNNING/READY/ABSTAINED/ESCALATED and operator APPROVED/REJECTED; expiry
-and supersession are reserved for N3b. A private token protects every in-flight run, and
+and supersession are listed in the lifecycle additions below. A private token protects every in-flight run, and
 interrupted runs are requeued on load. Public projections construct explicit fields and
 retain open plus twenty terminal records; they never spread private run rows.
 
@@ -153,3 +153,10 @@ baseline fix, deadline and private claim tokens; SUPERSEDED, EXPIRED, OVERRIDDEN
 AUTO_APPROVED are explicit terminal statuses. ObservableDTO contains only equipmentName,
 issueClass, symptomText and recentPublicEvents. Simulated reports are engine-confirmed;
 operator field reports retain the explicit confirmation workflow. See investigation.md.
+
+New operator reports retain application-owned simulated `createdAt` and, on closure,
+`closedAt` timestamps for orphan retention; these fields do not expand the public report
+DTO. Closed unlinked reports and their full orphan investigation rows expire by age or
+count cap; compact investigation facts and sequence high-water marks survive reclamation.
+Report admission's real-time window is process-local, while the open backlog cap is
+checked against persisted report/investigation state. See investigation.md for limits.

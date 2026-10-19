@@ -25,7 +25,28 @@ export function recentHistoryEvents(state, limit = 100) {
   return tail ? [...tail.events, ...state.operationalEvents.slice(tail.liveStart)].slice(-limit) : state.operationalEvents.slice(-limit);
 }
 
+/** Closed reports without an issue cannot enter issue archives. Reclaim full rows while
+ * retaining compact investigation facts and monotonic identifiers. Count cap also works
+ * with paused clocks; age cleanup follows the configured simulated retention window. */
+export function pruneClosedOrphanReports(state, days) {
+  const protectedReports=new Set((state.investigations??[]).filter((row)=>row.issueId||['QUEUED','RUNNING','READY'].includes(row.status)).map((row)=>row.reportId));
+  const eligible=(state.fieldReports??[]).filter((report)=>report.status==='CLOSED'&&!report.issueId&&!protectedReports.has(report.id));
+  const cutoff=Date.parse(state.simulationState.simulationTime)-days*86400000;
+  const removed=new Set(eligible.filter((row,index)=>index<eligible.length-100 || (days>0&&Date.parse(row.closedAt??row.createdAt)<cutoff)).map((row)=>row.id));
+  if(!removed.size)return;
+  state.investigationSequences??={};
+  for(const [collection,prefix] of [['fieldReports','FR'],['investigations','INV']]) {
+    state.investigationSequences[collection]=(state[collection]??[]).reduce((max,row)=>Math.max(max,Number(new RegExp(`^${prefix}-(\\d+)$`).exec(row.id)?.[1]??0)),state.investigationSequences[collection]??0);
+  }
+  state.historyRetention??=metadata();
+  state.historyRetention.facts.investigations??=[];
+  for(const row of state.investigations??[])if(removed.has(row.reportId))state.historyRetention.facts.investigations.push(compactInvestigationFact(row));
+  state.investigations=(state.investigations??[]).filter((row)=>!removed.has(row.reportId));
+  state.fieldReports=state.fieldReports.filter((row)=>!removed.has(row.id));
+}
+
 export function compactHistory(state, days = retentionDays(), { force = false } = {}) {
+  pruneClosedOrphanReports(state,days);
   if (!days) return [];
   const day = state.simulationState.simulationTime.slice(0, 10);
   if (!force && state.historyRetention?.lastDay === day) return [];

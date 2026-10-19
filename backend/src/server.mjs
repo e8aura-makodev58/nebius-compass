@@ -112,13 +112,31 @@ async function serveStatic(pathname, response) {
   }
 }
 
-async function readJsonBody(request, maxLength = 2000) {
-  let body = "";
-  for await (const chunk of request) {
-    body += chunk;
-    if (body.length > maxLength) throw new Error("Request body is too large");
+function assertRoomMutationRequest(request) {
+  const origin=request.headers.origin;
+  const protocol=request.headers['x-forwarded-proto'] ?? (request.socket?.encrypted?'https':'http');
+  if (origin !== undefined) {
+    let same=false;
+    try {
+      const parsed=new URL(origin),expected=new URL(`${protocol}://${request.headers.host}`);
+      same=['http:','https:'].includes(parsed.protocol)&&parsed.origin===origin&&parsed.origin===expected.origin;
+    } catch { /* null, malformed or multiple origins fail closed */ }
+    if(!same)throw Object.assign(new Error('Cross-origin room mutation rejected'),{statusCode:403,code:'CROSS_ORIGIN_MUTATION'});
   }
-  return body ? JSON.parse(body) : {};
+  const type=request.headers['content-type'];
+  if(typeof type!=='string'||type.split(';')[0].trim().toLowerCase()!=='application/json')
+    throw Object.assign(new Error('Room mutations require application/json'),{statusCode:415,code:'JSON_CONTENT_TYPE_REQUIRED'});
+}
+async function readJsonBody(request, maxLength = 2000) {
+  const chunks=[];let size=0;
+  for await (const chunk of request) {
+    const bytes=Buffer.from(chunk);size+=bytes.length;
+    if (size > maxLength) throw Object.assign(new Error('Request body is too large'),{statusCode:413,code:'REQUEST_TOO_LARGE'});
+    chunks.push(bytes);
+  }
+  const body=Buffer.concat(chunks).toString('utf8');
+  try {return body ? JSON.parse(body) : {};}
+  catch {throw Object.assign(new Error('Invalid JSON request body'),{statusCode:400,code:'INVALID_JSON'});}
 }
 
 /**
@@ -314,6 +332,7 @@ export function createRequestHandler(manager, logger = null, settingsService = n
     const requestLogger = lifecycleRoom ? createControlRoomLogger(logger, lifecycleRoom.id) : logger;
     logEvent(requestLogger, "request_started", { method: request.method, path: url.pathname });
     try {
+      if (/^\/api\/control-rooms\/[^/]+(?:\/|$)/.test(url.pathname) && !['GET','HEAD','OPTIONS'].includes(request.method)) assertRoomMutationRequest(request);
       if (request.method === "GET" && url.pathname === "/api/control-rooms") {
         return sendJson(response, 200, { rooms: await manager.listRoomsWithStatus() });
       }
@@ -414,7 +433,7 @@ export function createRequestHandler(manager, logger = null, settingsService = n
     } catch (error) {
       logEvent(requestLogger, "request_error", { method: request.method, path: url.pathname, error: error.message });
       const status = Number.isInteger(error.statusCode) ? error.statusCode : 500;
-      return sendJson(response, status, { error: status < 500 ? error.message : "Internal server error", ...(status === 409 && error.code ? { code: error.code } : {}) });
+      return sendJson(response, status, { error: status < 500 ? error.message : "Internal server error", ...(status < 500 && error.code ? { code: error.code } : {}) });
     } finally {
       logEvent(requestLogger, "request_completed", {
         method: request.method,

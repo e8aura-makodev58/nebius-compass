@@ -272,3 +272,37 @@ Test oversized chunked success and error responses with local fetch stubs.
   exist. They do not address the backlog or upstream byte limits above. Injection
   keyword detection is advisory; JSON quoting and prompts alone do not prove a
   model will ignore hostile text.
+
+## Status — round 21 implementation (2026-10-19)
+
+Codex implemented backend changes for findings 2–8 and 10. Regression tests cover
+trace sanitization and public projection before commit; numeric metric allowlisting
+and whole-ID boundaries; hazard inflections; selected-fix evidence; report admission
+and fair work scheduling; closed orphan reclamation; malformed-final repair; and
+streamed provider response caps. Defaults and retention tradeoffs are recorded in
+`docs/decisions.md` and `project-state/backend/investigation.md`. No live model calls
+were used, so live model quality/injection compliance remains unmeasured.
+
+Finding 1 is **partially addressed**: room mutations require JSON and same-origin
+when an Origin is supplied. Missing Origin is deliberately allowed for CLI callers.
+Authentication and authenticated actor attribution are still pending user direction.
+Finding 9 belongs to the main agent.
+
+**Required frontend integration (main agent):** `frontend/app.js`'s request helper
+currently sets JSON headers only when `options.body` exists. Set that header for
+POST/PUT/PATCH/DELETE commands too, including bodyless start/pause/reset/activity
+requests. For the existing helper expression, use:
+
+```js
+headers: options.body || ['POST', 'PUT', 'PATCH', 'DELETE'].includes((options.method ?? 'GET').toUpperCase())
+  ? { 'content-type': 'application/json' } : undefined
+```
+
+Codex left `frontend/` and `e2e/` untouched as assigned. The shared Playwright config
+supplies JSON headers to bodyless setup commands; browser suite success under that
+config does **not** establish that unmodified production bodyless callers work.
+The frontend helper change must accompany integration before deployment.
+
+Final backend verification: `npm test` 448/448; Chromium E2E on Codex port 3021
+83/83, with forced providers and the shared JSON request-header default described
+above. Test servers stopped; no live calls or runtime data writes.

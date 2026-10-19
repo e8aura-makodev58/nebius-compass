@@ -1,7 +1,7 @@
 import { ensureInvestigationPolicy, sampleInvestigation, scheduleInvestigationDeadline, clearInvestigationDeadline } from './investigation-policy.mjs';
 import { classFrequencyBaseline } from './investigation-analytics.mjs';
 import { narrateIssue } from './narrator.mjs';
-import { assertNoResponderSkill } from './live-schema.mjs';
+import { assertNoResponderSkill, createPublicLiveSnapshot } from './live-schema.mjs';
 /** Persisted reports, gated issue creation and atomic operator decisions. No model mutations. */
 import { randomUUID } from 'node:crypto';
 import { ensureIssueFault } from './fault-truth.mjs';
@@ -14,6 +14,9 @@ import { priorityForIssue } from './workforce-continuity.mjs';
 
 import { reportDTO, investigationDTO } from './investigation-public.mjs';
 export { reportDTO, investigationDTO, publicInvestigationState } from './investigation-public.mjs';
+export const REPORT_OPEN_LIMIT = 100;
+export const REPORT_RATE_LIMIT = 20;
+export const REPORT_RATE_WINDOW_MS = 60000;
 const terminal = new Set(['APPROVED','OVERRIDDEN','AUTO_APPROVED','REJECTED','EXPIRED','SUPERSEDED']);
 const string = (value,max=600) => {
   const text=typeof value==='string'?value.slice(0,max):'';
@@ -72,20 +75,32 @@ export function recoverInvestigations(state) {
   for (const report of state.fieldReports) if (report.narrationStatus==='PENDING_MODEL') {report.narrationStatus=report.status==='CLOSED'?'CANCELLED':'QUEUED';delete report.narratorToken;}
   for(const report of state.fieldReports) if(report.status==='UNRESOLVED'&&['RUNNING','PENDING_MODEL'].includes(report.interpretation.status)){report.interpretation.status='QUEUED';report.revision++;delete report.requestToken;}
 }
-export function createInvestigationService(store,{ investigatorOptions={}, rankingOptions={}, narratorOptions={} }={}) {
+export function createInvestigationService(store,{ investigatorOptions={}, rankingOptions={}, narratorOptions={}, reportNow=()=>performance.now() }={}) {
   const resolve=async(value)=>typeof value==='function'?await value():value;
-  const mutate=async(label,fn)=>(await store.mutate(label,fn)).result;
+  let admissions=[],nextKind=0;
+  const mutate=async(label,fn)=>(await store.mutate(label,(state)=>{
+    const result=fn(state);
+    // Validate model publications before commit; idle claims do not build snapshots.
+    if(['investigation-completed','interpretation-ranked','simulation-report-narrated'].includes(label))createPublicLiveSnapshot(state,{validated:true});
+    return result;
+  })).result;
   return {
     async submit(input) {
       inputObject(input,['narrative','equipmentId','reporter']);
       if ((input.equipmentId !== undefined && typeof input.equipmentId !== 'string') || (input.reporter !== undefined && (typeof input.reporter !== 'string' || input.reporter.length > 120))) throw investigationError('INVALID_REPORT',400);
       if(!input||typeof input!=='object'||typeof input.narrative!=='string'||Object.keys(input).some((k)=>!['narrative','equipmentId','reporter'].includes(k))||input.narrative.length>10000)throw investigationError('INVALID_REPORT',400);
       try { assertNoResponderSkill(input.narrative); } catch { throw investigationError('RESTRICTED_REPORT_CONTENT',400); }
+      const now=reportNow();
+      admissions=admissions.filter((at)=>at>now-REPORT_RATE_WINDOW_MS);
+      if(admissions.length>=REPORT_RATE_LIMIT)throw investigationError('REPORT_RATE_LIMIT',429);
+      admissions.push(now);
       return mutate('field-report-create',(state)=>{
         state.fieldReports??=[];state.investigations??=[];
+        const active=new Set(state.investigations.filter((row)=>!terminal.has(row.status)).map((row)=>row.reportId));
+        if(state.fieldReports.filter((row)=>row.status!=='CLOSED'&&(row.status==='UNRESOLVED'||active.has(row.id))).length>=REPORT_OPEN_LIMIT)throw investigationError('REPORT_BACKLOG_FULL',429);
         if(input.equipmentId&&!state.equipment.some((r)=>r.id===input.equipmentId))throw investigationError('EQUIPMENT_NOT_FOUND',404);
         const flags=reportPolicy(input.narrative);
-        const report={id:idFor(state,'fieldReports','FR'),status:'UNRESOLVED',narrative:input.narrative.slice(0,601),flags,revision:0,equipmentId:input.equipmentId??null,
+        const report={id:idFor(state,'fieldReports','FR'),createdAt:state.simulationState.simulationTime,status:'UNRESOLVED',narrative:input.narrative.slice(0,601),flags,revision:0,equipmentId:input.equipmentId??null,
           interpretation:{status:'QUEUED',source:'DETERMINISTIC',model:null,options:interpretationOptions(state,input.narrative,input.equipmentId)}};
         state.fieldReports.push(report);
         investigationEvent(state,'FIELD_REPORT_CREATED',report);
@@ -124,7 +139,7 @@ export function createInvestigationService(store,{ investigatorOptions={}, ranki
         const report=state.fieldReports?.find((row)=>row.id===id);if(!report)throw investigationError('REPORT_NOT_FOUND',404);
         if(input.expectedRevision!==undefined&&input.expectedRevision!==report.revision)throw investigationError('STALE');
         if(state.investigations.some((r)=>r.reportId===id&&['APPROVED','OVERRIDDEN','AUTO_APPROVED'].includes(r.status)))throw investigationError('STALE');
-        report.status='CLOSED';report.revision++;delete report.requestToken;delete report.narratorToken;if(report.narrationStatus)report.narrationStatus='CANCELLED';
+        report.status='CLOSED';report.closedAt=state.simulationState.simulationTime;report.revision++;delete report.requestToken;delete report.narratorToken;if(report.narrationStatus)report.narrationStatus='CANCELLED';
         for(const row of state.investigations.filter((r)=>r.reportId===id&&!terminal.has(r.status))){clearInvestigationDeadline(row);row.updatedAt=state.simulationState.simulationTime;row.status='REJECTED';row.revision++;delete row.requestToken;row.decision={status:'REJECTED',actor:'Central command',at:state.simulationState.simulationTime,reason:string(input.reason,360),confirmedPrerequisites:[]};}
         investigationEvent(state,'FIELD_REPORT_CLOSED',report,{reason:string(input.reason,360)});return {reportId:id};
       });
@@ -174,11 +189,18 @@ export function createInvestigationService(store,{ investigatorOptions={}, ranki
     async finishDeadline(trigger) {return mutate('investigation-deadline',(state)=>finishInvestigationDeadline(state,trigger));},
     async runNext() {
       const claim=await mutate('investigation-work-claim',(state)=>{
-        const report=state.fieldReports?.find((r)=>r.status==='UNRESOLVED'&&r.interpretation.status==='QUEUED');
-        if(report){report.interpretation.status='PENDING_MODEL';report.revision++;report.requestToken=randomUUID();return {kind:'report',id:report.id,token:report.requestToken};}
-        const narration=state.fieldReports?.find((r)=>r.status!=='CLOSED'&&r.narrationStatus==='QUEUED');
-        if(narration){narration.narrationStatus='PENDING_MODEL';narration.narratorToken=randomUUID();return {kind:'narration',id:narration.id,token:narration.narratorToken};}
-        const row=state.investigations?.find((r)=>r.status==='QUEUED'&&!['QUEUED','PENDING_MODEL'].includes(state.fieldReports.find((f)=>f.id===r.reportId)?.narrationStatus));if(!row)return null;
+        const candidates={
+          report:state.fieldReports?.find((r)=>r.status==='UNRESOLVED'&&r.interpretation.status==='QUEUED'),
+          narration:state.fieldReports?.find((r)=>r.status!=='CLOSED'&&r.narrationStatus==='QUEUED'),
+          investigation:state.investigations?.find((r)=>r.status==='QUEUED'&&!['QUEUED','PENDING_MODEL'].includes(state.fieldReports.find((f)=>f.id===r.reportId)?.narrationStatus)),
+        };
+        const kinds=['investigation','narration','report'];
+        const index=[0,1,2].map((offset)=>(nextKind+offset)%3).find((index)=>candidates[kinds[index]]);
+        if(index===undefined)return null;
+        nextKind=(index+1)%3;
+        const kind=kinds[index],row=candidates[kind];
+        if(kind==='report'){row.interpretation.status='PENDING_MODEL';row.revision++;row.requestToken=randomUUID();return {kind,id:row.id,token:row.requestToken};}
+        if(kind==='narration'){row.narrationStatus='PENDING_MODEL';row.narratorToken=randomUUID();return {kind,id:row.id,token:row.narratorToken};}
         row.status='RUNNING';row.revision++;row.requestToken=randomUUID();row.asOf=state.simulationState.simulationTime;row.updatedAt=row.asOf;row.baselineFixId=classFrequencyBaseline(state,state.issues.find((issue)=>issue.id===row.issueId),row.asOf);return {kind:'investigation',id:row.id,token:row.requestToken};
       });
       if(!claim)return false;
@@ -212,6 +234,7 @@ export function createInvestigationService(store,{ investigatorOptions={}, ranki
 export function authorizeInvestigation(state,row,input,{manual=false,policy=false}={}) {
   const issue=state.issues.find((item)=>item.id===row.issueId);
   const fix=fixById(issue?.issueClass,input.fixId),responder=state.responders.find((item)=>item.id===input.responderId);
+  const report=state.fieldReports?.find((item)=>item.id===row.reportId),currentFlags=reportPolicy(report?.narrative);
   const prerequisites=input.confirmedPrerequisites;
   const validStatus=manual?['ABSTAINED','ESCALATED'].includes(row.status):row.status==='READY';
   const reason=string(input.reason,360);
@@ -219,7 +242,8 @@ export function authorizeInvestigation(state,row,input,{manual=false,policy=fals
       !issue || issue.dispatchGate!=='INVESTIGATION' || !['PENDING','RECOMMENDATION_READY'].includes(issue.status) || !fix || !responder || responder.availability!=='AVAILABLE' ||
       state.assignments.some((item)=>item.status==='ACTIVE'&&(item.responderId===responder.id||item.issueId===issue.id)) || state.resolutionAttempts.some((item)=>item.issueId===issue.id&&item.status==='ACTIVE') ||
       !fix.requiredCertifications.every((cert)=>responder.certifications?.includes(cert)) || !Array.isArray(prerequisites) || prerequisites.some((value)=>!PREREQUISITES.includes(value)) || new Set(prerequisites).size!==prerequisites.length || !fix.prerequisites.every((value)=>prerequisites.includes(value)) ||
-      (manual&&!reason.trim()) || (!manual&&!row.fixes.some((item)=>item.fixId===fix.id))) throw investigationError('STALE');
+      (!manual&&(!report||report.flags?.hazard?.length||report.flags?.input||currentFlags.hazard.length||currentFlags.input)) ||
+      (manual&&!reason.trim()) || (!manual&&!row.fixes.some((item)=>item.fixId===fix.id&&['THIN','MODERATE','STRONG'].includes(item.grade)))) throw investigationError('STALE');
   const status=policy?'AUTO_APPROVED':manual?'OVERRIDDEN':'APPROVED';
   const actor=policy?'policy:AUTO_APPROVE_SAFE':'Central command';
   row.decision={status,authorizedResponderId:responder.id,authorizedFixId:fix.id,responderId:responder.id,fixId:fix.id,actor,at:state.simulationState.simulationTime,revision:row.revision,confirmedPrerequisites:[...prerequisites],reason,manualOverride:manual,attemptId:null};
@@ -233,8 +257,8 @@ export function finishInvestigationDeadline(state,trigger) {
   const row=state.investigations?.find((item)=>item.id===trigger.investigationId);
   if(!row || row.status!=='READY' || !trigger.token || row.deadlineDispatchToken!==trigger.token || Date.parse(row.deadline)>Date.parse(state.simulationState.simulationTime)) return {status:'DUPLICATE_OR_STALE'};
   const config=ensureInvestigationPolicy(state),report=state.fieldReports.find((item)=>item.id===row.reportId);
-  const first=row.fixes[0];
-  if(config.investigationApproval==='AUTO_APPROVE_SAFE' && ['MODERATE','STRONG'].includes(row.evidenceGrade) && ['MODERATE','STRONG'].includes(first?.grade) && report?.status==='CONFIRMED' && Array.isArray(report.flags?.hazard) && report.flags.hazard.length===0 && !report.flags.input) {
+  const first=row.fixes[0],currentFlags=reportPolicy(report?.narrative);
+  if(config.investigationApproval==='AUTO_APPROVE_SAFE' && ['MODERATE','STRONG'].includes(row.evidenceGrade) && ['MODERATE','STRONG'].includes(first?.grade) && report?.status==='CONFIRMED' && Array.isArray(report.flags?.hazard) && report.flags.hazard.length===0 && !report.flags.input && !currentFlags.hazard.length && !currentFlags.input) {
     const issue=state.issues.find((item)=>item.id===row.issueId),fix=fixById(issue?.issueClass,first.fixId);
     const responder=row.responders.find((candidate)=>candidate.qualified && state.responders.some((item)=>item.id===candidate.responderId&&item.availability==='AVAILABLE'&&fix?.requiredCertifications.every((cert)=>item.certifications?.includes(cert))));
     if(fix&&responder) {

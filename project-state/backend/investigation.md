@@ -94,8 +94,9 @@ qualification, budgets, noisy templates, and read-only scenario setup tags.
 ## Field reports and interpretation
 
 `report-policy.mjs` owns the versioned hazard/injection lexicons and the public symptom
-registry shared with the fault engine. Hazards (heat, smoke, sparks, injury, fire,
-burning, bypass, override interlock) take precedence over input rejection, and create an
+registry shared with the fault engine. Policy v2 recognizes hazard inflections (including
+sparking/smoking), flames, fumes and arcing as well as heat, injury, fire, burns, bypass
+and override interlock. These hazards take precedence over input rejection, and create an
 ESCALATED investigation without resolving provider settings or calling a model. A known,
 unoccupied station creates a gated issue directly; an occupied/unidentified station is
 recorded as an escalation without inventing a duplicate incident. Input that is empty,
@@ -128,14 +129,21 @@ Each run has a shared monotonic deadline (maximum 120 seconds), at most six prop
 executions and eight inference calls, including at most one final-output repair. Each
 provider promise is raced against the remaining deadline, so a transport that ignores its
 own timeout still cannot pin the work lane. Persisted traces contain only schema-validated
-arguments, returned IDs, elapsed times and fixed errors, with a 64 KiB limit. Invalid raw
+arguments, returned IDs, elapsed times and fixed errors, with a 64 KiB limit. Reserved
+hidden-truth markers in public trace strings are redacted before persistence and on DTO
+projection of legacy traces. Model publications validate the complete public room snapshot
+inside the transaction before commit; snapshot projection supports copy-on-write drafts.
+Idle work claims do not perform this additional projection. Invalid raw
 model text is discarded; `rawInvalid` is a boolean, not stored prose.
 
 Final hypotheses use class symptom codes and an allowlist of public observable phrases.
 Fixes are catalog IDs; responder IDs must have been returned by eligible_responders for
 the first fix. Citations name only CaseDTO fields and cases actually returned in this run.
 Unknown keys, invented IDs, duplicate rankings and prose over 400 characters or containing
-digits outside supplied IDs fail validation. One repair shares the original budget and
+digits outside complete supplied ID tokens or allowlisted numeric tool metrics fail validation.
+Numeric grounding uses only per-tool count fields and case `totalMinutes`; narrative, ID
+and timestamp digits are excluded. Percentage/probability/chance/likelihood claims always
+fail, even if the same number occurs in a metric. One repair shares the original budget and
 cannot execute further tools. Procedures always come verbatim from the catalog.
 
 Code computes grades and qualification. A model ESCALATE paired with a MODERATE/STRONG
@@ -143,11 +151,13 @@ first fix and supplied qualified responder is contradictory final output: bounde
 feedback requests the existing single repair within the original budget. Repeated contradiction
 uses deterministic fallback. ESCALATE remains accepted without a supported qualified action;
 code-owned hazard escalation still precedes all model work. Otherwise accepted escalation takes precedence;
-otherwise an explicit abstention, no supported fix or no eligible qualified responder
+otherwise an explicit abstention, grade NONE for the selected first fix, or no eligible qualified responder
 produces ABSTAINED. THIN produces a low-evidence warning and still requires approval.
 Code also shows approaching duty endpoints as public facts. Failures use labelled
 DETERMINISTIC output: lexical case overlap, observed fix evidence and nearest qualified
-responder order. No fallback opens the dispatch gate. Fixture mode reads the labelled
+responder order. No fallback opens the dispatch gate. Normal approval also requires a supported selected
+fix and rechecks the current hazard/input policy against the saved report, so legacy READY
+records cannot bypass the updated checks. Safe deadline approval rechecks this too. Fixture mode reads the labelled
 synthetic script in `fixtures/investigation/synthetic-responses/default.json`; no credential
 or network access is needed.
 
@@ -286,3 +296,26 @@ meta reports window, source hashes, counts, model IDs and runtime. CLI `--replay
 existing pure scorePairedReplay; see `docs/evaluation.md` for method, assumptions and commands.
 `backend/tests/replay-runner.test.mjs` covers future/truth noninterference, identical draws,
 fixed-responder controls, coverage, reproducibility and a hermetic limit-five CLI invocation.
+
+## Report admission and orphan retention
+
+`createInvestigationService` admits at most 20 syntactically valid submission attempts per
+rolling 60 real seconds per room service, using a monotonic process-local clock. Limit
+rejections happen before store mutation (`REPORT_RATE_LIMIT`, HTTP 429); the limiter
+resets on process/service restart. Inside the transaction, a persisted cap of 100 unresolved
+or nonterminal-investigation reports rejects new reports with `REPORT_BACKLOG_FULL` / 429,
+including after restart. Closing a report frees its open slot. Rejected backlog attempts
+consume rate slots. Simulated reports remain governed by the simulation's issue limits.
+
+Work claims rotate fairly among investigation, narration and interpretation ranking so a
+continuous ranking backlog cannot starve queued investigations. Each kind gets a turn
+within three successful claims when eligible. An individual model call still has its
+existing deadline.
+
+`pruneClosedOrphanReports` runs before daily issue-compaction shortcuts. Closed reports
+without a linked issue retain at most 100 full records, even with paused simulated time or
+archiving disabled. With retention enabled, records older than the configured simulated
+window expire too. Associated orphan investigations become compact lifetime analytic
+facts; operational audit events remain retained. Sequence high-water marks prevent ID reuse.
+Full orphan report/run lookup returns 404 after reclamation; issue-linked records retain
+the existing issue archive path. Active/pending records are never reclaimed by this policy.
