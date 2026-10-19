@@ -8,11 +8,11 @@ merges finished work into `master`, and archives merged handoffs to
 
 | Agent | Worktree | Branch |
 |---|---|---|
-| Main agent (Claude, unless the user says otherwise) | `/home/makodev58/nebius-compass` | `master` |
+| Main agent (Claude, user 2026-10-19): session and own work | `/home/makodev58/nebius-compass-claude` | `claude` |
+| Main agent: integration checkout (merges, assignments, merge log) | `/home/makodev58/nebius-compass` | `master` |
 | Codex | `/home/makodev58/nebius-compass-codex` | `codex` |
 | Gemini (**excluded from tasks** since 2026-10-17) | `/home/makodev58/nebius-compass-gemini` | `gemini` |
 | CodeBuddy (**excluded from tasks** since 2026-10-17) | `/home/makodev58/nebius-compass-codebuddy` | `codebuddy` |
-| Claude worker (**not used** since 2026-10-17; the main agent is Claude) | `/home/makodev58/nebius-compass-claude` | `claude` |
 
 ## Protocol
 
@@ -45,9 +45,13 @@ since 2026-10-17):**
 
 **Main agent:**
 
+0. Run your session in `/home/makodev58/nebius-compass-claude` and do your own tasks on the
+   `claude` branch, like a worker. Touch `/home/makodev58/nebius-compass` (`master`) only to
+   integrate: `git -C /home/makodev58/nebius-compass …`, and the suites run there.
 1. Write and update assignments in **Main agent → Assignments**, on `master`.
-2. To merge, read `handover.md` in each agent's worktree. For each `READY FOR MERGE` branch,
-   review the diff against `master`, merge it into `master`, rerun both suites on `master`,
+2. To merge, read each agent's section with `git show <agent>:handover.md`. For each `READY FOR MERGE` branch,
+   review the diff against `master`, merge it into `master` (your own `claude` branch goes
+   through the same review and merge), rerun both suites on `master`,
    then record the merge in **Merge log**.
 3. Copy the agent's handoff into `docs/handover-history.md` under **Merged handoffs**,
    newest first. Then reset that agent's section on `master` to `IDLE`.
@@ -68,11 +72,11 @@ Each agent tests on **its own ports only** and frees them **immediately** after 
 
 | Agent | E2E port (`COMPASS_E2E_PORT`) | Manual preview server |
 |---|---|---|
-| main agent | 3012 (default) | 3013 |
+| main agent (integration checkout, `master`) | 3012 (default) | 3013 |
 | codex | 3021 | 3121 |
 | gemini | 3022 (excluded) | 3122 (excluded) |
 | codebuddy | 3023 (excluded) | 3123 (excluded) |
-| claude | 3024 (not used) | 3124 (not used) |
+| claude (main agent's own work) | 3024 | 3124 |
 
 - **E2E:** run `COMPASS_E2E_PORT=<your port> LD_LIBRARY_PATH=/home/makodev58/rendertest/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`.
   Playwright starts the server and stops it when the run ends, using its own
@@ -96,7 +100,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | codex | STOP (no open task) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
-| claude | STOP (task taken by the main agent) |
+| claude | n/a (main agent; runs the main agent watcher) |
 
 Main agent watcher: polls every 300s for `READY FOR MERGE` / `BLOCKED` on each agent's branch
 and stops once no agent has an open assignment.
@@ -110,7 +114,7 @@ and stops once no agent has an open assignment.
 | codex | none | — |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
-| claude | none — provider controls built by the main agent on master | — |
+| claude | none (main agent's own work) | — |
 
 Finished tasks are recorded in **Merge log** below, never as "none" lines here.
 

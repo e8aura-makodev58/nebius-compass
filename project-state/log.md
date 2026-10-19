@@ -324,3 +324,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — Agents stay inside `nebius` folders
 - By user direction the `amd` folder rules are obsolete. `AGENTS.md` rules 10–11, the `handover.md` role table and protocol, and `~/aura-harness/aura-harness.md` now name `/home/makodev58/nebius-compass` (master) and `/home/makodev58/nebius-compass-<agent>` worktrees (e.g. `nebius-compass-claude`, `nebius-compass-codex`); agents never touch folders without `nebius` in the name, including `~/amd-compass`.
 - Pages updated: none (agent protocol only).
+
+## [2026-10-19] docs — Main agent runs from its own worktree
+- The user named Claude the main agent and runs its session in `/home/makodev58/nebius-compass-claude` (branch `claude`). `/home/makodev58/nebius-compass` stays on `master` as the integration checkout, used by the main agent only via `git -C` and suite runs, for assignments, merges (its own `claude` branch included) and the merge log. `AGENTS.md` rule 10, the `handover.md` role table, main-agent protocol, Ports/Watcher/Current-task rows, and `~/aura-harness/aura-harness.md` updated.
+- Pages updated: none (agent protocol only).
