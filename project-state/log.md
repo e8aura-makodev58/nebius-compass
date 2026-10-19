@@ -332,3 +332,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — Nebius hackathon plan
 - `docs/nebius/04_HACKATHON_PLAN.md` (draft v1): audit of the baseline `1e1c69c`, the new feature (Compass Investigator: Nemotron tool-using investigation with citations, safety gate, abstention and operator-approved dispatch), model tiering, evaluation harness, work packages N0–N9 with owners, risks and user blockers. Out for codex review.
 - Pages updated: none (plan only).
+
+## [2026-10-19] docs — Codex review of Nebius hackathon plan
+- Added a one-pass, evidence-backed review covering authority/privacy, approval, safety, replay isolation, scope, ownership and objective acceptance criteria. No implementation behavior changed.
+- Pages updated: `docs/nebius/04_HACKATHON_PLAN_REVIEW.md`, Codex section of `handover.md`; no component wiki changes required.

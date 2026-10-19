@@ -508,9 +508,14 @@ every **300 s**; act when your Current task row changes; stop per Watcher contro
 
 ## codex
 
-- **Status:** IDLE
-- **Updated:** 2026-10-18
-- **Task:** None. Round 10 merged; see `docs/handover-history.md`.
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-19
+- **Task:** Round 11 — one-pass Nebius hackathon plan review (docs only).
+- **Changes:** Added `docs/nebius/04_HACKATHON_PLAN_REVIEW.md` with twelve numbered findings and proposed revisions. Three blockers cover model fact authority, dispatch approval enforcement, and tool/trace privacy; remaining findings cover narratives, safety, replay, scope/dates, ownership, acceptance and release gates. Plan unchanged.
+- **Verification:** Read the supplied brief/rules/guide and checked findings against source, project-state and git provenance. Suites not run: docs-only exemption explicitly authorized in round 11 assignment.
+- **project-state pages updated:** `project-state/log.md` (review record only; implementation unchanged).
+- **Risks / follow-ups:** Main revises plan before N1 execution assignment. Codex watcher running every 300 seconds against master; stops on STOP or no task.
+- **Questions for main:** No response needed beyond plan revision and next assignment.
 
 ---
 
