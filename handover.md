@@ -912,9 +912,17 @@ excluded }]` with each arm `{ fixed: boolean }`).
 
 ## codex
 
-- **Status:** IDLE
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-19
-- **Task:** Round 16 assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 16 — N5 part 2 paired first-fix replay outcome runner.
+- **Changes:** Added `runPairedReplay({mode,heldOutDays=7,limit,investigate})` returning `{pairs,meta}`. Default input is the existing committed plant-1 month plus its archives, read-only. Cohort uses resolvedAt in the last window ending at seed clock, public symptoms and a catalog fix; sorts raisedAt/ID and applies limit. Each public decision is reconstructed strictly before raisedAt, excludes target/equal/future outcomes and cached recommendations, and uses engine-owned simulated interpretation without approval policy. Baselines use the existing class-frequency and deterministic symptom fix order from that cutoff-filtered packet.
+- **Engine boundary:** Separate `replay-outcome-runner.mjs` captures private truth and original first-attempt draw; reverses the attempt LCG twice to reproduce both original duration/success draws. Three isolated engine starts use the actual historical first responder, same simulation instant/history/private inputs; only explicit fix changes. Only `{fixed}` returns. Missing original draw/cause/skill/first responder, invalid output or thrown runs become FAILED exclusions. ABSTAINED/ESCALATED stay excluded. No live dispatch, approval, assistance or retry mutation. Canary tests prove cause/skill changes affect outcomes but not packets; future-data perturbations leave the target's state, baselines and paired outcome unchanged.
+- **Metadata / CLI:** meta has heldOutWindow, resolved/eligible/selected/ready/fallback/repaired/rawInvalid/timeout/failed counts, seedHash (decoded seed SHA-256), archiveHash (sorted source archive digest), mode, modelIds, selection, startedAt/finishedAt/runtimeMs. CLI `npm run eval:investigator -- --replay --mode fixture --limit 5` is hermetic; `--held-out-days N`, `--limit N`, `--json <path>` supported. Prints existing scorePairedReplay coverage, exclusions, all three first-fix rates and directional discordant pairs with denominators. JSON contains only pairs/meta/score, no private state or model traces. Original scenario CLI path preserved.
+- **Verification:** `npm test` 421/421; required E2E command with COMPASS_E2E_PORT=3021 and Chromium LD_LIBRARY_PATH 81/81 (3.1m). Six focused replay tests pass, including repeatable limit-five fixture/CLI runs. Original scenario fixture CLI still 24/24. No live calls; no replay result numbers added to evaluation docs. Codex ports 3021/3121 free after tests.
+- **Docs:** method-only section in docs/evaluation.md; rule-4 rationale in decisions; project-state investigation, overview, analytics-and-ethics, testing and log updated.
+- **Preserved work:** Sync merge e77f3a8 retained N3b/aa62320 fallback metadata and tests, combined both append-only logs/decisions, retained both ESCALATE tests and consolidated the duplicated repair logic. No edits to frontend/, e2e/, docs/nebius/ or backend/data/. No seed changes.
+- **Risks / follow-ups:** Main agent runs live replay; no model/business improvement claimed. Historical public roster is reconstructed from immutable seed reference definitions, fixed rotation, prior approved staffing intervals and assignment occupancy/positions, not every historical UI relocation. Holding the historical responder fixed controls efficacy; this is not a claim of lawful alternative dispatch to that responder. Fixture model IDs are nominal configuration, not live calls. Existing watcher PID 41408 retained without restart or a second worker.
+- **Questions for main:** None.
 
 ---
 

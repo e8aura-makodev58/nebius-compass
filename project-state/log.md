@@ -442,6 +442,10 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - `docs/DEMO_SCRIPT.md`: a 2:45 walkthrough recorded on a live run, with a recording checklist.
 - Pages updated: none.
 
+
+## [2026-10-19] fix — Validate contradictory model escalation before outcome selection
+- Live-eval follow-up: a MODERATE/STRONG first fix plus a qualified responder cannot also propose ESCALATE. Request one bounded repair inside existing budgets; preserve unsupported and code-owned hazard escalation. Clarified prompt, labelled every deterministic public/eval result, and extended hermetic flags/repair/policy tests. Refreshed the small synthetic seed for persisted policy reasons; counts unchanged.
+- Pages updated: backend/investigation.md; live results still require a separate measurement.
 ## [2026-10-19] fix — Model ESCALATE beside a supported recommendation is repaired
 - `investigator.mjs`: a model `ESCALATE` with a supported (MODERATE/STRONG) first fix and a qualified responder is a validation error (one repair, then `validation-failed` fallback); prompt reserves ESCALATE for blocking safety concerns. Test in `investigator.test.mjs`. Main agent did this right after merging N3b, with codex idle.
 - Pages updated: backend/investigation.md.
@@ -454,3 +458,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Field reports tile: decision deadline line, Re-investigate (supersedes, follows the new run), audited manual dispatch for ABSTAINED/ESCALATED (certification-filtered responders, prerequisites, required reason; state kept across polls). Settings → Demo: field report policy (approval mode, deadline, share). Analytics: "Field report investigations" (outcomes, approval/override/abstention rates, first-fix comparison with the counterfactual caveat).
 - E2E (real routes): re-investigate → override dispatch with exact decision fields and assignment; policy save; analytics panel.
 - Pages updated: frontend/overview.md.
+
+## [2026-10-19] feature — Paired rolling-origin first-fix replay runner
+- Added public cutoff-filtered decisions and an isolated engine-only three-arm outcome runner using the historical first responder and common recorded draws. CLI --replay reports paired coverage/exclusions, rates and discordance through the existing scorer; hermetic tests cover a five-issue fixture replay, future/hidden-truth invariance and reproducibility. No live run or result claims.
+- Pages updated: backend/investigation.md, backend/overview.md, operations/testing.md, concepts/analytics-and-ethics.md; method in docs/evaluation.md.

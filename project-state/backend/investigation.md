@@ -138,7 +138,11 @@ Unknown keys, invented IDs, duplicate rankings and prose over 400 characters or 
 digits outside supplied IDs fail validation. One repair shares the original budget and
 cannot execute further tools. Procedures always come verbatim from the catalog.
 
-Code computes grades and qualification. Accepted model escalation takes precedence;
+Code computes grades and qualification. A model ESCALATE paired with a MODERATE/STRONG
+first fix and supplied qualified responder is contradictory final output: bounded validation
+feedback requests the existing single repair within the original budget. Repeated contradiction
+uses deterministic fallback. ESCALATE remains accepted without a supported qualified action;
+code-owned hazard escalation still precedes all model work. Otherwise accepted escalation takes precedence;
 otherwise an explicit abstention, no supported fix or no eligible qualified responder
 produces ABSTAINED. THIN produces a low-evidence warning and still requires approval.
 Code also shows approaching duty endpoints as public facts. Failures use labelled
@@ -239,6 +243,15 @@ small and month datasets, counts, reproduction and unattended queue limits are d
 `backend/seed/INVESTIGATION_DATASETS.md`. Lifecycle tests live in
 `backend/tests/investigation-lifecycle.test.mjs`.
 
+
+The prompt reserves proposedOutcome for not recommending: routine operator approval is not
+an escalation reason. Model recommendations omit that field. Every public deterministic run
+has a nonempty fallbackReason, including persisted hazard-policy/input-policy exits, older
+records with deterministic-policy fallback, and pending-investigation placeholders. The eval
+adapter's unresolved interpretation result is labelled interpretation-unresolved. Invalid
+contradictory finals set rawInvalid and consume the same single repair; policy exits remain
+rawInvalid/repaired false and make no provider calls. Live accuracy must be remeasured
+separately; hermetic repair tests do not establish live model accuracy.
 ## Model-proposed escalation (2026-10-19)
 
 `proposedOutcome: ESCALATE` is accepted only when the model recommends no supported action.
@@ -248,3 +261,23 @@ repair, within the shared call and step budget, then the deterministic fallback
 (`validation-failed`). The prompt reserves `ESCALATE` for a safety concern that blocks any
 action. Found by the first live evaluation (`docs/evaluation.md`), where Ultra used it to
 mean "send to the operator". The code-owned hazard policy is unchanged.
+
+## Paired first-fix replay
+
+`replay-runner.mjs` exports `runPairedReplay({mode,heldOutDays=7,limit,investigate})` returning
+`{pairs,meta}`. Default input is the existing committed plant-1 month plus archive bundles;
+optional seed injection supports hermetic perturbation tests. `buildReplayDecisionState`
+constructs an explicit public rolling-origin projection at target raisedAt, excludes target
+and all equal/future completions, reconstructs roster from rotation/approved staffing and
+assignment intervals, and never exposes engine truth or approval policy. The shared
+casesBefore tools and cutoff-filtered buildFixPacket determine all public evidence and
+baseline choices. No interpretation confirmation or policy shortcut is used.
+
+`replay-outcome-runner.mjs` owns private outcome inputs and reproduces the recorded first
+attempt's engine draws with the historical first responder, cloning the same start state
+for each explicit fix. Only `{fixed}` leaves each arm. Missing original inputs fail closed
+into FAILED exclusions. No runtime state is written. Pairs include non-READY exclusions;
+meta reports window, source hashes, counts, model IDs and runtime. CLI `--replay` uses the
+existing pure scorePairedReplay; see `docs/evaluation.md` for method, assumptions and commands.
+`backend/tests/replay-runner.test.mjs` covers future/truth noninterference, identical draws,
+fixed-responder controls, coverage, reproducibility and a hermetic limit-five CLI invocation.

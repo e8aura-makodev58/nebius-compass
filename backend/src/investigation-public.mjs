@@ -15,7 +15,7 @@ function copyRefs(rows) { return (rows??[]).map((row) => ({caseId:row.caseId,fie
 export function investigationDTO(row, {summary=false}={}) {
   return { id:row.id,createdAt:row.createdAt ?? row.asOf,asOf:row.asOf,readyAt:row.readyAt ?? null,deadline:row.deadline ?? null,supersedes:row.supersedes ?? null,issueId:row.issueId,reportId:row.reportId,status:row.status,source:row.source,
     model:row.model ? {modelId:row.model.modelId,calls:row.model.calls,latencyMs:row.model.latencyMs,promptTokens:row.model.promptTokens,completionTokens:row.model.completionTokens}:null,
-    fallbackReason:row.fallbackReason ?? null,evidenceGrade:row.evidenceGrade,reason:row.reason,warnings:(row.warnings??[]).map((v)=>string(v,400)),
+    fallbackReason:row.fallbackReason ?? (row.source==='DETERMINISTIC' ? ['QUEUED','RUNNING'].includes(row.status)?'pending-investigation':'deterministic-policy' : null),evidenceGrade:row.evidenceGrade,reason:row.reason,warnings:(row.warnings??[]).map((v)=>string(v,400)),
     hypotheses:(row.hypotheses??[]).map((h)=>({symptomCode:h.symptomCode,text:h.text,evidenceRefs:copyRefs(h.evidenceRefs)})),
     fixes:(row.fixes??[]).map((f)=>({fixId:f.fixId,title:f.title,steps:f.steps,safetyClass:f.safetyClass,prerequisites:[...f.prerequisites],requiredCertifications:[...f.requiredCertifications],grade:f.grade,rationale:f.rationale,evidenceRefs:copyRefs(f.evidenceRefs)})),
     responders:(row.responders??[]).map((r)=>({responderId:r.responderId,displayName:r.displayName,qualified:r.qualified,certifications:[...r.certifications],rationale:r.rationale})),

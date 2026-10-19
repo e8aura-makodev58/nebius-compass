@@ -51,7 +51,7 @@ export async function runScenario(scenario,{mode='fixture',samples=1}={}) {
     const report=await service.getReport(submitted.reportId);
     let investigationId=submitted.investigationId;
     if(!investigationId&&scenario.expected.interpretation){const confirmed=await service.confirm(report.id,{...scenario.expected.interpretation,expectedRevision:report.revision});investigationId=confirmed.investigationId;while(await service.runNext()){};}
-    const record=investigationId?await service.getInvestigation(investigationId):{status:'ABSTAINED',source:'DETERMINISTIC',reason:report.interpretation.options.length?'Interpretation requires operator confirmation.':'No equipment resolved; operator must pick equipment.',interpretation:null,trace:[],fixes:[],responders:[],repaired:false,rawInvalid:false};
+    const record=investigationId?await service.getInvestigation(investigationId):{status:'ABSTAINED',source:'DETERMINISTIC',fallbackReason:'interpretation-unresolved',reason:report.interpretation.options.length?'Interpretation requires operator confirmation.':'No equipment resolved; operator must pick equipment.',interpretation:null,trace:[],fixes:[],responders:[],repaired:false,rawInvalid:false};
     // Interpretation ranking is separately accounted for; policy exits have no model calls.
     const interpretationCalls=['FIXTURE','NEBIUS_MODEL','AMD_MODEL'].includes(report.interpretation.source)?1:0;
     results.push({scenario,record,modelCalls:(record.model?.calls??0)+interpretationCalls});

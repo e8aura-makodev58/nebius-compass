@@ -209,3 +209,8 @@ supersession, override and policy safety, independent RNG sampling, ObservableDT
 narrator validation/timeouts, route revisions, retained/archived analytics equality and
 byte-repeatable offline seeds. The responder-ranking soak explicitly sets investigationShare
 zero to preserve its original 100-opportunity experiment; production defaults remain 0.2.
+
+`backend/tests/replay-runner.test.mjs` exercises a fixture `--replay --limit 5`, public-state
+canaries, hidden-truth outcome perturbations, future-data invariance, common recorded engine
+draws, exclusion denominators and deterministic repeated pairs. `eval-investigator.mjs
+--replay --mode fixture` makes no API calls; live replay is a separate explicit measurement.

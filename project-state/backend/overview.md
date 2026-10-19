@@ -116,3 +116,7 @@ not hold the Live agent lane. See [investigation.md](investigation.md).
 `narrator.mjs` validates ObservableDTO-only prose with bounded provider/template execution;
 `investigation-analytics.mjs` owns observed rate cohorts and compact retained facts.
 `investigation-service.mjs` coordinates explicit override, supersession and policy decisions.
+
+`replay-runner.mjs` builds public rolling-origin evaluation states and paired cohorts;
+`replay-outcome-runner.mjs` is the engine-only private counterfactual boundary. Neither
+writes runtime state. See investigation.md and docs/evaluation.md for the first-fix method.
