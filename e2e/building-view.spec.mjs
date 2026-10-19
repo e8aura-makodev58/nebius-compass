@@ -17,6 +17,7 @@ import { expect, test } from "@playwright/test";
 test("the building renders three floors of wireframe machines", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
   await expect(page.locator(".floor-plane")).toHaveCount(3);
   await expect(page.locator(".map-node.equipment")).toHaveCount(72);
   for (const floor of [1, 2, 3]) {
@@ -52,6 +53,7 @@ test("Shift Personnel and the floor show only people currently on duty", async (
 test("floor selection exposes another manufacturing floor and its machines", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
   await expect(page.locator(".floor-plane.active-floor .floor-tag")).toHaveText(/Floor 1/i);
   await page.getByRole("button", { name: "Show manufacturing floor 3" }).click();
   await expect(page.locator(".floor-plane.active-floor .floor-tag")).toHaveText(/Floor 3/i);
@@ -77,6 +79,7 @@ test("the optional 2.5D building can be rotated and survives the poll tick", asy
 test("2.5D labels are screen-space overlays above or below projected nodes without collisions", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
   await page.getByRole("button", { name: "Use 2.5D perspective view" }).click();
   const labels = page.locator(".map-overlay-label");
   const activeEquipment = page.locator(".floor-plane.active-floor .map-node.active-equipment");
@@ -115,6 +118,7 @@ test("2.5D labels are screen-space overlays above or below projected nodes witho
 test("2.5D leader lines still reach their nodes after the camera settles", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
   await page.getByRole("button", { name: "Use 2.5D perspective view" }).click();
   await page.getByRole("button", { name: "Zoom in" }).click();
   await page.getByRole("button", { name: "Zoom in" }).click();

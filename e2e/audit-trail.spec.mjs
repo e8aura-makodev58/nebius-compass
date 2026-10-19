@@ -18,6 +18,7 @@ const TWO_POLL_TICKS_MS = 3_500;
 test("Live: two events for one issue show distinct event detail above one chronology", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
   await expect(page.locator(".issue-card")).toHaveCount(2);
   await expect(page.locator(".event-feed")).toContainText("Issue Raised");
 
@@ -70,6 +71,7 @@ test("Live: two events for one issue show distinct event detail above one chrono
 test("Live: system events are selectable without an issue audit request", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
 
   await page.locator('[data-feed-event-id="event-001"]').click();
   await expect(page.locator("#issue-summary")).toContainText("Simulation Started");
@@ -94,6 +96,7 @@ test("Live: a delayed older audit response cannot overwrite the newer event sele
 
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
   await page.locator('[data-feed-event-id="event-002"]').click();
   await page.locator('[data-feed-event-id="event-003"]').click();
 
@@ -108,6 +111,7 @@ test("Live: a delayed older audit response cannot overwrite the newer event sele
 test("Live: a resolved issue stays reachable through its feed event", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
   await expect(page.locator(".issue-card")).toHaveCount(2);
 
   await page.locator("#issue-list").getByRole("button", { name: /ISS-103/ }).click();

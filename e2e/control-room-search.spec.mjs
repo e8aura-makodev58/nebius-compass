@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test("Live Control Room search finds public entities and preserves context appropriately", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
 
   await page.keyboard.press("Control+k");
   const input = page.getByRole("combobox", { name: "Search current operational state" });

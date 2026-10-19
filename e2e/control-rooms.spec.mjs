@@ -103,6 +103,7 @@ test("two simultaneous browser contexts in different rooms never see each other'
   await expect(page2.locator("#simulation-status")).toHaveText("Paused");
 
   await page1.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page1.locator("body")).not.toHaveClass(/busy/);
   await page2.getByRole("button", { name: "Show manufacturing floor 3" }).click();
   await expect(page2.locator(".floor-plane.active-floor .floor-tag")).toHaveText(/Floor 3/i);
   // plant1's own floor selection must be unaffected by plant-2's UI action.

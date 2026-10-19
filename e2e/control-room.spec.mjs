@@ -6,6 +6,7 @@ test("Live controls, analytics, and Offline fallback complete without repair", a
   await expect(page.getByText("Persistent environment")).toBeVisible();
 
   await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.locator("body")).not.toHaveClass(/busy/);
   await expect(page.locator(".issue-card")).toHaveCount(2);
 
   await page.getByRole("button", { name: "Settings", exact: true }).click();
