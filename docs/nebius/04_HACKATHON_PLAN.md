@@ -295,6 +295,19 @@ The UI and docs never label synthetic responses as recorded Nemotron.
 - Results go to `docs/EVALUATION.md` with commands, sample sizes and limitations. No
   time-saved or business-outcome claims.
 
+**Harness contract (N5, main agent, 2026-10-19).**
+- Scoring is `scripts/eval/score.mjs` (unit tests in `backend/tests/eval-score.test.mjs`).
+- The CLI is `scripts/eval-investigator.mjs` (`npm run eval:investigator`).
+- N3a adds `backend/src/investigation-eval.mjs` exporting
+  `runScenario(scenario, { mode, samples })` → `[{ scenario, record, modelCalls }]`. It must:
+  - build the scenario's setup tags as state in a scratch store;
+  - submit the report;
+  - confirm `expected.interpretation` the way an operator would (or leave the report
+    unresolved when there is none);
+  - return the investigation record in the §3.2 shape, with `interpretation`, `repaired` and
+    `rawInvalid` set.
+- The paired replay is scored by `scorePairedReplay`. Its outcome runner is N5 part 2.
+
 ## 5. Work packages, file ownership and gates (R8, R9)
 
 ### Ownership (exclusive per package)
