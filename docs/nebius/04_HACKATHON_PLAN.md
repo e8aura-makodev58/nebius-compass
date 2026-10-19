@@ -225,10 +225,10 @@ Codex review rounds: plan (now), N7 docs, final pre-submission checklist.
 
 | Risk | Mitigation / owner |
 |---|---|
-| **No Nebius API key in this environment** (blocks N0, N6, live demo) | **User**: provide key as a file (mode 600) outside git; main agent only. |
-| **IP ownership:** `AGENTS.md` rule 8 says Compass is built for real use at the user's company; rules require sole ownership and no employer claim | **User** must confirm the right to publish under Apache-2.0, or we publish a cleaned fork without company-specific material. Blocks N7. |
-| Same project also entered in the AMD hackathon | **User** checks the AMD event's exclusivity terms; we disclose the AMD-era baseline openly (§1). |
-| Public GitHub repo: `gh` not logged in | **User**: `! gh auth login`, or creates the empty repo. |
+| **No Nebius API key yet** (blocks N0, N6, live demo); user will provide it later | Until then N1 is built against the documented OpenAI-compatible API with fake-fetch tests, model IDs left as env-required placeholders; N0 runs as soon as the key arrives. Main agent only. |
+| ~~IP ownership~~ **Resolved (user, 2026-10-19):** the application is the user's own; they share it for use at their company under Apache-2.0. `LICENSE` added. | — |
+| ~~AMD hackathon exclusivity~~ **Not a concern (user, 2026-10-19).** We still disclose the AMD-era baseline (§1). | — |
+| Public GitHub repo: `gh` not logged in | **User** is logging in (2026-10-19). |
 | Nemotron Ultra latency/cost too high for an interactive loop | Step cap, Super fallback tier for the investigator, cached tool results, measured in N0/N6. |
 | Tool calling unsupported or flaky on the chosen model | JSON "next action" protocol on the same loop (N1 flag); decided from N0 facts. |
 | Free public demo burns credits | Idle auto-pause (exists), per-room daily token budget, Offline mode default for visitors with a Live toggle; fixture replay for the video's backup. |

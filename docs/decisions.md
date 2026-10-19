@@ -970,3 +970,14 @@ Existing running attempts retain legacy actions and are labelled separately in t
 - Operations: back up or copy a room as a whole directory; the checkpoint alone is not
   the current state.
 
+
+## 2026-10-19 — Nebius entry: ownership, licence and baseline (user)
+
+- The user owns ResponseCompass and shares it for use at their company under
+  **Apache-2.0**; `LICENSE` added (copyright e8aura-makodev58) and `package.json` declares it.
+  This settles the plan §6 ownership risk; it does not change rule 8.
+- AMD hackathon exclusivity is not a concern (user). We still disclose the AMD-era work as the
+  pre-existing project and claim only commits after the baseline `1e1c69c`
+  (`docs/BASELINE_AND_CHANGES.md`).
+- The Nebius API key arrives later. Until then provider work is built against the
+  OpenAI-compatible API with hermetic fake-fetch tests, and model IDs are not guessed in code.

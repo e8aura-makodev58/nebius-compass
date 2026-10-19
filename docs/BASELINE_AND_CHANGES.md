@@ -15,7 +15,7 @@ demo proof once they exist. Plan: [`docs/nebius/04_HACKATHON_PLAN.md`](nebius/04
 | **Nebius baseline** | **`1e1c69c`** (2026-10-19): everything after it is Nebius-entry work |
 | Commits from first commit to baseline | 119 (built for the AMD hackathon, disclosed as pre-existing) |
 | Secrets in history | None found for `.env`, `*.key`, `provider-credentials.json` (full secret scan before publishing: plan N7) |
-| Licence | None yet; Apache-2.0 planned once ownership is confirmed (plan §6) |
+| Licence | Apache-2.0 (`LICENSE`); the user owns the application and confirmed the licence (2026-10-19) |
 
 The AMD-era commits fall inside the Submission Period, but they were made for, and
 submitted to, a different hackathon. We treat them as the pre-existing project and claim only

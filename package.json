@@ -2,6 +2,7 @@
   "name": "responsecompass",
   "version": "0.1.0",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Compass: context-aware responder recommendation agent",
   "type": "module",
   "scripts": {

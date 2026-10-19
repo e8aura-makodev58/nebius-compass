@@ -332,3 +332,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — Nebius hackathon plan
 - `docs/nebius/04_HACKATHON_PLAN.md` (draft v1): audit of the baseline `1e1c69c`, the new feature (Compass Investigator: Nemotron tool-using investigation with citations, safety gate, abstention and operator-approved dispatch), model tiering, evaluation harness, work packages N0–N9 with owners, risks and user blockers. Out for codex review.
 - Pages updated: none (plan only).
+
+## [2026-10-19] docs — Apache-2.0 licence; plan risks updated
+- `LICENSE` (Apache-2.0) and `package.json` `license` added after the user confirmed ownership. Plan §6 and `docs/BASELINE_AND_CHANGES.md` record the user's answers (licence, AMD exclusivity not a concern, Nebius key later, GitHub login in progress); decision entry in `docs/decisions.md`.
+- Pages updated: none.
