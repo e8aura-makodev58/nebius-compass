@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 16) |
+| codex | RUN (round 17) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | N5 part 2 — paired first-fix replay outcome runner | 16 |
+| codex | Judge-period cost ledger and daily budget | 17 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -880,8 +880,52 @@ excluded }]` with each arm `{ fixed: boolean }`).
 - **main agent (meanwhile):** UI for override, re-investigate, policy and investigation
   analytics (N3b shapes); live evaluation run 2; deploy.
 
+**Round 17 (2026-10-19) — codex: judge-period cost ledger and daily budget.** The demo
+must stay free and usable for judges through 2026-12-15 without draining credit (plan §6,
+judge access). Start with `git merge master`; ports 3021/3121; keep your watcher.
+
+- **codex — cost ledger and budget.**
+  - **Ledger.** For every provider call that returns usage, record compact daily
+    aggregates per provider, model and role: calls, prompt tokens, completion tokens and
+    estimated cost.
+    - Price source: a per-model price table in code. Nebius values are from
+      `docs/nebius/05_TOKEN_FACTORY_FACTS.md` (USD per 1M tokens: Ultra 1.00/3.00, Super
+      0.30/0.90, Lightning and Nano 0.06/0.24); unknown models count tokens with cost null.
+    - Persistence: deployment-global, a small JSON file in the data root (not per room),
+      atomic writes, bounded to 120 days.
+    - Prompt contents are never stored.
+  - **Budget.**
+    - `COMPASS_DAILY_BUDGET_USD` is unset or 0 by default, meaning unlimited.
+    - When today's (UTC) estimated spend reaches the budget, new **live** calls fail closed
+      with `code: "budget-exhausted"` before reaching the provider. Callers fall back
+      deterministically, exactly like provider errors.
+    - In-flight calls finish. Calls resume at the next UTC day. The fallback reason is
+      visible on records as `budget-exhausted`.
+    - Log `provider_budget_exhausted` once per day.
+  - **API.** `GET /api/settings` gains `usage: { today: {...}, last7Days: [...], budgetUsd,
+    exhausted }`. It is readable by everyone, including tunnel visitors; changing the
+    budget is env-only.
+  - **UI.** In Settings → API, add a small read-only "Usage" block: today's spend, calls and
+    tokens per role, the budget and status. Keep it inside the existing Settings
+    renderer, follow its style, and tell me what you changed.
+  - **Tests** (hermetic, fake fetch and clock):
+    - aggregation per role and model;
+    - unknown-model cost null;
+    - the budget blocks before fetch and resumes the next day;
+    - fallback reason propagation for ranking, investigator and planner;
+    - persistence across restart;
+    - the bounded retention;
+    - no prompt text in the file.
+  - **Docs:** `model-providers.md`, `running-and-config.md`, `.env.example`, `log.md`.
+  - **Do not touch:** `e2e/` (tell me if an E2E needs updating), `docs/nebius/`,
+    `backend/data/`, port 3200. No live calls.
+
+- **main agent (meanwhile):** live paired replay, N7 repo and docs preparation, demo
+  rehearsal on e8aura-deploy.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `c9ae284` → merge `d90c3c8`: paired first-fix replay runner and `--replay` CLI (N5 part 2); ESCALATE check consolidated into the validator path. `project-state/log.md` conflict kept both. Main agent fixed a Reset race across E2E specs. On master: `npm test` 421/421, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `135b782` → merge `4f6d562`: N3b investigator lifecycle (expiry, supersede, override, safe auto-approval policy, simulated narration, retained analytics, lifecycle dataset, staged month). Clean merge. Main agent added the ESCALATE repair the branch missed. On master: `npm test` 413/413, E2E 81/81. Staged month `backend/seed/investigation-month/` **not adopted** (unattended run fills the queue; existing month stays). Handoff archived.
 - 2026-10-19 — **codex** `e0d03a4` → merge `ee9b587`: N3a investigator vertical slice (field reports, hazard/input policy, interpretation ranking, tool loop with validators and deterministic fallback, shared dispatch gate, approval routes, Offline fixtures, eval adapter). Fixture eval 23/24 (SC-13 label was wrong; fixed). `project-state/log.md` conflict kept both. Main agent added real-route E2E and fixed two spec races. On master: `npm test` 394/394, E2E 81/81. **Slice gate passed on 2026-10-19.** Handoff archived.
 - 2026-10-19 — **codex** `cf17c4e` → merge `d58113d`: N1b Nebius defaults (watcher moved out of the repo) and N2 investigation contracts — DTOs, public certifications, catalog safety data, case records, narratives, six bounded read-only tools with host-owned `asOf`. Clean merge. Main agent set the ranking default to thinking off (`5bc4016`). On master: `npm test` 374/374, E2E 78/78. Handoff archived.
@@ -912,17 +956,9 @@ excluded }]` with each arm `{ fixed: boolean }`).
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 16 — N5 part 2 paired first-fix replay outcome runner.
-- **Changes:** Added `runPairedReplay({mode,heldOutDays=7,limit,investigate})` returning `{pairs,meta}`. Default input is the existing committed plant-1 month plus its archives, read-only. Cohort uses resolvedAt in the last window ending at seed clock, public symptoms and a catalog fix; sorts raisedAt/ID and applies limit. Each public decision is reconstructed strictly before raisedAt, excludes target/equal/future outcomes and cached recommendations, and uses engine-owned simulated interpretation without approval policy. Baselines use the existing class-frequency and deterministic symptom fix order from that cutoff-filtered packet.
-- **Engine boundary:** Separate `replay-outcome-runner.mjs` captures private truth and original first-attempt draw; reverses the attempt LCG twice to reproduce both original duration/success draws. Three isolated engine starts use the actual historical first responder, same simulation instant/history/private inputs; only explicit fix changes. Only `{fixed}` returns. Missing original draw/cause/skill/first responder, invalid output or thrown runs become FAILED exclusions. ABSTAINED/ESCALATED stay excluded. No live dispatch, approval, assistance or retry mutation. Canary tests prove cause/skill changes affect outcomes but not packets; future-data perturbations leave the target's state, baselines and paired outcome unchanged.
-- **Metadata / CLI:** meta has heldOutWindow, resolved/eligible/selected/ready/fallback/repaired/rawInvalid/timeout/failed counts, seedHash (decoded seed SHA-256), archiveHash (sorted source archive digest), mode, modelIds, selection, startedAt/finishedAt/runtimeMs. CLI `npm run eval:investigator -- --replay --mode fixture --limit 5` is hermetic; `--held-out-days N`, `--limit N`, `--json <path>` supported. Prints existing scorePairedReplay coverage, exclusions, all three first-fix rates and directional discordant pairs with denominators. JSON contains only pairs/meta/score, no private state or model traces. Original scenario CLI path preserved.
-- **Verification:** `npm test` 421/421; required E2E command with COMPASS_E2E_PORT=3021 and Chromium LD_LIBRARY_PATH 81/81 (3.1m). Six focused replay tests pass, including repeatable limit-five fixture/CLI runs. Original scenario fixture CLI still 24/24. No live calls; no replay result numbers added to evaluation docs. Codex ports 3021/3121 free after tests.
-- **Docs:** method-only section in docs/evaluation.md; rule-4 rationale in decisions; project-state investigation, overview, analytics-and-ethics, testing and log updated.
-- **Preserved work:** Sync merge e77f3a8 retained N3b/aa62320 fallback metadata and tests, combined both append-only logs/decisions, retained both ESCALATE tests and consolidated the duplicated repair logic. No edits to frontend/, e2e/, docs/nebius/ or backend/data/. No seed changes.
-- **Risks / follow-ups:** Main agent runs live replay; no model/business improvement claimed. Historical public roster is reconstructed from immutable seed reference definitions, fixed rotation, prior approved staffing intervals and assignment occupancy/positions, not every historical UI relocation. Holding the historical responder fixed controls efficacy; this is not a claim of lawful alternative dispatch to that responder. Fixture model IDs are nominal configuration, not live calls. Existing watcher PID 41408 retained without restart or a second worker.
-- **Questions for main:** None.
+- **Task:** Round 17 assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
