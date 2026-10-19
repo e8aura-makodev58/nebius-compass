@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 17) |
+| codex | RUN (round 18) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Judge-period cost ledger and daily budget | 17 |
+| codex | Factual review of the public docs (N7) | 18 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -923,8 +923,36 @@ judge access). Start with `git merge master`; ports 3021/3121; keep your watcher
 - **main agent (meanwhile):** live paired replay, N7 repo and docs preparation, demo
   rehearsal on e8aura-deploy.
 
+**Round 18 (2026-10-19) — codex: factual review of the public docs (N7).** The repo goes
+public soon. Start with `git merge master`; keep your watcher. Docs only; no suites
+needed.
+
+- **codex — review, do not edit the reviewed files.** Check every factual claim in these
+  files against the code, tests and git history on master:
+  - `README.md`;
+  - `HACKATHON_CHANGES.md`;
+  - `docs/evaluation.md` (both live runs and the replay method);
+  - `docs/nebius/05_TOKEN_FACTORY_FACTS.md`;
+  - `docs/nebius/06_SUBMISSION_DRAFT.md`;
+  - `docs/DEMO_SCRIPT.md`;
+  - `scripts/deploy/README.md`;
+  - `.env.example`.
+
+  Look for:
+  - claims the code does not support;
+  - wrong commit hashes, counts, defaults, env names or route names;
+  - "every step runs on NVIDIA"-style overclaims;
+  - anything a judge could not reproduce from the README;
+  - secrets, private URLs or personal data;
+  - rule 3/4 language that misstates the boundary;
+  - stale AMD-only wording in user-facing docs.
+- **Output:** a new file `docs/nebius/07_PUBLIC_DOCS_REVIEW.md` with numbered findings. Each
+  finding gets a severity (blocker / major / minor), file:line, the evidence and the exact
+  replacement text. Fill your section, commit, then set `READY FOR MERGE`.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `4538dfd` → merge `dafe5a2`: deployment-global provider usage ledger, daily budget fallback (`budget-exhausted`), Settings Usage card. Clean merge. On master: `npm test` 431/431, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `c9ae284` → merge `d90c3c8`: paired first-fix replay runner and `--replay` CLI (N5 part 2); ESCALATE check consolidated into the validator path. `project-state/log.md` conflict kept both. Main agent fixed a Reset race across E2E specs. On master: `npm test` 421/421, E2E 83/83. Handoff archived.
 - 2026-10-19 — **codex** `135b782` → merge `4f6d562`: N3b investigator lifecycle (expiry, supersede, override, safe auto-approval policy, simulated narration, retained analytics, lifecycle dataset, staged month). Clean merge. Main agent added the ESCALATE repair the branch missed. On master: `npm test` 413/413, E2E 81/81. Staged month `backend/seed/investigation-month/` **not adopted** (unattended run fills the queue; existing month stays). Handoff archived.
 - 2026-10-19 — **codex** `e0d03a4` → merge `ee9b587`: N3a investigator vertical slice (field reports, hazard/input policy, interpretation ranking, tool loop with validators and deterministic fallback, shared dispatch gate, approval routes, Offline fixtures, eval adapter). Fixture eval 23/24 (SC-13 label was wrong; fixed). `project-state/log.md` conflict kept both. Main agent added real-route E2E and fixed two spec races. On master: `npm test` 394/394, E2E 81/81. **Slice gate passed on 2026-10-19.** Handoff archived.
@@ -956,17 +984,9 @@ judge access). Start with `git merge master`; ports 3021/3121; keep your watcher
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-19
-- **Task:** Round 17 — judge-period deployment cost ledger and daily budget.
-- **Changes:** Added provider-usage.mjs, a deployment-global shared daily ledger in provider-usage.json under the data root, with serialized atomic owner-only/fsynced writes and 120 UTC days of retention. The HTTP-attempt boundary records returned usage before output/tool validation, including truncation, repair/tool turns, HTTP errors and retries that report usage. Keys are provider/model/configured role (fix, staffing and interpretation ranking belong to compass); only allowlisted counters/costs persist, never prompts/outputs/keys/request IDs/room data. Fixed Nebius price table follows N0 facts; AMD/unknown models stay unpriced. Nanodollar rounding avoids decimal budget undercount. Known spend survives partial/unknown usage rather than being reset by null estimates.
-- **Budget:** COMPASS_DAILY_BUDGET_USD is env-only, default 0/unlimited. Positive limits check known UTC-day spend before queueing and immediately before each fetch/retry; ledger/preflight latency cannot extend the original provider deadline. In-flight requests finish and may exceed the estimate; next UTC day automatically resumes new calls. Usage is attributed to completion day. Persisted per-day logging flag emits provider_budget_exhausted once per day across restarts. Budget rejection preserves code/reason budget-exhausted through responder/fix/staffing ranking, investigator fallbackReason, report interpretation fallbackReason, planner fallback event/result and narration event reason.
-- **API contract:** GET /api/settings gains usage `{today,last7Days,budgetUsd,exhausted}` and remains readable by tunnel visitors. Daily entries have `{day,calls,promptTokens,completionTokens,knownCostUsd,estimatedCostUsd,unpricedCalls,byRole,byModel}`; estimatedCostUsd is null when incomplete. byRole entries carry role plus totals; byModel rows carry provider/model/role/calls/tokens/knownCostUsd/estimatedCostUsd/unpricedCalls. Seven days are chronological including zeros/today. No public budget edit endpoint.
-- **UI:** Existing Settings API renderer includes a small read-only Usage card: UTC date/today's known estimate and calls, four-role calls/input/output token table, budget/status and explicit unpriced-call note. Reuses settings/table styles with compact mobile table rules. Keeps usage visible on the locked tunnel form and retains its last snapshot through model/credential saves. Manual Chromium check passed at 375/1280px for read-only controls, exhausted/unpriced states and viewport bounds; preview server stopped. No existing E2E required changes.
-- **Verification:** Final `npm test` 431/431; final browser suite 83/83 on COMPASS_E2E_PORT=3021 with required Chromium LD_LIBRARY_PATH (2.5m), forced failures/no API spend. New hermetic tests cover aggregate keys/prices, null unknown/partial costs, no prompt storage, atomic persistence/restart, in-flight/queued/429-retry budget gating, UTC rollover, daily log deduplication, 120-day retention, exact decimal threshold, corruption fail-closed and all fallback paths. Existing force-event tests now await fetch-start after asynchronous budget preflight while still proving the action returns before provider completion. No e2e/, docs/nebius/, backend/data/ edits; no live calls.
-- **Docs:** model-providers, running-and-config, .env.example, http-api, backend overview, frontend overview, testing, log and decisions updated.
-- **Risks / follow-ups:** Main agent must set a positive deployment env budget to activate a cap; default remains unlimited as assigned. This is known estimated token spend, not provider billing: unpriced/missing usage and in-flight overshoot cannot form a hard account cap. One application writer owns the data root, matching existing JSON stores. Existing 300-second watcher PID 41408 retained; no second worker or watcher restart. Codex ports 3021/3121 verified free after testing.
-- **Questions for main:** None.
+- **Task:** Round 18 assigned; see Main agent → Assignments. Replace this section at handoff.
 
 ---
 
