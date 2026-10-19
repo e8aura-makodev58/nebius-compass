@@ -126,15 +126,21 @@ differs.
 | Run | Investigator | Deterministic order | Class-frequency baseline | Investigator fell back | Discordant vs baseline (inv / base) | Discordant vs deterministic (inv / det) |
 |---|---|---|---|---|---|---|
 | A (before the prose/repair fix) | 49/60 | 46/60 | 41/60 | 34/60 | 9 / 1 | 4 / 1 |
-| **B (after the fix, current code)** | **46/60** | **46/60** | **41/60** | **7/60** | **7 / 2** | **2 / 2** |
+| B (after the fix) | 46/60 | 46/60 | 41/60 | 7/60 | 7 / 2 | 2 / 2 |
+| C (same code as B, with per-pair source) | 45/60 | 46/60 | 41/60 | 23/60 | 6 / 2 | 2 / 3 |
+
+**Run C by source.** Model-chosen first fixes worked 29/37 (78.4%), and fallback-chosen ones
+16/23 (69.6%). These are different issues, so this is not a paired comparison. Run C used the
+same code as run B but fell back 23 times instead of 7: every invalid first answer (23) also
+failed its repair. Validity varies a lot from run to run, so a single run's fallback rate is
+not a stable property.
 
 **Reading.** In run B the model chose the first fix in 53 of 60 issues. The investigator arm
 ties the deterministic order (46/60 each) and is ahead of the class-frequency baseline
 (46 vs 41; discordant pairs 7 vs 2). Run A's higher investigator figure is not a model
 result: 34 of its 60 choices came from the deterministic fallback, because the validator
 rejected numbers Ultra quoted from tool results and the repair message did not restate
-the contract (fixed in `8a76993`). The replay does not yet record per-pair source, so run B's
-53 model choices cannot be scored separately; that provenance is in codex's round 19.
+the contract (fixed in `8a76993`). Per-pair source is recorded from run C on.
 
 **Limits.** 60 issues, one window, one sample per issue. With 4 discordant pairs against the
 deterministic order there is no evidence of a difference either way. With 9 against the

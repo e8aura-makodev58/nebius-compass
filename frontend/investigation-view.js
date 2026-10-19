@@ -18,9 +18,22 @@ let selectedId = null;
 let reportFormOpen = false;
 let lastFeedback = '';
 
+/**
+ * An authorization is consumed by one attempt (dispatch gate). If that attempt failed, the
+ * issue is pending again and needs a fresh investigation; the old record stays as audit.
+ */
+export function needsNewAuthorization(inv, state) {
+  if (!['APPROVED', 'OVERRIDDEN', 'AUTO_APPROVED'].includes(inv.status) || !inv.issueId) return false;
+  const issue = (state.issues ?? []).find((row) => row.id === inv.issueId);
+  if (!issue || issue.status !== 'PENDING' || issue.assignedResponderId) return false;
+  // Only the newest run for the issue; an older one is already superseded in spirit.
+  return !(state.investigations ?? []).some((other) => other.issueId === inv.issueId && other.id !== inv.id && (other.supersedes === inv.id || Date.parse(other.createdAt ?? 0) > Date.parse(inv.createdAt ?? 0)));
+}
+const isOpen = (inv, state) => OPEN_INVESTIGATION.has(inv.status) || needsNewAuthorization(inv, state);
+
 export function openInvestigations(state) {
   return (state.fieldReports ?? []).filter((r) => OPEN_REPORT.has(r.status)).length
-    + (state.investigations ?? []).filter((i) => ['READY', 'ABSTAINED', 'ESCALATED'].includes(i.status)).length;
+    + (state.investigations ?? []).filter((i) => ['READY', 'ABSTAINED', 'ESCALATED'].includes(i.status) || needsNewAuthorization(i, state)).length;
 }
 
 function sourceLabel(record) {
@@ -107,7 +120,8 @@ function investigationMarkup(inv, state, escape) {
   const prereqs = first?.prerequisites ?? [];
   const callout = inv.status === 'ESCALATED' || inv.status === 'ABSTAINED' ? `<div class="inv-callout ${inv.status === 'ESCALATED' ? 'warn' : ''}"><strong>${escape(STATUS[inv.status])}</strong><p>${escape(inv.reason ?? '')}</p><p class="inv-meta">Nothing is dispatched automatically. Central command may dispatch manually with an audited reason, re-investigate, or close the report.</p></div>${overrideMarkup(inv, state, escape)}` : '';
   const due = inv.status === 'READY' && inv.deadline ? `<p class="inv-meta inv-due">Decision due by ${escape(simClock(inv.deadline))} simulated (${Math.max(0, minutesBetween(inv.deadline, state.simulationState?.simulationTime)).toFixed(0)} min left)${state.investigationPolicy?.investigationApproval === 'AUTO_APPROVE_SAFE' ? ' · safe policy may auto-approve at the deadline' : ' · expires if unanswered'}</p>` : '';
-  const canReinvestigate = inv.issueId && ['READY', 'ABSTAINED', 'ESCALATED', 'EXPIRED'].includes(inv.status) && !pending.has(inv.id);
+  const failedAttempt = needsNewAuthorization(inv, state);
+  const canReinvestigate = inv.issueId && (['READY', 'ABSTAINED', 'ESCALATED', 'EXPIRED'].includes(inv.status) || failedAttempt) && !pending.has(inv.id);
   const hypotheses = (inv.hypotheses ?? []).map((h) => `<li><strong>${escape(h.symptomCode)}</strong> ${escape(h.text)} ${caseLinks(h.evidenceRefs, escape)}</li>`).join('');
   const responderRows = responders.map((r, i) => `<li><label class="inv-option"><input type="radio" name="inv-responder-${escape(inv.id)}" value="${escape(r.responderId)}" ${i === 0 && r.qualified ? 'checked' : ''} ${r.qualified ? '' : 'disabled'} ${decidable ? '' : 'disabled'}/><span><strong>${escape(r.displayName)}</strong>${r.qualified ? '' : ' <span class="inv-chip warn">Not qualified for this fix</span>'}<small>${escape((r.certifications ?? []).join(', ') || 'No certifications')}</small>${r.rationale ? `<small>${escape(r.rationale)}</small>` : ''}</span></label></li>`).join('');
   const trace = (inv.trace ?? []).map((t) => `<li><code>${escape(t.tool)}</code> ${escape(JSON.stringify(t.args ?? {}))} → ${escape((t.resultIds ?? []).join(', ') || 'no rows')}${t.ms != null ? ` · ${escape(t.ms)} ms` : ''}${t.error ? ` · <span class="inv-chip warn">${escape(t.error)}</span>` : ''}</li>`).join('');
@@ -125,6 +139,7 @@ function investigationMarkup(inv, state, escape) {
     ${responderRows ? `<h5>Responders</h5><ol class="inv-options">${responderRows}</ol>` : ''}
     ${inv.status === 'READY' ? `<fieldset class="inv-prereqs" ${decidable ? '' : 'disabled'}><legend>Confirm before dispatch</legend>${prereqs.length ? prereqs.map((p) => `<label><input type="checkbox" data-inv-prereq value="${escape(p)}"/> ${escape(p.replaceAll('_', ' ').toLowerCase())}</label>`).join('') : '<p class="inv-meta">No prerequisites for this action.</p>'}</fieldset><label class="inv-reason">Reason (for escalate or reject)<input data-inv-reason maxlength="360"/></label><div class="inv-actions inv-primary"><button type="button" data-inv-action="approve" ${decidable ? '' : 'disabled'}>Approve and dispatch</button><button type="button" class="secondary-button" data-inv-action="escalate" ${decidable ? '' : 'disabled'}>Escalate</button><button type="button" class="secondary-button" data-inv-action="reject" ${decidable ? '' : 'disabled'}>Reject</button></div>` : ''}
     ${decision}
+    ${failedAttempt ? `<div class="inv-callout warn"><strong>Attempt did not fix the issue</strong><p>This approval was used by one attempt and cannot be reused. The issue is pending again; run a new investigation with the current evidence, which includes this failed attempt.</p></div>` : ''}
     ${canReinvestigate ? `<div class="inv-actions"><button type="button" class="secondary-button" data-inv-action="reinvestigate">Re-investigate with current evidence</button></div>` : ''}
     ${trace ? `<details data-inv-detail="trace"><summary>Investigation steps (${inv.trace.length})</summary><ol class="inv-trace">${trace}</ol></details>` : ''}
   </section>`;
@@ -134,11 +149,11 @@ export function investigationTileMarkup(state, escape) {
   if (state.mode !== 'LIVE') return '<div class="empty-state"><h3>Field reports</h3><p>Field reports and Compass investigations run in Live mode. Offline remains API-free.</p></div>';
   const reports = (state.fieldReports ?? []).filter((r) => OPEN_REPORT.has(r.status));
   const invs = state.investigations ?? [];
-  const open = invs.filter((i) => OPEN_INVESTIGATION.has(i.status));
-  const recent = invs.filter((i) => !OPEN_INVESTIGATION.has(i.status)).slice(-5).reverse();
+  const open = invs.filter((i) => isOpen(i, state));
+  const recent = invs.filter((i) => !isOpen(i, state)).slice(-5).reverse();
   if (!invs.some((i) => i.id === selectedId)) selectedId = (open[0] ?? recent[0])?.id ?? null;
   const selected = invs.find((i) => i.id === selectedId);
-  const list = [...open, ...recent].map((i) => `<button type="button" class="inv-row ${i.id === selectedId ? 'selected' : ''}" data-inv-select="${escape(i.id)}" aria-pressed="${i.id === selectedId}"><strong>${escape(i.issueId ?? i.id)}</strong><span>${escape(STATUS[i.status] ?? i.status)}</span></button>`).join('');
+  const list = [...open, ...recent].map((i) => `<button type="button" class="inv-row ${i.id === selectedId ? 'selected' : ''}" data-inv-select="${escape(i.id)}" aria-pressed="${i.id === selectedId}"><strong>${escape(i.issueId ?? i.id)}</strong><span>${escape(needsNewAuthorization(i, state) ? 'Attempt failed — re-investigate' : STATUS[i.status] ?? i.status)}</span></button>`).join('');
   return `<div class="inv-tile-head"><h3>Field reports</h3><button type="button" data-inv-action="open-report" ${reportFormOpen ? 'hidden' : ''}>Report incident</button></div>${reportFormMarkup(state, escape)}
     ${reports.map((r) => reportMarkup(r, escape)).join('')}
     ${list ? `<nav class="inv-list" aria-label="Investigations">${list}</nav>` : reports.length ? '' : '<div class="empty-state"><strong>No field reports</strong><p>Report an incident in plain language; Compass investigates it against past cases and recommends a safe first action for approval.</p></div>'}

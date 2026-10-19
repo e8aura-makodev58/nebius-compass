@@ -153,3 +153,26 @@ test('field reports display screen fits a wall screen', async ({ page, request }
   await expect(page.locator('#investigation-tile').getByRole('button', { name: 'Report incident' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test('a failed approved attempt asks for a new investigation instead of reusing the approval', async ({ page, request }) => {
+  await liveRoom(request);
+  const store = stubStore();
+  const report = { id: 'FR-FAIL', status: 'CONFIRMED', narrative: 'Station 4 output keeps drifting.', flags: {}, revision: 2 };
+  store.extraReports.push(report);
+  store.investigations.push({ ...readyInvestigation(report), id: 'INV-FAIL', issueId: 'ISS-104', status: 'APPROVED', revision: 3, createdAt: '2026-09-01T07:55:00.000Z',
+    decision: { status: 'APPROVED', actor: 'Central command', at: '2026-09-01T07:56:00.000Z', responderId: 'R-ENGR028', fixId: 'FIX-A-01', confirmedPrerequisites: ['STATION_ISOLATED'] } });
+  await installStubs(page, store);
+  let body = null;
+  await page.route(`**${room}/investigations/INV-FAIL/reinvestigate`, async (route) => { body = route.request().postDataJSON(); await route.fulfill({ json: { investigationId: 'INV-FAIL', issueId: 'ISS-104', supersedes: 'INV-FAIL' } }); });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/rooms/plant-1');
+  const tile = page.locator('#investigation-tile');
+  // ISS-104 is pending and unassigned in a reset room, as after a failed attempt.
+  await expect(tile.getByRole('button', { name: /ISS-104.*Attempt failed — re-investigate/ })).toBeVisible();
+  await tile.getByRole('button', { name: /ISS-104/ }).click();
+  const detail = tile.locator('[data-investigation-id="INV-FAIL"]');
+  await expect(detail.getByText('Attempt did not fix the issue')).toBeVisible();
+  await expect(detail.getByRole('button', { name: 'Approve and dispatch' })).toHaveCount(0);
+  await detail.getByRole('button', { name: 'Re-investigate with current evidence' }).click();
+  await expect.poll(() => body).toEqual({ expectedRevision: 3 });
+});

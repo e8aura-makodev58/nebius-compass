@@ -29,10 +29,14 @@ against solid accent and accent-ink button backgrounds. The UI uses locally serv
 Inter for copy and JetBrains Mono for figures/IDs; `npm run vendor` regenerates
 only the Latin normal/italic font faces alongside the Dockview assets.
 Soft borders, 6–10px corners, subtle elevation and segmented controls follow
-`docs/design/modern-light.md`. The dashboard isolates its stacking context so
-tile dividers stay below the search palette. Analytics period charts use full-width
-rows on desktop, with unbroken dates and word-wrapped completeness labels; long series
-scroll locally on narrow screens.
+`docs/design/modern-light.md` and `docs/design/nebius-theme.md`. Theme enhancements (E1, E2, E4–E7)
+provide standardized empty states (`.empty-state`), hardened microcopy contrast using `--ink-2`,
+compact mobile 375px headers, non-italic incident narratives with Nebius navy borders and lime-wash
+cited case chips, tabular-aligned Settings usage metrics, and universal keyboard `:focus-visible` states.
+The dashboard isolates its stacking context so tile dividers stay below the search palette.
+Analytics period charts use full-width rows on desktop, with unbroken dates and word-wrapped completeness labels;
+long series scroll locally on narrow screens.
+
 
 ## How it talks to the backend
 
