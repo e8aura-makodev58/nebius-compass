@@ -2,7 +2,7 @@ import { ensureIssueFault } from './fault-truth.mjs';
 import { readFileSync } from "node:fs";
 import { ISSUE_CLASSES, assertNoResponderSkill } from "./live-schema.mjs";
 import { analyticHistory, recentHistoryEvents } from "./history-retention.mjs";
-import { AMD_DEFAULT_MODEL_ID, callChatCompletion, defaultReasoningEffortFor, readAmdApiKey } from "./model-provider.mjs";
+import { callChatCompletion, defaultReasoningEffortFor, readProviderApiKey, roleDefaults, safeModelMetadata } from "./model-provider.mjs";
 
 export const EVENT_PLANNER_SCHEMA_VERSION = "1.0";
 const ACTIVE_ISSUE_STATUSES = new Set(["PENDING", "RECOMMENDATION_READY", "OFFER_PENDING", "ASSIGNED"]);
@@ -143,7 +143,7 @@ export function createFallbackEventProposal(state) {
   };
 }
 
-async function callLivePlanner(packet, { provider, modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl }) {
+async function callLivePlanner(packet, { provider, modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl, onMetadata }) {
   return callChatCompletion({
     provider,
     modelId,
@@ -151,6 +151,7 @@ async function callLivePlanner(packet, { provider, modelId, apiKey, reasoningEff
     reasoningEffort,
     timeoutMs,
     fetchImpl,
+    onMetadata,
     systemInstruction: EVENT_PLANNER_SYSTEM_INSTRUCTION,
     userContent: JSON.stringify(packet),
     jsonSchemaName: "event_planner_result",
@@ -162,8 +163,8 @@ async function callLivePlanner(packet, { provider, modelId, apiKey, reasoningEff
 export async function requestEventProposal(packet, options = {}) {
   const mode = options.mode ?? process.env.COMPASS_EVENT_PLANNER_MODE ?? process.env.COMPASS_DEMO_INFERENCE_MODE ?? "fixture";
   const provider = options.provider ?? "amd";
-  const modelId = options.modelId ?? (process.env.AMD_TOKEN_FACTORY_MODEL || AMD_DEFAULT_MODEL_ID);
-  const reasoningEffort = options.reasoningEffort ?? (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId));
+  const modelId = options.modelId ?? roleDefaults(provider, "event-planner").modelId;
+  const reasoningEffort = options.reasoningEffort ?? (provider === "nebius" ? roleDefaults(provider, "event-planner").reasoningEffort : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId)));
   const modelInfo = { provider, modelId, mode, ...(reasoningEffort ? { reasoningEffort } : {}) };
   if (mode === "force-failure") return { status: "unavailable", reason: "forced-failure", modelInfo };
   try {
@@ -171,7 +172,8 @@ export async function requestEventProposal(packet, options = {}) {
       ? await callLivePlanner(packet, {
           provider,
           modelId,
-          apiKey: options.apiKey ?? readAmdApiKey(),
+          apiKey: options.apiKey ?? readProviderApiKey(provider),
+          onMetadata: metadata => Object.assign(modelInfo, metadata),
           reasoningEffort,
           timeoutMs: options.timeoutMs ?? (Number.parseInt(process.env.COMPASS_EVENT_PLANNER_TIMEOUT_MS, 10) || DEFAULT_TIMEOUT_MS),
           fetchImpl: options.fetchImpl ?? fetch,
@@ -179,7 +181,7 @@ export async function requestEventProposal(packet, options = {}) {
       : JSON.parse(readFileSync(fixtureUrl, "utf8"));
     return { status: "ok", output, modelInfo };
   } catch (error) {
-    return { status: "unavailable", reason: error.name === "AbortError" ? "timeout" : "provider-error", message: error.message, modelInfo };
+    return { status: "unavailable", reason: error.code === "model-not-configured" ? "model-not-configured" : error.name === "AbortError" ? "timeout" : "provider-error", message: error.message, modelInfo };
   }
 }
 
@@ -244,7 +246,10 @@ export function createEventPlanningService(store, { requestProposal = requestEve
         if (!proposal) return { status: "BLOCKED", reason: "NO_ELIGIBLE_EQUIPMENT" };
         const validation = validateEventProposal(state, proposal);
         if (!validation.valid) return { status: "BLOCKED", reason: validation.errors.join("; ") };
-        return persistProposal(state, proposal, trigger, source);
+        const persisted = persistProposal(state, proposal, trigger, source);
+        const event = state.operationalEvents.at(-1);
+        if (event && planned.modelInfo) event.payload.modelInfo = safeModelMetadata(planned.modelInfo);
+        return persisted;
       });
     },
   };

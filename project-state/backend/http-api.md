@@ -16,9 +16,9 @@ per-room).
 |--------|------|---------|
 | GET | `/api/control-rooms` | List every room with health (`READY`/`FAILED`), mode, and clock state. |
 | PATCH | `/api/control-rooms/:id/display-name` | Rename a room; optimistic concurrency returns `409 ROOM_METADATA_CONFLICT` on a revision mismatch. |
-| GET | `/api/settings` | Current provider, both `roles` model/effort selections and validation status, credential status, and provider list. Top-level model fields alias Compass ranking. |
+| GET | `/api/settings` | Current provider, four `roles` (compass, event-planner, investigator, narrator) with model/effort/timeout selections and validation status, plus `modelsByProvider`, credential status, and provider list. Top-level model fields alias Compass ranking. |
 | GET | `/api/settings/models` | Discover the selectable models for a provider. Accepts `?provider=` to preview a provider without switching to it. |
-| POST | `/api/settings` | Save `{provider, role, modelId, reasoningEffort}` for `compass` or `event-planner` (validated against the discovered catalog). Omitted role defaults to Compass; unknown roles return 400. |
+| POST | `/api/settings` | Save `{provider, role, modelId, reasoningEffort, timeoutMs?}` for `compass`, `event-planner`, `investigator` or `narrator` (validated against the discovered catalog). Omitted role defaults to Compass; unknown roles return 400. |
 | GET | `/api/logs` | Recent structured application events. Accepts `?limit=`. |
 | POST | `/api/logs/client` | Accept a client-side (browser) error report. |
 

@@ -361,3 +361,11 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] measurement — Nebius Token Factory N0 probe
 - Team key verified (HTTP 200). `docs/nebius/05_TOKEN_FACTORY_FACTS.md` records catalog facts (five Nemotron models with context, price, limits), JSON mode, thinking control via `chat_template_kwargs.enable_thinking`, native tool calling on every Nemotron model, 5-run validity tables, and role defaults: investigator Ultra (thinking on), ranking Super (on), planner/narrator Lightning (off). `scripts/probe-nebius.mjs` is the manual, credit-spending probe (never in `npm test`).
 - Pages updated: none yet (codex updates model-providers.md in N1).
+
+## [2026-10-19] fix — Wake Codex on changed handover assignments
+- Replaced log-only polling with a 300-second watcher that queues a follow-up to the existing Codex session, deduplicates accepted delivery, retries errors and obeys STOP/no task. Added hermetic parser/delivery tests.
+- Pages updated: `operations/running-and-config.md`, Codex section of `handover.md`.
+
+## [2026-10-19] feature — N1 Nebius provider and normalized tool turns
+- Added Nebius as the fresh-settings default, preserving AMD selections/credentials; introduced four independent model roles, capability-driven thinking/tools, provider-isolated controls and bounded usage/latency metadata. Fixed cache-parent creation for fresh-clone unit tests.
+- Pages updated: `backend/model-providers.md`, `backend/overview.md`, `backend/http-api.md`, `operations/running-and-config.md`, `.env.example`, `docs/decisions.md`; frontend changes limited to Settings API role fields.

@@ -1243,6 +1243,8 @@ let modelDrafts = {};
 const SETTINGS_ROLES = [
   { role: "compass", label: "Ranking (Compass)", modelId: "settings-model", effortId: "settings-effort", saveId: "settings-save" },
   { role: "event-planner", label: "Event planner", modelId: "settings-event-planner-model", effortId: "settings-event-planner-effort", saveId: "settings-event-planner-save" },
+  { role: "investigator", label: "Investigator", modelId: "settings-investigator-model", effortId: "settings-investigator-effort", saveId: "settings-investigator-save" },
+  { role: "narrator", label: "Narrator", modelId: "settings-narrator-model", effortId: "settings-narrator-effort", saveId: "settings-narrator-save" },
 ];
 // A live AMD ranking takes about 40–90s of real time, so above 5× it arrives long after
 // the simulated dispatch moved on (docs/decisions.md). The API still accepts 10× and 60×
@@ -1268,24 +1270,25 @@ function renderSettings(settings) {
   const providerMeta = (settings.providers ?? []).find((provider) => provider.id === selectedProviderId);
   const providerOptions = (settings.providers ?? []).map((provider) => `<option value="${escapeHtml(provider.id)}" ${provider.id === selectedProviderId ? "selected" : ""} ${provider.enabled ? "" : "disabled"}>${escapeHtml(provider.label)}${provider.enabled ? "" : " (coming soon)"}</option>`).join("");
   const rolePickers = SETTINGS_ROLES.map(({ role, label, modelId, effortId, saveId }) => {
-    const saved = settings.roles?.[role] ?? settings;
-    const draft = modelDrafts[role] ??= { modelId: saved.modelId, reasoningEffort: saved.reasoningEffort };
+    const saved = settings.modelsByProvider?.[selectedProviderId]?.[role] ?? settings.roles?.[role] ?? settings;
+    const draft = modelDrafts[role] ??= { modelId: saved.modelId, reasoningEffort: saved.reasoningEffort, timeoutMs: saved.timeoutMs ?? 30000 };
     const models = discoveredModelsByProvider[selectedProviderId] ?? [];
     const choices = [...models];
     if (!choices.some((model) => model.id === draft.modelId)) choices.unshift({ id: draft.modelId });
-    const modelOptions = choices.map((model) => `<option value="${escapeHtml(model.id)}" ${model.id === draft.modelId ? "selected" : ""}>${escapeHtml(model.id)}</option>`).join("");
+    const modelOptions = choices.map((model) => `<option value="${escapeHtml(model.id)}" ${model.id === draft.modelId ? "selected" : ""}>${escapeHtml(model.id || "Model not configured")}</option>`).join("");
     const efforts = reasoningEffortsFor(selectedProviderId, draft.modelId) ?? [draft.reasoningEffort || "default"];
     const effortOptions = efforts.map((effort) => `<option value="${escapeHtml(effort)}" ${effort === draft.reasoningEffort ? "selected" : ""}>${escapeHtml(effort)}</option>`).join("");
     const validation = saved.modelValidation ?? settings.modelValidation;
     const changed = draft.modelId !== saved.modelId || draft.reasoningEffort !== saved.reasoningEffort;
     const status = changed ? "Unsaved selection."
-      : validation?.status === "MISSING" ? `Saved model unavailable. Live requests use ${validation.effectiveModelId}.`
+      : validation?.status === "MISSING" ? (validation.effectiveModelId ? `Saved model unavailable. Live requests use ${validation.effectiveModelId}.` : "Saved model unavailable. Live requests use deterministic fallback.")
       : validation?.status === "VALID" ? "Saved model is available."
       : validation?.status === "CHECKING" ? "Checking saved model availability…"
       : "Model availability is unverified. Refresh available models to check.";
     return `<fieldset class="settings-role" data-model-role="${role}"><legend>${label}</legend>
       <div class="settings-field"><label for="${modelId}">Model</label><select id="${modelId}">${modelOptions}</select></div>
       <div class="settings-field"><label for="${effortId}">Thinking level</label><select id="${effortId}">${effortOptions}</select></div>
+      <div class="settings-field"><label for="${modelId}-timeout">Timeout (milliseconds)</label><input id="${modelId}-timeout" type="number" min="1000" max="120000" step="1000" value="${draft.timeoutMs ?? saved.timeoutMs ?? 30000}" data-saved-timeout="${saved.timeoutMs ?? 30000}"></div>
       <p class="workflow-prompt" data-model-status role="status">${escapeHtml(status)}</p>
       <button id="${saveId}" type="button">Save ${label}</button>
     </fieldset>`;
@@ -1319,6 +1322,7 @@ function renderSettings(settings) {
 
   document.querySelector("#settings-provider").addEventListener("change", (event) => {
     selectedProviderId = event.target.value;
+    modelDrafts = {};
     document.querySelector("#settings-feedback").textContent = "";
     renderSettings(settings);
   });
@@ -1329,7 +1333,7 @@ function renderSettings(settings) {
     const model = document.getElementById(picker.modelId);
     const effort = document.getElementById(picker.effortId);
     const markChanged = () => {
-      modelDrafts[picker.role] = { modelId: model.value, reasoningEffort: effort.value };
+      modelDrafts[picker.role] = { modelId: model.value, reasoningEffort: effort.value, timeoutMs: Number(document.getElementById(`${picker.modelId}-timeout`).value) };
       model.closest("fieldset").querySelector("[data-model-status]").textContent = "Unsaved selection.";
     };
     model.addEventListener("change", () => {
@@ -1339,6 +1343,7 @@ function renderSettings(settings) {
       markChanged();
     });
     effort.addEventListener("change", markChanged);
+    document.getElementById(`${picker.modelId}-timeout`).addEventListener("input", markChanged);
     document.getElementById(picker.saveId).addEventListener("click", () => saveSettings(picker.role));
   }
 }
@@ -1380,10 +1385,13 @@ async function saveSettings(role) {
   const provider = document.querySelector("#settings-provider").value;
   const modelId = document.getElementById(picker.modelId).value;
   const reasoningEffort = document.getElementById(picker.effortId).value;
+  const timeoutInput = document.getElementById(`${picker.modelId}-timeout`);
+  const timeoutMs = Number(timeoutInput.value);
+  const timeoutChanged = timeoutInput.value !== timeoutInput.dataset.savedTimeout;
   for (const entry of SETTINGS_ROLES) document.getElementById(entry.saveId).disabled = true;
   button.classList.add("is-loading"); feedback.textContent = "";
   try {
-    const saved = await globalApi("/settings", { method: "POST", body: JSON.stringify({ provider, role, modelId, reasoningEffort }) });
+    const saved = await globalApi("/settings", { method: "POST", body: JSON.stringify({ provider, role, modelId, reasoningEffort, ...(timeoutChanged ? { timeoutMs } : {}) }) });
     selectedProviderId = saved.provider;
     delete modelDrafts[role];
     renderSettings(saved);

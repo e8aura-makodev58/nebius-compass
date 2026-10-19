@@ -1,263 +1,93 @@
-# Model provider
+# Model providers
 
-ResponseCompass uses two model roles — the **Compass agent** (`agent.mjs`, ranks
-candidates) and the **event planner** (`event-planner.mjs`, proposes the next issue). Fix ranking (`fix-ranking.mjs`) reuses the Compass ranking role and settings. All
-send JSON-output chat-completion requests and parse JSON results. The ranking agent can
-make one revalidated repair request within its original deadline. Provider mechanics
-are isolated in `model-provider.mjs`; everything that must never depend on the provider
-(validation, fallback, never trusting the model) lives in the callers.
+`backend/src/model-provider.mjs` supports **Nebius Token Factory** and **AMD Token Factory**.
+Fresh deployments select `nebius`; saved AMD deployments keep their provider, credentials,
+model pins and reasoning settings without rewriting files on load. Removed legacy provider
+pins still migrate to AMD defaults. No model gets authority over facts, eligibility,
+outcomes or mutations; validators and deterministic fallback remain in the callers.
 
-ResponseCompass uses **one provider: AMD Radeon Cloud Token Factory**, an OpenAI-compatible
-service. This is a hackathon requirement; OpenAI, OpenRouter, and the self-hosted GPT-OSS
-provider were removed on 2026-10-16 (see `docs/decisions.md`). Service facts, limits, and
-terms are in [`Compass_AMD_Token_Factory_Integration_Guide.md`](../../Compass_AMD_Token_Factory_Integration_Guide.md).
+## Configuration and discovery
 
-> **Changing the provider is a change to this page.** Update it, plus
-> [operations/running-and-config.md](../operations/running-and-config.md) for any env
-> vars, and add coverage under `backend/tests/amd-provider.test.mjs`.
+`provider-settings.mjs` persists four independent roles: `compass`, `event-planner`,
+`investigator`, and `narrator`. Fix and staffing ranking reuse `compass`. Investigator and
+narrator settings are transport preparation; the investigation runtime is a later package.
+Each role stores model ID, reasoning effort and timeout; API saves accept 1000–120000 ms.
+Legacy flat AMD selections populate the two existing roles. Settings saves serialize
+atomic owner-only writes; a model save does not rewrite the separate credential file.
 
-## The abstraction (`model-provider.mjs`)
+Nebius has **no guessed model defaults**. `NEBIUS_ROLE_DEFAULTS` is the single role-default
+table, initially with blank IDs; `roleDefaults` applies environment overrides. Blank or
+catalog-confirmed-missing Nebius models fail closed as `model-not-configured`; the live
+ranking/planner callers use deterministic fallback. AMD retains measured
+`MiMo-V2.6-Flash` / `none` defaults. Those AMD measurements are historical evidence, not
+measurements of Nebius or of new investigation behavior.
 
-- `PROVIDER_IDS` — `["amd"]`. `providerDef(id)` resolves any id (including a removed one
-  recorded in old state) to AMD, so a request never silently goes nowhere.
-- `amdBaseUrl()` — `AMD_TOKEN_FACTORY_BASE_URL`, default
-  `https://developer.amd.com.cn/radeon/api/v1`, resolved at call time.
-- `readAmdApiKey()` — `AMD_TOKEN_FACTORY_API_KEY`, else the contents of
-  `AMD_TOKEN_FACTORY_API_KEY_FILE`; an unreadable file yields no key (fail closed).
-- `AMD_DEFAULT_MODEL_ID` = `MiMo-V2.6-Flash`; `defaultReasoningEffortFor(modelId)` returns
-  `none` for it and `default` (field omitted) for anything else.
-- `callChatCompletion({ modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl,
-  systemInstruction, userContent, jsonSchemaName, jsonSchema, errorLabel })` — POSTs to
-  `/chat/completions`, enforces the timeout via `AbortController`, and returns `JSON.parse`
-  of `choices[0].message.content`. It **throws on every failure**: missing credential,
-  HTTP error (AMD's `{"error"}` and `{"detail":{"error"}}` wrappers are unwrapped into the
-  message), timeout, `finish_reason: "length"` (truncation), or non-JSON content. Callers
-  catch broadly and fall back. Errors carry `status`, `retryAfterMs` and `serviceFailure`
-  for the runtime controls below.
+`NEBIUS_MODEL_CAPABILITIES` is the per-model capability table that the main agent fills
+after N0. It selects `native` or `json-protocol` tool calling, JSON mode, and thinking
+mapping (`omit`, `reasoning_effort`, or `chat_template_kwargs.enable_thinking`). Until
+verified, thinking controls are omitted and tool proposals use a JSON protocol. Explicit
+unsupported thinking controls fail closed. Nebius UI efforts are `default` and, only for
+verified thinking-capable models, `on`/`off`; optional `reasoningValues` maps on/off to the
+verified wire values. No live capability or license claim follows from discovery alone.
 
-### Request shape
+Credentials come from provider-specific env/key files or owner-only
+`provider-credentials.json`; unreadable key files return no key. Saved credentials override
+environment bootstrap keys. API snapshots expose only configuration status and masked
+hints. Both providers discover text models at `/models` via their own credential and URL.
+Catalog status, cached models and stale-response revisions are isolated per provider.
+Boot checks run in the background when enabled; `NODE_ENV=test` disables them. A confirmed
+missing AMD role falls back to its measured default without changing the saved pin.
 
-```text
-{ model, messages: [system, user], response_format: { type: "json_object" },
-  max_tokens: AMD_TOKEN_FACTORY_MAX_OUTPUT_TOKENS (4096), reasoning_effort?: <unless "default"> }
-```
+`GET /api/settings` exposes current-provider role settings and validation, plus
+`modelsByProvider` for switching forms without copying model pins across providers.
+`GET /api/settings/models?provider=…` refreshes a catalog; `POST /api/settings` saves
+`{provider, role, modelId, reasoningEffort, timeoutMs?}`. Role omission means `compass`.
+`requestOptions(role)` returns mode, provider, private API key, model ID, timeout and optional
+effort; it is server-internal. Settings → API adds investigator/narrator role fieldsets and
+per-role timeout fields. Public-demo settings retain existing read-only enforcement.
 
-- **`json_object`, not `json_schema`.** AMD's shared endpoints reject strict `json_schema`
-  for DeepSeek-V4-Flash (HTTP 400 "does not support JSON schema output mode"), so the
-  output schema is appended to the system message as guidance. `json_object` guarantees
-  only syntactically valid JSON: **the callers' validators are the real contract** —
-  `validateAgentResult` (IDs, ranks, tradeoffs, no digits in prose apart from supplied candidate names) and
-  `validateEventProposal` (eligible equipment, issue class, ceilings).
-- Any separate reasoning trace (`message.reasoning`) is ignored — never parsed, stored, or
-  shown.
-- Unsupported optional fields are silently dropped by AMD's gateway, so ResponseCompass does not
-  rely on `seed`, `stop`, etc.
+## Transport and tools
 
-## Model choice (measured 2026-10-16)
+`callChatCompletion` retains the existing parsed-JSON return contract and optionally
+reports metadata via `onMetadata`. It rejects unexpected tool calls. Existing responder,
+fix, staffing and planner callers retain their bounded validators and fallback behavior.
+Responder/fix/staffing recommendations persist only allowlisted model metadata; planner
+events carry the same bounded metadata. Separate model reasoning traces are discarded.
 
-One live call per model on the Scenario A candidate packet (four candidates), then
-repeats for the leaders. Validity means `validateAgentResult` accepted the output.
+`callChatTurn` returns `{content, toolCalls, finishReason, usage, modelId, latencyMs,
+providerRequestId?}`. Tool calls normalize to `{id, name, arguments}` with parsed arguments.
+Native requests send OpenAI-style function schemas and omit JSON response format. The JSON
+protocol encodes read-only tools in the system instruction and parses `action: tool|final`
+into the same result shape. Transport errors still throw to the caller's fallback handler;
+malformed/unknown tool calls return a bounded `error` with no raw model text and execute
+nothing. This module never executes tools.
 
-| Model (reasoning) | Valid | Latency | Notes |
-|---|---|---|---|
-| **MiMo-V2.6-Flash (none)** | **4/4** | 21–30s | Default. |
-| GLM-5.3-Flash (low) | 1/3 | 27–41s | One digit-in-prose failure, one HTTP 502. |
-| DeepSeek-V4-Flash (default / none) | 0/3 | 30–39s | Responder IDs and numbers in prose, an invented responder ID, garbled words. |
-| Qwen3.8-Flash-Next (none) | 0/1 | 34s | Digits in prose. |
-| Qwen3.8-27B (low) | 1/1 | 120s | Too slow for dispatch. |
-| DeepSeek-V4.1-Flash, Gemma-4-31B-IT | — | >150s | No reply. |
+Tool validation supports the documented restricted JSON Schema subset implemented in
+`matchesSchema`: typed objects/arrays/scalars, properties, required keys, enum, numeric and
+length/item bounds. Unknown schema keywords fail closed. Extra object keys require
+explicit `additionalProperties: true`; arguments must be JSON objects matching the supplied
+schema. At most six unique calls per turn, 8192 argument characters per call. Later tool
+runners must also enforce run-level deadlines, evidence authorization and output-byte caps.
 
-### Repeat measurement — `npm run measure:amd` (2026-10-16, 3 samples each)
+Usage contains only nonnegative safe integer token counts when supplied. Latency uses a
+monotonic clock and includes queueing/retries for that turn; metadata describes the last
+completed call when a ranking makes a repair. IDs are bounded strings. Prompts, credentials
+and reasoning text are never added to metadata.
 
-`scripts/measure-amd-models.mjs` makes live calls through `requestAgentRecommendation` and
-`requestEventProposal`, so they pass the same provider limits and validators as the app.
-It runs one call at a time and prints a Markdown table. It spends the shared team quota, so
-it is manual and never part of `npm test`. Options: `--models id[:effort],…` (default
-`AMD_DEFAULT_MODEL_ID`), `--samples N` (default 3), `--skip-planner`, `--skip-ranking`,
-`--timeout-ms` (ranking, default 90000) and `--planner-timeout-ms` (default 30000); the
-timeout defaults match the app's own. Repeated failures are grouped with a count. (Runs
-before 2026-10-17 05:30 UTC used one 90s timeout for both roles.) The expected Scenario A top pick is `R-ENGR028`.
+## Controls and fallback
 
-| Model (reasoning) | Ranking valid | Ranking median | Planner valid | Planner median | Main failure |
-|---|---|---|---|---|---|
-| **MiMo-V2.6-Flash (none)** | 1/3 | 28.5s | 3/3 | 4.5s | Digits in rationale prose. |
-| GLM-5.3-Flash (low) | 0/3 | — | 0/3 | — | Timeouts; HTTP 429 "concurrency limit (16)". |
-| Qwen3.8-Flash-Next (none) | 0/3 | — | 3/3 | 27.5s | Ranking timed out at 90s. |
-| DeepSeek-V4-Flash (none) | 0/3 | — | 3/3 | 6.7s | Digits in rationale prose. |
-| MiniCPM5-2B (default) | 0/3 | — | 0/3 | — | Schema errors; unknown equipment. |
+`provider-controls.mjs` owns controls keyed by **transport and provider**. Production fetch
+shares a provider's limiter across roles and rooms; AMD and Nebius have independent
+queues, RPM windows and breakers. Injected transports remain isolated for tests.
 
-The single valid MiMo ranking picked `R-ENGR028`. Most ranking failures come from
-`containsNumericLeakage` in `agent.mjs`, which then rejected any digit, while models wrote
-responder IDs or numbers in their rationale. Since 2026-10-17 (user decision) the supplied
-candidates' `responderId` / `displayName` are allowed in prose; every other digit is still
-rejected. The ranking prompt now reinforces qualitative prose with a compliant example;
-one revalidated repair attempt is available as described below.
-A ranking-only re-check right after that change (2026-10-17, 3 samples): **MiMo-V2.6-Flash
-3/3 valid** (median 28.4s; it picked `R-ENGR028` in 1 of 3 and other eligible candidates
-otherwise). DeepSeek-V4-Flash (default reasoning) was 1/3: it left candidates out of the
-ranking.
+Nebius defaults: 20 starts/minute, concurrency 2, up to 32 queued, two 429 retries,
+breaker threshold 5 and cooldown 60000 ms. AMD retains 10 RPM and otherwise the existing
+semantics. Only 429 retries, honoring Retry-After or bounded exponential jitter within the
+caller's original deadline. Other failures return promptly; service failures affect only
+that provider's breaker. Application validation happens outside controls.
 
-### After the repair retry and provider controls (2026-10-17, 3 samples, 90s timeout)
-
-| Model (reasoning) | Ranking valid | Picked `R-ENGR028` | Ranking median | Planner valid | Planner median | Failures |
-|---|---|---|---|---|---|---|
-| **MiMo-V2.6-Flash (none)** | 2/3 | 2/3 | 22.0s | 3/3 | 5.7s | One ranking timed out at 90s. |
-| DeepSeek-V4-Flash (default) | **3/3** | **3/3** | 27.9s | 1/3 | 6.9s | Planner: unknown equipment; description over 180 characters. |
-| Qwen3.8-Flash-Next (default) | 0/3 | — | — | 3/3 | 30.7s | Every ranking timed out. |
-| GLM-5.3-Flash (low) | 0/3 | — | — | 0/3 | — | Timeouts; the circuit breaker then opened and failed the last call at once. |
-
-Rankings went from 1 valid in 15 to 5 valid in 12 across comparable models, and every
-valid ranking picked the expected candidate. No digit-in-prose failures remained. MiMo
-stays the default: it is the only model valid on both roles. Small samples; the app's own
-agent timeout is 60s, shorter than this run's 90s.
-
-### Default-choice measurement (2026-10-17, 10 samples, app timeouts 60s ranking / 30s planner)
-
-| Model (reasoning) | Ranking valid | Picked `R-ENGR028` | Ranking median | Planner valid | Planner median | Failures |
-|---|---|---|---|---|---|---|
-| **MiMo-V2.6-Flash (none)** | **9/10** | 8/10 | 41.7s | **10/10** | 5.5s | Ranking timeout ×1. |
-| DeepSeek-V4-Flash (default) | 8/10 | 8/10 | 33.2s | 3/10 | 5.4s | Ranking timeout ×2; planner unknown equipment ×5, timeout ×2. |
-| DeepSeek-V4-Flash (none) | 8/10 | 8/10 | 41.9s | 3/10 | 5.8s | Ranking timeout ×2; planner unknown equipment ×5, `responseAction` over 240 characters ×2. |
-
-**Decision: MiMo-V2.6-Flash / `none` stays the default for both roles.** With the repair
-retry it is now the most reliable ranker as well as the planner. DeepSeek is no better at
-ranking and much worse at planning. All remaining ranking failures are timeouts, not
-invalid answers: MiMo's ranking latencies ran 24–60s (median 42s, some including a repair),
-so the 60s agent timeout was tight; it is now 90s (user decision, 2026-10-17). Per-role selection (codex, round 4) stays useful for
-operators, but needs no different defaults. The planner is
-reliable on MiMo and DeepSeek. Re-measure after that fix and the provider limiter merge.
-
-Output speed is roughly 25 tokens/s, so a ranking takes 20–60s; the agent timeout defaults
-to 90s (60s before 2026-10-17) and the planner to 30s. The service has no SLA and was fully down (HTTP 500/502)
-later the same day, so the deterministic fallback is a normal operating path. Small
-samples: re-measure before relying on these numbers.
-
-## Selection & discovery (`provider-settings.mjs`)
-
-- **Persisted role pins.** `backend/data/provider-settings.json` stores
-  `{ provider: "amd", models: { amd: { compass: {modelId, reasoningEffort},
-  "event-planner": {modelId, reasoningEffort} } } }`. A legacy single selection loads
-  into both roles without rewriting the file; the next operator save writes the new
-  shape. Saves update only the selected role and serialize atomic owner-only writes.
-  A file naming a removed provider loads AMD defaults; removed-provider pins are never
-  sent to AMD. The separate credential file is unchanged by model saves.
-- **Env seeding.** A fresh install seeds from `AMD_TOKEN_FACTORY_MODEL` /
-  `AMD_TOKEN_FACTORY_REASONING_EFFORT` for both roles. Optional
-  `AMD_TOKEN_FACTORY_EVENT_PLANNER_MODEL` / `_REASONING_EFFORT` override only the planner
-  seed. The planner inherits the shared effort only when it uses the shared model (a
-  different family may reject it, e.g. GLM has no `none`); otherwise its own model's
-  default effort applies. Persisted selections override environment seeds.
-- **Credential.** The env/file key is the bootstrap; a key saved in Settings is kept in the
-  owner-only `provider-credentials.json` and takes precedence. Snapshots only ever expose a
-  masked hint.
-- **Model discovery.** `GET /api/settings/models` fetches AMD's `/models`, keeps chat
-  models only (drops OCR-only models such as MinerU), and attaches each model's documented
-  reasoning levels via `reasoningEffortsForModel` (DeepSeek-V4, GLM, MiMo, Qwen3.8 families;
-  unknown models offer only `default`, since an unsupported value is an HTTP 422).
-- **Boot validation.** The server enables a background catalog check after settings and
-  credentials load; startup never awaits the network. `NODE_ENV=test` disables this boot
-  check. Service-level callers opt in with `checkModelsOnBoot` (tests supply fake fetch).
-  Snapshots expose `roles.compass` and `roles["event-planner"]`, each with saved model,
-  effort and `modelValidation` with `status`
-  (`UNCHECKED`, `CHECKING`, `VALID`, `MISSING`, `UNAVAILABLE`), `savedModelId`, and
-  `effectiveModelId`. A successful catalog missing the saved chat model emits
-  `provider_saved_model_missing` with `role` to the application log. Only the missing
-  role's request options use `AMD_DEFAULT_MODEL_ID` and its default reasoning effort,
-  leaving the user's saved file untouched. Failed/malformed discovery keeps saved choices; a later
-  successful refresh can restore it. Confirmed fallback remains active during a pending
-  refresh. Changing credentials invalidates catalog evidence,
-  and stale in-flight responses cannot override the new credential's status.
-- **`requestOptions(purpose)`** returns `{ mode, provider: "amd", apiKey, modelId,
-  reasoningEffort? }` for `agent.mjs` / `event-planner.mjs`, using that role's selection.
-  Purposes are `compass` (default) and `event-planner`; unknown roles are rejected.
-  `mode` is `live` unless
-  overridden by `COMPASS_LIVE_COMPASS_MODE` / `COMPASS_EVENT_PLANNER_MODE`.
-- **API / UI.** `POST /api/settings` accepts `{provider, role, modelId, reasoningEffort}`,
-  validating against the cached catalog and supported reasoning levels. Omitting role
-  retains compatibility by selecting `compass`. Top-level snapshot `modelId`,
-  `reasoningEffort` and `modelValidation` remain ranking aliases. Settings → API provides
-  labelled Ranking (Compass) and Event planner fieldsets with independent controls,
-  status and saves; saving one or refreshing models preserves the other's unsaved draft.
-
-## Inference modes
-
-Both callers accept a `mode`:
-
-- `live` — call AMD through `callChatCompletion`.
-- `fixture` — load a committed JSON fixture (the Offline path; never touches the network).
-- `force-failure` — deterministically return "unavailable" (used by tests and the E2E
-  suite to prove the fallback).
-
-Any failure resolves to an explicit `{ status: "unavailable" }`, and the runtime falls back
-to the deterministic baselines — dispatch always continues.
-
-## Ranking validation repair (`agent.mjs`)
-
-A parsed live ranking that fails `validateAgentResult` can trigger **one** replacement
-request through `callLiveModel` → `callChatCompletion`. The replacement receives the same
-authoritative candidate packet and bounded validator feedback (at most eight errors,
-each at most 256 characters), without echoing the rejected model output. It uses the same
-model, reasoning setting and output contract, and passes the full unchanged validator.
-Supplied candidate names remain the only digit-bearing prose allowed.
-
-Both calls share the original monotonic deadline (default 90 seconds). Repair starts only
-with at least one second remaining and gets only the remaining timeout, so provider
-queueing/retries also consume that budget. Even a valid result arriving after the deadline
-is unavailable. A second validation failure stays `validation-failed`; provider errors do
-not trigger a validation repair. Validation remains outside the provider call so rejected
-rankings are not service failures for provider controls. Fixture and force-failure modes
-never repair or call the network.
-
-Hermetic coverage lives in `backend/tests/wp5-agent.test.mjs`, using fake fetch, an injected
-monotonic clock and mock timers to check successful repair, repeated rejection, feedback
-bounds, skipping a near-expired deadline and aborting at the shared deadline. The main agent
-must re-measure live validity after merging; these tests establish behavior, not model quality.
-
-## Runtime controls (`provider-controls.mjs`)
-
-Every `callChatCompletion` runs under one set of controls, so the agent, its repair attempt
-and the event planner in every control room share the same budget. Controls are kept per
-transport: the real `fetch` has a single process-wide set; each injected test `fetchImpl`
-gets its own, so hermetic tests never share limiter or breaker state. Env vars are in
-[../operations/running-and-config.md](../operations/running-and-config.md).
-
-- **Limiter.** At most `AMD_TOKEN_FACTORY_APP_CONCURRENCY` (2) in flight and
-  `AMD_TOKEN_FACTORY_APP_RPM` (10) starts per rolling minute, with up to 32 waiting in a
-  FIFO queue. A full queue fails at once (`code: "queue-full"`). A request that cannot
-  start before its deadline fails as a timeout (`AbortError`, `code: "deadline"`).
-- **Deadline.** `timeoutMs` covers queueing, every attempt and every retry wait; each
-  attempt's `AbortController` gets only the time left.
-- **Retries.** Only HTTP 429 is retried, following the guide (§9): wait `Retry-After`
-  (seconds or HTTP date), or back off exponentially with jitter from 1s when it is absent.
-  Retry only while the wait fits the deadline and `AMD_TOKEN_FACTORY_MAX_RETRIES` (2) is not
-  used up. 502/503, network errors and other 4xx fail at once so the caller falls back.
-- **Circuit breaker.** `AMD_TOKEN_FACTORY_BREAKER_THRESHOLD` (5) consecutive service
-  failures (429, 5xx, network errors, timeouts) open it. While open, calls fail at once
-  (`code: "circuit-open"`, message names the breaker). After
-  `AMD_TOKEN_FACTORY_BREAKER_COOLDOWN_MS` (60s) one probe is allowed; success closes it,
-  failure reopens it. Any response from a reachable service (including 4xx, truncation or
-  bad JSON) resets the count. Validation rejections happen in the callers and never reach
-  the breaker.
-
-Callers already map `AbortError` to `timeout` and anything else to `provider-error`, then
-fall back, so these controls needed no caller changes.
-
-## Not yet built
-
-Nothing from the integration guide's runtime list remains open. Catalog validation at
-boot is described under Selection & discovery.
-
-## Frontend
-
-The Settings → API tab renders the provider list from the `/api/settings` response
-(`settings.providers`), so it shows the single AMD entry with no client change. See
-[frontend/overview.md](../frontend/overview.md).
-
-## Fix-ranking requests
-
-`fix-ranking.mjs` uses the existing ranking role's model, reasoning and credential settings
-and `callChatCompletion` provider controls. Its strict contract ranks supplied catalog IDs
-only; application-owned observed evidence and procedure text form the packet. One bounded
-validation repair shares the default 90s ranking budget. Fixture and forced-failure modes
-never read credentials or call a provider. Existing recorded model-validity measurements
-are responder/planner measurements, not measurements of this new fix-ranking task.
+Offline fixture paths remain API-free; forced failure remains deterministic. N0/live
+validation belongs to the main agent, never the unit suite or worker worktree.
+Hermetic coverage: `amd-provider.test.mjs`, `nebius-provider.test.mjs`,
+`provider-controls.test.mjs`, `provider-settings.test.mjs`, and existing ranking tests.
+See [running and configuration](../operations/running-and-config.md) for env variables.

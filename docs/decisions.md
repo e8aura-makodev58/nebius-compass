@@ -995,3 +995,18 @@ Existing running attempts retain legacy actions and are labelled separately in t
   explicit allowlisted DTOs (never spread state rows); public synthetic certifications seeded
   independently of `ResponderSkill`; hazard and injection screening are code-owned, not model
   roles. Rules 3 and 4 unchanged.
+
+## 2026-10-19 — N1: Nebius default with AMD compatibility and explicit capabilities
+
+Fresh settings select Nebius Token Factory; saved AMD selections and credentials remain
+unchanged on load. AMD remains selectable. Nebius model IDs start blank, with per-role env
+seeds and a single role-default table filled only after the main agent's N0 probes. A blank
+or confirmed-missing Nebius model fails closed to deterministic fallback, never AMD's model.
+Thinking/tool protocol mappings are per-model data, not inferred from model names.
+
+A normalized chat-turn function supports validated native or JSON-protocol tool proposals;
+the existing parsed-JSON helper retains its contract. Transport does not execute tools or
+mutate operational state. Rules 3/4 remain unchanged: models rank bounded supplied options,
+and no hidden truth enters this integration. Limiter, 429-only retries and breaker behavior
+remain unchanged, isolated by provider and transport. Metadata is allowlisted and excludes
+prompts, secrets and reasoning traces. The guide creates no additional authority exception.

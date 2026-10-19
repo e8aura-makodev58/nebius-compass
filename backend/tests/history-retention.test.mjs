@@ -1,3 +1,4 @@
+import { mkdir as ensureScratchDirectory } from "node:fs/promises";
 import {buildStaffingPacket} from '../src/staffing-service.mjs';
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -33,7 +34,7 @@ async function bundles(root) {
 const sorted = (rows) => rows.toSorted((a, b) => a.id.localeCompare(b.id));
 
 test("multi-day retention preserves decisions, exact analytics, audits, and crash recovery", { timeout: 60_000 }, async (t) => {
-  const directory = await mkdtemp(join(repository, ".cache/retention-test-"));
+  const directory = await ensureScratchDirectory(join(repository, ".cache"), { recursive: true }).then(() => mkdtemp(join(repository, ".cache/retention-test-")));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const from = join(directory, "from.json");
   await writeFile(from, JSON.stringify(createLiveSeed()));

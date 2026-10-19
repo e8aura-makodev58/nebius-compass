@@ -9,7 +9,7 @@
 
 import { readFileSync } from "node:fs";
 import { SCHEMA_VERSION } from "./context-engine.mjs";
-import { AMD_DEFAULT_MODEL_ID, callChatCompletion, defaultReasoningEffortFor, readAmdApiKey } from "./model-provider.mjs";
+import { callChatCompletion, defaultReasoningEffortFor, readProviderApiKey, roleDefaults } from "./model-provider.mjs";
 
 export const SYSTEM_INSTRUCTION = `You are Compass, a responder recommendation agent.
 
@@ -261,7 +261,7 @@ function buildFixtureResult(candidatePacket) {
   return { ...fixture, recommendationRequestId: candidatePacket.recommendationRequestId };
 }
 
-async function callLiveModel(candidatePacket, { provider, modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl }, validationErrors) {
+async function callLiveModel(candidatePacket, { provider, modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl, onMetadata }, validationErrors) {
   return callChatCompletion({
     provider,
     modelId,
@@ -269,6 +269,7 @@ async function callLiveModel(candidatePacket, { provider, modelId, apiKey, reaso
     reasoningEffort,
     timeoutMs,
     fetchImpl,
+    onMetadata,
     systemInstruction: SYSTEM_INSTRUCTION,
     // Re-ask from authoritative inputs, without echoing the rejected output.
     // Bound feedback even if a malformed result generated many/large errors.
@@ -294,8 +295,8 @@ async function callLiveModel(candidatePacket, { provider, modelId, apiKey, reaso
 export async function requestAgentRecommendation(candidatePacket, options = {}) {
   const mode = options.mode ?? process.env.COMPASS_DEMO_INFERENCE_MODE ?? "fixture";
   const provider = options.provider ?? "amd";
-  const modelId = options.modelId ?? (process.env.AMD_TOKEN_FACTORY_MODEL || AMD_DEFAULT_MODEL_ID);
-  const reasoningEffort = options.reasoningEffort ?? (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId));
+  const modelId = options.modelId ?? roleDefaults(provider, "compass").modelId;
+  const reasoningEffort = options.reasoningEffort ?? (provider === "nebius" ? roleDefaults(provider, "compass").reasoningEffort : (process.env.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(modelId)));
   const modelInfo = { provider, modelId, mode, ...(reasoningEffort ? { reasoningEffort } : {}) };
 
   if (mode === "force-failure") {
@@ -312,7 +313,8 @@ export async function requestAgentRecommendation(candidatePacket, options = {}) 
       const callOptions = {
         provider,
         modelId,
-        apiKey: options.apiKey ?? readAmdApiKey(),
+        apiKey: options.apiKey ?? readProviderApiKey(provider),
+        onMetadata: metadata => Object.assign(modelInfo, metadata),
         reasoningEffort,
         fetchImpl: options.fetchImpl ?? fetch,
       };
@@ -327,7 +329,7 @@ export async function requestAgentRecommendation(candidatePacket, options = {}) 
       if (!valid) return { status: "unavailable", reason: "validation-failed", errors, modelInfo };
       return { status: "ok", result: raw, modelInfo };
     } catch (error) {
-      const reason = error.name === "AbortError" ? "timeout" : "provider-error";
+      const reason = error.code === "model-not-configured" ? "model-not-configured" : error.name === "AbortError" ? "timeout" : "provider-error";
       return { status: "unavailable", reason, message: error.message, modelInfo };
     }
   }

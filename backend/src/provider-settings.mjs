@@ -1,11 +1,11 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { AMD_DEFAULT_MODEL_ID, PROVIDER_IDS, amdBaseUrl, defaultReasoningEffortFor, readAmdApiKey } from "./model-provider.mjs";
+import { AMD_DEFAULT_MODEL_ID, PROVIDER_IDS, amdBaseUrl, defaultReasoningEffortFor, readAmdApiKey, readNebiusApiKey, nebiusBaseUrl, roleDefaults, modelCapabilities } from "./model-provider.mjs";
 import { compassDataPath } from "./data-root.mjs";
 import { logEvent } from "./application-log-store.mjs";
 
 const DEFAULT_TIMEOUT_MS = 8_000;
-const MODEL_ROLES = ["compass", "event-planner"];
+const MODEL_ROLES = ["compass", "event-planner", "investigator", "narrator"];
 const defaultModel = () => ({ modelId: AMD_DEFAULT_MODEL_ID, reasoningEffort: defaultReasoningEffortFor(AMD_DEFAULT_MODEL_ID) });
 
 function modelRole(value = "compass") {
@@ -39,6 +39,13 @@ function isSelectableAmdModel(model) {
 }
 
 const PROVIDER_CATALOG = Object.freeze({
+  nebius: {
+    id: 'nebius', label: 'Nebius Token Factory', enabled: true,
+    get modelsUrl() { return `${nebiusBaseUrl()}/models`; },
+    isSelectable: isSelectableAmdModel,
+    toOption: model => ({ id: model.id, ownedBy: 'nebius', reasoningEfforts: modelCapabilities('nebius', model.id).thinking === 'omit' ? ['default'] : ['default','on','off'] }),
+    fallbackReasoningEfforts: modelId => modelCapabilities('nebius', modelId).thinking === 'omit' ? ['default'] : ['default','on','off'],
+  },
   amd: {
     id: "amd",
     label: "AMD Token Factory",
@@ -51,13 +58,14 @@ const PROVIDER_CATALOG = Object.freeze({
 });
 
 function normalizeProviderId(value) {
-  return PROVIDER_IDS.includes(value) ? value : "amd";
+  return PROVIDER_IDS.includes(value) ? value : "nebius";
 }
 
 function normalizeModelEntry(value = {}) {
   return {
     modelId: typeof value.modelId === "string" ? value.modelId.trim() : "",
     reasoningEffort: typeof value.reasoningEffort === "string" ? value.reasoningEffort : "default",
+    ...(Number.isFinite(value.timeoutMs) && value.timeoutMs > 0 ? { timeoutMs: value.timeoutMs } : {}),
   };
 }
 
@@ -66,16 +74,16 @@ function normalizeModelEntry(value = {}) {
  * (openai, openrouter, gpt-oss). Those pins are dropped rather than sent to
  * AMD, and the AMD defaults apply instead.
  */
-function normalizeSettings(value = {}, defaults = Object.fromEntries(MODEL_ROLES.map((role) => [role, defaultModel()]))) {
+function normalizeSettings(value = {}, defaults) {
   const models = {};
   for (const id of PROVIDER_IDS) {
     const legacy = normalizeModelEntry(value.models?.[id]);
     models[id] = Object.fromEntries(MODEL_ROLES.map((role) => {
       const normalized = normalizeModelEntry(value.models?.[id]?.[role]);
-      return [role, normalized.modelId ? normalized : legacy.modelId ? { ...legacy } : { ...defaults[role] }];
+      return [role, normalized.modelId ? { ...defaults[id][role], ...normalized } : legacy.modelId && ["compass","event-planner"].includes(role) ? { ...defaults[id][role], ...legacy } : { ...defaults[id][role] }];
     }));
   }
-  return { provider: normalizeProviderId(value.provider), models, updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : null };
+  return { provider: PROVIDER_IDS.includes(value.provider) ? value.provider : value.provider ? "amd" : "nebius", models, updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : null };
 }
 
 function maskCredential(apiKey) {
@@ -116,7 +124,7 @@ function previewSettings(settings, apiKeys, storedCredentials, providerId = sett
 export function createProviderSettingsService({
   filePath = compassDataPath("provider-settings.json"),
   credentialsFilePath = join(dirname(filePath), "provider-credentials.json"),
-  apiKeys = { amd: readAmdApiKey() },
+  apiKeys,
   fetchImpl = fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   environment = process.env,
@@ -126,43 +134,29 @@ export function createProviderSettingsService({
   // Environment variables remain a safe deployment bootstrap. A credential
   // saved through Settings takes precedence and is kept in its own owner-only
   // file, never in the model-settings file or API payload.
-  const environmentApiKeys = apiKeys;
+  const environmentApiKeys = apiKeys ?? { amd: readAmdApiKey(environment), nebius: readNebiusApiKey(environment) };
   let storedCredentials = {};
   // Seeds a fresh install; a persisted settings file, once written, takes
   // precedence over these on later boots.
-  const seedModelId = environment.AMD_TOKEN_FACTORY_MODEL || AMD_DEFAULT_MODEL_ID;
-  const sharedSeed = {
-    modelId: seedModelId,
-    reasoningEffort: environment.AMD_TOKEN_FACTORY_REASONING_EFFORT || defaultReasoningEffortFor(seedModelId),
-  };
-  const plannerModelId = environment.AMD_TOKEN_FACTORY_EVENT_PLANNER_MODEL || seedModelId;
-  // The shared effort was chosen for the shared model; a different planner
-  // model may reject it (GLM has no "none"), so it falls back to its own default.
-  const plannerEffortFallback = plannerModelId === seedModelId ? sharedSeed.reasoningEffort : defaultReasoningEffortFor(plannerModelId);
-  const seed = {
-    compass: sharedSeed,
-    "event-planner": {
-      modelId: plannerModelId,
-      reasoningEffort: environment.AMD_TOKEN_FACTORY_EVENT_PLANNER_REASONING_EFFORT || plannerEffortFallback,
-    },
-  };
-  let settings = normalizeSettings({ models: { amd: seed } }, seed);
+  const seed = Object.fromEntries(PROVIDER_IDS.map(id => [id, Object.fromEntries(MODEL_ROLES.map(role => [role, roleDefaults(id, role, environment)]))]));
+  let settings = normalizeSettings({}, seed);
   // Cached so a save can validate against the list the operator actually saw,
   // without re-fetching.
   let availableModelsByProvider = Object.fromEntries(PROVIDER_IDS.map((id) => [id, []]));
   let initialization;
-  let catalogState = { status: "UNCHECKED" };
-  let catalogRevision = 0;
+  let catalogStates = Object.fromEntries(PROVIDER_IDS.map(id => [id, { status: "UNCHECKED" }]));
+  let catalogRevisions = Object.fromEntries(PROVIDER_IDS.map(id => [id, 0]));
   let settingsWrite = Promise.resolve();
 
   function modelValidation(providerId = settings.provider, role = "compass") {
+    const catalogState = catalogStates[providerId];
     const savedModelId = settings.models[providerId][role].modelId;
     const missing = catalogState.status === "READY" && !availableModelsByProvider[providerId].some((model) => model.id === savedModelId);
     return {
       ...catalogState,
       status: catalogState.status === "READY" ? (missing ? "MISSING" : "VALID") : catalogState.status,
       savedModelId,
-      effectiveModelId: missing ? AMD_DEFAULT_MODEL_ID : savedModelId,
+      effectiveModelId: missing ? (providerId === "amd" ? AMD_DEFAULT_MODEL_ID : "") : savedModelId,
     };
   }
 
@@ -170,6 +164,7 @@ export function createProviderSettingsService({
     return {
       ...previewSettings(settings, currentApiKeys(), storedCredentials, providerId),
       modelValidation: modelValidation(providerId),
+      modelsByProvider: Object.fromEntries(PROVIDER_IDS.map(id => [id, Object.fromEntries(MODEL_ROLES.map(role => [role, { ...settings.models[id][role], modelValidation: modelValidation(id, role) }]))])),
       roles: Object.fromEntries(MODEL_ROLES.map((role) => [role, {
         ...settings.models[providerId][role], modelValidation: modelValidation(providerId, role),
       }])),
@@ -177,9 +172,11 @@ export function createProviderSettingsService({
   }
 
   function invalidateCatalog() {
-    catalogRevision += 1;
-    catalogState = { status: "UNCHECKED" };
-    availableModelsByProvider = Object.fromEntries(PROVIDER_IDS.map((id) => [id, []]));
+    for (const id of PROVIDER_IDS) {
+      catalogRevisions[id] += 1;
+      catalogStates[id] = { status: 'UNCHECKED' };
+      availableModelsByProvider[id] = [];
+    }
   }
 
   function currentApiKeys() {
@@ -229,15 +226,15 @@ export function createProviderSettingsService({
     const catalog = PROVIDER_CATALOG[id];
     const apiKeys = currentApiKeys();
     const apiKey = apiKeys[id];
-    const revision = ++catalogRevision;
+    const revision = ++catalogRevisions[id];
     const base = () => preview(id);
     if (!apiKey) {
-      catalogState = { status: "UNAVAILABLE", reason: `${catalog.label} credential is not configured` };
-      return { ...base(), modelDiscovery: { ...catalogState, provider: id }, models: [] };
+      catalogStates[id] = { status: "UNAVAILABLE", reason: `${catalog.label} credential is not configured` };
+      return { ...base(), modelDiscovery: { ...catalogStates[id], provider: id }, models: [] };
     }
     // Keep confirmed catalog evidence in force while a refresh is pending;
     // do not briefly resume calls to a model already known to be missing.
-    if (catalogState.status !== "READY") catalogState = { status: "CHECKING" };
+    if (catalogStates[id].status !== "READY") catalogStates[id] = { status: "CHECKING" };
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -249,19 +246,19 @@ export function createProviderSettingsService({
         .filter((model) => typeof model?.id === "string" && catalog.isSelectable(model))
         .map((model) => catalog.toOption(model))
         .sort((a, b) => a.id.localeCompare(b.id));
-      if (revision === catalogRevision) {
+      if (revision === catalogRevisions[id]) {
         availableModelsByProvider[id] = models;
-        catalogState = { status: "READY", checkedAt: new Date().toISOString() };
+        catalogStates[id] = { status: "READY", checkedAt: new Date().toISOString() };
         for (const role of MODEL_ROLES) {
           const validation = modelValidation(id, role);
-          if (validation.status === "MISSING") {
+          if (validation.status === "MISSING" && validation.savedModelId !== validation.effectiveModelId && validation.savedModelId) {
             logEvent(logger, "provider_saved_model_missing", { provider: id, role, savedModelId: validation.savedModelId, effectiveModelId: validation.effectiveModelId });
           }
         }
       }
       return { ...base(), modelDiscovery: { status: "READY", provider: id, fetchedAt: new Date().toISOString() }, models };
     } catch (error) {
-      if (revision === catalogRevision) catalogState = { status: "UNAVAILABLE" };
+      if (revision === catalogRevisions[id]) catalogStates[id] = { status: "UNAVAILABLE" };
       return { ...base(), modelDiscovery: { status: "UNAVAILABLE", provider: id, reason: controller.signal.aborted ? `${catalog.label} model discovery timed out` : error.message }, models: [] };
     } finally {
       clearTimeout(timer);
@@ -282,14 +279,17 @@ export function createProviderSettingsService({
     if (!catalog || !catalog.enabled) throw new Error("Select an available provider");
     const modelId = typeof input.modelId === "string" ? input.modelId.trim() : "";
     const cached = availableModelsByProvider[providerId] ?? [];
+    const hasCatalog = catalogStates[providerId].status === "READY";
     const cachedEntry = cached.find((model) => model.id === modelId);
-    if (!modelId || (cached.length > 0 ? !cachedEntry : !catalog.isSelectable({ id: modelId }))) {
-      throw new Error(cached.length > 0 ? `Selected model is not available to this ${catalog.label} credential` : `Select an available ${catalog.label} text model`);
+    if (!modelId || (hasCatalog ? !cachedEntry : !catalog.isSelectable({ id: modelId }))) {
+      throw new Error(hasCatalog ? `Selected model is not available to this ${catalog.label} credential` : `Select an available ${catalog.label} text model`);
     }
     const supportedEfforts = cachedEntry?.reasoningEfforts ?? catalog.fallbackReasoningEfforts(modelId);
     const reasoningEffort = typeof input.reasoningEffort === "string" ? input.reasoningEffort : "";
     if (!supportedEfforts.includes(reasoningEffort)) throw new Error(`Reasoning level is not supported for ${modelId}`);
-    const nextSettings = { provider: providerId, models: { ...settings.models, [providerId]: { ...settings.models[providerId], [role]: { modelId, reasoningEffort } } }, updatedAt: new Date().toISOString() };
+    const timeoutMs = input.timeoutMs === undefined ? settings.models[providerId][role].timeoutMs : Number(input.timeoutMs);
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 120_000) throw new Error('Timeout must be between 1000 and 120000 milliseconds');
+    const nextSettings = { provider: providerId, models: { ...settings.models, [providerId]: { ...settings.models[providerId], [role]: { modelId, reasoningEffort, timeoutMs } } }, updatedAt: new Date().toISOString() };
     await persist(nextSettings);
     settings = nextSettings;
     return preview();
@@ -327,16 +327,17 @@ export function createProviderSettingsService({
       const role = modelRole(purpose);
       const mode = purpose === "event-planner"
         ? environment.COMPASS_EVENT_PLANNER_MODE ?? "live"
-        : environment.COMPASS_LIVE_COMPASS_MODE ?? "live";
+        : environment[`COMPASS_${purpose.toUpperCase()}_MODE`] ?? environment.COMPASS_LIVE_COMPASS_MODE ?? "live";
       const providerId = settings.provider;
       const current = modelValidation(providerId, role).status === "MISSING"
-        ? defaultModel()
+        ? { ...settings.models[providerId][role], ...(providerId === 'amd' ? defaultModel() : { modelId: '', reasoningEffort: 'default' }) }
         : settings.models[providerId][role];
       return {
         mode,
         provider: providerId,
         apiKey: currentApiKeys()[providerId] ?? "",
-        modelId: current.modelId || AMD_DEFAULT_MODEL_ID,
+        modelId: current.modelId,
+        timeoutMs: current.timeoutMs,
         ...(current.reasoningEffort && current.reasoningEffort !== "default" ? { reasoningEffort: current.reasoningEffort } : {}),
       };
     },

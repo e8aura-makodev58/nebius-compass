@@ -1,3 +1,4 @@
+import { safeModelMetadata } from "./model-provider.mjs";
 import { randomUUID } from 'node:crypto';
 /** Observed evidence and approval lifecycle. Never consults simulation truth. */
 import { getPerformanceSummary } from './context-engine.mjs';
@@ -154,9 +155,9 @@ export function createStaffingService(store,{agentOptions={},requestRanking=requ
       delete rec.requestToken;
       const valid=outcome.status==='ok'&&validateStaffingRanking(packet,outcome.result).valid;
       if(valid)rec.rankedOptions=outcome.result.rankedOptions;
-      rec.source=valid?(options.mode==='fixture'?'FIXTURE':'AMD_MODEL'):'DETERMINISTIC';
+      rec.source=valid?(options.mode==='fixture'?'FIXTURE':(outcome.modelInfo?.provider === 'nebius' ? 'NEBIUS_MODEL' : 'AMD_MODEL')):'DETERMINISTIC';
       rec.rankingStatus=valid?'READY':'FALLBACK';rec.disagreement=rec.rankedOptions[0].optionId!==rec.baselineOptionId;rec.revision++;
-      rec.modelInfo=outcome.modelInfo?Object.fromEntries(['provider','modelId','mode','reasoningEffort'].filter((k)=>typeof outcome.modelInfo[k]==='string').map((k)=>[k,outcome.modelInfo[k]])):null;
+      rec.modelInfo=outcome.modelInfo?safeModelMetadata(outcome.modelInfo):null;
       staffingEvent(state,'STAFFING_RANKED',{recommendationId:id,source:rec.source,disagreement:rec.disagreement});return {status:rec.rankingStatus};
     });
   }};

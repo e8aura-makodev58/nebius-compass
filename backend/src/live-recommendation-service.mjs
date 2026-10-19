@@ -1,3 +1,4 @@
+import { safeModelMetadata } from "./model-provider.mjs";
 import { requestAgentRecommendation, validateAgentResult } from "./agent.mjs";
 import { buildCandidatePacket, getNaiveScoreBaseline, getNearestAvailableBaseline } from "./context-engine.mjs";
 import { BASELINE_CONFIG, assertNoResponderSkill } from "./live-schema.mjs";
@@ -109,7 +110,7 @@ export function createLiveRecommendationService(store, { requestRecommendation =
           recommendation.status = "STALE";
           return { status: "STALE_CANDIDATES", recommendationId: recommendation.id };
         }
-        recommendation.modelInfo = outcome.modelInfo ?? null;
+        recommendation.modelInfo = outcome.modelInfo ? safeModelMetadata(outcome.modelInfo) : null;
         if (outcome.status !== "ok") {
           recommendation.status = "UNAVAILABLE";
           recommendation.failureReason = outcome.reason;
