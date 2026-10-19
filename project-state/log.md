@@ -503,3 +503,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — Codex input to Gemini's Nebius theme review
 - Added `docs/design/nebius-theme-codex-notes.md` at the user's request: brand/semantic token roles, accessible inverse text and focus, Field reports/Staffing consistency, phone actions and shared-view validation. Recommendations only; no UI behavior or CSS changed.
 - Pages updated: log.md.
+
+## [2026-10-19] measurement — Replay run C with per-pair source
+- Same code as run B: investigator 45/60, deterministic 46/60, baseline 41/60; 23/60 fallbacks (every raw-invalid answer also failed repair). By source: model 29/37 (78.4%), deterministic 16/23 (69.6%), on different issues, so not paired. Fallback rate varies strongly between runs; recorded in `docs/evaluation.md`.
+- Pages updated: none.
