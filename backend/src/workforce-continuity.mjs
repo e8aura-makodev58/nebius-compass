@@ -1,3 +1,4 @@
+import { assertDispatchAuthorized } from './dispatch-gate.mjs';
 import { certificationsFor } from './investigation-records.mjs';
 import { ensureIssueFault } from './fault-truth.mjs';
 /**
@@ -197,6 +198,7 @@ export function reconcileWorkforceDuty(state, { reason = "WC2_MIGRATION" } = {})
     const attempt = state.resolutionAttempts.find((row) => row.id === releasing[0].attemptId);
     let replacement = null;
     if (staying.length === 0 && activeStaffCount < MAX_ACTIVE_STAFF) replacement = findReplacement(state, isLawful);
+    if (replacement && !assertDispatchAuthorized(state, issue, replacement.id, "HANDOVER")) replacement = null;
     if (staying.length === 0 && !replacement) {
       // No lawful survivor and no free lawful responder to hand off to, and
       // an attempt may only become terminal through a genuine drawn
@@ -263,7 +265,7 @@ export function priorityForIssue(issue, now) {
 const BAND_ORDER = { CRITICAL: 0, HIGH: 1, STANDARD: 2, DEFERRED: 3 };
 export function selectNextQueuedIssue(state) {
   const now = state.simulationState.simulationTime;
-  return state.issues.filter((issue) => issue.status === "PENDING").map((issue) => ({ issue, band: priorityForIssue(issue, now) })).sort((a, b) => {
+  return state.issues.filter((issue) => issue.status === "PENDING" && (issue.dispatchGate !== "INVESTIGATION" || state.responders.some((row) => row.availability === "AVAILABLE" && assertDispatchAuthorized(state, issue, row.id, "REMATCH")))).map((issue) => ({ issue, band: priorityForIssue(issue, now) })).sort((a, b) => {
     const band = BAND_ORDER[a.band] - BAND_ORDER[b.band];
     if (band) return band;
     return Date.parse(a.issue.raisedAt ?? a.issue.createdAt) - Date.parse(b.issue.raisedAt ?? b.issue.createdAt) || a.issue.id.localeCompare(b.issue.id);

@@ -125,3 +125,28 @@ counts. Each `/analytics/period` row includes the same `staffingRecommendations`
 its UTC decision/risk interval; compact canonical audit facts make archived months exact.
 
 **Static caching.** Pages, scripts and styles are served with `Cache-Control: no-cache`, so a deploy is never hidden behind a browser or Cloudflare copy; files under `/vendor/` get `public, max-age=604800, immutable`. Because a CDN may still override that header, `index.html` references and relative module imports also carry `?v=<content hash of frontend/*.html|css|js>`, so each deploy fetches new URLs.
+
+## Field reports and investigations (N3a)
+
+Under `/api/control-rooms/:id`, both modes use the same report/investigation service;
+Offline fixes both model roles to the API-free synthetic fixture path.
+
+| Method | Tail path | Contract |
+|---|---|---|
+| POST | `/reports` | `{narrative,equipmentId?,reporter?}` → 202 `{reportId,issueId?,investigationId?}`; hazard/input policy runs before any model call. |
+| GET | `/reports/:id` | Explicit public report, flags, revision and ranked code-built interpretations. |
+| POST | `/reports/:id/confirm` | `{optionId,expectedRevision}` or `{equipmentId,issueClass,symptomCode,expectedRevision}` → `{issueId,investigationId}`. |
+| POST | `/reports/:id/close` | `{reason?,expectedRevision?}`; closes report and rejects unapproved runs. |
+| GET | `/investigations/:id` | Explicit investigation, model metadata, catalog procedures, qualified responders and public tool trace. |
+| POST | `/investigations/:id/approve` | `{responderId,fixId,confirmedPrerequisites,expectedRevision,reason?}`; atomic safety check and assignment; manual abstained/escalated override needs a reason. |
+| POST | `/investigations/:id/reject`, `/escalate` | `{reason?,expectedRevision}`; no assignment. |
+| POST | `/investigations/:id/feedback` | `{useful,note?}`; records useful/not-useful (note is not persisted). |
+| GET | `/cases/:caseId` | Public CaseDTO from current or compact archived facts; unknown case → 404. |
+
+Unknown records are 404, malformed inputs or restricted simulation-marker text 400, revision/state/safety conflicts 409 `STALE`.
+An occupied equipment item returns 409 `EQUIPMENT_HAS_OPEN_ISSUE` on confirmation.
+`/state` includes open plus twenty recent terminal investigation DTOs and their reports;
+private run tokens, authorization internals and ID-sequence metadata are excluded. Ordinary
+issue audits include the public investigations. Report-created issues stay gated even on
+model outage, input abstention, rejection or escalation. Existing legacy/planner-origin
+issues retain their autonomous assignment behavior.

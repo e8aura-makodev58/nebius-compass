@@ -66,7 +66,7 @@ Role defaults use the verified N0 models; an explicitly empty transport model ID
 | `NEBIUS_TOKEN_FACTORY_API_KEY` / `_API_KEY_FILE` | unset | Server-side key or key-file path; direct value wins; unreadable file fails closed. |
 | `NEBIUS_TOKEN_FACTORY_MODEL` | `nvidia/nemotron-3-super-120b-a12b` | Ranking role model seed. |
 | `NEBIUS_TOKEN_FACTORY_EVENT_PLANNER_MODEL` | `nvidia/Nemotron-3_5-Lightning` | Event planner model seed. |
-| `NEBIUS_TOKEN_FACTORY_INVESTIGATOR_MODEL` | `nvidia/Nemotron-3-Ultra-550b-a55b` | Investigator model seed (runtime added in later packages). |
+| `NEBIUS_TOKEN_FACTORY_INVESTIGATOR_MODEL` | `nvidia/Nemotron-3-Ultra-550b-a55b` | Investigator model seed (N3a tool loop). |
 | `NEBIUS_TOKEN_FACTORY_NARRATOR_MODEL` | `nvidia/Nemotron-3_5-Lightning` | Narrator model seed (runtime added in later packages). |
 | `NEBIUS_TOKEN_FACTORY_REASONING_EFFORT` | `default` | Ranking thinking seed: default/on/off; explicit on/off require a verified capability entry. |
 | `NEBIUS_TOKEN_FACTORY_{EVENT_PLANNER,INVESTIGATOR,NARRATOR}_REASONING_EFFORT` | `off` / `default` / `off` | Independent role thinking seeds; shared effort inherits only for the same configured model. |

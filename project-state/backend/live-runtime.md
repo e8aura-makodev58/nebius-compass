@@ -156,3 +156,21 @@ facts stay canonical in `staffingAudit`, preserving counts across every archive 
 Public snapshots expose the open recommendation and five recent decisions, stripping
 scheduler/request tokens. Policy changes and every recommendation/decision are operational
 facts, with operator actions attributed to **Central command**.
+
+## Field reports and the investigator lane (N3a)
+
+`investigation-service.mjs` persists report → interpretation → operator-confirmed gated
+issue → investigation → decision. The runtime schedules a tracked investigation pump from
+the agent lane and returns after submission/confirmation; the pump yields the lane while
+awaiting ranking/provider work. It handles reports in paused rooms because they are
+operator requests. `agentWorkIdle` drains this work for tests. The shared monotonic run
+deadline bounds even a never-resolving provider. Run identities discard late results after
+reset/closure; migration requeues interrupted runs/rankings with old tokens removed.
+The control-room manager receives a separate investigator-options factory, wired to the
+investigator role in provider settings; interpretation ranking uses Compass role settings.
+
+`dispatch-gate.mjs` gates every assignment writer, including transfer and handover, without
+changing OPEN issues. Gated issues cannot head-of-line block the autonomous queue; ordinary
+fix inference skips them. Operator approval validates and assigns the exact authorized fix
+and responder atomically. Failed attempts cannot silently rematch under an old approval.
+See [investigation.md](investigation.md) for budgets, public state bounds and N3b deferrals.

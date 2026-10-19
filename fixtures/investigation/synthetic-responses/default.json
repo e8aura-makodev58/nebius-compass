@@ -1,0 +1,9 @@
+{
+  "label": "synthetic",
+  "description": "Hand-written fixture scripts use application-supplied arguments and returned ids; not a recorded model response.",
+  "interpretationRationale": "Stored synthetic ordering of code supplied interpretations.",
+  "toolSequence": ["search_cases", "fix_catalog", "fix_evidence", "eligible_responders"],
+  "hypothesisText": "The reported observations resemble the recorded public symptom.",
+  "fixRationale": "The public procedure is supported by the completed cases.",
+  "responderRationale": "Available and qualified for the proposed public procedure."
+}

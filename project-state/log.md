@@ -278,7 +278,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Applied the round 8 transport lesson to staffing ranking: live calls and their bounded
   repair default to global fetch. Rationales reject all digits except supplied option IDs,
   even when a number appears in the packet; authoritative numbers stay in the UI tables.
-- Pages updated: backend/live-runtime.md, concepts/agent-boundary.md, operations/testing.md.
+- Pages updated: backend/live-runtime.md, concepts/agent-boundary.md, operations/testing.md, operations/running-and-config.md.
 ## [2026-10-18] fix — Busy responders stay lawful extension options
 - `lawfulStaffingOptions` only offered an extension to a responder who was idle at that moment, so a recommendation made while the top option was between jobs went STALE when central command approved it a minute later, after the responder had picked up work. Found in a live AMD check on 3200. Extensions now require only that the responder is on duty, on the current crew and within the duty limits; the 16 h duty, 12 h rest, staff-cap and surge rules are unchanged. Regression test in `staffing.test.mjs`; the stale-approval test now uses a responder who has gone off duty.
 - Pages updated: none (rules unchanged in backend/simulation.md).
@@ -411,3 +411,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] config — Nebius ranking default thinking off
 - `NEBIUS_ROLE_DEFAULTS.compass.reasoningEffort` is now `off`, as the real-packet measurement decided (Super off: 5/5 valid, 5/5 expected top, 3.2 s; on: 4/5, 2/5, 17.6 s). `.env.example` comment and `model-providers.md` updated.
 - Pages updated: backend/model-providers.md.
+
+## [2026-10-19] feature — N3a investigator vertical slice
+- Added persisted field reports, interpretation ranking/confirmation, bounded investigator tools and repair, deterministic policy/fallback, shared dispatch authorization, atomic safety-checked approval, routes, Offline fixtures and the scenario adapter. Added native/JSON-protocol transport, gate/offer, policy, privacy, restart, race and responsiveness coverage.
+- Pages updated: backend/investigation.md, backend/domain-model.md, backend/simulation.md, backend/http-api.md, backend/live-runtime.md, backend/offline-runtime.md, backend/overview.md, backend/model-providers.md, concepts/agent-boundary.md, operations/testing.md, operations/running-and-config.md.

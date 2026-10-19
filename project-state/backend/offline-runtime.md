@@ -32,3 +32,13 @@ The `fixture` and `force-failure` inference modes are what let `npm test` and th
 Playwright suite run hermetically (no credentials, no spend). The E2E suite forces provider
 failure to prove the deterministic fallback still dispatches. See
 [../operations/testing.md](../operations/testing.md).
+
+## Shared investigation fixture path
+
+Offline exposes the same report, case and investigation service methods as Live through
+`createApplicationRuntime`. Its existing in-memory state is adapted to the shared mutation
+and assignment functions; reports and investigators use labelled files in
+`fixtures/investigation/synthetic-responses/`, never provider settings, keys or fetch.
+The normal Offline scripted journey is unchanged, and the current frontend still hides
+its field-report form in Offline. Backend contract tests exercise this API-free seam.
+See [investigation.md](investigation.md) for the same safety gates and DTOs used in both modes.

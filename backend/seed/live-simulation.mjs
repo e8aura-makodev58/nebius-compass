@@ -97,6 +97,8 @@ export function createLiveSeed() {
     dispatchOffers: [],
     resolutionHistory: base.resolutionHistory.map((record) => ({ ...record, attemptId: `legacy-${record.id}`, assisted: false, participants: [{ responderId: record.responderId, roleIntervals: [{ role: "PRIMARY", joinedAt: null, endedAt: record.resolvedAt ?? null }], participationMinutes: record.resolutionMinutes, contributionShare: 1 }] })),
     recommendations: [],
+    fieldReports: [],
+    investigations: [],
     operationalEvents: [
       { id: "event-001", simulationTimestamp: "2026-09-01T07:40:00.000Z", eventType: "SIMULATION_STARTED", source: "SEED", payload: {}, createdAtRealTime: simulationStart },
       { id: "event-002", simulationTimestamp: "2026-09-01T07:45:00.000Z", eventType: "ISSUE_RAISED", equipmentId: "EQ-03", issueId: "ISS-103", source: "SEED", payload: { issueClass: "A", description: "Process-output drift detected", responseAction: "Inspect operating parameters, correct the deviation, and verify stable output through a controlled check." }, createdAtRealTime: simulationStart },

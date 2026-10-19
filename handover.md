@@ -774,9 +774,46 @@ harness contract sits at the end of §4. Commit in coherent steps with both suit
 
 ## codex
 
-- **Status:** IDLE
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-19
-- **Task:** Round 14 (N3a) assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Task:** Round 14 — N3a investigator vertical slice.
+- **Changes:** Persisted FieldReports; versioned hazard/input/injection policy; bounded code-built interpretation ranking and operator confirmation; native/JSON-protocol investigator with six tool steps, eight calls, one shared monotonic deadline and one final repair; strict citations/catalog/qualification/prose validation; labelled deterministic fallback; shared dispatch gate across all assignment writers, offers, overrides, transfers, support, handover and rematch; atomic safety-checked approval, audited reject/escalate/close/feedback; route and state DTOs; shared API-free Offline fixtures; restart token recovery; isolated scenario adapter.
+- **Verification:** Final `npm test` **394/394**. Final `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **78/78**; ports 3021/3121 free. Twenty new slice tests include global-fetch transport, actual route handlers, gate enumeration/forged offers, approval safety/idempotence, policy zero-call exits, privacy, bounded state, durable restart/reset races and never-resolving-provider responsiveness. No live calls or API spend.
+- **Files changed:** New `backend/src/{dispatch-gate,report-policy,investigator,investigation-service,investigation-public,investigation-eval}.mjs`, `backend/src/prompts/investigator.mjs`, labelled `fixtures/investigation/synthetic-responses/default.json`, `backend/tests/investigator.test.mjs`; shared runtimes/store/schema/migration, room/server routing, assignment/fix/workforce boundaries, live seed; maintained project-state pages and appended decisions/log. No frontend, E2E, docs/nebius or backend/data edits.
+- **project-state pages updated:** `backend/investigation.md`, `domain-model.md`, `simulation.md`, `http-api.md`, `live-runtime.md`, `offline-runtime.md`, `overview.md`, `model-providers.md`; `concepts/agent-boundary.md`, operations testing/config, and `log.md`.
+- **Frontend/E2E follow-up for main:** Switch the existing investigation UI E2E from stubs to real routes. Public field names match the stub contract, including PENDING_MODEL interpretation status and the small public trace in `/state`. New report issues suppress the ordinary fix-ranking projection, keeping the investigation recommendation authoritative. Approval dispatches atomically and returns `{status,id}`; existing UI polls `/state` after non-state responses. Add a safety-checked manual-override UI for ABSTAINED/ESCALATED if desired (approve endpoint accepts an explicit reason). Input-policy exits have no confirmable options. A known occupied station conflicts on ordinary confirmation; hazard reports on occupied/unidentified stations escalate without creating a duplicate issue.
+- **Risks / follow-ups:** N3b owns expiry, supersession/re-investigation, policy approval, simulated investigationShare and narrator. An approved authorization is consumed by one attempt; support, transfer, handover replacement and failed-attempt rematch cannot silently reuse it. Existing handover deferral preserves current work pending a separately approved continuation. Restricted private simulation-marker text is rejected before persistence to preserve legacy snapshot privacy guards; ordinary injection spans remain quoted data. One intermediate E2E run hit the station-history Reset/selection timing race (Force Resolve disabled); the subsequent full rerun passed. No E2E changes made.
+- **Watcher:** Existing PID 41408 remains running, same session, 300-second interval; not restarted.
+- **Questions for main:** SC-13 fixture expects READY with nobody on shift, contrary to the no-eligible-qualified-responder abstention rule. The implementation safely ABSTAINS and does not authorize overtime. Please reconcile the label in your fixture ownership area; worker imported scenarios read-only.
+
+`npm run eval:investigator -- --mode fixture`: all 24 scenarios executed with no external calls. Outcome accuracy **23/24**; accepted-output citation validity **28/28**; safety violations **0 in 12 accepted**; labelled zero-call policy **6/6**; abstention precision **7/8**, recall **7/7**; interpretation agreement **15/15**. The interpretation metric is operator-confirmed triples, not independent model classification accuracy. Accepted / repaired / deterministic-source / raw-invalid = **12 / 0 / 11 / 0**; synthetic tokens are zero. Table is the harness's outcome/selected-validation score, not a claim that every free-text constraint label was independently scored. No live latency or Nemotron-quality claim.
+
+| Scenario | Expected | Actual | Match |
+|---|---|---|---|
+| SC-01 | READY | READY | yes |
+| SC-02 | READY | READY | yes |
+| SC-03 | READY | READY | yes |
+| SC-04 | READY | READY | yes |
+| SC-05 | READY | READY | yes |
+| SC-06 | ABSTAINED | ABSTAINED | yes |
+| SC-07 | ABSTAINED | ABSTAINED | yes |
+| SC-08 | ABSTAINED | ABSTAINED | yes |
+| SC-09 | READY | READY | yes |
+| SC-10 | READY | READY | yes |
+| SC-11 | ABSTAINED | ABSTAINED | yes |
+| SC-12 | READY | READY | yes |
+| SC-13 | READY | ABSTAINED | no — staffing boundary |
+| SC-14 | ESCALATED | ESCALATED | yes |
+| SC-15 | ESCALATED | ESCALATED | yes |
+| SC-16 | ESCALATED | ESCALATED | yes |
+| SC-17 | READY | READY | yes |
+| SC-18 | READY | READY | yes |
+| SC-19 | ABSTAINED | ABSTAINED | yes |
+| SC-20 | ABSTAINED | ABSTAINED | yes |
+| SC-21 | ABSTAINED | ABSTAINED | yes |
+| SC-22 | READY | READY | yes |
+| SC-23 | READY | READY | yes |
+| SC-24 | ESCALATED | ESCALATED | yes |
 
 ---
 

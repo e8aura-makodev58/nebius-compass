@@ -1,3 +1,4 @@
+import { approvedInvestigation } from './dispatch-gate.mjs';
 /** Observed fix evidence only. Does not import or inspect the latent model. */
 import { fixesFor, FIX_CATALOG_VERSION, fixById } from './fix-catalog.mjs';
 function median(rows) {
@@ -36,6 +37,15 @@ export function deterministicFixRecommendation(state, issue, reason = 'model-not
     packet, rankedFixes, fallbackFixId: rankedFixes[0].fixId, baselineFixId: baselineFix(packet), disagreement: rankedFixes[0].fixId !== baselineFix(packet) };
 }
 export function selectAttemptFix(state, issue) {
+  if (issue.dispatchGate === 'INVESTIGATION') {
+    const investigation = approvedInvestigation(state, issue);
+    const decision = investigation?.decision;
+    const fix = fixById(issue.issueClass, decision?.authorizedFixId);
+    if (!fix || decision.attemptId) throw new Error('Investigation approval required');
+    return { fixApplied: { ...fix }, fixAttemptNumber: state.resolutionHistory.filter((r) => r.issueId === issue.id).length + 1,
+      fixDecision: { source: investigation.source, reason: 'INVESTIGATION_APPROVED', recommendedFixId: fix.id,
+        baselineFixId: fix.id, baselineAgreement: true, ranking: [fix.id], rankedAt: decision.at } };
+  }
   const recommendation = issue.fixRecommendation ??= deterministicFixRecommendation(state, issue);
   const used = new Set(state.resolutionHistory.filter((r) => r.issueId === issue.id && r.fixApplied).map((r) => r.fixApplied.id));
   const candidates = recommendation.status === 'PENDING_MODEL' ? fallbackFixOrder(recommendation.packet) : recommendation.rankedFixes;

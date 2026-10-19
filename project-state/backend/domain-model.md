@@ -127,3 +127,19 @@ operator reports survive unchanged. The portable month seed uses the same load m
 Case identity is `CASE-<issueId>` and is derived from resolved public issue facts plus
 observed completed attempts, never hidden truth. See [investigation.md](investigation.md)
 for the explicit Case/Responder/Fix/Equipment DTO fields and legacy handling.
+
+## FieldReport and Investigation state (N3a)
+
+Room state may contain `fieldReports`, `investigations` and private monotone
+`investigationSequences`. Report status is UNRESOLVED/CONFIRMED/CLOSED; interpretation
+ranking has QUEUED/PENDING_MODEL/READY with a private request identity. Investigation
+states are QUEUED/RUNNING/READY/ABSTAINED/ESCALATED and operator APPROVED/REJECTED; expiry
+and supersession are reserved for N3b. A private token protects every in-flight run, and
+interrupted runs are requeued on load. Public projections construct explicit fields and
+retain open plus twenty terminal records; they never spread private run rows.
+
+Report-created issues have `origin: FIELD_REPORT` and `dispatchGate: INVESTIGATION`;
+missing/OPEN gates preserve legacy behavior. Approval stores authorized responder/fix,
+Central command, timestamp, original revision and prerequisite confirmations. The first
+attempt ID consumes that authorization. Public decisions omit internal authorization IDs
+and run tokens. Full contracts and state/mode behavior are in [investigation.md](investigation.md).

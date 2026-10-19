@@ -1043,3 +1043,46 @@ and flagging truncation. The later loop must treat truncation under its fallback
 it must never turn omitted case detail into evidence. Narrative text remains untrusted.
 Offline history generation adds deterministic noisy reports inside the mutation before
 retention, using the same hook for memory and durable stores and no model calls.
+
+## 2026-10-19 — N3a investigator vertical slice and fail-closed dispatch
+
+Operator narrative remains a FieldReport until the operator confirms a code-built
+interpretation or a registry-valid manual triple. Code owns priority and confirmed public
+symptoms; hidden fault sampling cannot overwrite the confirmed interpretation. A versioned
+hazard/input policy runs before provider settings or inference. Hazards auto-escalate;
+occupied/unidentified equipment escalates without creating a duplicate issue. Injection
+spans are quoted untrusted data, including retrieved reports.
+
+The bounded read-only investigator uses the investigator provider role, six tool steps,
+eight calls including one final repair, one monotonic deadline and DTO-only traces. Public
+hypothesis text is restricted to supplied observable phrases rather than accepting latent
+diagnoses. Tool result subsets can be used only for the cases actually returned; an
+oversized unusable result falls back. Deterministic fallback uses lexical public evidence,
+observed fix grades and nearest qualified responders. It never dispatches or approves
+staffing. Fixture mode reads a labelled synthetic script, not a recorded Nemotron output.
+
+The shared authorization gate is inside all roster writers and assignment entry paths,
+including handover, transfers and Offline. A gated approval binds one responder/fix and one
+initial attempt, never a silent support addition or failed-attempt rematch. Operator
+approval atomically revalidates state/revision, availability, qualifications and every
+safety prerequisite, then invokes the shared assignment engine with the approved fix.
+Abstained/escalated manual picks require an audit reason and the same safety checks.
+Duplicate identical approval is idempotent; changed/stale requests mutate nothing.
+
+RUNNING work and interrupted interpretation ranking requeue on load with old request
+identities removed. The agent lane initiates a tracked pump and yields during provider
+waits; a raced deadline bounds a transport that never settles. Explicit public projections
+supply open plus twenty terminal records, with private tokens and authorization internals
+excluded. Offline adapts its existing state to these same services with fixtures fixed.
+Expiry, supersession, policy auto-approval, simulated-issue sampling and narrator remain N3b.
+
+The fixture evaluation honestly reports SC-13 as ABSTAINED: its setup has no on-shift
+responder while its label expects READY. Matching that label by authorizing overtime would
+violate the qualification/outcome and staffing boundaries. Interpretation agreement uses
+operator-confirmed expected triples and is not independent model classification accuracy.
+
+The shared privacy guard also validates new report/decision text before persistence.
+Restricted private simulation-marker content returns 400 rather than poisoning the room's
+public snapshot (whose legacy serialized privacy guard rejects those markers). This is a
+privacy-boundary validation exception to ordinary untrusted-narrative handling; normal
+instruction-like spans remain quoted data and do not bypass the investigation policy.

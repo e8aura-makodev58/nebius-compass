@@ -1,3 +1,4 @@
+import { publicInvestigationState } from './investigation-public.mjs';
 import { CERTIFICATIONS } from './investigation-records.mjs';
 import { staffingBacklog } from './staffing-service.mjs';
 import { deterministicFixRecommendation } from './fix-evidence.mjs';
@@ -51,6 +52,15 @@ export function validateLiveState(state, { previous = null } = {}) {
   const changed=(key)=>{if(!previous)return state[key]??[];if(state[key]===previous[key])return [];const old=new Set(previous[key]??[]);return (state[key]??[]).filter(row=>!old.has(row));};
   assert(state && typeof state === "object", "state must be an object");
   validateFaultTruth(state);
+  for (const key of ['fieldReports','investigations']) if (state[key] !== undefined) {
+    assert(Array.isArray(state[key]), `Invalid ${key}`);
+    assertUnique(state[key], 'id', key);
+  }
+  for (const row of changed('investigations')) {
+    assert(['QUEUED','RUNNING','READY','ABSTAINED','ESCALATED','FAILED','APPROVED','REJECTED','EXPIRED','SUPERSEDED'].includes(row.status), 'Invalid investigation status');
+    assert(Number.isInteger(row.revision) && row.revision >= 0, 'Invalid investigation revision');
+    assert(Buffer.byteLength(JSON.stringify(row.trace ?? [])) <= 65536, 'Investigation trace exceeds budget');
+  }
   for (const responder of changed('responders')) if (responder.certifications !== undefined) {
     assert(Array.isArray(responder.certifications) && new Set(responder.certifications).size === responder.certifications.length
       && responder.certifications.every((value) => CERTIFICATIONS.includes(value)), 'Invalid public certifications');
@@ -137,6 +147,7 @@ export function validateLiveState(state, { previous = null } = {}) {
   }
   assert(state.responders.filter((responder) => responder.availability !== "UNAVAILABLE").length <= 8, "workforce exceeds maximum active staff");
   for (const issue of state.issues) {
+    assert(issue.dispatchGate === undefined || ["OPEN","INVESTIGATION"].includes(issue.dispatchGate), "Invalid dispatch gate");
     assert(ISSUE_CLASSES.includes(issue.issueClass), `issue ${issue.id} class is invalid`);
     assert(["PENDING", "RECOMMENDATION_READY", "OFFER_PENDING", "ASSIGNED", "RESOLVED"].includes(issue.status), `issue ${issue.id} status is invalid`);
     assert(["STANDARD", "COMPLEX"].includes(issue.complexity), `issue ${issue.id} complexity is invalid`);
@@ -289,7 +300,7 @@ export function createPublicLiveSnapshot(state, { validated = false } = {}) {
   if (!validated) validateLiveState(state);
   // Select before cloning. Neither private history nor archived analytic facts
   // belong in the polled payload, even transiently.
-  const { responderSkills, resolutionHistory, historyRetention, faultTruth, ...base } = state;
+  const { responderSkills, resolutionHistory, historyRetention, faultTruth, fieldReports, investigations, investigationSequences, ...base } = state;
   const openIssues = state.issues.filter((row) => row.status !== "RESOLVED");
   const recentIssues = state.issues.filter((row) => row.status === "RESOLVED").sort((a, b) => Date.parse(b.resolvedAt) - Date.parse(a.resolvedAt)).slice(0, 100);
   const issueIds = new Set([...openIssues, ...recentIssues].map((row) => row.id));
@@ -301,8 +312,8 @@ export function createPublicLiveSnapshot(state, { validated = false } = {}) {
     const latest = state.recommendations.findLast((row) => row.issueId === issue.id && ["READY", "UNAVAILABLE", "PENDING_MODEL"].includes(row.status));
     if (latest) recommendationIds.add(latest.id);
   }
-  const publicState = structuredClone({ ...base,
-    issues: [...state.issues.filter((row) => issueIds.has(row.id)), ...(state.historyRetention?.facts.issues ?? []).filter((row) => issueIds.has(row.id))].map((row) => row.status !== "RESOLVED" && row.symptom && !row.fixRecommendation ? { ...row, fixRecommendation: deterministicFixRecommendation(state, row) } : row),
+  const publicState = structuredClone({ ...base, ...publicInvestigationState(state),
+    issues: [...state.issues.filter((row) => issueIds.has(row.id)), ...(state.historyRetention?.facts.issues ?? []).filter((row) => issueIds.has(row.id))].map((row) => row.dispatchGate !== "INVESTIGATION" && row.status !== "RESOLVED" && row.symptom && !row.fixRecommendation ? { ...row, fixRecommendation: deterministicFixRecommendation(state, row) } : row),
     assignments: state.assignments.filter((row) => row.status === "ACTIVE"),
     resolutionAttempts: state.resolutionAttempts.filter((row) => row.status === "ACTIVE"),
     recommendations: state.recommendations.filter((row) => recommendationIds.has(row.id)),
@@ -353,6 +364,7 @@ export function createIssueAuditRecord(state, issueId) {
   if (!issue) return null;
   const record = structuredClone({
     issue,
+    ...((state.investigations ?? []).some((row)=>row.issueId===issueId) ? {investigations:publicInvestigationState({investigations:state.investigations.filter((row)=>row.issueId===issueId),fieldReports:[]}).investigations} : {}),
     equipment: state.equipment.find((entry) => entry.id === issue.equipmentId) ?? null,
     recommendations: state.recommendations.filter((entry) => entry.issueId === issueId),
     dispatchOffers: (state.dispatchOffers ?? []).filter((entry) => entry.issueId === issueId),

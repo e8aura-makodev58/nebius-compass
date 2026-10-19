@@ -1,3 +1,4 @@
+import { publicInvestigationState } from './investigation-public.mjs';
 import { initializeFaults, assertNoFaultTruth } from './fault-truth.mjs';
 /**
  * Single-process journaled persistence for v4 Live Simulation.
@@ -118,7 +119,7 @@ export function createLiveStore({ filePath = process.env.COMPASS_LIVE_STATE_PATH
         const state = await ensureLoaded();
         if (state.issues.some((row) => row.id === issueId)) return createIssueAuditRecord(state, issueId);
         const bundle = await archivedIssue(archiveRoot, state, issueId);
-        return bundle ? redactIssueAuditRecord({ ...bundle, equipment: state.equipment.find((row) => row.id === bundle.issue.equipmentId) ?? null }) : null;
+        return bundle ? redactIssueAuditRecord({ ...bundle, ...((state.investigations ?? []).some((row)=>row.issueId===issueId) ? {investigations:publicInvestigationState({investigations:state.investigations.filter((row)=>row.issueId===issueId),fieldReports:[]}).investigations} : {}), equipment: state.equipment.find((row) => row.id === bundle.issue.equipmentId) ?? null }) : null;
       });
     },
     async stationHistory(equipmentId, { before = null, limit = 100 } = {}) {
