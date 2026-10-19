@@ -749,6 +749,21 @@ passed. Start with `git merge master`; ports 3021/3121; keep your watcher. Plan 
 §5 N3b are the spec.
 
 - **codex — N3b.**
+  - **FIRST, a defect found by the live eval (`docs/evaluation.md`, 2026-10-19).** In 8 of
+    24 live scenarios, Ultra returned a supported, qualified recommendation **and**
+    `proposedOutcome: ESCALATE` with a reason like "Strong historical evidence supports the
+    fix…". `investigator.mjs:159` accepts any model escalation, so these became `ESCALATED`.
+    - **Prompt** (`prompts/investigator.mjs`): `proposedOutcome` is only for not
+      recommending. `ESCALATE` means a safety concern needs a person before any action.
+      Omit `proposedOutcome` when recommending; approval is always required anyway.
+    - **Code:** if the model proposes `ESCALATE` while its first fix is grade ≥ `MODERATE`
+      and has a qualified responder, treat that as a validation error with bounded
+      feedback (one repair, inside the existing call/step budget). Keep accepting
+      `ESCALATE` when there is no supported fix. The code-owned hazard policy is
+      unchanged.
+    - Add a hermetic test with that exact output shape.
+    - Also put `fallbackReason` on every deterministic run (some live runs had none
+      visible) and keep `rawInvalid`/`repaired` accurate.
   - **State machine completion (§3.2).**
     - `READY` → `EXPIRED` at the deadline (default 30 simulated minutes; room setting
       `investigationDeadlineMinutes`). Use the scheduler token-claim pattern, restart-safe
