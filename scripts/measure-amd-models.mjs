@@ -1,7 +1,8 @@
-// Live AMD Token Factory model measurement. Opt-in and manual: it spends the
+// Live model measurement (AMD or Nebius Token Factory, --provider). Opt-in and manual: it spends the
 // shared team quota, so it is never part of `npm test`.
 //
 //   npm run measure:amd -- --models MiMo-V2.6-Flash,GLM-5.3-Flash:low --samples 3
+//   npm run measure:amd -- --provider nebius --models nvidia/nemotron-3-super-120b-a12b:default,nvidia/Nemotron-3_5-Lightning:off
 //
 // Timeouts default to the app's own: 90s for a ranking (COMPASS_AGENT_TIMEOUT_MS)
 // and 30s for a planner proposal (COMPASS_EVENT_PLANNER_TIMEOUT_MS).
@@ -18,11 +19,12 @@ import { buildCandidatePacket } from "../backend/src/context-engine.mjs";
 import { requestAgentRecommendation } from "../backend/src/agent.mjs";
 import { buildEventPlannerPacket, requestEventProposal, validateEventProposal } from "../backend/src/event-planner.mjs";
 import { createLiveSeed } from "../backend/seed/live-simulation.mjs";
-import { AMD_DEFAULT_MODEL_ID, defaultReasoningEffortFor, readAmdApiKey } from "../backend/src/model-provider.mjs";
+import { AMD_DEFAULT_MODEL_ID, NEBIUS_ROLE_DEFAULTS, defaultReasoningEffortFor, readProviderApiKey } from "../backend/src/model-provider.mjs";
 
 const { values } = parseArgs({
   options: {
-    models: { type: "string", default: AMD_DEFAULT_MODEL_ID },
+    provider: { type: "string", default: "amd" },
+    models: { type: "string" },
     samples: { type: "string", default: "3" },
     "skip-planner": { type: "boolean", default: false },
     "skip-ranking": { type: "boolean", default: false },
@@ -31,17 +33,19 @@ const { values } = parseArgs({
   },
 });
 
-const apiKey = readAmdApiKey();
+const provider = values.provider === "nebius" ? "nebius" : "amd";
+const apiKey = readProviderApiKey(provider);
 if (!apiKey) {
-  console.error("No AMD key: set AMD_TOKEN_FACTORY_API_KEY or AMD_TOKEN_FACTORY_API_KEY_FILE.");
+  const prefix = provider === "nebius" ? "NEBIUS" : "AMD";
+  console.error(`No ${prefix} key: set ${prefix}_TOKEN_FACTORY_API_KEY or ${prefix}_TOKEN_FACTORY_API_KEY_FILE.`);
   process.exit(1);
 }
 const samples = Math.max(1, Number.parseInt(values.samples, 10) || 1);
 const timeoutMs = Number.parseInt(values["timeout-ms"], 10) || 90000;
 const plannerTimeoutMs = Number.parseInt(values["planner-timeout-ms"], 10) || 30000;
-const models = values.models.split(",").map((entry) => entry.trim()).filter(Boolean).map((entry) => {
+const models = (values.models ?? (provider === "nebius" ? NEBIUS_ROLE_DEFAULTS.compass.modelId : AMD_DEFAULT_MODEL_ID)).split(",").map((entry) => entry.trim()).filter(Boolean).map((entry) => {
   const [modelId, effort] = entry.split(":");
-  return { modelId, reasoningEffort: effort || defaultReasoningEffortFor(modelId) };
+  return { modelId, reasoningEffort: effort || (provider === "nebius" ? "default" : defaultReasoningEffortFor(modelId)) };
 });
 
 const state = createInitialDemoState();
@@ -60,7 +64,7 @@ const seconds = (ms) => (ms == null ? "—" : `${(ms / 1000).toFixed(1)}s`);
 
 const rows = [];
 for (const { modelId, reasoningEffort } of models) {
-  const options = { mode: "live", provider: "amd", apiKey, modelId, reasoningEffort, timeoutMs };
+  const options = { mode: "live", provider, apiKey, modelId, reasoningEffort, timeoutMs };
   const agent = { valid: 0, expectedTop: 0, latencies: [], failures: [] };
   for (let i = 0; i < (values["skip-ranking"] ? 0 : samples); i++) {
     const started = Date.now();
@@ -94,7 +98,7 @@ for (const { modelId, reasoningEffort } of models) {
   rows.push({ modelId, reasoningEffort, agent, planner });
 }
 
-console.log(`\nMeasured ${new Date().toISOString()} · ${samples} sample(s) per model · timeouts ${seconds(timeoutMs)} ranking / ${seconds(plannerTimeoutMs)} planner · expected top pick ${expectedTop}\n`);
+console.log(`\nMeasured ${new Date().toISOString()} · ${provider} · ${samples} sample(s) per model · timeouts ${seconds(timeoutMs)} ranking / ${seconds(plannerTimeoutMs)} planner · expected top pick ${expectedTop}\n`);
 console.log("| Model (reasoning) | Ranking valid | Expected top | Ranking median | Planner valid | Planner median | Failures |");
 console.log("|---|---|---|---|---|---|---|");
 for (const { modelId, reasoningEffort, agent, planner } of rows) {

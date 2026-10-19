@@ -369,3 +369,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] feature — N1 Nebius provider and normalized tool turns
 - Added Nebius as the fresh-settings default, preserving AMD selections/credentials; introduced four independent model roles, capability-driven thinking/tools, provider-isolated controls and bounded usage/latency metadata. Fixed cache-parent creation for fresh-clone unit tests.
 - Pages updated: `backend/model-providers.md`, `backend/overview.md`, `backend/http-api.md`, `operations/running-and-config.md`, `.env.example`, `docs/decisions.md`; frontend changes limited to Settings API role fields.
+
+## [2026-10-19] measurement — Nebius ranking and planner on the real Compass packets
+- `scripts/measure-amd-models.mjs` gains `--provider nebius` (defaults to the Nebius ranking model). Five samples per setting on the Scenario A ranking packet and the planner packet: Super with thinking off was 5/5 valid with the expected top pick 5/5 at 3.2 s; Super with thinking on was 4/5, 2/5, 17.6 s with one truncation. The ranking default becomes Super / off (codex applies it in N1b). Table in `docs/nebius/05_TOKEN_FACTORY_FACTS.md`.
+- Pages updated: none (codex updates model-providers.md in N1b).

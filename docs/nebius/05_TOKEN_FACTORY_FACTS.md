@@ -66,13 +66,34 @@ Model licences are not in the API. Check NVIDIA's model cards before N7 and link
 | Lightning | 5/5 tool calls, 1.2 s | 5/5, 1.1 s |
 | Nano | 5/5 tool calls, 4.3 s | 4/5 (one 120 s timeout), 1.2 s |
 
+## Real Compass packets (2026-10-19, `npm run measure:amd -- --provider nebius`, 5 samples)
+
+These are the app's own Scenario A ranking packet and event-planner packet, sent through the
+app's validators, provider controls and the 90 s / 30 s timeouts. The "expected top" column
+counts how often the model's top pick was `R-ENGR028`, the expected pick for this one scenario;
+it is not a general accuracy measure. Thinking-off rows ran against the N1b capability table
+on the codex branch, because master did not have it yet.
+
+| Model (thinking) | Ranking valid | Expected top | Ranking median | Planner valid | Planner median | Failures |
+|---|---|---|---|---|---|---|
+| **Super (off)** | **5/5** | **5/5** | **3.2 s** | 5/5 | 1.7 s | — |
+| Super (default = on) | 4/5 | 2/5 | 17.6 s | 5/5 | 2.9 s | one truncated at 4096 tokens |
+| Ultra (default = on) | 5/5 | 5/5 | 8.2 s | 5/5 | 2.0 s | — |
+| Ultra (off) | 5/5 | 3/5 | 3.5 s | 5/5 | 2.2 s | — |
+| **Lightning (off)** | 5/5 | 2/5 | 3.6 s | **5/5** | **1.3 s** | — |
+| Lightning (on) | 0/5 | — | — | 4/5 | 8.7 s | ranking truncated ×5; one planner schema error |
+
+On the real packet, Super with thinking on is slower and less consistent than with thinking
+off: its reasoning runs long and once hit the output cap. **The ranking default changes to
+Super / off.** The planner default stays Lightning / off.
+
 ## Defaults for N1 (role → model, thinking)
 
 | Role | Model | Thinking | Why |
 |---|---|---|---|
 | `investigator` | `nvidia/Nemotron-3-Ultra-550b-a55b` | on | Best tool-loop behaviour; ~3 s per step. Fallback tier: Super. |
-| `compass` (responder, fix, staffing ranking) | `nvidia/nemotron-3-super-120b-a12b` | on | 5/5 valid; Super is the track's "fast everyday" tier. Re-measure on Scenario A. |
-| `event-planner` | `nvidia/Nemotron-3_5-Lightning` | off | 5/5 valid at 0.7 s; cheapest; 600 RPM. |
+| `compass` (responder, fix, staffing ranking) | `nvidia/nemotron-3-super-120b-a12b` | **off** | Real packet: 5/5 valid, 5/5 expected top, 3.2 s (thinking on: 4/5, 2/5, 17.6 s). |
+| `event-planner` | `nvidia/Nemotron-3_5-Lightning` | off | Real packet: 5/5 valid, 1.3 s; cheapest; 600 RPM. |
 | `narrator` | `nvidia/Nemotron-3_5-Lightning` | off | Same. |
 
 All four use `toolCalling: native`. The JSON next-action protocol stays as a fallback, but
