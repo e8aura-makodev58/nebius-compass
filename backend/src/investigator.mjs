@@ -44,15 +44,15 @@ export async function rankInterpretations(report, options = {}) {
   if (!available.length) return {options:[],source:'DETERMINISTIC',model:null};
   const provider = options.provider ?? 'nebius';
   const modelId = options.modelId ?? roleDefaults(provider,'compass').modelId;
-  const fallback = () => ({options:available,source:'DETERMINISTIC',model:null});
-  if (options.mode === 'force-failure') return fallback();
+  const fallback = (fallbackReason='provider-error') => ({options:available,fallbackReason,source:'DETERMINISTIC',model:null});
+  if (options.mode === 'force-failure') return fallback('forced-failure');
   try {
     let output;
     if (options.mode === 'fixture') {
       const fixture = JSON.parse(await readFile(new URL('../../fixtures/investigation/synthetic-responses/default.json',import.meta.url)));
       if (fixture.label !== 'synthetic') return fallback();
       output = {rankedOptions:available.map((row) => ({optionId:row.optionId,rationale:fixture.interpretationRationale}))};
-    } else output = await timed(() => callChatCompletion({...options,provider,modelId,apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,
+    } else output = await timed(() => callChatCompletion({...options,role:'compass',provider,modelId,apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,
       timeoutMs: Math.min(options.timeoutMs ?? 90000,120000),systemInstruction:INTERPRETATION_INSTRUCTION,userContent:JSON.stringify({report:JSON.stringify(report.narrative),options:available}),
       jsonSchemaName:'interpretations',jsonSchema:{type:'object',required:['rankedOptions']}}),Math.min(options.timeoutMs ?? 90000,120000));
     const rows = output.rankedOptions;
@@ -60,7 +60,7 @@ export async function rankInterpretations(report, options = {}) {
       rows.some((row) => !exact(row,['optionId','rationale']) || !available.some((o) => o.optionId === row.optionId) || !prose(row.rationale,available.map((o) => o.optionId)))) return fallback();
     return { options:rows.map((row) => { const option = available.find((item) => item.optionId === row.optionId); return {optionId:option.optionId,equipmentId:option.equipmentId,equipmentName:option.equipmentName,issueClass:option.issueClass,symptomCode:option.symptomCode,symptomText:option.symptomText,rationale:row.rationale}; }),
       source:options.mode === 'fixture' ? 'FIXTURE' : provider === 'nebius' ? 'NEBIUS_MODEL' : 'AMD_MODEL',model:{modelId} };
-  } catch { return fallback(); }
+  } catch(error) { return fallback(error.code==='budget-exhausted'?'budget-exhausted':'provider-error'); }
 }
 function shiftWarnings(rows,asOf) {
   return rows.filter((row)=>row.shiftEndsAt && Date.parse(row.shiftEndsAt)>Date.parse(asOf) && Date.parse(row.shiftEndsAt)-Date.parse(asOf)<=30*60000)
@@ -119,7 +119,7 @@ export async function investigate(state, issue, options = {}) {
           const args = tool==='search_cases' ? {issueClass:issue.issueClass,symptomCode:issue.symptom.code} : tool==='fix_catalog' ? {issueClass:issue.issueClass} : {issueClass:issue.issueClass,fixId:fixtureFix,equipmentId:issue.equipmentId,...(tool==='fix_evidence' ? {symptomCode:issue.symptom.code} : {})};
           turn = {content:null,toolCalls:[{id:`fixture-${turnNumber}`,name:tool,arguments:JSON.stringify(args)}]};
         } else turn={toolCalls:[],content:JSON.stringify({hypotheses:[{symptomCode:issue.symptom.code,text:fixture.hypothesisText,evidenceRefs:fixtureCases.slice(0,1).map((row) => ({caseId:row.caseId,field:'symptomText'}))}],fixes:[{fixId:fixtureFix,rationale:fixture.fixRationale,evidenceRefs:fixtureCases.filter((row) => row.fixesTried.some((fix) => fix.fixId===fixtureFix)).slice(0,1).map((row) => ({caseId:row.caseId,field:'fixesTried'}))}],responders:fixtureResponders.map((row) => ({responderId:row.responderId,rationale:fixture.responderRationale}))})};
-      } else turn = await timed(() => (options.callTurn ?? callChatTurn)({...options,provider,modelId:model.modelId,reasoningEffort:options.reasoningEffort ?? defaults.reasoningEffort,apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,
+      } else turn = await timed(() => (options.callTurn ?? callChatTurn)({...options,role:'investigator',provider,modelId:model.modelId,reasoningEffort:options.reasoningEffort ?? defaults.reasoningEffort,apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,
         messages,tools:toolHost.tools,timeoutMs:Math.max(1,deadline-now())}),deadline-now());
       if (now() >= deadline) return fallback('deadline');
       model.promptTokens += turn.usage?.promptTokens ?? 0; model.completionTokens += turn.usage?.completionTokens ?? 0;
@@ -166,5 +166,5 @@ export async function investigate(state, issue, options = {}) {
         reason:output.proposedOutcome?.reason ?? (status==='READY'?'Public evidence supports an action for approval.':'No grounded action with an eligible qualified responder.'),hypotheses:output.hypotheses,fixes:fixRows,responders,trace,repaired,rawInvalid,warnings:[...warnings,...shiftWarnings(eligible,context.asOf),...(first?.grade==='THIN'?['Low evidence; operator approval required.']:[])]};
     }
     return fallback('inference-call-cap');
-  } catch(error) {return fallback(error.code==='deadline'?'deadline':'provider-error');}
+  } catch(error) {return fallback(error.code==='budget-exhausted'?'budget-exhausted':error.code==='deadline'?'deadline':'provider-error');}
 }

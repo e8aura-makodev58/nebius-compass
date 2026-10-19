@@ -7,6 +7,7 @@
  * Nebius and AMD use separate credentials, capability tables and process controls.
  */
 
+import { providerUsageLedger } from './provider-usage.mjs';
 import { readFileSync } from "node:fs";
 import { parseRetryAfter, providerControlsFor } from "./provider-controls.mjs";
 
@@ -197,7 +198,7 @@ export async function callChatCompletion(options) {
 export async function callChatTurn({ provider = 'amd', modelId, apiKey, reasoningEffort,
   timeoutMs = 30_000, fetchImpl = fetch, systemInstruction = '', userContent = '',
   jsonSchemaName, jsonSchema, messages, tools = [], capabilities = modelCapabilities(provider, modelId),
-  errorLabel = 'Model provider', controls, now = () => performance.now(),
+  errorLabel = 'Model provider', controls, now = () => performance.now(), role='compass', usageLedger=providerUsageLedger(),
 }) {
   const def = providerDef(provider);
   if (provider === 'nebius' && !modelId?.trim()) throw Object.assign(new Error('Nebius model is not configured'), { code: 'model-not-configured' });
@@ -217,8 +218,9 @@ export async function callChatTurn({ provider = 'amd', modelId, apiKey, reasonin
   if (native) { request.tools = tools; request.tool_choice = "auto"; delete request.response_format; }
   const body = JSON.stringify(request), started = now(), deadline = started + timeoutMs;
   controls ??= providerControlsFor(fetchImpl, process.env, provider);
+  await usageLedger.beforeStart();
   try {
-    const envelope = await controls.run(deadline, () => attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel, timeoutMs: Math.max(0, deadline - now()) }));
+    const envelope = await controls.run(deadline, () => attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel, usageLedger, provider, modelId, role, deadline, now, timeoutMs: Math.max(0, deadline - now()) }));
     return normalizeChatTurn(envelope.payload, { tools, native, modelId, latencyMs: Math.max(0, now() - started), requestId: envelope.requestId });
   } catch (error) {
     if (error?.code === 'circuit-open' || error?.code === 'queue-full') error.message = `${errorLabel}: ${provider === "nebius" ? error.message.replaceAll("AMD", "Nebius") : error.message}`;
@@ -280,7 +282,10 @@ export function normalizeChatTurn(payload, { tools = [], native = false, modelId
   } catch { return invalid(); }
 }
 
-async function attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel, timeoutMs }) {
+async function attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel, timeoutMs, usageLedger, provider, modelId, role, deadline, now }) {
+  await usageLedger.beforeStart();
+  timeoutMs=Math.min(timeoutMs,Math.max(0,deadline-now()));
+  if(timeoutMs<=0)throw Object.assign(new Error('Provider request deadline elapsed'),{code:'deadline'});
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let reachedService = false;
@@ -296,7 +301,10 @@ async function attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel,
       // The provider's own words are the only thing that distinguishes a bad
       // parameter from a bad key from a retired model. Bounded, and never
       // includes the request body or headers.
-      const detail = upstreamErrorDetail(await response.text().catch(() => ""));
+      const text = await response.text().catch(() => "");
+      let payload;try {payload=JSON.parse(text);} catch {}
+      if(payload)await usageLedger.record({provider,model:payload.model ?? modelId,role,usage:payload.usage});
+      const detail = upstreamErrorDetail(text);
       throw Object.assign(new Error(`${errorLabel} responded with HTTP ${response.status}${detail ? `: ${detail.slice(0, 500)}` : ""}`), {
         status: response.status,
         retryAfterMs: parseRetryAfter(response.headers?.get?.("retry-after")),
@@ -305,6 +313,7 @@ async function attemptChatCompletion({ def, apiKey, body, fetchImpl, errorLabel,
       });
     }
     const payload = await response.json();
+    await usageLedger.record({provider,model:payload?.model ?? modelId,role,usage:payload?.usage});
     const choice = payload?.choices?.[0];
     if (choice?.finish_reason === "length") throw new Error(`${errorLabel} response was truncated at the output-token limit`);
     // Any separate reasoning trace (message.reasoning) is deliberately ignored:

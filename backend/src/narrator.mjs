@@ -24,13 +24,13 @@ export async function narrateIssue(state, issue, options={}) {
   let timer;
   try {
     const turn=await Promise.race([
-      Promise.resolve().then(()=>(options.callTurn ?? callChatTurn)({...options,provider,modelId:options.modelId ?? defaults.modelId,reasoningEffort:options.reasoningEffort ?? defaults.reasoningEffort,
+      Promise.resolve().then(()=>(options.callTurn ?? callChatTurn)({...options,role:'narrator',provider,modelId:options.modelId ?? defaults.modelId,reasoningEffort:options.reasoningEffort ?? defaults.reasoningEffort,
         apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,timeoutMs:timeout,systemInstruction:instruction,userContent:JSON.stringify(observable),jsonSchemaName:'observable_report',jsonSchema:{type:'object',required:['narrative'],properties:{narrative:{type:'string',maxLength:600}},additionalProperties:false}})),
       new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('deadline')),timeout);}),
     ]);
     const output=JSON.parse(turn.content);
     if (turn.error || turn.toolCalls?.length || now()-started>=timeout || !output || Object.keys(output).join()!=='narrative' || !validateNarrative(output.narrative,observable)) return fallback('validation-failed');
     return {narrative:output.narrative,narrativeSource:'simulated',reason:null,model:safeModelMetadata({...turn,latencyMs:Math.max(0,now()-started)})};
-  } catch { return fallback('provider-error'); }
+  } catch(error) { return fallback(error.code==='budget-exhausted'?'budget-exhausted':'provider-error'); }
   finally { clearTimeout(timer); }
 }

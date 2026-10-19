@@ -144,8 +144,9 @@ export function createFallbackEventProposal(state) {
   };
 }
 
-async function callLivePlanner(packet, { provider, modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl, onMetadata }) {
+async function callLivePlanner(packet, { provider, modelId, apiKey, reasoningEffort, timeoutMs, fetchImpl, onMetadata, usageLedger }) {
   return callChatCompletion({
+    role: 'event-planner', usageLedger,
     provider,
     modelId,
     apiKey,
@@ -171,6 +172,7 @@ export async function requestEventProposal(packet, options = {}) {
   try {
     const output = mode === "live"
       ? await callLivePlanner(packet, {
+          usageLedger: options.usageLedger,
           provider,
           modelId,
           apiKey: options.apiKey ?? readProviderApiKey(provider),
@@ -182,7 +184,7 @@ export async function requestEventProposal(packet, options = {}) {
       : JSON.parse(readFileSync(fixtureUrl, "utf8"));
     return { status: "ok", output, modelInfo };
   } catch (error) {
-    return { status: "unavailable", reason: error.code === "model-not-configured" ? "model-not-configured" : error.name === "AbortError" ? "timeout" : "provider-error", message: error.message, modelInfo };
+    return { status: "unavailable", reason: error.code === "budget-exhausted" ? "budget-exhausted" : error.code === "model-not-configured" ? "model-not-configured" : error.name === "AbortError" ? "timeout" : "provider-error", message: error.message, modelInfo };
   }
 }
 
@@ -250,6 +252,7 @@ export function createEventPlanningService(store, { requestProposal = requestEve
         if (!validation.valid) return { status: "BLOCKED", reason: validation.errors.join("; ") };
         const persisted = persistProposal(state, proposal, trigger, source);
         const event = state.operationalEvents.at(-1);
+        if(event && source==='DETERMINISTIC_FALLBACK' && planned.reason==='budget-exhausted'){event.payload.fallbackReason='budget-exhausted';persisted.fallbackReason='budget-exhausted';}
         if (event && planned.modelInfo) event.payload.modelInfo = safeModelMetadata(planned.modelInfo);
         return persisted;
       });

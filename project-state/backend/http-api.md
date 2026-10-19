@@ -170,3 +170,11 @@ its incremented revision, also exposed at `/state.investigationPolicy`. Defaults
 30 simulated minutes and 0.2. Unknown fields/invalid values fail; stale revisions conflict.
 Policy changes are audited. `/analytics.investigations` and every period's `investigations`
 contain outcome counts, rates and first-fix comparison; see analytics-and-ethics.
+
+## Provider usage in settings
+
+`GET /api/settings` includes deployment-global `usage:{today,last7Days,budgetUsd,exhausted}`,
+readable even with tunnel settings locked. Today/last7Days daily entries carry day, calls,
+promptTokens, completionTokens, knownCostUsd, estimatedCostUsd (null if incomplete),
+unpricedCalls, byRole and byModel. Role entries have totals; model rows identify provider,
+model and role. This exposes aggregates only, never prompts/credentials. Budget is env-only.

@@ -214,3 +214,9 @@ zero to preserve its original 100-opportunity experiment; production defaults re
 canaries, hidden-truth outcome perturbations, future-data invariance, common recorded engine
 draws, exclusion denominators and deterministic repeated pairs. `eval-investigator.mjs
 --replay --mode fixture` makes no API calls; live replay is a separate explicit measurement.
+
+`backend/tests/provider-usage.test.mjs` uses fake fetch/clock and scratch or memory ledgers
+for role/model aggregation, unknown/partial costs, pre-fetch/queued budget rejection, UTC
+rollover, in-flight completion, restart/log idempotency, 120-day retention, exact small-cost
+increments, original deadline preservation, content-free files and ranking/planner/investigator/narrator fallback propagation.
+Node test workers never use the production ledger file; no live provider is added to npm test.

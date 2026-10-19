@@ -1,3 +1,4 @@
+import { providerUsageLedger } from './provider-usage.mjs';
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { AMD_DEFAULT_MODEL_ID, PROVIDER_IDS, amdBaseUrl, defaultReasoningEffortFor, readAmdApiKey, readNebiusApiKey, nebiusBaseUrl, roleDefaults, modelCapabilities } from "./model-provider.mjs";
@@ -130,6 +131,7 @@ export function createProviderSettingsService({
   environment = process.env,
   checkModelsOnBoot = false,
   logger = null,
+  usageLedger = providerUsageLedger({logger}),
 } = {}) {
   // Environment variables remain a safe deployment bootstrap. A credential
   // saved through Settings takes precedence and is kept in its own owner-only
@@ -298,7 +300,7 @@ export function createProviderSettingsService({
 
   return {
     initialize,
-    async snapshot() { await initialize(); return preview(); },
+    async snapshot() { await initialize(); return {...preview(),usage:await usageLedger.snapshot()}; },
     refreshModels,
     update,
     updateCredential(input) { return serializeSave(async () => {

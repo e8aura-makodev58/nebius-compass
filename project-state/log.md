@@ -462,3 +462,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] feature — Paired rolling-origin first-fix replay runner
 - Added public cutoff-filtered decisions and an isolated engine-only three-arm outcome runner using the historical first responder and common recorded draws. CLI --replay reports paired coverage/exclusions, rates and discordance through the existing scorer; hermetic tests cover a five-issue fixture replay, future/hidden-truth invariance and reproducibility. No live run or result claims.
 - Pages updated: backend/investigation.md, backend/overview.md, operations/testing.md, concepts/analytics-and-ethics.md; method in docs/evaluation.md.
+
+## [2026-10-19] feature — Deployment usage ledger and UTC daily inference budget
+- Added per-provider/model/role token and estimated-cost accounting at the HTTP-attempt boundary, 120-day atomic persistence, pre-fetch/queued/retry budget enforcement, durable daily exhaustion log, exact reason propagation and public settings aggregates. Settings API includes a read-only Usage table/status; unknown costs remain explicit and live work already in flight finishes.
+- Pages updated: backend model-providers, http-api, overview; operations running-and-config/testing; frontend overview; .env.example documents env-only budget.
