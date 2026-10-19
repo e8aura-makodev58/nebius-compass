@@ -127,12 +127,15 @@ Chart colours are the `--chart-*` tokens.
   disagreement, timeline charts, and a searchable equipment directory. See
   [../concepts/analytics-and-ethics.md](../concepts/analytics-and-ethics.md).
 - **Settings** — an **API** sub-tab (read-only with a note and every control disabled when
-  `GET /api/settings` reports `editable: false`, i.e. for tunnel visitors; shared provider/credential and separate Ranking
-  (Compass) / Event planner model and reasoning pickers with individual validation status,
+  `GET /api/settings` reports `editable: false`, i.e. for tunnel visitors; shared provider/credential and four separate role
+  pickers (Ranking (Compass), Event planner, Investigator, Narrator), each with model, thinking level and
+  timeout, showing the selected provider's own saved roles, with individual validation status,
   saves and preserved unsaved drafts, with live model
   discovery) and a **Demo** sub-tab (workforce scenario, agent activity, deferred-demand
-  ledger, handover log). The provider dropdown is rendered dynamically from `/api/settings` (today it lists
-  only AMD Token Factory), so a newly added provider would appear with no client change. See
+  ledger, handover log). The provider dropdown is rendered dynamically from `/api/settings` (Nebius Token Factory,
+  the default, and AMD Token Factory), so a newly added provider would appear with no client change.
+  Model-sourced records are labelled "Nebius model" or "AMD model" from their `source`
+  (`NEBIUS_MODEL` / `AMD_MODEL`). See
   [../backend/model-providers.md](../backend/model-providers.md).
 
 ## Diagnostics

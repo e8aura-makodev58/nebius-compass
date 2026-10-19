@@ -605,7 +605,7 @@ function renderResponders(state) {
   document.querySelectorAll("[data-responder-id]").forEach((button) => { button.onclick = () => { selectedResponderId = button.dataset.responderId; focusEntity("responder", selectedResponderId); render(currentState); }; });
 }
 
-function fixSourceLabel(source) { return source === "AMD_MODEL" ? "AMD model" : source === "FIXTURE" ? "Offline fixture" : "Deterministic"; }
+function fixSourceLabel(source) { return source === "NEBIUS_MODEL" ? "Nebius model" : source === "AMD_MODEL" ? "AMD model" : source === "FIXTURE" ? "Offline fixture" : "Deterministic"; }
 function recommendedFixMarkup(issue, state) {
   const rec = issue.fixRecommendation ?? state.issues.find((row) => row.id === issue.id)?.fixRecommendation;
   if (!issue.symptom && !rec) return "";
@@ -630,7 +630,7 @@ function fixRate(metric) {
 function fixAnalyticsPanel(analytics) {
   const f = analytics.fixes;
   if (!f) return "";
-  return `<section id="analytics-reliability" class="analytics-panel"><p class="eyebrow">Lifetime observed outcomes</p><h3>Fix recommendations and outcomes</h3><div class="metric-grid"><div><span>First-time fix rate</span><strong>${metricValue(f.firstTimeFixRate, fixRate)}</strong></div><div><span>Recommended vs baseline agreement</span><strong>${metricValue(f.recommendedVsBaselineAgreement, fixRate)}</strong></div></div><p class="workflow-prompt">${escapeHtml(f.definition)} AMD model recommendations: ${f.modelRecommendations}; deterministic recommendations: ${f.deterministicRecommendations}.</p></section>`;
+  return `<section id="analytics-reliability" class="analytics-panel"><p class="eyebrow">Lifetime observed outcomes</p><h3>Fix recommendations and outcomes</h3><div class="metric-grid"><div><span>First-time fix rate</span><strong>${metricValue(f.firstTimeFixRate, fixRate)}</strong></div><div><span>Recommended vs baseline agreement</span><strong>${metricValue(f.recommendedVsBaselineAgreement, fixRate)}</strong></div></div><p class="workflow-prompt">${escapeHtml(f.definition)} Model recommendations (Nebius or AMD): ${f.modelRecommendations}; deterministic recommendations: ${f.deterministicRecommendations}.</p></section>`;
 }
 function fixPeriodTable(period) {
   if (!period?.periods?.some((p) => p.fixes)) return "";
@@ -1246,7 +1246,7 @@ const SETTINGS_ROLES = [
   { role: "investigator", label: "Investigator", modelId: "settings-investigator-model", effortId: "settings-investigator-effort", saveId: "settings-investigator-save" },
   { role: "narrator", label: "Narrator", modelId: "settings-narrator-model", effortId: "settings-narrator-effort", saveId: "settings-narrator-save" },
 ];
-// A live AMD ranking takes about 40–90s of real time, so above 5× it arrives long after
+// A live AMD ranking took about 40–90s of real time (Nebius about 1–4s), so above 5× it arrives long after
 // the simulated dispatch moved on (docs/decisions.md). The API still accepts 10× and 60×
 // for offline generation; a room already running faster shows its speed until lowered.
 const RECOMMENDED_SPEEDS = [1, 5];

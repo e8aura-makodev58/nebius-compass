@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 12) |
+| codex | RUN (round 13) |
 | gemini | STOP (excluded from tasks) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | N1 — Nebius Token Factory provider (round 12) | 12 |
+| codex | N1b (Nebius defaults) then N2 (contracts, DTOs, tools) | 13 |
 | gemini | none — **excluded from tasks** (user, 2026-10-17); theme merged `87b3a77` | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -563,8 +563,87 @@ Plan v2 (`docs/nebius/04_HACKATHON_PLAN.md`) is the spec. Read §2 (model tierin
 - **main agent (meanwhile):** N5 scenario fixtures (`fixtures/investigation/`, by 10-21),
   N4 UI on stubs, N0 when the key arrives.
 
+**Round 13 (2026-10-19) — codex: N1b, then N2.** Start with `git merge master`. Ports
+3021/3121. Keep your watcher running. Commit N1b separately, then continue straight into N2
+in the same round; set `READY FOR MERGE` once at the end, unless N2 needs a decision
+(`BLOCKED`).
+
+- **codex — N1b: fill the Nebius defaults from N0** (`docs/nebius/05_TOKEN_FACTORY_FACTS.md`).
+  - `NEBIUS_ROLE_DEFAULTS`:
+    - compass `nvidia/nemotron-3-super-120b-a12b` / `default`;
+    - event-planner `nvidia/Nemotron-3_5-Lightning` / `off`;
+    - investigator `nvidia/Nemotron-3-Ultra-550b-a55b` / `default`;
+    - narrator `nvidia/Nemotron-3_5-Lightning` / `off`.
+
+    Keep your timeouts.
+  - `NEBIUS_MODEL_CAPABILITIES`: those three models plus `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`
+    and `nvidia/Nemotron-3.5-Super-VL`, each
+    `{ toolCalling: 'native', thinking: 'chat_template_kwargs.enable_thinking', jsonMode: true }`.
+  - Update the two tests that assert blank fresh IDs: fresh Nebius now uses the table, and
+    blank still fails closed when explicitly configured blank.
+  - Leave the `.env.example` model/effort lines **blank**, so built-in defaults apply and a
+    copied file cannot silently override the planner's `off`. Comment that blank means
+    "built-in default" and name the defaults.
+  - Update `model-providers.md` and `running-and-config.md`.
+  - Move `scripts/watch-codex-handover.mjs` and its test **out of the product repo** to
+    `/home/makodev58/nebius-tools/` (the repo goes public in N7; agent tooling does not
+    belong in it). Remove its `running-and-config.md` section, and keep a one-line log entry.
+- **codex — N2: contracts §3.3, §3.4 and §3.7 of plan v2.**
+  - **`backend/src/investigation-dto.mjs`.** Explicit field-by-field constructors for
+    `CaseDTO`, `ResponderDTO`, `FixDTO` and `EquipmentDTO`, exactly the field lists in §3.3.
+    Never spread state rows.
+  - **Certifications.** Public synthetic certifications per responder, from a **separate
+    seeded RNG stream** independent of `ResponderSkill`. Small enum: `ISOLATION`,
+    `SPECIALIST-A`, `SPECIALIST-B`, `SPECIALIST-C`. Add migration for existing rooms and
+    the month seed (deterministic, seeded by responder id).
+  - **Fix catalog.** Add `safetyClass`, `prerequisites[]` (enum: `STATION_ISOLATED`,
+    `LOCKOUT_CONFIRMED`, `DRIVE_DE_ENERGISED`) and `requiredCertifications[]`. Update
+    `validateFixCatalog`. These are public procedure data, not outcome truth: at least one
+    `ROUTINE`, one `ISOLATION_REQUIRED` and one `SPECIALIST_ONLY` fix per class.
+  - **Case records.** `CASE-<issueId>`, derived from resolved issues **and the archive's
+    compact facts** (extend the compact facts if a `CaseDTO` field is missing). Stable
+    across reload/archive. Legacy flag for pre-fix-catalog history.
+  - **`reportNarrative` (+ `narrativeSource`) on issues.** Migration: resolved history gets
+    a code-generated template narrative from the **public symptom only**, marked
+    `template`. The history generator writes seeded templates with noise: misleading
+    keywords, typos, omissions. Use templates for now, not the live narrator.
+  - **`backend/src/investigation-tools.mjs`.** Read-only tools with JSON schemas for
+    `callChatTurn`:
+    - `search_cases`;
+    - `get_case`;
+    - `equipment_history`;
+    - `fix_catalog`;
+    - `fix_evidence`;
+    - `eligible_responders` (eligible = available, plus qualification per fix).
+
+    Each takes `asOf` from the caller, never from the model. Budgets from §3.6: ≤ 10 rows,
+    ≤ 8 KB per result. Args are validated, and errors come back as tool results, not
+    throws.
+  - **Tests** (hermetic):
+    - noninterference: randomise skill/cause/effectiveness → byte-identical tool results
+      and DTOs;
+    - canary scan over every tool result and DTO, including archive-backed cases and
+      renamed keys;
+    - future-data perturbation: records after `asOf` change nothing;
+    - case-id stability across archive;
+    - catalog validation;
+    - certification determinism and independence;
+    - migration;
+    - the scenario setup tags in `fixtures/investigation/scenarios.json` that N2 can
+      already build (history and responder tags). Import fixtures read-only.
+  - **Do not build** the investigator loop, routes or approval yet (N3a). **Do not touch**
+    `frontend/`, `e2e/`, `fixtures/investigation/`, `docs/nebius/`, `backend/data/`, port
+    3200. No live calls.
+  - **Docs:** `domain-model.md`, `simulation.md`, `agent-boundary.md`, a new
+    `project-state/backend/investigation.md` (add it to `index.md`), `log.md`, and a
+    `docs/decisions.md` entry.
+
+- **main agent (meanwhile):** live re-measure of the Compass ranking roles on Nebius with
+  the real Scenario A packet (after N1b merges), N5 eval harness skeleton, N4 polish.
+
 ### Merge log
 
+- 2026-10-19 — **codex** `d3a500b` → merge `b255703` + main agent `1f18284`: N1 Nebius Token Factory provider (round 12): Nebius default, AMD kept, four roles with timeouts, per-provider controls, native/JSON-protocol tool turns, call metadata; main agent added the provider E2E and Nebius labels. `project-state/log.md` conflict kept both. Combined tree tested before merge: `npm test` 356/356, E2E 78/78. Handoff archived.
 - 2026-10-19 — **main agent** `claude` → master (fast-forward to `26fe6db`): plan v2, Apache-2.0 licence, 24 investigation scenarios (N5 part 1), Field reports tile on the §3.8 contract with stubbed-route E2E (N4), Chromium libraries moved to `/home/makodev58/nebius-tools`, override/rooms spec race fix. `npm test` 342/342, E2E 78/78 on master.
 - 2026-10-19 — **codex** `534a1b1` → merge `f892d3b`: one-pass review of the Nebius plan (round 11), 12 findings, all accepted into plan v2 `a2d8373`. Docs only; `project-state/log.md` append conflict kept both. Handoff archived.
 - 2026-10-18 — **codex** `7d74b73` → merge `9aee67d`: journaled live store, copy-on-write drafts, frozen snapshots (round 10). Codex ran out of tokens mid-task; the main agent finished it in the codex worktree at the user's request (16 failing tests fixed, crash-safety tests added). Clean merge. `npm test` 327/327, E2E 71/71. Tick-mutation 50 ms target not met (p95 0.18 s). Handoff archived.

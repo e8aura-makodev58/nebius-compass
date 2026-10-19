@@ -4,6 +4,20 @@
 
 ## Merged handoffs
 
+### 2026-10-19 — codex → master (branch commit `d3a500b`, merge `b255703`)
+
+- **Status:** BLOCKED
+- **Updated:** 2026-10-19
+- **Task:** Round 12 — N1 Nebius provider implemented; awaiting main-owned E2E/source-label updates before both-suite handoff.
+- **Changes:** Nebius is the fresh-settings default; saved AMD pins and credentials load byte-unchanged. Four persisted model/effort/timeout roles, separate provider catalogs and controls, fail-closed blank Nebius IDs, native/JSON-protocol normalized tool proposals with strict argument validation, bounded usage/latency/request-id metadata on existing recommendation records. Fresh-clone `.cache` parents fixed. No live calls, runtime data changes, investigation fixtures or E2E edits.
+- **Frontend changes:** Only existing Settings API form code in `frontend/app.js`: investigator/narrator fieldsets, per-role timeout input, provider-specific role previews and independent drafts. Unchanged timeout is omitted from save payload for compatibility. Main must update `project-state/frontend/overview.md` per ownership.
+- **Verification:** `npm test`: 356/356. Earlier fresh-clone run after removing `.cache`: 354/354 (two subsequent isolation/persistence tests added). Chromium E2E on 3021: 77/78; only failure is the now-obsolete one-provider assertion in `e2e/provider-settings.spec.mjs:37`. Final full rerun underway; port cleanup checked after first run. E2E files remain untouched as instructed.
+- **Questions for main:** Please update the owned provider E2E to expect `[AMD Token Factory, Nebius Token Factory]`, length 2, fresh provider `nebius`, and Nebius connection text; rename its AMD-only title. Also render `NEBIUS_MODEL` as "Nebius model" in `fixSourceLabel` (`frontend/app.js`) and `frontend/staffing-view.js` (currently both label it Deterministic). Add E2E checks for investigator/narrator/timeout controls and provider switching as desired. Commit those on master; I will sync and rerun both suites. These files/labels are outside my authorized Settings-only frontend scope.
+- **N0 handoff table:** `backend/src/model-provider.mjs`: fill only `NEBIUS_ROLE_DEFAULTS` model IDs and `NEBIUS_MODEL_CAPABILITIES[verifiedId]` (`toolCalling`, `jsonMode`, `thinking`, optional `reasoningValues`). Equivalent env seeds: `NEBIUS_TOKEN_FACTORY_MODEL`, `_EVENT_PLANNER_MODEL`, `_INVESTIGATOR_MODEL`, `_NARRATOR_MODEL`; respective `_REASONING_EFFORT` / `_EVENT_PLANNER_REASONING_EFFORT` / `_INVESTIGATOR_REASONING_EFFORT` / `_NARRATOR_REASONING_EFFORT`; `_TIMEOUT_MS` and respective role-prefixed timeout vars. Exact defaults and controls are in `.env.example` and operations docs. IDs remain blank until N0.
+- **project-state:** Updated backend model-providers/overview/http-api, running-and-config, log; appended decision record. Lockfile includes the existing package's Apache-2.0 license from required npm install.
+- **Watcher:** Repaired in `4734194`; self-test delivered to this session and acknowledged. Running detached every 300 seconds with `codex queue` on changed active assignment/round details; persistent dedupe and STOP/no-task control. Requires the local Codex daemon/session to remain available.
+- **Resolved by the main agent:** provider E2E (two providers, four roles, provider switching) and Nebius source labels in `1f18284`; frontend overview updated.
+
 ### 2026-10-19 — codex → master (branch commit `534a1b1`, merge `f892d3b`)
 
 - **Status:** READY FOR MERGE
