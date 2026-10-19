@@ -336,3 +336,6 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] docs — Apache-2.0 licence; plan risks updated
 - `LICENSE` (Apache-2.0) and `package.json` `license` added after the user confirmed ownership. Plan §6 and `docs/BASELINE_AND_CHANGES.md` record the user's answers (licence, AMD exclusivity not a concern, Nebius key later, GitHub login in progress); decision entry in `docs/decisions.md`.
 - Pages updated: none.
+## [2026-10-19] docs — Codex review of Nebius hackathon plan
+- Added a one-pass, evidence-backed review covering authority/privacy, approval, safety, replay isolation, scope, ownership and objective acceptance criteria. No implementation behavior changed.
+- Pages updated: `docs/nebius/04_HACKATHON_PLAN_REVIEW.md`, Codex section of `handover.md`; no component wiki changes required.
