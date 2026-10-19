@@ -18,6 +18,7 @@ whole system on one page. When you add or remove a page, update this list.
 | Page | What it covers |
 |------|----------------|
 | [backend/overview.md](backend/overview.md) | Every module under `backend/src/`, grouped by subsystem, with links to the deep-dive pages. |
+| [backend/assistant.md](backend/assistant.md) | Ask Compass public read-only tools, grounded Q&A role and limits. |
 | [backend/investigation.md](backend/investigation.md) | Investigation DTOs, read-only tools, cutoff, cases, certifications and narratives. |
 | [backend/domain-model.md](backend/domain-model.md) | The persisted state schema, every core entity, the issue lifecycle, and the hidden-`ResponderSkill` invariant. |
 | [backend/live-runtime.md](backend/live-runtime.md) | Live mode: what a tick does, persistence/concurrency, agent activity, deferred work. |

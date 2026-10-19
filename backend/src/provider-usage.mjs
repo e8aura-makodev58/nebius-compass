@@ -15,7 +15,7 @@ export const MODEL_PRICES=Object.freeze({nebius:Object.freeze({
 })});
 // Current prices are exact multiples of one nanodollar per token.
 const usd=(value)=>Math.round(value*1e9)/1e9;
-const roles=new Set(['compass','event-planner','investigator','narrator']);
+const roles=new Set(['compass','event-planner','investigator','narrator','assistant']);
 const tokens=(value)=>Number.isSafeInteger(value)&&value>=0?value:null;
 const modelName=(value)=>typeof value==='string'&&/^[\w./:-]{1,200}$/.test(value)?value:'unknown-model';
 const utcDay=(time)=>new Date(time).toISOString().slice(0,10);

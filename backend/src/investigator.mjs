@@ -24,9 +24,9 @@ export function numbersIn(rows, tool) {
   return new Set((Array.isArray(rows)?rows:[]).flatMap((row)=>(METRIC_FIELDS[tool]??[])
     .flatMap((key)=>typeof row?.[key]==='number'&&Number.isFinite(row[key])&&row[key]>=0?[String(row[key])]:[])));
 }
-function proseError(value, ids, grounded = new Set()) {
+export function proseError(value, ids, grounded = new Set(), maxLength = 400) {
   if (typeof value !== 'string' || !value.trim()) return 'prose must be a nonempty string';
-  if (value.length > 400) return 'prose exceeds 400 characters';
+  if (value.length > maxLength) return `prose exceeds ${maxLength} characters`;
   if (/hidden-cause|trueMedian|trueSuccess|effectiveness|responderSkill/i.test(value)) return 'restricted content is forbidden';
   if (/%|\b(?:probabilit(?:y|ies)|chances?|likelihood|percent(?:age)?s?)\b/i.test(value)) return 'probability/percentage claims are forbidden; use qualitative prose';
   try { assertNoResponderSkill(value); } catch { return 'restricted content is forbidden'; }

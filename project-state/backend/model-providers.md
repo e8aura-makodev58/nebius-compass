@@ -168,3 +168,13 @@ adapters are checked after serialization. Overflow has code `response-too-large`
 retried as a service failure. Unreadable error bodies still preserve their HTTP status.
 Investigator final content also has a 65,536-byte cap, with 8,192 bytes per proposed tool
 argument before its local parsing/trace path. Oversized replies never execute proposed work.
+
+## Ask Compass role
+
+A fifth role, `assistant`, defaults to Nebius Super (`nvidia/nemotron-3-super-120b-a12b`),
+thinking off and 45 seconds. `NEBIUS_TOKEN_FACTORY_ASSISTANT_MODEL`,
+`NEBIUS_TOKEN_FACTORY_ASSISTANT_REASONING_EFFORT`, `NEBIUS_TOKEN_FACTORY_ASSISTANT_TIMEOUT_MS`
+(and AMD equivalents) seed independent saved role settings. `COMPASS_ASSISTANT_MODE`
+selects live/fixture/force-failure; `COMPASS_ASSISTANT_TIMEOUT_MS` supplies the generic
+timeout fallback. The usage ledger recognizes assistant calls under their own role.
+The existing Settings role renderer adds Assistant (Ask Compass) with independent controls.

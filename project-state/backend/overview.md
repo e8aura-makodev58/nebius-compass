@@ -124,3 +124,5 @@ writes runtime state. See investigation.md and docs/evaluation.md for the first-
 `provider-usage.mjs` owns the deployment-global daily provider/model/role token and estimated
 cost ledger, 120-day atomic persistence, UTC budget gate and one-per-day exhaustion audit.
 All chat transports share it; see model-providers.md for accounting boundaries and settings API.
+
+`assistant-tools.mjs` supplies Ask Compass’s seven public-only read-only projections and per-tool numeric metrics; see [assistant.md](assistant.md).

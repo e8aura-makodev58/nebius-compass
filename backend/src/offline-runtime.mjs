@@ -1,3 +1,4 @@
+import { createAskService } from './assistant.mjs';
 import { claimInvestigationDeadlines } from './investigation-policy.mjs';
 import { finishInvestigationDeadline } from './investigation-service.mjs';
 import { createInvestigationService } from './investigation-service.mjs';
@@ -59,6 +60,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
       return {label,result:structuredClone(result)};
     },
   };
+  const assistant = createAskService(investigationStore,{mode:'fixture'});
   const investigations = createInvestigationService(investigationStore,{investigatorOptions:{mode:'fixture'},rankingOptions:{mode:'fixture'},narratorOptions:{mode:'fixture'}});
   async function finishInvestigationWork() { while (await investigations.runNext()) {} }
   let workflow = null;
@@ -192,7 +194,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     publicState.simulationState = publicSimulationState;
     publicState.resolutionAttempts = publicState.resolutionAttempts.map(redactAttempt);
     publicState.resolutionHistory = publicState.resolutionHistory.map((record) => record.participants ? { ...record, participants: record.participants.map(({ contributionShare, ...participant }) => participant) } : record);
-    return structuredClone({ ...publicState, ...publicInvestigationState(demoState), workflow });
+    return structuredClone({ ...publicState, ...publicInvestigationState(demoState), workflow, askHistory:assistant.history() });
   }
 
   async function completeRecommendation(issueId) {
@@ -243,6 +245,8 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
 
   return {
     snapshot,
+    ask:(input)=>assistant.ask(input),
+    getAsk:(id)=>assistant.get(id),
     updateInvestigationPolicy:(input)=>investigations.updatePolicy(input),
     async reinvestigate(id,input) {const result=await investigations.reinvestigate(id,input);await finishInvestigationWork();return result;},
     async submitReport(input) { const result=await investigations.submit(input);await finishInvestigationWork();return result; },
@@ -251,6 +255,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     getInvestigation:(id)=>investigations.getInvestigation(id), getCase:(id)=>investigations.getCase(id),
     decideInvestigation:(id,input,action)=>investigations.decide(id,input,action),
     reset() {
+      assistant.clear();
       demoState = initializeOfflineState();
       workflow = null;
       requestSequence = 0;

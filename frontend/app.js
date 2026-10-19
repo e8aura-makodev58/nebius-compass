@@ -1246,6 +1246,7 @@ const SETTINGS_ROLES = [
   { role: "compass", label: "Ranking (Compass)", modelId: "settings-model", effortId: "settings-effort", saveId: "settings-save" },
   { role: "event-planner", label: "Event planner", modelId: "settings-event-planner-model", effortId: "settings-event-planner-effort", saveId: "settings-event-planner-save" },
   { role: "investigator", label: "Investigator", modelId: "settings-investigator-model", effortId: "settings-investigator-effort", saveId: "settings-investigator-save" },
+  { role: "assistant", label: "Assistant (Ask Compass)", modelId: "settings-assistant-model", effortId: "settings-assistant-effort", saveId: "settings-assistant-save" },
   { role: "narrator", label: "Narrator", modelId: "settings-narrator-model", effortId: "settings-narrator-effort", saveId: "settings-narrator-save" },
 ];
 // A live AMD ranking took about 40–90s of real time (Nebius about 1–4s), so above 5× it arrives long after

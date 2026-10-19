@@ -219,3 +219,6 @@ it adds no editable controls and reuses settings/evidence-table styles. Usage is
 the settings snapshot; saving a model/credential retains the last displayed usage snapshot.
 
 In Operational Analytics period charts, provisional/in-progress simulated periods (`.period-bar.partial`) are distinguished from completed periods via reduced opacity (0.55), a diagonal hatched pattern (`repeating-linear-gradient`), a dashed rule border, and an explicit legend entry (`■ Complete   □ In-progress (provisional)`).
+
+Settings includes the fifth Assistant (Ask Compass) role through the existing shared
+role-card renderer, with independent model, reasoning, timeout and save controls.
