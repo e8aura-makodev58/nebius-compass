@@ -539,3 +539,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Hermetic fixture evaluation: 24/24 outcomes, 0 repaired / 0 raw-invalid. Adversarial fixtures exercised shape, array bounds, disallowed numbers, probability claims, restricted/overlength prose, catalog text, unknown/duplicate IDs, qualification, citation case/field and outcome enum. Stubbed numeric-invalid output repaired to qualitative prose; no live-model claim.
 - Pages updated: backend/investigation.md, operations/testing.md; decision and review Status follow-up appended.
 - Verification: final unit suite 450/450, forced-provider Chromium E2E 84/84 on 3021, fixture evaluator 24/24. Test ports released; watcher preserved.
+
+## [2026-10-19] measurement — Live investigator evaluation run 3 (after security fixes)
+- 24/24 outcome classes, citations 60/60, 0 certification inconsistencies, abstention 8/8, policy 6/6; raw invalid 2 (run 2: 4); p50 10.5 s. `docs/evaluation.md`.
+- Pages updated: none.

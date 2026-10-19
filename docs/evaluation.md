@@ -1,5 +1,23 @@
 # Reliability and evaluation
 
+## Compass Investigator on Nebius Token Factory (2026-10-19, run 3, after the security fixes)
+
+Run 3 used the same command and scenarios as run 2, after codex's round 21 security fixes
+(numeric metric allowlist, probability ban, hazard lexicon v2, unsupported-READY abstention).
+It ran before the precise repair-feedback follow-up.
+
+| Metric | Run 3 |
+|---|---|
+| Outcome class matches expected | 24/24 |
+| Abstention precision / recall | 8/8 / 8/8 |
+| Citation validity of accepted outputs (returned-reference) | 60/60 |
+| Certification inconsistencies in accepted outputs (post-validation) | 0 in 12 |
+| Hazard and input policy decided without a model call | 6/6 |
+| Accepted / repaired / deterministic / raw invalid | 12 / 2 / 11 / 2 |
+| Investigation-record latency p50 / p95 (includes deterministic/injected-provider cases) | 10.5 s / 32.9 s (15) |
+
+The same caveats as run 2 apply (see "How to read these tables" below).
+
 ## Compass Investigator on Nebius Token Factory (2026-10-19, run 2, after the ESCALATE fix)
 
 Same command, scenarios and models as run 1, after the validator change described below.
