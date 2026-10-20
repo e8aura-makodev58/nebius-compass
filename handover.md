@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | STOP (no open task; round 23 merged 2026-10-20) |
+| codex | RUN (round 26) |
 | gemini | RUN (round 25) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,10 +111,10 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | none (round 23 merged 2026-10-20) | — |
+| codex | Brainstorm ATE/FT/WS feature proposal (docs only) | 26 |
 | gemini | Implement the Ask Compass dialog CSS improvements (review §3) | 25 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
-| claude | none (main agent's own work) | — |
+| claude | Ask: record validation errors on the trace, rerun two failing live scenarios (main's own work) | 26 |
 
 Finished tasks are recorded in **Merge log** below, never as "none" lines here.
 
@@ -1258,6 +1258,24 @@ your watcher.
   Nebius palette with no lime as text. At most 4 screenshots under
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
+
+**Round 26 (2026-10-20) — codex: brainstorm ATE/FT/WS features (docs only).** Start with
+`git merge master`; restart your watcher. The product is used at a semiconductor test facility with
+ATE testers and handlers for final test (FT) and probers for wafer sort (WS). FT uses loadboards with
+sockets; WS uses probe cards with sockets and probe pins. Compass today handles per-issue responder
+assignment, issue priority, and staffing simulation, all with deterministic code owning facts.
+
+- **codex.** Write `docs/product/ate-feature-proposal.md` (new file). Propose candidate features that fit
+  Compass's existing model (issues, responders, events, deterministic eligibility and priority, bounded
+  model roles, no hidden `ResponderSkill` leakage). For each: the user problem, the equipment and
+  consumable it concerns (tester, handler, prober, loadboard, socket, probe card, probe pin, changeover),
+  the data it would need, which part is deterministic and which (if any) is a bounded model role, a
+  rough size (S/M/L), and the main risk. Cover at least: socket and contactor life and cleaning cadence,
+  probe-card and pin planarity or wear alarms, loadboard inventory and checkout, handler jams and
+  throughput loss, device changeover scheduling, yield and bin excursions, retest and guardband
+  decisions, and calibration or correlation between testers. Add a short section of assumptions to
+  confirm with the user, and a ranked top five. Use synthetic, domain-neutral examples only; no real
+  customer, device or site data. Docs only: do not change code. Commit, then set `READY FOR MERGE`.
 
 **Round 25 (2026-10-20) — gemini: implement the Ask Compass dialog CSS improvements.** Start with
 `git merge master`; restart your watcher. Source: `docs/design/ask-compass-review.md`, §3 (Improvements
