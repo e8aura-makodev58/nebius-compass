@@ -1335,15 +1335,14 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## codex
 
-- **Status:** IDLE
-- **Updated:** —
-- **Task:** Round 23 merged (see Merge log). Replace this section at handoff.
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-20
+- **Task:** Round 26 — Brainstorm ATE/FT/WS feature proposal (docs only).
+- **Changes:** Added `docs/product/ate-feature-proposal.md`: eight candidates covering every requested area, each with user problem/assets, data requirements, deterministic ownership, optional bounded model role, synthetic example, relative size and main risk. Ranked top five: socket/contactor care; loadboard checkout; handler jam/throughput triage; probe-card/pin inspection; calibration/correlation readiness. Includes implementation prerequisites, long-run/import/concurrency acceptance concerns, public manufacturer terminology references and six assumptions to confirm.
+- **Boundary:** Proposal only. Asset/counter/lot/inventory/scheduling domains are explicitly new scope. Models never set priorities, diagnose private causes, control schedules, set test limits or authorize disposition. Retest and guardband decisions retain qualified engineering approval. Hidden skill/private fault truth remain excluded. Live and Offline would share deterministic rules.
+- **Verification:** Docs coverage/local-link checks and `git diff --check` pass. `npm test` 467/467; E2E 88/88 on port 3021, forced providers, no live calls; port 3021 free. No code changed. Existing watcher left running.
+- **project-state pages updated:** log.md (proposal recorded; architecture behavior unchanged).
+- **Questions for main:** No blocker. Confirm the user's WS socket/card/pin hierarchy, authoritative data sources, maintenance/quality policy owners, approval roles and first-slice priority before implementation. Relative sizes exclude vendor/MES integration; no ROI claims.
 
 ---
 
