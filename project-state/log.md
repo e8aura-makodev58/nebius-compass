@@ -588,3 +588,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Ran `eval:ask --mode live` once in a one-off container on the local deploy VM with the server's Nebius key file mounted. Model: the configured assistant model. Result: 18/20 status matches; 20/20 constraint matches; citations 10/10 valid; numbers, hidden-truth and action leaks 0 across 18 scored answers; decline precision and recall 7/7; fallback 5, repaired 4, raw-invalid 4, errors 2 (2 are synthetic fault injections). Latency p95 4.6 s; p50 is not meaningful because most scenarios decline or fall back without a model call.
 - Misses: `retrieved-injection` and `responder` both fell back after two validation failures (raw, then repair). The answer does not record which validation rule failed, so the cause is unknown. Next step: record validation errors on the answer trace, then rerun those two.
 - Pages updated: this entry only.
+
+## [2026-10-20] backend — Ask fallbacks now record the rejected rule family
+- Fallback answers carry `rejectedBy`: the rule families (`final`, `text`, `citations`) rejected on each attempt. The model's wording is not stored. Deployed as `e850684`.
+- Rerun of `retrieved-injection` and `responder` live: `retrieved-injection` passed this time (READY), so the first failure was run-to-run variation. `responder` fell back with `rejectedBy: ["final","text"]`: the model added fields beyond `text` and `citations`, and its repaired prose was rejected by the text rule too.
+- Open: decide whether to relax the exact-shape check (`final`) or tighten the instruction to the model. Not changed here.
