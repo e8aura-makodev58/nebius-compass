@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 23) |
+| codex | STOP (no open task; round 23 merged 2026-10-20) |
 | gemini | RUN (round 24g) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Ask Compass evaluation harness and scenarios | 23 |
+| codex | none (round 23 merged 2026-10-20) | — |
 | gemini | Review the Ask Compass dialog (docs only) | 24g |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
@@ -1261,6 +1261,7 @@ your watcher.
 
 ### Merge log
 
+- 2026-10-20 — **codex** `e8e30d3` → merge (round 23): Ask Compass synthetic evaluation harness (`npm run eval:ask -- --mode fixture|live`, 20 scenarios, docs/evaluation.md). Fixture mode is API-free; no live calls were made. On master: `npm test` 466/466, E2E 88/88, fixture CLI exit 0. Open follow-up: Live answer quality needs a separate main-agent review; not run. Handoff archived.
 - 2026-10-19 — **codex** `56af715` → merge `fa94df0`: Ask Compass backend (round 22). Codex ran out of credits after `cb2320a`; the main agent finished the uncommitted service work in the codex worktree at the user's request (fixed a test that wrote `backend/data/provider-usage.json`; in-memory `publicSnapshot()`). On master: `npm test` 463/463, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **gemini** `4d7408d` → merge `64eefff`: fresh-clone judge walkthrough (docs). Main agent applied the fixes (UI auto-select, README/draft). On master: `npm test` 450/450, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **gemini** `3927f02` → merge `be5066e`: wall-display layout (≥1440/2200px) and provisional period charts. On master: `npm test` 450/450, E2E 85/85. Deployed. Handoff archived.
@@ -1302,15 +1303,15 @@ your watcher.
 
 ## codex
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-20
-- **Task:** Round 23 — Ask Compass evaluation harness and scenarios.
-- **Changes:** Added 20 labelled synthetic scenarios and `npm run eval:ask -- --mode fixture|live`, with `--only` and optional public JSON output. The isolated runner exercises the real Ask service, replays trace identities against the same snapshot, and never writes product data. Live uses the assistant provider with an in-memory usage ledger; only the main agent runs it. Synthetic error/timeout probes stay labelled in both modes.
-- **Scoring:** status and constraint matches, citation validity, unsupported numeric prose, hidden-truth/action leakage, decline precision/recall, fallback/repaired/raw-invalid/errors, and nearest-rank latency with denominators. Poisoned-answer tests ensure the scorer can detect violations independently of service filtering. Fixture response repair/injection probes have explicit Live expectations.
-- **Verification:** `npm test` 466/466; E2E 88/88 on port 3021 with forced provider failures. Port 3021 is free. Fixture CLI 20/20 status and constraint matches, all emitted citations valid, zero final numeric/hidden/action violations; 3 repair/raw-invalid scenarios. Checked subset/JSON export and invalid mode rejection. No live calls.
-- **Docs:** method/limits in `docs/evaluation.md`; updated project-state backend/assistant.md, operations/testing.md and log.md.
-- **Limits:** fixture results measure contract handling, not semantic explanation quality. Leakage checks are lexical and number checks establish allowlist membership, not correct field attribution. Empty/over-long requests are correctly scored as `INVALID_QUESTION` errors with no status; no product behavior changed. Main agent should review Live answer quality separately.
-- **Questions for main:** none.
+- **Status:** IDLE
+- **Updated:** —
+- **Task:** Round 23 merged (see Merge log). Replace this section at handoff.
+- **Changes:** —
+- **Files changed:** —
+- **Verification:** `npm test` — · E2E —
+- **project-state pages updated:** —
+- **Risks / follow-ups:** —
+- **Questions for main:** —
 
 ---
 
