@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | STOP (no open task; round 23 merged 2026-10-20) |
-| gemini | RUN (round 24g) |
+| gemini | STOP (no open task; round 24g merged 2026-10-20) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | none (round 23 merged 2026-10-20) | — |
-| gemini | Review the Ask Compass dialog (docs only) | 24g |
+| gemini | none (round 24g merged 2026-10-20) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
 
@@ -1261,6 +1261,7 @@ your watcher.
 
 ### Merge log
 
+- 2026-10-20 — **gemini** `b229ab6` → merge (round 24g): Ask Compass dialog review (`docs/design/ask-compass-review.md`, 4 screenshots; docs only, 5 CSS-only improvements proposed, none applied). The gemini section reports head `c2c4736`; the branch head is `b229ab6`. Handoff archived.
 - 2026-10-20 — **codex** `e8e30d3` → merge (round 23): Ask Compass synthetic evaluation harness (`npm run eval:ask -- --mode fixture|live`, 20 scenarios, docs/evaluation.md). Fixture mode is API-free; no live calls were made. On master: `npm test` 466/466, E2E 88/88, fixture CLI exit 0. Open follow-up: Live answer quality needs a separate main-agent review; not run. Handoff archived.
 - 2026-10-19 — **codex** `56af715` → merge `fa94df0`: Ask Compass backend (round 22). Codex ran out of credits after `cb2320a`; the main agent finished the uncommitted service work in the codex worktree at the user's request (fixed a test that wrote `backend/data/provider-usage.json`; in-memory `publicSnapshot()`). On master: `npm test` 463/463, E2E 85/85. Deployed. Handoff archived.
 - 2026-10-19 — **gemini** `4d7408d` → merge `64eefff`: fresh-clone judge walkthrough (docs). Main agent applied the fixes (UI auto-select, README/draft). On master: `npm test` 450/450, E2E 85/85. Deployed. Handoff archived.
@@ -1317,16 +1318,15 @@ your watcher.
 
 ## gemini
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-20
-- **Task:** Round 24g — review the Ask Compass dialog (docs only)
-- **Head commit:** c2c4736
-- **Changes:** Comprehensive review of the Ask Compass dialog across 375px, 1280px, and 1920px viewports with isolated preview on port 3122. Tested action question (declined), general workload question (analytics fallback citation), selected issue context question (issue citation), citation navigation to analytics and issue records, and full keyboard workflow (Tab, Enter, Esc). Authored `docs/design/ask-compass-review.md` with 5 numbered issues and 5 concrete CSS-only improvements in the Nebius palette (no lime as text). Committed 4 screenshots under `docs/design/ask-compass-review/` (596 KB total).
-- **Files changed:** `docs/design/ask-compass-review.md`, `docs/design/ask-compass-review/*.png`, `handover.md` (gemini section only)
-- **Verification:** Docs and reference images only; no suites needed (verified preview server stopped and port 3122 free; watcher scheduled).
-- **project-state pages updated:** None (design review document only; no code changes).
-- **Risks / follow-ups:** Ready for main agent review; improvements 1–5 are CSS-only.
-- **Questions for main:** None.
+- **Status:** IDLE
+- **Updated:** —
+- **Task:** Round 24g merged (see Merge log). Replace this section at handoff.
+- **Changes:** —
+- **Files changed:** —
+- **Verification:** `npm test` — · E2E —
+- **project-state pages updated:** —
+- **Risks / follow-ups:** —
+- **Questions for main:** —
 
 
 
