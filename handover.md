@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | STOP (no open task; round 23 merged 2026-10-20) |
-| gemini | STOP (no open task; round 24g merged 2026-10-20) |
+| gemini | RUN (round 25) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | none (round 23 merged 2026-10-20) | — |
-| gemini | none (round 24g merged 2026-10-20) | — |
+| gemini | Implement the Ask Compass dialog CSS improvements (review §3) | 25 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (main agent's own work) | — |
 
@@ -1259,6 +1259,19 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 25 (2026-10-20) — gemini: implement the Ask Compass dialog CSS improvements.** Start with
+`git merge master`; restart your watcher. Source: `docs/design/ask-compass-review.md`, §3 (Improvements
+1–5) and the matching issues in §2.
+
+- **gemini.** Implement Improvements 1–5 as CSS only, in `frontend/` styles. Keep the
+  Nebius palette, no lime as text, and phone width (375px) with no horizontal scroll. Before changing
+  anything, check each proposed selector against the current `frontend/` code: the review was written
+  against an earlier snapshot, so any selector that no longer matches must be reported, not forced.
+  Add or update E2E coverage for the dialog (`e2e/ask-compass.spec.mjs`) for the behaviour you change.
+  Use **port 3022** for E2E, and port 3122 for any manual preview (stop it and check the port is free).
+  Run both suites (`npm test` and `npm run test:e2e` with the port set), then commit and set
+  `READY FOR MERGE`. Do not change backend code, and do not touch `docs/design/`.
+
 ### Merge log
 
 - 2026-10-20 — **gemini** `b229ab6` → merge (round 24g): Ask Compass dialog review (`docs/design/ask-compass-review.md`, 4 screenshots; docs only, 5 CSS-only improvements proposed, none applied). The gemini section reports head `c2c4736`; the branch head is `b229ab6`. Handoff archived.
@@ -1320,7 +1333,7 @@ your watcher.
 
 - **Status:** IDLE
 - **Updated:** —
-- **Task:** Round 24g merged (see Merge log). Replace this section at handoff.
+- **Task:** Round 25 assigned; see Main agent → Assignments. Replace this section at handoff.
 - **Changes:** —
 - **Files changed:** —
 - **Verification:** `npm test` — · E2E —
