@@ -593,3 +593,13 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Fallback answers carry `rejectedBy`: the rule families (`final`, `text`, `citations`) rejected on each attempt. The model's wording is not stored. Deployed as `e850684`.
 - Rerun of `retrieved-injection` and `responder` live: `retrieved-injection` passed this time (READY), so the first failure was run-to-run variation. `responder` fell back with `rejectedBy: ["final","text"]`: the model added fields beyond `text` and `citations`, and its repaired prose was rejected by the text rule too.
 - Open: decide whether to relax the exact-shape check (`final`) or tighten the instruction to the model. Not changed here.
+## [2026-10-20] ui — Ask Compass dialog CSS improvements (round 25)
+- Implemented Improvements 1–5 from `docs/design/ask-compass-review.md` in `frontend/investigation.css`:
+  - 1. Flex container containment (`.ask-dialog[open]`, `.ask-dialog > [data-ask-body]`) with fixed header/form and dedicated scrollable answer history (`.ask-history, .ask-case { flex: 1 1 auto; overflow-y: auto; }`).
+  - 2. Semantic left-border signals across answer classifications (`.ask-answer.ask-declined` with `--warn` amber, `.ask-answer.ask-fallback` with `--rule-strong`, `.ask-answer.ask-ready` with `--accent`).
+  - 3. Interactive polish and high-contrast focus rings for `#open-ask` launcher button with Nebius brand lime.
+  - 4. Interactive citation chip elevation and tactile hover/focus states (`.ask-answer .inv-case`).
+  - 5. Mobile responsive scaling and touch-target sizing (`@media (max-width: 600px)`: ≥44px touch targets on close button, submit button, and `#open-ask`; 16px textarea font size to prevent mobile auto-zoom).
+- Added comprehensive E2E assertions to `e2e/ask-compass.spec.mjs` verifying flex display, scroll containment, semantic left border colors, mobile touch target heights (375px), and citation styles.
+- Verification: unit suite 466/466 passed; full Chromium E2E suite 88/88 passed on port 3022.
+- Pages updated: frontend/overview.md, log.md.
