@@ -603,3 +603,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added comprehensive E2E assertions to `e2e/ask-compass.spec.mjs` verifying flex display, scroll containment, semantic left border colors, mobile touch target heights (375px), and citation styles.
 - Verification: unit suite 466/466 passed; full Chromium E2E suite 88/88 passed on port 3022.
 - Pages updated: frontend/overview.md, log.md.
+
+## [2026-10-20] docs — ATE/FT/WS feature candidates
+- Added a proposal with eight candidates, a ranked top five, data/authority boundaries, relative sizes, risks and user assumptions. Prioritizes consumable care and asset readiness; yield, retest and guardband changes remain engineering review workflows. No implementation or policy changed.
+- Pages updated: docs/product/ate-feature-proposal.md; this log. Existing architecture pages remain descriptions of implemented behavior.
