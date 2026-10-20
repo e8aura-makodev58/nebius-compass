@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | RUN (round 26) |
-| gemini | RUN (round 25) |
+| gemini | STOP (no open task; round 25 merged 2026-10-20) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | Brainstorm ATE/FT/WS feature proposal (docs only) | 26 |
-| gemini | Implement the Ask Compass dialog CSS improvements (review §3) | 25 |
+| gemini | none (round 25 merged 2026-10-20) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | Ask: record validation errors on the trace, rerun two failing live scenarios (main's own work) | 26 |
 
@@ -1292,6 +1292,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-20 — **gemini** `aeafb08` → merge (round 25): Ask Compass dialog CSS improvements 1–5 in `frontend/investigation.css`, with E2E updates. Handoff archived.
 - 2026-10-20 — **gemini** `b229ab6` → merge (round 24g): Ask Compass dialog review (`docs/design/ask-compass-review.md`, 4 screenshots; docs only, 5 CSS-only improvements proposed, none applied). The gemini section reports head `c2c4736`; the branch head is `b229ab6`. Handoff archived.
 - 2026-10-20 — **codex** `e8e30d3` → merge (round 23): Ask Compass synthetic evaluation harness (`npm run eval:ask -- --mode fixture|live`, 20 scenarios, docs/evaluation.md). Fixture mode is API-free; no live calls were made. On master: `npm test` 466/466, E2E 88/88, fixture CLI exit 0. Open follow-up: Live answer quality needs a separate main-agent review; not run. Handoff archived.
 - 2026-10-19 — **codex** `56af715` → merge `fa94df0`: Ask Compass backend (round 22). Codex ran out of credits after `cb2320a`; the main agent finished the uncommitted service work in the codex worktree at the user's request (fixed a test that wrote `backend/data/provider-usage.json`; in-memory `publicSnapshot()`). On master: `npm test` 463/463, E2E 85/85. Deployed. Handoff archived.
@@ -1349,28 +1350,15 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-20
-- **Task:** Round 25 — Implement the Ask Compass dialog CSS improvements (review §3)
-- **Head commit:** aeafb08
-- **Changes:** Implemented CSS improvements 1–5 from `docs/design/ask-compass-review.md` in `frontend/investigation.css`. Verified all selectors against current frontend DOM scaffolding:
-  1. Flex container structure (`.ask-dialog[open]`, `.ask-dialog > [data-ask-body]`, `.ask-dialog:not([open]) { display: none; }`) with pinned header/form and dedicated scrollable answer history (`.ask-history, .ask-case { flex: 1 1 auto; overflow-y: auto; }`).
-  2. Semantic left-border signals across answer classifications (`.ask-answer.ask-declined` with `--warn` amber `#D97706`, `.ask-answer.ask-fallback` with `--rule-strong` `#BFCAD8`, `.ask-answer.ask-ready` with `--accent`).
-  3. Interactive polish & high-contrast focus rings for `#open-ask` launcher button using Nebius brand lime.
-  4. Interactive citation chip elevation and tactile hover/focus states (`.ask-answer .inv-case`).
-  5. Mobile responsive scaling and touch targets under `@media (max-width: 600px)` (≥44px touch targets on close button, submit button, and `#open-ask`; 16px textarea font size to prevent mobile auto-zoom).
-- **Files changed:** `frontend/investigation.css`, `e2e/ask-compass.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md` (gemini section only)
-- **Verification:** Both test suites pass:
-  - `npm test`: 466/466 passed (0 failures).
-  - `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`: 88/88 passed (0 failures), covering dialog flex containment, semantic border colors, mobile touch targets at 375px, citation styles, and zero horizontal overflow (`scrollWidth <= innerWidth`).
-  - Port 3022 checked and free (`ss -ltn | grep :3022`).
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None.
-- **Questions for main:** None.
-
-
-
----
+- **Status:** IDLE
+- **Updated:** —
+- **Task:** Round 25 merged (see Merge log). Replace this section at handoff.
+- **Changes:** —
+- **Files changed:** —
+- **Verification:** `npm test` — · E2E —
+- **project-state pages updated:** —
+- **Risks / follow-ups:** —
+- **Questions for main:** —
 
 ## codebuddy
 
