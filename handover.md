@@ -1331,12 +1331,13 @@ your watcher.
 
 ## gemini
 
-- **Status:** IDLE
-- **Updated:** —
-- **Task:** Round 25 assigned; see Main agent → Assignments. Replace this section at handoff.
-- **Changes:** —
+- **Status:** IN PROGRESS
+- **Updated:** 2026-10-20
+- **Task:** Round 25 — Implement the Ask Compass dialog CSS improvements (review §3)
+- **Head commit:** b86d71f
+- **Changes:** In progress: implementing Improvements 1–5 from docs/design/ask-compass-review.md as CSS in frontend/investigation.css and updating e2e/ask-compass.spec.mjs.
 - **Files changed:** —
-- **Verification:** `npm test` — · E2E —
+- **Verification:** in progress
 - **project-state pages updated:** —
 - **Risks / follow-ups:** —
 - **Questions for main:** —
