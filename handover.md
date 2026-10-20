@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 26) |
+| codex | STOP (no open task; round 26 merged 2026-10-20) |
 | gemini | STOP (no open task; round 25 merged 2026-10-20) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Brainstorm ATE/FT/WS feature proposal (docs only) | 26 |
+| codex | none (round 26 merged 2026-10-20) | — |
 | gemini | none (round 25 merged 2026-10-20) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | Ask: record validation errors on the trace, rerun two failing live scenarios (main's own work) | 26 |
@@ -1292,6 +1292,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-20 — **codex** `0eb2139` → merge (round 26): ATE/FT/WS feature proposal, `docs/product/ate-feature-proposal.md` (eight candidates, ranked top five, assumptions to confirm). Docs only. Handoff archived.
 - 2026-10-20 — **gemini** `aeafb08` → merge (round 25): Ask Compass dialog CSS improvements 1–5 in `frontend/investigation.css`, with E2E updates. Handoff archived.
 - 2026-10-20 — **gemini** `b229ab6` → merge (round 24g): Ask Compass dialog review (`docs/design/ask-compass-review.md`, 4 screenshots; docs only, 5 CSS-only improvements proposed, none applied). The gemini section reports head `c2c4736`; the branch head is `b229ab6`. Handoff archived.
 - 2026-10-20 — **codex** `e8e30d3` → merge (round 23): Ask Compass synthetic evaluation harness (`npm run eval:ask -- --mode fixture|live`, 20 scenarios, docs/evaluation.md). Fixture mode is API-free; no live calls were made. On master: `npm test` 466/466, E2E 88/88, fixture CLI exit 0. Open follow-up: Live answer quality needs a separate main-agent review; not run. Handoff archived.
@@ -1336,16 +1337,15 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## codex
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-20
-- **Task:** Round 26 — Brainstorm ATE/FT/WS feature proposal (docs only).
-- **Changes:** Added `docs/product/ate-feature-proposal.md`: eight candidates covering every requested area, each with user problem/assets, data requirements, deterministic ownership, optional bounded model role, synthetic example, relative size and main risk. Ranked top five: socket/contactor care; loadboard checkout; handler jam/throughput triage; probe-card/pin inspection; calibration/correlation readiness. Includes implementation prerequisites, long-run/import/concurrency acceptance concerns, public manufacturer terminology references and six assumptions to confirm.
-- **Boundary:** Proposal only. Asset/counter/lot/inventory/scheduling domains are explicitly new scope. Models never set priorities, diagnose private causes, control schedules, set test limits or authorize disposition. Retest and guardband decisions retain qualified engineering approval. Hidden skill/private fault truth remain excluded. Live and Offline would share deterministic rules.
-- **Verification:** Docs coverage/local-link checks and `git diff --check` pass. `npm test` 467/467; E2E 88/88 on port 3021, forced providers, no live calls; port 3021 free. No code changed. Existing watcher left running.
-- **project-state pages updated:** log.md (proposal recorded; architecture behavior unchanged).
-- **Questions for main:** No blocker. Confirm the user's WS socket/card/pin hierarchy, authoritative data sources, maintenance/quality policy owners, approval roles and first-slice priority before implementation. Relative sizes exclude vendor/MES integration; no ROI claims.
-
----
+- **Status:** IDLE
+- **Updated:** —
+- **Task:** Round 26 merged (see Merge log). Replace this section at handoff.
+- **Changes:** —
+- **Files changed:** —
+- **Verification:** `npm test` — · E2E —
+- **project-state pages updated:** —
+- **Risks / follow-ups:** —
+- **Questions for main:** —
 
 ## gemini
 
