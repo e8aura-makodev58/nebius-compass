@@ -240,3 +240,10 @@ messages for shape/bounds, numeric/probability/restricted/overlength prose, cata
 unknown/duplicate IDs, qualification, citation case/field and outcome-enum failures. A
 stubbed numeric-invalid final repairs to qualitative prose within the original budget;
 this establishes contract handling, not real-model repair success.
+
+`ask-eval.test.mjs` runs all 20 synthetic Ask requests with network forbidden, covering
+request errors, deterministic declines, missing evidence, numeric repair, citation rejection,
+retrieved injection, provider error and timeout. Scorer poisoning verifies nonzero violation
+counts independently of service filtering and checks empty/decline denominators. The Live
+adapter is tested with a stub provider only; npm test never makes live calls. The standalone
+`npm run eval:ask -- --mode fixture` prints denominator-bearing scores; Live is main-agent-only.

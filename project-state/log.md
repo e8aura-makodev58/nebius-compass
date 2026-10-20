@@ -574,3 +574,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Deleted `Compass_AMD_Token_Factory_Integration_Guide.md` (the user's instruction: AMD documents removed, AMD provider code retained as a selectable provider). Dropped the guide references from `AGENTS.md` rule 1, `.env.example` and the `provider-controls.mjs` header comment.
 - Historical log and handover entries that name the guide are left as written (append-only records).
 - Pages updated: none (no page links the guide).
+
+## [2026-10-20] feature — Ask Compass evaluation harness
+- Added 20 labelled synthetic Ask scenarios, a hermetic real-service runner, optional main-agent Live mode, and independent final-answer scoring with evidence/number, safety, decline, fallback/repair and latency denominators. Invalid requests retain their actual error contract; no product behavior changed or live calls made.
+- Pages updated: backend/assistant.md, operations/testing.md; method and limits in docs/evaluation.md.

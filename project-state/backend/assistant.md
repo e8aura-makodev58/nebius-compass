@@ -67,3 +67,15 @@ operational state**: tests compare the room state before and after.
   publication (`ASK_RESET`).
 - **Offline/fixture:** reads `fixtures/assistant-response.json` (labelled `synthetic`); no
   network. The E2E suite sets `COMPASS_ASSISTANT_MODE=force-failure`.
+
+## Evaluation
+
+`scripts/eval-ask.mjs` (`npm run eval:ask -- --mode fixture|live`) runs the labelled
+20-request `fixtures/assistant/scenarios.json` against isolated synthetic snapshots.
+`scripts/eval/ask-runner.mjs` uses the real service and replays returned trace identities
+for the independent public-evidence scorer in `scripts/eval/ask-score.mjs`. Fixture turns
+probe repair, unsafe retrieved narrative responses, invalid citations and provider faults;
+Live uses real assistant calls except labelled synthetic error/timeout probes. Only the
+main agent runs Live. The memory usage ledger prevents product data writes. See
+`docs/evaluation.md` for denominator definitions, mode-specific expectations and limits:
+contract validity does not establish semantic answer quality.
