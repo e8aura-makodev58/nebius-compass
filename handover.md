@@ -1317,9 +1317,18 @@ your watcher.
 
 ## gemini
 
-- **Status:** IDLE
-- **Updated:** 2026-10-19
-- **Task:** Round 24g assigned; see Main agent → Assignments. Replace this section at handoff.
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-20
+- **Task:** Round 24g — review the Ask Compass dialog (docs only)
+- **Head commit:** c2c4736
+- **Changes:** Comprehensive review of the Ask Compass dialog across 375px, 1280px, and 1920px viewports with isolated preview on port 3122. Tested action question (declined), general workload question (analytics fallback citation), selected issue context question (issue citation), citation navigation to analytics and issue records, and full keyboard workflow (Tab, Enter, Esc). Authored `docs/design/ask-compass-review.md` with 5 numbered issues and 5 concrete CSS-only improvements in the Nebius palette (no lime as text). Committed 4 screenshots under `docs/design/ask-compass-review/` (596 KB total).
+- **Files changed:** `docs/design/ask-compass-review.md`, `docs/design/ask-compass-review/*.png`, `handover.md` (gemini section only)
+- **Verification:** Docs and reference images only; no suites needed (verified preview server stopped and port 3122 free; watcher scheduled).
+- **project-state pages updated:** None (design review document only; no code changes).
+- **Risks / follow-ups:** Ready for main agent review; improvements 1–5 are CSS-only.
+- **Questions for main:** None.
+
+
 
 ---
 
