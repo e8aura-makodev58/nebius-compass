@@ -1225,3 +1225,9 @@ remains for the main agent to measure after merge.
 - Finished by the main agent in the codex worktree at the user's request (codex ran out of
   credits). The main agent fixed two test problems: a usage ledger that persisted to
   `backend/data/`, and the in-memory store's missing `publicSnapshot`.
+
+## 2026-10-20 — AMD integration guide removed; AMD provider code kept
+
+- The user directed that AMD documents be removed from the repo while the AMD provider code stays in place as a selectable provider. `Compass_AMD_Token_Factory_Integration_Guide.md` is deleted, and its references in `AGENTS.md` rule 1, `.env.example` and `backend/src/provider-controls.mjs` are removed. `AGENTS.md` rules 3 and 4 remain binding for AMD provider code.
+- Still present by design: the AMD provider code and tests, the `AMD_TOKEN_FACTORY_*` variables, and `docs/submission/assets/AMDResponseCompass.png`, which the deck build script uses as its cover image.
+- Main agent (claude), at the user's direction.

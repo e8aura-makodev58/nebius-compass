@@ -1,7 +1,7 @@
 /**
  * Runtime controls for AMD Token Factory calls: a local rate/concurrency
  * limiter with a bounded wait queue, 429 retries that honour Retry-After, and a
- * circuit breaker. See Compass_AMD_Token_Factory_Integration_Guide.md §9.
+ * circuit breaker.
  *
  * Every control respects the caller's deadline. A request that cannot start,
  * or cannot retry, before its deadline fails at once so the caller falls back

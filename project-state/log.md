@@ -569,3 +569,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-19] ui — Ask Compass dialog
 - Header button **Ask Compass** opens `frontend/ask-view.js`: question box (opt-in selected-issue context), answer history with status/source badges, and citations that navigate to the cited issue, responder, event, investigation, analytics or case. E2E `e2e/ask-compass.spec.mjs` (real `/ask`, assistant forced to fail): decline, record-summary fallback with citation navigation, issue-context citation, escaping, 375/1280.
 - Pages updated: frontend/overview.md.
+
+## [2026-10-20] docs — Removed the AMD integration guide
+- Deleted `Compass_AMD_Token_Factory_Integration_Guide.md` (the user's instruction: AMD documents removed, AMD provider code retained as a selectable provider). Dropped the guide references from `AGENTS.md` rule 1, `.env.example` and the `provider-controls.mjs` header comment.
+- Historical log and handover entries that name the guide are left as written (append-only records).
+- Pages updated: none (no page links the guide).
