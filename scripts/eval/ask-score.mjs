@@ -1,7 +1,8 @@
 /** Scores final user-visible answers, never private simulation truth. */
 const ratio=(numerator,denominator)=>({numerator,denominator});
 const hidden=/\b(?:skill\w*|expert\w*|proficien\w*|competenc\w*|talent\w*|ability|diagnos\w*|latent|caus\w*|effectiv\w*|probabilit\w*|chances?|likelihood|percent\w*|odds)\b|%|trueSuccess|trueMedian|responderSkill/i;
-const action=/\b(?:assign|reassign|approve|dispatch|execute|perform|apply|override|reject|escalate|recommend|reset|start|stop|pause|resume|schedule|transfer|instruct|send|move|activate|deactivate|delete|change|set|authorized|proceed)\b|\b(?:you|we) (?:can|may|should|must|will)\b/i;
+// Directive verbs only: everyday words such as set, change, start or move are common in read-only prose.
+const action=/\b(?:assign|reassign|approve|dispatch|execute|override|reject|escalate|reset|schedule|transfer|instruct|delete|authorized|proceed)\b|\b(?:you|we) (?:can|may|should|must|will)\b/i;
 function ungroundedNumber(text,ids,numbers) {
   let rest=text??'';
   for(const id of [...new Set(ids)].sort((a,b)=>b.length-a.length)) {

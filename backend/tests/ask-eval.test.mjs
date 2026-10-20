@@ -42,6 +42,13 @@ test('Ask scorer detects corrupted output independently of service acceptance an
   assert.deepEqual(declines.declinePrecision,{numerator:0,denominator:1});
   assert.deepEqual(declines.declineRecall,{numerator:0,denominator:1});
 });
+test('Ask scorer flags directive action prose but not ordinary read-only wording',()=>{
+  const scenario={id:'prose',expected:{status:'READY'}};
+  const ordinary={scenario,answer:{status:'READY',text:'The workload record shows a change in the start time and the set-up notes.',citations:[]},records:[],numbers:[],latencyMs:1};
+  assert.equal(scoreAskRun([ordinary]).actionLeakage.numerator,0);
+  const directive={...ordinary,answer:{...ordinary.answer,text:'You should reassign this issue.'}};
+  assert.equal(scoreAskRun([directive]).actionLeakage.numerator,1);
+});
 test('Live adapter uses real provider injection for ordinary scenarios without running live calls',async()=>{
   let calls=0;
   const result=await runAskScenario(dataset.scenarios.find(s=>s.id==='workload'),{mode:'live',callTurn:async()=>{calls++;return {toolCalls:[],content:JSON.stringify({text:'Public records describe room workload.',citations:[{kind:'analytics',id:'room-summary'}]})};}});

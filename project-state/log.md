@@ -578,3 +578,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-20] feature — Ask Compass evaluation harness
 - Added 20 labelled synthetic Ask scenarios, a hermetic real-service runner, optional main-agent Live mode, and independent final-answer scoring with evidence/number, safety, decline, fallback/repair and latency denominators. Invalid requests retain their actual error contract; no product behavior changed or live calls made.
 - Pages updated: backend/assistant.md, operations/testing.md; method and limits in docs/evaluation.md.
+
+## [2026-10-20] backend — Ask evaluation: narrowed the action-leak check
+- `scripts/eval/ask-score.mjs` no longer counts everyday verbs (set, change, start, stop, move, send, apply, pause, resume, perform, recommend, activate, deactivate) as action leaks; directive verbs and "you/we should|must|can|may|will" still count. Regression test added to `backend/tests/ask-eval.test.mjs`.
+- Reason: the lexical check would fail ordinary read-only prose in live answers. Not yet checked against live answers; the live run was not completed.
+- Pages updated: none beyond this log entry.
