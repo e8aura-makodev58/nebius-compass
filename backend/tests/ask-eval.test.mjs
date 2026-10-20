@@ -21,6 +21,7 @@ test('Ask evaluation is hermetic and covers final safety, validation, repair and
   assert.equal(score.counts.errors.numerator,2);
   assert.equal(results.find(r=>r.scenario.id==='dispatch-history').answer.citations[0].kind,'event');
   assert.equal(results.find(r=>r.scenario.id==='retrieved-injection').answer.trace.some(t=>t.tool==='search_cases'),true);
+  assert.ok(results.find(r=>r.scenario.id==='invalid-citation').answer.rejectedBy.includes('citations'));
 });
 test('Ask scorer detects corrupted output independently of service acceptance and handles empty denominators',()=>{
   const scenario={id:'bad',expected:{status:'READY'}};

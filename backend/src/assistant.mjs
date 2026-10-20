@@ -73,7 +73,7 @@ export function createAskService(store,{mode,assistantOptions={},now=()=>perform
         const decline=declineQuestion(input.question);
         if(decline)return finish({status:'DECLINED',text:decline==='ACTION_REQUEST'?'Ask Compass is read-only. Use the recorded operator decision controls for actions.':'Ask Compass answers public record questions only; this request is outside that boundary.',citations:[],trace:[],source:'DETERMINISTIC',model:null,reason:decline});
         const host=createAskTools(state,{asOf}),records=new Map(),numbers=new Set(),trace=[];
-        let calls=0,repaired=false,rawInvalid=false;
+        let calls=0,repaired=false,rawInvalid=false,rejectedBy=[];
         const use=(tool,args)=>{
           const properties=host.tools.find(row=>row.function.name===tool)?.function.parameters.properties??{};
           const safeArgs=Object.fromEntries(Object.entries(args??{}).filter(([key,value])=>Object.hasOwn(properties,key)&&(typeof value==='string'||Number.isSafeInteger(value))).map(([key,value])=>[key,typeof value==='string'?askText(value,120):value]));
@@ -91,7 +91,7 @@ export function createAskService(store,{mode,assistantOptions={},now=()=>perform
         const initial=seeds.map(([tool,args])=>({tool,result:use(tool,args)}));
         const fallback=(reason)=>{
           const rows=[...records.values()].slice(0,10);
-          return finish({status:'FALLBACK',text:rows.length?`Deterministic record summary: ${rows.map(row=>`${row.kind} ${row.id}${row.status?` (${row.status})`:''}`).join('; ')}.`:'Deterministic record summary: no matching retained public records were found.',citations:rows.map(({kind,id})=>({kind,id})),trace,source:'DETERMINISTIC',model:model(),reason,repaired,rawInvalid});
+          return finish({status:'FALLBACK',text:rows.length?`Deterministic record summary: ${rows.map(row=>`${row.kind} ${row.id}${row.status?` (${row.status})`:''}`).join('; ')}.`:'Deterministic record summary: no matching retained public records were found.',citations:rows.map(({kind,id})=>({kind,id})),trace,source:'DETERMINISTIC',model:model(),reason,repaired,rawInvalid,...(rejectedBy.length?{rejectedBy}:{})});
         };
         let options={},defaults=roleDefaults('nebius','assistant'),provider='nebius';
         function model(){return calls?{modelId:askText(options.modelId??defaults.modelId,200),calls,latencyMs:Math.max(0,now()-began),promptTokens,completionTokens}:null;}
@@ -136,6 +136,8 @@ export function createAskService(store,{mode,assistantOptions={},now=()=>perform
             const errors=validateAskFinal(output,{records,numbers});
             if(errors.length) {
               rawInvalid=true;
+              // Keep only the rule family (text, citations, final), never the model's wording.
+              rejectedBy=[...rejectedBy,...errors.map(error=>error.split(':')[0].replace(/\[\d+\]$/,''))].slice(0,6);
               if(repaired||turnIndex===5)return fallback('validation-failed');
               repaired=true;messages.push({role:'assistant',content:'{"invalidFinalDiscarded":true}'},{role:'user',content:JSON.stringify({validationErrors:errors,allowedCitations:[...records.values()].map(({kind,id})=>({kind,id})),allowedMetricNumbers:[...numbers],instruction:'Repair exactly {text,citations}. Use qualitative prose without numbers if unsure; no advice, authorization or hidden truth. No more tools.'})});continue;
             }
