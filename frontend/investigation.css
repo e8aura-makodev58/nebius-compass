@@ -69,21 +69,45 @@
 
 
 /* Ask Compass dialog (frontend/ask-view.js). */
-.ask-dialog { width: min(720px, calc(100vw - 24px)); max-height: min(86vh, 900px); padding: 18px; border: 1px solid var(--rule-strong); border-radius: var(--radius); background: var(--paper-raised); color: var(--ink); box-shadow: var(--shadow-md); overflow: auto; }
+.ask-dialog { width: min(720px, calc(100vw - 24px)); max-height: min(88vh, 880px); padding: 18px; border: 1px solid var(--rule-strong); border-radius: var(--radius); background: var(--paper-raised); color: var(--ink); box-shadow: var(--shadow-md); overflow: hidden; }
+.ask-dialog[open] { display: flex; flex-direction: column; }
+.ask-dialog:not([open]) { display: none; }
 .ask-dialog::backdrop { background: rgba(15, 43, 67, .35); }
-.ask-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.ask-dialog > [data-ask-body] { display: flex; flex-direction: column; min-height: 0; height: 100%; overflow: hidden; }
+.ask-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; flex-shrink: 0; }
 .ask-head h2 { margin: 2px 0 0; font-size: 1.1rem; }
-.ask-form { display: grid; gap: 6px; margin-bottom: 14px; }
+.ask-form { display: grid; gap: 6px; margin-bottom: 14px; flex-shrink: 0; }
 .ask-form label { color: var(--ink-2); font-weight: 600; font-size: .78rem; }
 .ask-form textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); padding: 9px; background: var(--paper-raised); color: var(--ink); font: inherit; }
 .ask-form textarea:focus-visible { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
 .ask-context { display: flex; gap: 6px; align-items: center; font-weight: 500 !important; }
+.ask-history, .ask-case { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; margin-top: 4px; }
 .ask-history { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.ask-answer { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); background: var(--paper-raised); }
-.ask-answer.ask-declined, .ask-answer.ask-fallback { border-left-color: var(--rule-strong); background: var(--paper-sunk); }
+.ask-dialog [data-ask-body] > .empty-state { flex: 1 1 auto; margin-top: 4px; }
+.ask-answer { position: relative; display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); background: var(--paper-raised); transition: border-color .15s ease, background-color .15s ease; }
+.ask-answer.ask-ready { border-left-color: var(--accent); background: var(--paper-raised); }
+.ask-answer.ask-declined { border-left-color: var(--warn); background: var(--paper-sunk); }
+.ask-answer.ask-fallback { border-left-color: var(--rule-strong); background: var(--paper-sunk); }
 .ask-question { margin: 0; color: var(--ink-2); font-weight: 600; font-size: .8rem; }
 .ask-text { margin: 0; white-space: pre-wrap; }
-.ask-case { display: grid; gap: 6px; }
-#open-ask { margin-right: 6px; border-color: var(--accent); background: var(--brand-lime); color: var(--ink); font-weight: 600; }
+.ask-case { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--paper-sunk); }
+.ask-case h4 { margin: 0; font-size: .92rem; color: var(--ink); }
+.ask-answer .inv-case { background: var(--paper-raised); border: 1px solid var(--rule-strong); color: var(--ink); box-shadow: 0 1px 2px rgba(15, 43, 67, .06); padding: 3px 9px; font: 600 .74rem var(--font-mono); transition: transform .12s ease, background-color .12s ease, border-color .12s ease, box-shadow .12s ease; }
+.ask-answer .inv-case:hover { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); transform: translateY(-1px); }
+.ask-answer .inv-case:focus-visible { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
+#open-ask { margin-right: 6px; border-color: var(--accent); background: var(--brand-lime); color: var(--ink); font-weight: 600; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+#open-ask:hover { background: var(--brand-lime-deep); border-color: var(--ink); box-shadow: var(--shadow-sm); }
+#open-ask:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--accent); }
+@media (max-width: 600px) {
+  .ask-dialog { width: calc(100vw - 16px); max-height: 92vh; padding: 14px 12px; border-radius: var(--radius-sm); }
+  .ask-head h2 { font-size: 1rem; }
+  .ask-head [data-ask-close] { min-height: 44px; padding: 8px 12px; display: inline-flex; align-items: center; justify-content: center; }
+  .ask-form textarea { font-size: 16px; padding: 10px; }
+  .ask-form button[type="submit"] { min-height: 44px; width: 100%; font-size: .88rem; }
+  .ask-context { min-height: 40px; font-size: .82rem; }
+  .ask-answer { padding: 8px 10px; }
+  .ask-answer .inv-case { min-height: 32px; padding: 4px 10px; }
+  #open-ask { min-height: 44px; padding: 10px 14px; }
+}
 /* Room for the Ask Compass button: drop the shortcut hints on mid-width desktops (shortcuts still work). */
 @media (min-width: 901px) and (max-width: 1439px) { #open-control-search kbd, #open-control-search span[aria-hidden="true"] { display: none; } }

@@ -1331,16 +1331,24 @@ your watcher.
 
 ## gemini
 
-- **Status:** IN PROGRESS
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-20
 - **Task:** Round 25 — Implement the Ask Compass dialog CSS improvements (review §3)
-- **Head commit:** b86d71f
-- **Changes:** In progress: implementing Improvements 1–5 from docs/design/ask-compass-review.md as CSS in frontend/investigation.css and updating e2e/ask-compass.spec.mjs.
-- **Files changed:** —
-- **Verification:** in progress
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Head commit:** aeafb08
+- **Changes:** Implemented CSS improvements 1–5 from `docs/design/ask-compass-review.md` in `frontend/investigation.css`. Verified all selectors against current frontend DOM scaffolding:
+  1. Flex container structure (`.ask-dialog[open]`, `.ask-dialog > [data-ask-body]`, `.ask-dialog:not([open]) { display: none; }`) with pinned header/form and dedicated scrollable answer history (`.ask-history, .ask-case { flex: 1 1 auto; overflow-y: auto; }`).
+  2. Semantic left-border signals across answer classifications (`.ask-answer.ask-declined` with `--warn` amber `#D97706`, `.ask-answer.ask-fallback` with `--rule-strong` `#BFCAD8`, `.ask-answer.ask-ready` with `--accent`).
+  3. Interactive polish & high-contrast focus rings for `#open-ask` launcher button using Nebius brand lime.
+  4. Interactive citation chip elevation and tactile hover/focus states (`.ask-answer .inv-case`).
+  5. Mobile responsive scaling and touch targets under `@media (max-width: 600px)` (≥44px touch targets on close button, submit button, and `#open-ask`; 16px textarea font size to prevent mobile auto-zoom).
+- **Files changed:** `frontend/investigation.css`, `e2e/ask-compass.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md` (gemini section only)
+- **Verification:** Both test suites pass:
+  - `npm test`: 466/466 passed (0 failures).
+  - `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`: 88/88 passed (0 failures), covering dialog flex containment, semantic border colors, mobile touch targets at 375px, citation styles, and zero horizontal overflow (`scrollWidth <= innerWidth`).
+  - Port 3022 checked and free (`ss -ltn | grep :3022`).
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** None.
+- **Questions for main:** None.
 
 
 
