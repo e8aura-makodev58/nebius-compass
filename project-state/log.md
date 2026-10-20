@@ -583,3 +583,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - `scripts/eval/ask-score.mjs` no longer counts everyday verbs (set, change, start, stop, move, send, apply, pause, resume, perform, recommend, activate, deactivate) as action leaks; directive verbs and "you/we should|must|can|may|will" still count. Regression test added to `backend/tests/ask-eval.test.mjs`.
 - Reason: the lexical check would fail ordinary read-only prose in live answers. Not yet checked against live answers; the live run was not completed.
 - Pages updated: none beyond this log entry.
+
+## [2026-10-20] backend — Ask Compass live evaluation (first run)
+- Ran `eval:ask --mode live` once in a one-off container on the local deploy VM with the server's Nebius key file mounted. Model: the configured assistant model. Result: 18/20 status matches; 20/20 constraint matches; citations 10/10 valid; numbers, hidden-truth and action leaks 0 across 18 scored answers; decline precision and recall 7/7; fallback 5, repaired 4, raw-invalid 4, errors 2 (2 are synthetic fault injections). Latency p95 4.6 s; p50 is not meaningful because most scenarios decline or fall back without a model call.
+- Misses: `retrieved-injection` and `responder` both fell back after two validation failures (raw, then repair). The answer does not record which validation rule failed, so the cause is unknown. Next step: record validation errors on the answer trace, then rerun those two.
+- Pages updated: this entry only.
