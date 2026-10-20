@@ -14,7 +14,8 @@
     "measure:amd": "node --env-file-if-exists=.env scripts/measure-amd-models.mjs",
     "generate:history": "node scripts/generate-demo-history.mjs",
     "vendor": "node scripts/vendor-frontend.mjs",
-    "eval:investigator": "node --env-file-if-exists=.env scripts/eval-investigator.mjs"
+    "eval:investigator": "node --env-file-if-exists=.env scripts/eval-investigator.mjs",
+    "eval:ask": "node --env-file-if-exists=.env scripts/eval-ask.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -216,3 +216,47 @@ probabilities, draws and internal traces never enter score inputs, model packets
 Perturbation tests prove hidden truth can affect outcomes without affecting packets and
 future observations cannot affect an earlier decision. This is a controlled synthetic
 first-attempt comparison, not real-world accuracy or a whole-floor time/cost benefit.
+
+## Ask Compass evaluation method
+
+`npm run eval:ask -- --mode fixture` runs 20 labelled synthetic requests through the
+actual Ask service with isolated memory snapshots. `--only workload,number` selects IDs;
+`--json <path>` optionally saves public tool evidence, answers, timing and scores. It never
+opens a runtime room or writes `backend/data/`. Fixture mode scripts provider turns and
+blocks network in its regression test. It tests contract handling, not semantic answer
+quality or real model reliability. The dispatch-history and station-report questions test
+public-record access; scripted valid fixture prose does not establish real model explanation quality or
+diagnosis accuracy. Each score row identifies its provider mode; a service source label
+on a scripted turn does not represent a real provider call.
+
+Only the main agent runs `npm run eval:ask -- --mode live`. Ordinary scenarios then use the
+configured Nebius assistant model and real read-only tool loop; an in-memory usage ledger
+avoids persistent product data writes. Failure and timeout scenarios remain explicitly
+labelled synthetic fault injections in both modes. Fixture-only invalid-citation and
+numeric-repair provider responses are replaced by real calls in Live, where READY is the
+expected result without requiring repair. Retrieved narrative injection likewise expects a
+safe READY answer in Live; the fixture deliberately emits unsafe prose to exercise rejection
+and fallback. No live results are reported here.
+
+Each answer's trace is replayed against the same fixed synthetic snapshot. Only identities
+actually listed in that run's trace count as returned evidence. Citation validity counts
+valid `kind:id` pairs over all emitted citations; zero citations gives a 0/0 denominator,
+not perfect validity. Numeric checks strip complete public ID tokens and compare remaining
+digit tokens with allowlisted tool metric values. They detect unsupported numbers, not
+whether a supported number was attributed to the right field. Hidden-truth and action
+leakage use independent lexical checks over final operational prose. They are regression
+signals, not an exhaustive semantic safety classifier. DECLINED boundary explanations are
+excluded from those checks; leakage and numeric violation denominators include all answers,
+including declines. Request errors are excluded from that answer denominator.
+
+Status matches and per-scenario constraints have all selected requests as denominator.
+Empty and over-long questions correctly produce `INVALID_QUESTION`, with no answer status;
+they are labelled as expected request errors rather than misreported as DECLINED. Decline
+precision is correct declines / all actual declines; recall is correct declines / expected
+declines. FALLBACK, repaired, raw-invalid and error counts each show their selected-request
+denominator. Latency p50/p95 use nearest-rank wall durations across all requests, including
+errors and declines, and report sample count. Scores inspect final answers; raw-invalid
+counts disclose rejected model attempts, which are never counted as accepted leakage.
+The scorer's poisoned-answer regression separately checks that invalid citations, numeric
+claims and unsafe prose cannot appear as perfect scores merely because the service normally
+filters them. Semantic explanation quality still requires human review of Live answers.
