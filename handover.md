@@ -1386,15 +1386,21 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** IDLE
-- **Updated:** —
-- **Task:** Round 25 merged (see Merge log). Replace this section at handoff.
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-21
+- **Task:** Round 27 — accessibility pass on the console status bar and tile controls.
+- **Head commit:** `bea98f8`
+- **Changes:**
+  - Separated status bar visual poll timestamp updates (`#status-bar-sync`) from screen-reader live announcements (`#status-bar-live`, `.sr-only`, `role="status"`, `aria-live="polite"`), preventing announcement floods every 1.5s while announcing result transitions (connected, failed, restored).
+  - Enhanced non-color visual cues: bold weight on failed status bar text, and inset accent bar (`box-shadow`) on Dockview active tabs so state is never conveyed by colour alone.
+  - Enforced 44px minimum height for `.status-bar` and tile header buttons under mobile media queries with zero horizontal scroll.
+  - Labelled `.tiling-actions` with `role="toolbar"` and `aria-label="Tile actions"`, set panel-specific accessible names and titles on "Open in window" and "Maximise" / "Restore" buttons, and labelled the layout reset button.
+  - Extended `e2e/status-bar.spec.mjs` and `e2e/tiling.spec.mjs`.
+- **Files changed:** `frontend/index.html`, `frontend/app.js`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/tiling.css`, `e2e/status-bar.spec.mjs`, `e2e/tiling.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
+- **Verification:** `npm test` 467/467; Playwright Chromium E2E 93/93 on port 3022. Port 3022 free.
+- **project-state pages updated:** `frontend/overview.md`, `log.md`.
+- **Risks / follow-ups:** None.
+- **Questions for main:** None.
 
 ## codebuddy
 

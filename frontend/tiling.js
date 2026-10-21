@@ -72,6 +72,8 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
   const reset = document.createElement("button");
   reset.type = "button"; reset.id = "reset-layout"; reset.className = "secondary-button";
   reset.textContent = "Reset layout";
+  reset.setAttribute("aria-label", "Reset layout");
+  reset.title = "Reset layout to default sizes";
   document.querySelector(".control-room-search").prepend(reset);
   const media = matchMedia("(min-width: 901px)");
   let api = null, saveTimer = null, adjusting = false, lastLayout = null, refreshFrame = null;
@@ -168,6 +170,8 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
       createRightHeaderActionComponent: (group) => {
         const element = document.createElement("span");
         element.className = "tiling-actions";
+        element.setAttribute("role", "toolbar");
+        element.setAttribute("aria-label", "Tile actions");
         const detach = document.createElement("button");
         detach.type = "button"; detach.className = "tiling-detach"; detach.textContent = "Open in window";
         const maximize = document.createElement("button");
@@ -176,7 +180,9 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
           const name = group.activePanel?.title ?? "tile";
           maximize.textContent = group.api.isMaximized() ? "Restore" : "Maximise";
           maximize.setAttribute("aria-label", `${maximize.textContent} ${name}`);
+          maximize.title = `${maximize.textContent} ${name}`;
           detach.setAttribute("aria-label", `Open ${name} in its own window`);
+          detach.title = `Open ${name} in its own window`;
         }
         maximize.addEventListener("click", () => {
           if (group.api.isMaximized()) group.api.exitMaximized();
@@ -188,7 +194,7 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
           if (!screen || !displayHref) return;
           const href = displayHref(screen);
           const opened = window.open(href, href, "popup,width=1100,height=760");
-          detach.title = opened ? "" : "Allow pop-ups for this site to open panels in their own window";
+          detach.title = opened ? `Open ${group.activePanel?.title ?? "tile"} in its own window` : "Allow pop-ups for this site to open panels in their own window";
           opened?.focus();
         });
         element.append(detach, maximize);
@@ -204,7 +210,12 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
     api.onDidMaximizedGroupChange(() => {
       for (const group of api.groups) {
         const button = group.element.querySelector(".tiling-maximize");
-        if (button) { button.textContent = group.api.isMaximized() ? "Restore" : "Maximise"; button.setAttribute("aria-label", `${button.textContent} ${group.activePanel?.title ?? "tile"}`); }
+        if (button) {
+          const name = group.activePanel?.title ?? "tile";
+          button.textContent = group.api.isMaximized() ? "Restore" : "Maximise";
+          button.setAttribute("aria-label", `${button.textContent} ${name}`);
+          button.title = `${button.textContent} ${name}`;
+        }
       }
       onMapResize();
     });

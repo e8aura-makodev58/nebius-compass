@@ -1115,11 +1115,18 @@ function renderStatusBar(state) {
   document.querySelector("#status-bar-run").textContent = live && sim ? statusLabel(sim.status) : "Offline demo";
   document.querySelector("#status-bar-speed").textContent = live && sim ? `${sim.speedMultiplier}×` : "—";
 }
+let lastSyncOk = null;
 function setStatusBarSync(ok) {
   const sync = document.querySelector("#status-bar-sync");
   if (!sync) return;
   sync.classList.toggle("status-bar-sync-failed", !ok);
   sync.textContent = ok ? `Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Update failed — retrying";
+  const live = document.querySelector("#status-bar-live");
+  if (live && ok !== lastSyncOk) {
+    const wasFailed = lastSyncOk === false;
+    lastSyncOk = ok;
+    live.textContent = ok ? (wasFailed ? "Room updates restored" : "Room updates connected") : "Update failed — retrying";
+  }
 }
 function reportClientError(action, error) { fetch("/api/logs/client", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, message: error.message }) }).catch(() => {}); }
 /** `path` is room-relative (e.g. "/reset", "/simulation/pause") — every perform() call is a room-scoped mutation. */
@@ -1612,6 +1619,7 @@ function startActivityHeartbeat() {
 }
 
 function bootControlRoom() {
+  lastSyncOk = null;
   startActivityHeartbeat();
   document.querySelector(".app-shell").hidden = false;
   document.querySelectorAll("[data-display-screen]").forEach((link) => { link.href = `/rooms/${encodeURIComponent(currentControlRoomId)}/display/${link.dataset.displayScreen}`; });
