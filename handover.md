@@ -1389,7 +1389,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 - **Status:** READY FOR MERGE
 - **Updated:** 2026-10-21
 - **Task:** Round 27 — accessibility pass on the console status bar and tile controls.
-- **Head commit:** `bea98f8`
+- **Head commit:** `d37f5c1`
 - **Changes:**
   - Separated status bar visual poll timestamp updates (`#status-bar-sync`) from screen-reader live announcements (`#status-bar-live`, `.sr-only`, `role="status"`, `aria-live="polite"`), preventing announcement floods every 1.5s while announcing result transitions (connected, failed, restored).
   - Enhanced non-color visual cues: bold weight on failed status bar text, and inset accent bar (`box-shadow`) on Dockview active tabs so state is never conveyed by colour alone.
