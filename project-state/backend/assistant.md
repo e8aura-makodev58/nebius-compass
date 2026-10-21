@@ -79,3 +79,15 @@ Live uses real assistant calls except labelled synthetic error/timeout probes. O
 main agent runs Live. The memory usage ledger prevents product data writes. See
 `docs/evaluation.md` for denominator definitions, mode-specific expectations and limits:
 contract validity does not establish semantic answer quality.
+
+## Known question-policy and grounding limitations
+
+The current lexical policy treats every `caus\w*` word as a hidden-truth request, including
+ordinary questions about reported causes. Its exact action words also reject descriptive
+`stop` and equipment-noun `transfer`. Both rejections occur before tools/provider access;
+input and final-output validators share these word filters. Conversely, “best approach”
+passes the input filter despite the prompt forbidding procedural recommendations. Valid
+citation identities and allowed number tokens do not establish factual support for every
+sentence or relevance to the question; only approval claims have an extra record-state
+check. These are current limitations, not a relaxation of private-truth rules. See
+[the reproduced findings and proposed handoff](../../docs/product/ask-compass-decline-findings.md).
