@@ -25,7 +25,7 @@
   .topbar .mode-controls button, .simulation-bar button { padding: 7px 12px; font-size: .82rem; }
   .topbar .tab-button { padding: 7px 10px; font-size: .88rem; }
   /* The search opener shares the simulation row rather than owning one. */
-  #control-room-view { display: grid; min-height: 0; gap: 8px 12px; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); }
+  #control-room-view { display: grid; min-height: 0; gap: 8px 12px; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr) auto; }
   .simulation-bar { min-height: 0; gap: 14px; margin: 0; padding: 7px 12px; grid-area: 1 / 1; }
   .simulation-bar > div { display: flex; gap: 7px; align-items: baseline; min-width: 0; }
   .simulation-bar > div .eyebrow { margin: 0; }
@@ -35,6 +35,7 @@
   /* The opener's grid column is only as wide as the button; size the palette to the viewport. */
   .search-palette { width: min(620px, calc(100vw - 40px)); }
   .dashboard { grid-area: 2 / 1 / 3 / 3; }
+  .status-bar { grid-area: 3 / 1 / 4 / 3; }
 }
 /* Only the bounded-workstation behaviour needs the height, because it trades
    page scrolling for locally scrolling panes and needs room to be worth it. */
@@ -391,3 +392,9 @@
     max-width: 2100px;
   }
 }
+
+/* Bottom status bar: a margin below the workspace and a quiet strip of run status. */
+.status-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; min-height: 28px; margin: 0 0 6px; padding: 4px 12px; border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--paper-sunk); color: var(--ink-2); font-size: .78rem; }
+.status-bar > span { display: inline-flex; gap: 6px; align-items: baseline; white-space: nowrap; }
+.status-bar strong { color: var(--ink); font-family: var(--font-mono); font-weight: 600; }
+.status-bar .status-bar-sync-failed { color: var(--warn-ink); }

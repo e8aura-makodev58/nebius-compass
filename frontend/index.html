@@ -62,6 +62,13 @@
             <p id="context-eyebrow" class="eyebrow">Station Status</p><h2 id="issue-heading">Station status</h2><div id="issue-summary" class="issue-summary" aria-live="polite"></div><div id="baseline-panel" class="baseline-panel" aria-live="polite"></div><div id="recommendation-panel" class="recommendation-panel" aria-live="polite"></div><hr /><div class="sidebar-tabs" role="tablist" aria-label="Shift details"><button id="personnel-tab" type="button" role="tab" aria-selected="true" aria-controls="responder-list">Shift Personnel</button><button id="stations-tab" type="button" role="tab" aria-selected="false" aria-controls="station-list">Stations</button></div><div id="responder-list" class="responder-list" role="tabpanel" aria-labelledby="personnel-tab"></div><div id="station-list" class="station-list" role="tabpanel" aria-labelledby="stations-tab" hidden></div>
           </aside>
         </section>
+        <footer id="status-bar" class="status-bar" aria-label="Status bar">
+          <span>Room <strong id="status-bar-room">—</strong></span>
+          <span>Clock <strong id="status-bar-clock">—</strong></span>
+          <span>Run <strong id="status-bar-run">—</strong></span>
+          <span>Speed <strong id="status-bar-speed">—</strong></span>
+          <span id="status-bar-sync" class="status-bar-sync" role="status">Connecting…</span>
+        </footer>
       </section>
       <section id="rooms-view" class="analytics-view" hidden><div class="section-heading"><div><p class="eyebrow">Deployment directory</p><h2>Control Rooms</h2></div></div><div id="rooms-content"><p class="workflow-prompt">Loading control rooms…</p></div></section>
       <section id="settings-view" class="settings-view" hidden>

@@ -607,3 +607,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-20] docs — ATE/FT/WS feature candidates
 - Added a proposal with eight candidates, a ranked top five, data/authority boundaries, relative sizes, risks and user assumptions. Prioritizes consumable care and asset readiness; yield, retest and guardband changes remain engineering review workflows. No implementation or policy changed.
 - Pages updated: docs/product/ate-feature-proposal.md; this log. Existing architecture pages remain descriptions of implemented behavior.
+
+## [2026-10-21] ui — Per-tile Open in window; console status bar
+- Each desktop tile header has **Open in window**, which opens its panel's wall-display page in a separate window (`tiling.js` `displayHref`; mapping in `PANELS[*].screen`). The tile stays in the workspace.
+- The console view ends with a status bar (room, clock, run state, speed, last poll result). The workspace now has a bottom margin instead of running to the viewport edge.
+- E2E: `e2e/status-bar.spec.mjs` (desktop margin, phone width, failed-poll recovery) and a new case in `e2e/tiling.spec.mjs`.
+- Pages updated: frontend/overview.md.

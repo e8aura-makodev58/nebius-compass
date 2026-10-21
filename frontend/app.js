@@ -1081,7 +1081,7 @@ function render(state) {
   const previousMode = currentState?.mode;
   if (previousMode && previousMode !== state.mode) { stationHistoryCache.clear(); selectedIssueId = null; selectedStationId = null; selectedResponderId = null; clearEventSelection(); }
   workspaceNav?.update(state);
-  currentState = state; const live = state.mode === "LIVE"; elements["simulation-controls"].hidden = !live; elements["control-room-search"].hidden = !live; if (!live && searchOpen) closeSearchPalette(); elements["offline-reset-button"].hidden = live; elements["live-mode-button"].classList.toggle("active", live); elements["offline-mode-button"].classList.toggle("active", !live); renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render}); renderInvestigations(state, {escape: escapeHtml, request: roomApi, onState: render}); askView.render(); renderResponders(state); renderStations(state); renderSidebarTabs(); if (currentView === "settings" && currentSettingsTab === "demo") renderDemoContinuity(state);
+  currentState = state; renderStatusBar(state); const live = state.mode === "LIVE"; elements["simulation-controls"].hidden = !live; elements["control-room-search"].hidden = !live; if (!live && searchOpen) closeSearchPalette(); elements["offline-reset-button"].hidden = live; elements["live-mode-button"].classList.toggle("active", live); elements["offline-mode-button"].classList.toggle("active", !live); renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render}); renderInvestigations(state, {escape: escapeHtml, request: roomApi, onState: render}); askView.render(); renderResponders(state); renderStations(state); renderSidebarTabs(); if (currentView === "settings" && currentSettingsTab === "demo") renderDemoContinuity(state);
   if (currentView === "settings" && currentSettingsTab === "demo") renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render});
   if (!live) { renderOffline(state); renderAgentActivity(state); return; }
   elements["simulation-time"].textContent = new Date(state.simulationState.simulationTime).toISOString().replace("T", " ").slice(0, 16); elements["simulation-status"].textContent = statusLabel(state.simulationState.status); renderSpeedOptions(state.simulationState.speedMultiplier); elements["pause-resume-button"].textContent = state.simulationState.status === "RUNNING" ? "Pause" : "Resume";
@@ -1106,6 +1106,21 @@ function roomApi(path, options = {}) {
   return api(`/api/control-rooms/${encodeURIComponent(currentControlRoomId)}${path}`, options);
 }
 function globalApi(path, options = {}) { return api(`/api${path}`, options); }
+/** Bottom status bar: room, simulated clock, run state and speed, plus whether the last poll succeeded. */
+function renderStatusBar(state) {
+  if (!document.querySelector("#status-bar")) return;
+  const live = state.mode === "LIVE", sim = state.simulationState;
+  document.querySelector("#status-bar-room").textContent = currentControlRoomId ?? "—";
+  document.querySelector("#status-bar-clock").textContent = live && sim ? new Date(sim.simulationTime).toISOString().replace("T", " ").slice(0, 16) : "—";
+  document.querySelector("#status-bar-run").textContent = live && sim ? statusLabel(sim.status) : "Offline demo";
+  document.querySelector("#status-bar-speed").textContent = live && sim ? `${sim.speedMultiplier}×` : "—";
+}
+function setStatusBarSync(ok) {
+  const sync = document.querySelector("#status-bar-sync");
+  if (!sync) return;
+  sync.classList.toggle("status-bar-sync-failed", !ok);
+  sync.textContent = ok ? `Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Update failed — retrying";
+}
 function reportClientError(action, error) { fetch("/api/logs/client", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, message: error.message }) }).catch(() => {}); }
 /** `path` is room-relative (e.g. "/reset", "/simulation/pause") — every perform() call is a room-scoped mutation. */
 async function perform(path, body = null) { if (actionInFlight) return; actionInFlight = true; localAgentActivity = activityForUrl(path); const actionButton = document.activeElement instanceof HTMLButtonElement ? document.activeElement : null; actionButton?.classList.add("is-loading"); document.body.classList.add("busy"); renderAgentActivity(currentState); try { const nextState = await roomApi(path, { method: "POST", body: body ? JSON.stringify(body) : undefined }); if (["/reset", "/simulation/reset"].includes(path)) { stationHistoryCache.clear(); selectedIssueId = null; clearEventSelection(); } render(nextState); } catch (error) { reportClientError(path, error); setHtml(elements["recommendation-panel"], `<p class="load-error">${escapeHtml(error.message)}</p>`); } finally { actionInFlight = false; localAgentActivity = null; actionButton?.classList.remove("is-loading"); document.body.classList.remove("busy"); renderAgentActivity(currentState); } }
@@ -1603,11 +1618,11 @@ function bootControlRoom() {
   paretoPanel = initParetoPanel(document.querySelector("#pareto-panel"), { roomApi, isVisible: () => currentView === "analytics" && !document.hidden });
   if (displayScreen) bootDisplayScreen();
   else workspaceNav = initWorkspaceNav({onReveal: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS)});
-  if (!displayScreen) initTiling({ onMapResize: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS) });
+  if (!displayScreen) initTiling({ onMapResize: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS), displayHref: (screen) => `/rooms/${encodeURIComponent(currentControlRoomId)}/display/${screen}` });
   if (!displayScreen) askView = initAsk({ escape: escapeHtml, request: roomApi, getState: () => currentState, onState: render, getContextIssueId: () => selectedIssueId, navigate: navigateToCitation });
   document.querySelector('#active-room-name').textContent = currentControlRoomId;
-  roomApi("/state").then(render).catch((error) => { reportClientError("initial_state_load", error); setHtml(elements.floor, `<p class="load-error">${escapeHtml(error.message)}</p>`); });
-  setInterval(async () => { if (actionInFlight || pointerInteractionActive()) return; try { render(await roomApi("/state")); if (currentView === "analytics") await loadAnalytics(); } catch (error) { reportClientError("poll_state", error); } }, 1_500);
+  roomApi("/state").then((state) => { render(state); setStatusBarSync(true); }).catch((error) => { reportClientError("initial_state_load", error); setHtml(elements.floor, `<p class="load-error">${escapeHtml(error.message)}</p>`); });
+  setInterval(async () => { if (actionInFlight || pointerInteractionActive()) return; try { render(await roomApi("/state")); setStatusBarSync(true); if (currentView === "analytics") await loadAnalytics(); } catch (error) { setStatusBarSync(false); reportClientError("poll_state", error); } }, 1_500);
 }
 
 if (currentControlRoomId) bootControlRoom(); else bootRoomPicker();

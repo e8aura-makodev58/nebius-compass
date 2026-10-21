@@ -4,12 +4,12 @@ const STORAGE_KEY = "responsecompass.tiling.v1";
 const VERSION = 1;
 const SIZE_CAP = 200_000;
 const PANELS = {
-  staffing: { selector: "#staffing-tile", title: "Staffing", minimumWidth: 260, minimumHeight: 180 },
-  investigation: { selector: "#investigation-tile", title: "Field reports", minimumWidth: 260, minimumHeight: 180 },
-  map: { selector: ".floor-section", title: "Floor map", minimumWidth: 300, minimumHeight: 220 },
-  issues: { selector: "#issue-list", title: "Issues", minimumWidth: 180, minimumHeight: 130 },
-  events: { selector: "#event-feed", title: "Event feed", minimumWidth: 180, minimumHeight: 130 },
-  context: { selector: ".context-panel", title: "Dispatch / context", minimumWidth: 280, minimumHeight: 180 },
+  staffing: { selector: "#staffing-tile", title: "Staffing", screen: "staffing", minimumWidth: 260, minimumHeight: 180 },
+  investigation: { selector: "#investigation-tile", title: "Field reports", screen: "investigation", minimumWidth: 260, minimumHeight: 180 },
+  map: { selector: ".floor-section", title: "Floor map", screen: "map", minimumWidth: 300, minimumHeight: 220 },
+  issues: { selector: "#issue-list", title: "Issues", screen: "issues", minimumWidth: 180, minimumHeight: 130 },
+  events: { selector: "#event-feed", title: "Event feed", screen: "events", minimumWidth: 180, minimumHeight: 130 },
+  context: { selector: ".context-panel", title: "Dispatch / context", screen: "dispatch", minimumWidth: 280, minimumHeight: 180 },
 };
 
 /** Validate before fromJSON: no hidden, missing, duplicate, foreign or detached tiles. */
@@ -51,8 +51,11 @@ export function parseStoredLayout(raw) {
 }
 function constraints(id) { return { minimumWidth: PANELS[id].minimumWidth, minimumHeight: PANELS[id].minimumHeight }; }
 
-/** Move the original DOM nodes; never clone application state, IDs or listeners. */
-export function initTiling({ onMapResize = () => {} } = {}) {
+/**
+ * Move the original DOM nodes; never clone application state, IDs or listeners.
+ * `displayHref(screen)` gives the wall-display URL a tile opens in its own window.
+ */
+export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) {
   const dashboard = document.querySelector(".dashboard");
   const regions = Object.fromEntries(Object.entries(PANELS).map(([id, spec]) => {
     const selected = dashboard.querySelector(spec.selector);
@@ -163,17 +166,32 @@ export function initTiling({ onMapResize = () => {} } = {}) {
         return { element, init({ title }) { element.textContent = title; } };
       },
       createRightHeaderActionComponent: (group) => {
-        const element = document.createElement("button");
-        element.type = "button"; element.className = "tiling-maximize";
+        const element = document.createElement("span");
+        element.className = "tiling-actions";
+        const detach = document.createElement("button");
+        detach.type = "button"; detach.className = "tiling-detach"; detach.textContent = "Open in window";
+        const maximize = document.createElement("button");
+        maximize.type = "button"; maximize.className = "tiling-maximize";
         function update() {
           const name = group.activePanel?.title ?? "tile";
-          element.textContent = group.api.isMaximized() ? "Restore" : "Maximise";
-          element.setAttribute("aria-label", `${element.textContent} ${name}`);
+          maximize.textContent = group.api.isMaximized() ? "Restore" : "Maximise";
+          maximize.setAttribute("aria-label", `${maximize.textContent} ${name}`);
+          detach.setAttribute("aria-label", `Open ${name} in its own window`);
         }
-        element.addEventListener("click", () => {
+        maximize.addEventListener("click", () => {
           if (group.api.isMaximized()) group.api.exitMaximized();
           else { store(); group.api.maximize(); }
         });
+        // The tile stays in this window; the same panel opens in a window that can be moved to another display.
+        detach.addEventListener("click", () => {
+          const screen = PANELS[group.activePanel?.id]?.screen;
+          if (!screen || !displayHref) return;
+          const href = displayHref(screen);
+          const opened = window.open(href, href, "popup,width=1100,height=760");
+          detach.title = opened ? "" : "Allow pop-ups for this site to open panels in their own window";
+          opened?.focus();
+        });
+        element.append(detach, maximize);
         const listener = group.api.onDidActivePanelChange(update);
         const maximizeListener = group.api.onDidConstraintsChange(update);
         return { element, init() { update(); }, dispose() { listener.dispose(); maximizeListener.dispose(); } };

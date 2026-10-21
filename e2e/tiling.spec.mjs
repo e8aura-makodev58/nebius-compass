@@ -146,3 +146,17 @@ test("crossing the desktop breakpoint restores stacked nodes and keeps their han
   await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(6);
   expect(await page.evaluate(() => document.querySelector("#floor") === window.originalFloorNode && document.querySelector("#issue-list") === window.originalIssueNode)).toBe(true);
 });
+
+test("each tile opens its panel in its own window on the wall-display route, and the tile stays in the workspace", async ({ page }) => {
+  await boot(page);
+  for (const [title, screen] of [["Floor map", "map"], ["Dispatch / context", "dispatch"]]) {
+    const button = page.getByRole("button", { name: `Open ${title} in its own window` });
+    await expect(button).toBeVisible();
+    const [popup] = await Promise.all([page.waitForEvent("popup"), button.click()]);
+    await popup.waitForLoadState();
+    await expect(popup).toHaveURL(new RegExp(`/rooms/plant-1/display/${screen}$`));
+    await expect(popup.locator("body")).toHaveClass(/display-mode/);
+    await popup.close();
+  }
+  await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(6);
+});
