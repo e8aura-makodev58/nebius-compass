@@ -4,6 +4,19 @@
 
 ## Merged handoffs
 
+### 2026-10-21 — codex → master (branch commit `bff39c0`, merge on master)
+
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-21
+- **Task:** User-requested investigation: ordinary stuck/transfer questions declined; “best approach” returned a status summary. Findings only while Claude owns UI improvements.
+- **Deliverable:** `docs/product/ask-compass-decline-findings.md` with exact reproductions, source references, root causes, limits and implementation/regression handoff. No UI/backend code changed.
+- **Confirmed cause:** `assistant.mjs`'s `caus\w*` filter matches `cause`/`causing` in both user questions, returning HIDDEN_TRUTH_REQUEST before any provider/tool access. `stop` and `transfer` separately trigger ACTION_REQUEST in descriptive questions. The same lexical rules and cause prohibition affect final prose; changing only the input gate is insufficient. The generic decline text hides the distinction.
+- **Related gap:** “best approach” passes the gate despite Ask's no-procedure-advice prompt. The quoted status answer passes `validateAskFinal` against deliberately non-supporting synthetic records: citations prove returned identities, not each claim. `assigned` avoids `assign`; “within minutes” avoids digit checks. This does not prove the original answer was false; no original deployed snapshot/trace was fetched. Two model calls alone do not identify tool use versus repair. Conversation history is not passed to the model and selected-issue context is opt-in.
+- **Recommended follow-up for Claude:** Preserve hidden skill/fault DTO guards; distinguish read-only public observations from private-truth requests and mutation commands at input/output; answer reported/negative/unknown obstruction states explicitly. Route advice to recorded investigation/catalog/decision evidence. Ground assignment/duration/event-absence claims in code-owned evidence and scoped retrieval. Coordinate context/decline copy with your UI work. Extend unit/eval cases (including scorer's own cause regex) without loosening true hidden-truth tests. Full details in the deliverable.
+- **Verification:** Exact question matrix, real service declines with provider access forbidden (zero option reads), synthetic unsupported-answer validator reproduction; docs local links and diff check pass. `npm test` 467/467; forced-provider E2E 92/92 on port 3021; port free. No live inference calls.
+- **project-state pages updated:** backend/assistant.md (current limitations), log.md.
+- **Questions for main:** No blocker; findings are ready for your review and follow-up assignment. This handoff deliberately does not change implementation or overlap your UI work.
+
 ### 2026-10-19 — codex (finished by the main agent) → master (branch commit `56af715`, merge `fa94df0`)
 
 - **Status:** READY FOR MERGE

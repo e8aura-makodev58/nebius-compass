@@ -613,3 +613,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - The console view ends with a status bar (room, clock, run state, speed, last poll result). The workspace now has a bottom margin instead of running to the viewport edge.
 - E2E: `e2e/status-bar.spec.mjs` (desktop margin, phone width, failed-poll recovery) and a new case in `e2e/tiling.spec.mjs`.
 - Pages updated: frontend/overview.md.
+
+## [2026-10-21] docs — Ask Compass decline investigation
+- Reproduced the user's ordinary obstruction questions being classified as hidden-truth requests by `caus` word matching, plus descriptive stop/transfer false positives. Documented the advice/status mismatch, unsupported-claim validation reproduction and bounded fix/regression handoff for Claude; did not change implementation or UI.
+- Pages updated: backend/assistant.md, docs/product/ask-compass-decline-findings.md; this log. Original deployed answer evidence was not fetched; synthetic validation-gap proof is explicitly separate from incident truth.

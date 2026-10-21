@@ -97,8 +97,8 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | STOP (no open task; round 26 merged 2026-10-20) |
-| gemini | STOP (no open task; round 25 merged 2026-10-20) |
+| codex | RUN (round 27, 2026-10-21) |
+| gemini | RUN (round 27, 2026-10-21) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -111,10 +111,10 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | none (round 26 merged 2026-10-20) | — |
-| gemini | none (round 25 merged 2026-10-20) | — |
+| codex | Ask: fix decline causes and grounding gaps per your findings, plus the repair-shape fix (main's decision) | 27 |
+| gemini | Status bar and tile controls accessibility pass at phone and desktop widths | 27 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
-| claude | Ask: record validation errors on the trace, rerun two failing live scenarios (main's own work) | 26 |
+| claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
 Finished tasks are recorded in **Merge log** below, never as "none" lines here.
 
@@ -1259,6 +1259,41 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 27 (2026-10-21) — codex: fix Ask Compass decline causes and grounding gaps.** Start with
+`git merge master` (protocol step 1). Source: your `docs/product/ask-compass-decline-findings.md`, which
+the main agent accepted and merged. Decisions main has made:
+
+- Fix the input gate first: stop `caus\w*`, `stop` and `transfer` from matching public descriptive
+  questions, while keeping true hidden-truth requests (skill, hidden causes, probabilities) declined.
+  Update the tests and the eval scenarios; do not loosen a true hidden-truth test to make a case pass.
+- Give each decline a specific reason in the user-visible text (hidden truth, action request, outside
+  the public record boundary), instead of one generic line.
+- For the "best approach" gap: route procedure-advice questions to recorded investigation/catalog/decision
+  evidence, and decline advice that is not grounded in that evidence.
+- Ground assignment, duration and event-absence claims in code-owned evidence. Add a validator check that
+  rejects a claim the cited records do not support, and add a test for the status-summary case you reproduced.
+- Repair shape (open from Ask live run 2026-10-20): the model adds fields beyond `text` and `citations`.
+  Keep the strict `exact` check. Tighten the instruction to the model instead of relaxing the check, and
+  add a fixture test that a repaired answer with extra fields is rejected.
+- Do not change UI layout (gemini owns the status bar in round 27) and do not change the model provider or
+  make live calls. Use **port 3021** for E2E. Run both suites, update `backend/assistant.md` and
+  `project-state/log.md`, commit, and set `READY FOR MERGE`.
+
+**Round 27 (2026-10-21) — gemini: accessibility pass on the console status bar and tile controls.** Start with
+`git merge master`. Source: `frontend/index.html`, `frontend/tiling.js`, `frontend/layout.css`, and
+`e2e/status-bar.spec.mjs`, `e2e/tiling.spec.mjs` (both added on 2026-10-21).
+
+- Check the status bar (room, clock, run state, speed, last poll result) and the tile header buttons,
+  including **Open in window**, at 375px and 1280px. Fix what fails: missing accessible names, a status
+  that is only colour, touch targets under 44px on phone width, text contrast below 4.5:1, and any
+  horizontal scroll.
+- Make the last poll result announced to assistive tech without a flood of updates (a polite live region
+  that changes only when the result changes).
+- CSS, HTML attributes and small JS for the live region only. Do not change backend code or the
+  `ask-compass` UI. Extend the two E2E specs for each behaviour you change.
+- Use **port 3022** for E2E. Run both suites, update `project-state/frontend/overview.md` and
+  `project-state/log.md`, commit, and set `READY FOR MERGE`.
+
 **Round 26 (2026-10-20) — codex: brainstorm ATE/FT/WS features (docs only).** Start with
 `git merge master`; restart your watcher. The product is used at a semiconductor test facility with
 ATE testers and handlers for final test (FT) and probers for wafer sort (WS). FT uses loadboards with
@@ -1292,6 +1327,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-21 — **codex** `bff39c0` → merge (round 26 follow-up, investigation): Ask Compass decline causes and grounding gaps, `docs/product/ask-compass-decline-findings.md` (docs only). On master: `npm test` 467/467. Handoff archived.
 - 2026-10-20 — **codex** `0eb2139` → merge (round 26): ATE/FT/WS feature proposal, `docs/product/ate-feature-proposal.md` (eight candidates, ranked top five, assumptions to confirm). Docs only. Handoff archived.
 - 2026-10-20 — **gemini** `aeafb08` → merge (round 25): Ask Compass dialog CSS improvements 1–5 in `frontend/investigation.css`, with E2E updates. Handoff archived.
 - 2026-10-20 — **gemini** `b229ab6` → merge (round 24g): Ask Compass dialog review (`docs/design/ask-compass-review.md`, 4 screenshots; docs only, 5 CSS-only improvements proposed, none applied). The gemini section reports head `c2c4736`; the branch head is `b229ab6`. Handoff archived.
@@ -1339,7 +1375,8 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 - **Status:** IDLE
 - **Updated:** —
-- **Task:** Round 26 merged (see Merge log). Replace this section at handoff.
+- **Task:** —
+- **Head commit:** —
 - **Changes:** —
 - **Files changed:** —
 - **Verification:** `npm test` — · E2E —
