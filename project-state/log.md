@@ -617,3 +617,11 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-21] docs — Ask Compass decline investigation
 - Reproduced the user's ordinary obstruction questions being classified as hidden-truth requests by `caus` word matching, plus descriptive stop/transfer false positives. Documented the advice/status mismatch, unsupported-claim validation reproduction and bounded fix/regression handoff for Claude; did not change implementation or UI.
 - Pages updated: backend/assistant.md, docs/product/ask-compass-decline-findings.md; this log. Original deployed answer evidence was not fetched; synthetic validation-gap proof is explicitly separate from incident truth.
+
+## [2026-10-21] a11y — Status bar and tile controls accessibility pass
+- Accessible live region for status bar poll state: separated visual timestamp updates in `#status-bar-sync` from screen-reader live announcements (`#status-bar-live`, `.sr-only`, `role="status"`, `aria-live="polite"`), preventing update floods on poll ticks and announcing only result transitions (connected, failed, restored).
+- Non-color visual cues: bold weight on failed status bar text, and inset accent bar (`box-shadow`) on Dockview active tabs so state is never conveyed by colour alone.
+- Mobile touch target sizing: enforced 44px minimum height for `.status-bar` and tile action buttons under mobile media queries, guaranteeing zero horizontal scroll.
+- Named toolbars and controls: labelled `.tiling-actions` as `role="toolbar"` (`aria-label="Tile actions"`), set panel-specific accessible names and titles on "Open in window" and "Maximise" / "Restore" buttons, and labelled the layout reset button.
+- Extended `e2e/status-bar.spec.mjs` (polite live region, state change announcements, 44px phone height) and `e2e/tiling.spec.mjs` (toolbars, accessible names, non-color active tab cues).
+- Pages updated: frontend/overview.md, log.md.

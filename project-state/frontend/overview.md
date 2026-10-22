@@ -63,7 +63,7 @@ resolves all nodes before moving any of them, and retains their IDs, ARIA attrib
 listeners and `app.js` references. The default has the map at upper left, issues/events
 beneath it, and a right column of context, Field reports and Staffing. The frame's minimum height is 560px so the three stacked tiles keep their minimum sizes. Tiles fill the bounded frame; dividers resize both
 neighbours and clamp to panel minimum sizes. Users can drag tiles to edges and
-maximise/restore a group. Centre merges, floating groups and pop-outs are disabled. Each tile's header has **Open in window**, which opens that panel's wall-display page (`/rooms/:id/display/:screen`; the dispatch/context tile opens `dispatch`) in its own window, so it can be moved to another monitor. The tile stays in this window, and the window name is the URL, so pressing the button again focuses the same window. Pop-ups must be allowed for the site.
+maximise/restore a group. Centre merges, floating groups and pop-outs are disabled. Each tile's header has a labelled action toolbar (`role="toolbar"`, `aria-label="Tile actions"`) containing **Open in window** and **Maximise** / **Restore** buttons with tile-specific accessible names and titles. **Open in window** opens that panel's wall-display page (`/rooms/:id/display/:screen`; the dispatch/context tile opens `dispatch`) in its own window, so it can be moved to another monitor. The tile stays in this window, and the window name is the URL, so pressing the button again focuses the same window. Active tabs feature an inset accent bar indicator (box-shadow) so state is not conveyed by colour alone, and tile action controls enforce a 44px minimum touch target on mobile viewports. Pop-ups must be allowed for the site.
 Very short desktop windows scroll the page to keep the minimum-sized frame reachable.
 
 Layout persistence is per browser (`responsecompass.tiling.v1`), debounced and guarded
@@ -115,7 +115,7 @@ guaranteeing zero horizontal scroll.
 
 ## Status bar
 
-The console view ends with a status bar (`#status-bar`, `renderStatusBar` and `setStatusBarSync` in `app.js`): room, simulated clock, run state, speed, and the last poll result (`Updated HH:MM:SS`, or **Update failed — retrying** in the warning colour until the next poll succeeds). Offline demo shows run state "Offline demo" with no clock. It sits in the console grid's third row, with a bottom margin so the workspace no longer reaches the viewport edge. E2E: `e2e/status-bar.spec.mjs`.
+The console view ends with a status bar (`#status-bar`, `renderStatusBar` and `setStatusBarSync` in `app.js`): room, simulated clock, run state, speed, and the last poll result (`Updated HH:MM:SS`, or **Update failed — retrying** in warning colour and bold font weight until the next poll succeeds). Offline demo shows run state "Offline demo" with no clock. It sits in the console grid's third row, with a bottom margin so the workspace no longer reaches the viewport edge. To prevent screen-reader announcement floods on every poll tick, `#status-bar-sync` displays visual timestamps while a dedicated polite live region (`#status-bar-live`, `.sr-only`, `aria-live="polite"`, `role="status"`) announces only state changes ("Room updates connected", "Update failed — retrying", "Room updates restored"). At mobile widths (≤900px), `.status-bar` enforces a 44px touch height with zero horizontal scroll. E2E: `e2e/status-bar.spec.mjs`.
 
 ## Issue Pareto
 

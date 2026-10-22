@@ -160,3 +160,24 @@ test("each tile opens its panel in its own window on the wall-display route, and
   }
   await expect(page.locator("#floor-tiles .dv-groupview")).toHaveCount(6);
 });
+
+test("tile headers expose accessible action toolbars, named controls and non-color active tab cues", async ({ page }) => {
+  await boot(page);
+  const toolbars = page.locator("#floor-tiles .tiling-actions");
+  await expect(toolbars).toHaveCount(6);
+  for (const bar of await toolbars.all()) {
+    await expect(bar).toHaveAttribute("role", "toolbar");
+    await expect(bar).toHaveAttribute("aria-label", "Tile actions");
+  }
+  for (const title of ["Floor map", "Dispatch / context", "Issues", "Event feed", "Field reports", "Staffing"]) {
+    const detachBtn = page.getByRole("button", { name: `Open ${title} in its own window` });
+    const maxBtn = page.getByRole("button", { name: `Maximise ${title}` });
+    await expect(detachBtn).toBeVisible();
+    await expect(maxBtn).toBeVisible();
+  }
+  // Active tab indicator uses non-color box-shadow cue
+  const activeTab = page.locator("#floor-tiles .dv-tab.dv-active-tab").first();
+  await expect(activeTab).toBeVisible();
+  const shadow = await activeTab.evaluate((el) => getComputedStyle(el).boxShadow);
+  expect(shadow).toContain("rgb(15, 43, 67)");
+});

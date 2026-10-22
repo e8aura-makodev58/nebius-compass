@@ -98,7 +98,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 | Agent | Watcher |
 |---|---|
 | codex | RUN (round 27, 2026-10-21) |
-| gemini | RUN (round 27, 2026-10-21) |
+| gemini | STOP (no open task; round 27 merged 2026-10-22) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -112,7 +112,7 @@ and stops once no agent has an open assignment.
 | Agent | Current task | Round |
 |---|---|---|
 | codex | Ask: fix decline causes and grounding gaps per your findings, plus the repair-shape fix (main's decision) | 27 |
-| gemini | Status bar and tile controls accessibility pass at phone and desktop widths | 27 |
+| gemini | none (round 27 merged 2026-10-22) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1327,6 +1327,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-22 — **gemini** `d37f5c1` (head `61e5514`) → merge (round 27): status bar and tile controls accessibility pass (live region, 44px touch targets, named toolbar controls). Handoff archived.
 - 2026-10-21 — **codex** `bff39c0` → merge (round 26 follow-up, investigation): Ask Compass decline causes and grounding gaps, `docs/product/ask-compass-decline-findings.md` (docs only). On master: `npm test` 467/467. Handoff archived.
 - 2026-10-20 — **codex** `0eb2139` → merge (round 26): ATE/FT/WS feature proposal, `docs/product/ate-feature-proposal.md` (eight candidates, ranked top five, assumptions to confirm). Docs only. Handoff archived.
 - 2026-10-20 — **gemini** `aeafb08` → merge (round 25): Ask Compass dialog CSS improvements 1–5 in `frontend/investigation.css`, with E2E updates. Handoff archived.
@@ -1388,7 +1389,8 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 - **Status:** IDLE
 - **Updated:** —
-- **Task:** Round 25 merged (see Merge log). Replace this section at handoff.
+- **Task:** —
+- **Head commit:** —
 - **Changes:** —
 - **Files changed:** —
 - **Verification:** `npm test` — · E2E —

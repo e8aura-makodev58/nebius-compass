@@ -393,8 +393,14 @@
   }
 }
 
+/* Visually hidden utility for screen-reader live announcements without layout shift. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
 /* Bottom status bar: a margin below the workspace and a quiet strip of run status. */
 .status-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; min-height: 28px; margin: 0 0 6px; padding: 4px 12px; border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--paper-sunk); color: var(--ink-2); font-size: .78rem; }
 .status-bar > span { display: inline-flex; gap: 6px; align-items: baseline; white-space: nowrap; }
 .status-bar strong { color: var(--ink); font-family: var(--font-mono); font-weight: 600; }
-.status-bar .status-bar-sync-failed { color: var(--warn-ink); }
+.status-bar .status-bar-sync-failed { color: var(--warn-ink); font-weight: 600; }
+@media (max-width: 900px) {
+  body:not(.display-mode) .status-bar { min-height: 44px; padding: 6px 12px; gap: 6px 14px; font-size: .75rem; }
+}
