@@ -39,15 +39,15 @@ uses the room mutation guard (JSON content type, same-origin), but Ask **never m
 operational state**: tests compare the room state before and after.
 
 - **DECLINED, before any provider option is read or any model call:**
-  - questions about hidden truth (skill, causes, effectiveness, probabilities or
+  - questions about hidden truth (skill, explicitly hidden/true/real causes, effectiveness, probabilities or
     percentages) → `HIDDEN_TRUTH_REQUEST`;
-  - requests to act (assign, approve, dispatch, override, reset…) → `ACTION_REQUEST`;
+  - requests to act (assign, approve, dispatch, override, reset…; imperative stop/transfer) → `ACTION_REQUEST`;
   - instruction-injection markers → `UNTRUSTED_INSTRUCTION_REQUEST`.
 
-  These are code-owned patterns, not model judgement.
+  These are code-owned patterns, not model judgement. Descriptive stop/transfer and public reported-cause questions pass; each decline explains hidden truth, action, or the public-record boundary.
 - **Model loop:**
   - initial tool reads are seeded from the context ids, or ids named in the question,
-    else `analytics_summary`;
+    else `analytics_summary`; issue context also seeds its latest retained investigation;
   - then at most 4 tool steps, 6 calls and 45 s (the `assistant` role);
   - the question and every narrative are passed as untrusted data.
 - **Final validation (`validateAskFinal`):**
@@ -55,10 +55,19 @@ operational state**: tests compare the room state before and after.
   - 1–10 citations, each a `kind:id` a tool returned in this run;
   - text ≤ 1000 chars that passes the shared prose validator, with numbers only from
     per-tool allowlisted count/minute fields;
-  - no hidden-truth, probability, advice or authorization language;
+  - no hidden-truth, probability, advice or authorization language; descriptive public report language is allowed;
   - "approved" only when a cited record shows an approval.
 
-  One repair with the allowed citations and numbers, then fallback.
+  Assignment, duration, ready-state timing and retained-event-count claims must copy a
+  code-owned `supportedClaim` from a cited record as a complete verbatim sentence. Issue
+  assignment uses canonical current status/responder fields; historical assignment requires
+  an assignment event with both issue and responder. Investigation timing is readyAt minus
+  createdAt, only with valid ordered timestamps at/before the cutoff. Retained event counts
+  are scoped to the snapshot and explicitly exclude archived history; absolute event-absence
+  statements are rejected. A cause statement must be an exact attributed public report quote,
+  and still passes the private-data/action/number guards.
+
+  One repair with the allowed citations, numbers and supported statements, then fallback. Both initial and repair prompts require exactly two keys (`text`, `citations`) and forbid metadata fields. Extra fields in repaired output remain invalid.
 - **FALLBACK (`source: DETERMINISTIC`):** a labelled list of the records the tools found,
   with the reason (`forced-failure`, `deadline`, `validation-failed`, `tool-step-cap`,
   `provider-error`, `budget-exhausted`, …).
@@ -71,7 +80,7 @@ operational state**: tests compare the room state before and after.
 ## Evaluation
 
 `scripts/eval-ask.mjs` (`npm run eval:ask -- --mode fixture|live`) runs the labelled
-20-request `fixtures/assistant/scenarios.json` against isolated synthetic snapshots.
+28-request `fixtures/assistant/scenarios.json` against isolated synthetic snapshots.
 `scripts/eval/ask-runner.mjs` uses the real service and replays returned trace identities
 for the independent public-evidence scorer in `scripts/eval/ask-score.mjs`. Fixture turns
 probe repair, unsafe retrieved narrative responses, invalid citations and provider faults;
@@ -80,14 +89,22 @@ main agent runs Live. The memory usage ledger prevents product data writes. See
 `docs/evaluation.md` for denominator definitions, mode-specific expectations and limits:
 contract validity does not establish semantic answer quality.
 
-## Known question-policy and grounding limitations
+## Recorded procedure questions and limits
 
-The current lexical policy treats every `caus\w*` word as a hidden-truth request, including
-ordinary questions about reported causes. Its exact action words also reject descriptive
-`stop` and equipment-noun `transfer`. Both rejections occur before tools/provider access;
-input and final-output validators share these word filters. Conversely, “best approach”
-passes the input filter despite the prompt forbidding procedural recommendations. Valid
-citation identities and allowed number tokens do not establish factual support for every
-sentence or relevance to the question; only approval claims have an extra record-state
-check. These are current limitations, not a relaxation of private-truth rules. See
-[the reproduced findings and proposed handoff](../../docs/product/ask-compass-decline-findings.md).
+“Best approach”, procedure questions and “how should/can/do I/we” use a deterministic
+record-answer path before provider options are read, shared by Live and Offline. The latest
+retained investigation linked to issue context (or the explicitly supplied investigation)
+provides an existing option and decision status. Its fix ID must match the public catalog;
+the answer quotes the catalog title and reports the investigation/decision status without
+authorizing execution. Missing context, missing options or an unknown catalog ID yields
+`DECLINED` / `PUBLIC_RECORD_BOUNDARY`, with the reason in the visible answer.
+
+The public projections add only canonical assignment ID, linked investigation ID, retained
+event count and calculated ready-state duration; no private cause or skill fields are read.
+The event count includes all retained matching events at/before the snapshot, even when the
+event tool returns only its ten-row window. It never claims archive-wide completeness.
+
+Question policy and protected-claim detection remain conservative lexical rules, not a
+semantic proof for arbitrary paraphrases. Other qualitative sentences and question relevance
+still need human evaluation. Follow-up pronouns require explicit issue context; prior Ask
+history is not model context. No live inference was used to validate this change.

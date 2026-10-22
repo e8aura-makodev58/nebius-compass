@@ -37,3 +37,21 @@ test('Ask tools enforce schema/cutoff and numeric grounding excludes narrative, 
   const result=host.execute('responder_public',{responderId:state.responders[0].id});assert.ok(!Object.hasOwn(result.rows[0],'sameIssueHistoricalCount'));
   assert.deepEqual([...askNumbers([{totalIssues:5,id:'999',asOf:'2099',narrative:'97'}],'analytics_summary')],['5']);
 });
+
+
+test('Ask derives assignment, duration and retained event scope only from cutoff public fields',()=>{
+  const state=stateWithRecords(),row=state.investigations[0];
+  row.readyAt='2026-09-01T08:05:00Z';row.privateTiming='secret-canary';
+  state.issues[0].status='ASSIGNED';state.issues[0].assignedResponderId=state.responders[0].id;
+  state.operationalEvents.push({id:'future',eventType:'ISSUE_RAISED',issueId:'ISS-001',simulationTimestamp:'2099-01-01T00:00:00Z'});
+  const host=createAskTools(state,{asOf:'2026-09-01T08:30:00Z'});
+  const issue=host.execute('get_issue',{issueId:'ISS-001'}).rows[0],inv=host.execute('get_investigation',{investigationId:'INV-1'}).rows[0];
+  assert.equal(issue.assignedResponderId,state.responders[0].id);assert.equal(issue.investigationId,'INV-1');assert.equal(issue.retainedEventCount,1);assert.equal(inv.durationMinutes,5);assert.deepEqual([...askNumbers([inv],'get_investigation')],['5']);
+  for(let n=0;n<14;n++)state.operationalEvents.push({id:`event-extra-${n}`,eventType:'ISSUE_RAISED',issueId:'ISS-001',simulationTimestamp:'2026-09-01T08:10:00Z'});
+  const bounded=createAskTools(state,{asOf:'2026-09-01T08:30:00Z'});
+  assert.equal(bounded.execute('get_issue',{issueId:'ISS-001'}).rows[0].retainedEventCount,15);
+  assert.equal(bounded.execute('issue_events',{issueId:'ISS-001'}).rows.length,10);
+  const early=createAskTools(state,{asOf:'2026-09-01T08:02:00Z'});
+  assert.equal(early.execute('get_investigation',{investigationId:'INV-1'}).rows[0].durationMinutes,null);
+  row.readyAt='2026-08-01T00:00:00Z';assert.equal(host.execute('get_investigation',{investigationId:'INV-1'}).rows[0].durationMinutes,null);
+});

@@ -617,3 +617,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-21] docs — Ask Compass decline investigation
 - Reproduced the user's ordinary obstruction questions being classified as hidden-truth requests by `caus` word matching, plus descriptive stop/transfer false positives. Documented the advice/status mismatch, unsupported-claim validation reproduction and bounded fix/regression handoff for Claude; did not change implementation or UI.
 - Pages updated: backend/assistant.md, docs/product/ask-compass-decline-findings.md; this log. Original deployed answer evidence was not fetched; synthetic validation-gap proof is explicitly separate from incident truth.
+
+
+## [2026-10-22] fix — Ask public question policy and protected factual claims
+- Round 27 distinguishes descriptive public cause/stop/transfer questions from private truth and commands, explains declines, routes procedure questions to recorded catalog options, and requires code-owned cited assignment/timing/retained-event statements. Repair retains the exact two-key schema; extra-field repair is rejected.
+- Expanded hermetic Ask evaluation to 28 cases, preserving private-truth probes. No UI/provider changes or live calls.
+- Pages updated: backend/assistant.md; docs/evaluation.md.

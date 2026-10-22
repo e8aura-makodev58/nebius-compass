@@ -1,6 +1,6 @@
 {
   "label": "synthetic",
-  "version": "ask-scenarios-v1",
+  "version": "ask-scenarios-v2",
   "description": "Synthetic requests and scripted provider contract probes; not answer-quality labels. Invalid requests have null status and expected error.",
   "scenarios": [
     {
@@ -282,6 +282,141 @@
       "expected": {
         "status": "DECLINED",
         "constraints": {}
+      }
+    },
+    {
+      "id": "reported-transfer-stop",
+      "input": {
+        "question": "was anything stuck on the transfer causing it to stop repeatedly?",
+        "context": {
+          "issueId": "ISS-001"
+        }
+      },
+      "behavior": "normal",
+      "expected": {
+        "status": "READY",
+        "constraints": {
+          "minCitations": 1
+        }
+      }
+    },
+    {
+      "id": "reported-cause",
+      "input": {
+        "question": "was something stuck that cause the issue?",
+        "context": {
+          "issueId": "ISS-001"
+        }
+      },
+      "behavior": "normal",
+      "expected": {
+        "status": "READY",
+        "constraints": {
+          "minCitations": 1
+        }
+      }
+    },
+    {
+      "id": "transfer-noun",
+      "input": {
+        "question": "Was anything stuck on the transfer?",
+        "context": {
+          "issueId": "ISS-001"
+        }
+      },
+      "behavior": "normal",
+      "expected": {
+        "status": "READY",
+        "constraints": {
+          "minCitations": 1
+        }
+      }
+    },
+    {
+      "id": "historical-stop",
+      "input": {
+        "question": "Why did it stop repeatedly?",
+        "context": {
+          "issueId": "ISS-001"
+        }
+      },
+      "behavior": "normal",
+      "expected": {
+        "status": "READY",
+        "constraints": {
+          "minCitations": 1
+        }
+      }
+    },
+    {
+      "id": "public-cause",
+      "input": {
+        "question": "What caused the problem according to the public report?",
+        "context": {
+          "issueId": "ISS-001"
+        }
+      },
+      "behavior": "normal",
+      "expected": {
+        "status": "READY",
+        "constraints": {
+          "minCitations": 1
+        }
+      }
+    },
+    {
+      "id": "best-approach-missing",
+      "input": {
+        "question": "What is the best approach to this issue?",
+        "context": {
+          "issueId": "ISS-001"
+        }
+      },
+      "behavior": "normal",
+      "expected": {
+        "status": "DECLINED",
+        "constraints": {
+          "reason": "PUBLIC_RECORD_BOUNDARY"
+        }
+      }
+    },
+    {
+      "id": "best-approach-recorded",
+      "input": {
+        "question": "What is the best approach to this issue?",
+        "context": {
+          "issueId": "ISS-001"
+        }
+      },
+      "behavior": "recorded-option",
+      "expected": {
+        "status": "READY",
+        "constraints": {
+          "minCitations": 1
+        }
+      }
+    },
+    {
+      "id": "repair-extra-fields",
+      "input": {
+        "question": "What is the room workload?",
+        "context": {
+          "issueId": "ISS-001"
+        }
+      },
+      "behavior": "repair-extra-fields",
+      "expected": {
+        "status": "FALLBACK",
+        "constraints": {
+          "repaired": true,
+          "rawInvalid": true
+        }
+      },
+      "liveExpected": {
+        "status": "READY",
+        "constraints": {
+          "minCitations": 1
+        }
       }
     }
   ]

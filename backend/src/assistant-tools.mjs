@@ -41,7 +41,7 @@ function bounded(rows,maximum=10) {
   }
   return result;
 }
-const METRICS={get_issue:['minutesOpen'],analytics_summary:['totalIssues','activeIssues','resolvedIssues','availableResponders','assignedResponders','observedAttempts','firstFixAttempts','firstFixSuccesses']};
+const METRICS={get_issue:['minutesOpen','retainedEventCount'],get_investigation:['durationMinutes'],analytics_summary:['totalIssues','activeIssues','resolvedIssues','availableResponders','assignedResponders','observedAttempts','firstFixAttempts','firstFixSuccesses']};
 export function askNumbers(rows,tool) {
   if(tool==='search_cases')return numbersIn(rows,tool);
   if(tool==='responder_public')return numbersIn(rows,'eligible_responders');
@@ -60,10 +60,13 @@ export function createAskTools(state,{asOf=state.simulationState.simulationTime}
         const row=issues.get(args.issueId);
         if(row)rows=[{kind:'issue',id:askText(row.id,120),equipmentId:askText(row.equipmentId,120),issueClass:askText(row.issueClass,1),status:askText(row.status,40),raisedAt:row.raisedAt,resolvedAt:row.resolvedAt??null,
           symptom:{code:askText(row.symptom?.code,80),text:askText(row.symptom?.text)},narrative:askText(row.reportNarrative??row.description),dispatchGate:row.dispatchGate==='INVESTIGATION'?'INVESTIGATION':'OPEN',
+          retainedEventCount:(state.operationalEvents??[]).filter(event=>event.id&&event.issueId===row.id&&Date.parse(event.simulationTimestamp)<=cutoff).length,
+          assignedResponderId:row.status==='ASSIGNED'?askText(row.assignedResponderId,120)||null:null,
+          investigationId:state.investigations?.filter(inv=>inv.issueId===row.id&&Date.parse(inv.createdAt??inv.asOf)<=cutoff).sort((a,b)=>Date.parse(b.createdAt??b.asOf)-Date.parse(a.createdAt??a.asOf)||b.id.localeCompare(a.id))[0]?.id??null,
           minutesOpen:Math.max(0,(Math.min(cutoff,Date.parse(row.resolvedAt)||cutoff)-Date.parse(row.raisedAt))/60000)}];
       } else if(name==='get_investigation') {
         const row=state.investigations?.find((row)=>row.id===args.investigationId&&Date.parse(row.createdAt??row.asOf)<=cutoff);
-        if(row) {const dto=investigationDTO(row);rows=[{kind:'investigation',id:dto.id,issueId:dto.issueId,status:dto.status,source:dto.source,asOf:dto.asOf,evidenceGrade:dto.evidenceGrade,reason:askText(dto.reason),fallbackReason:askText(dto.fallbackReason,80)||null,
+        if(row) {const dto=investigationDTO(row);rows=[{kind:'investigation',id:dto.id,issueId:dto.issueId,status:dto.status,source:dto.source,asOf:dto.asOf,durationMinutes:Number.isFinite(Date.parse(dto.readyAt))&&Date.parse(dto.readyAt)<=cutoff&&Date.parse(dto.readyAt)>=Date.parse(dto.createdAt)?(Date.parse(dto.readyAt)-Date.parse(dto.createdAt))/60000:null,evidenceGrade:dto.evidenceGrade,reason:askText(dto.reason),fallbackReason:askText(dto.fallbackReason,80)||null,
           fixes:dto.fixes.map((fix)=>({fixId:fix.fixId,title:fix.title,grade:fix.grade})),decision:dto.decision?{status:dto.decision.status,actor:askText(dto.decision.actor,120),at:dto.decision.at,responderId:dto.decision.responderId,fixId:dto.decision.fixId}:null}];}
       } else if(name==='responder_public') {
         const row=state.responders.find((row)=>row.id===args.responderId);
