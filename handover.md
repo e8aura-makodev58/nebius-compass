@@ -1373,16 +1373,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## codex
 
-- **Status:** IDLE
-- **Updated:** —
-- **Task:** —
-- **Head commit:** —
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-22
+- **Task:** Round 27 — Ask decline causes, grounding gaps and strict repair shape.
+- **Head commit:** `3032d36` (implementation; this handoff is committed separately).
+- **Changes:** Public reported-cause and descriptive stop/transfer questions pass; private truth and commands still decline with specific visible reasons. Procedure-advice questions read the latest linked retained investigation and report a recorded catalog option/decision, or decline outside the public-record boundary before provider access. Assignment, timing and retained-event-scope claims require complete verbatim code-owned statements from cited records. Reported cause wording requires an attributed public report quote. Initial/repair instructions require exactly text/citations; extra-field repairs are rejected.
+- **Files changed:** `backend/src/assistant{,-tools}.mjs`; three Ask test files; `scripts/eval/ask-{runner,score}.mjs`; `fixtures/assistant/scenarios.json`; `docs/evaluation.md`; wiki below.
+- **Verification:** `npm test` **472/472**; full forced-failure Chromium E2E on 3021 **92/92**, then Ask E2E on final backend **3/3**. Hermetic Ask evaluation **28/28** inside unit suite. `git diff --check` clean; 3021 free. No live inference, UI/provider changes or product-data writes.
+- **project-state pages updated:** `project-state/backend/assistant.md`, `project-state/log.md`.
+- **Risks / follow-ups:** Policy and protected-claim detection remain conservative lexical checks, not semantic validation of arbitrary paraphrases or every qualitative sentence. Event counts cover retained records at the fixed snapshot only, never archive-wide absence. Procedure answers describe recorded options/status without authorizing execution. Follow-up pronouns still need explicit context. Main owns any Live evaluation.
+- **Questions for main:** None.
 
 ## gemini
 
