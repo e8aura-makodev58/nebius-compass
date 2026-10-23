@@ -625,3 +625,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Named toolbars and controls: labelled `.tiling-actions` as `role="toolbar"` (`aria-label="Tile actions"`), set panel-specific accessible names and titles on "Open in window" and "Maximise" / "Restore" buttons, and labelled the layout reset button.
 - Extended `e2e/status-bar.spec.mjs` (polite live region, state change announcements, 44px phone height) and `e2e/tiling.spec.mjs` (toolbars, accessible names, non-color active tab cues).
 - Pages updated: frontend/overview.md, log.md.
+
+## [2026-10-22] fix — Ask public question policy and protected factual claims
+- Round 27 distinguishes descriptive public cause/stop/transfer questions from private truth and commands, explains declines, routes procedure questions to recorded catalog options, and requires code-owned cited assignment/timing/retained-event statements. Repair retains the exact two-key schema; extra-field repair is rejected.
+- Expanded hermetic Ask evaluation to 28 cases, preserving private-truth probes. No UI/provider changes or live calls.
+- Pages updated: backend/assistant.md; docs/evaluation.md.

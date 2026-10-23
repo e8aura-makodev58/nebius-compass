@@ -219,7 +219,7 @@ first-attempt comparison, not real-world accuracy or a whole-floor time/cost ben
 
 ## Ask Compass evaluation method
 
-`npm run eval:ask -- --mode fixture` runs 20 labelled synthetic requests through the
+`npm run eval:ask -- --mode fixture` runs 28 labelled synthetic requests through the
 actual Ask service with isolated memory snapshots. `--only workload,number` selects IDs;
 `--json <path>` optionally saves public tool evidence, answers, timing and scores. It never
 opens a runtime room or writes `backend/data/`. Fixture mode scripts provider turns and
@@ -233,7 +233,7 @@ Only the main agent runs `npm run eval:ask -- --mode live`. Ordinary scenarios t
 configured Nebius assistant model and real read-only tool loop; an in-memory usage ledger
 avoids persistent product data writes. Failure and timeout scenarios remain explicitly
 labelled synthetic fault injections in both modes. Fixture-only invalid-citation and
-numeric-repair provider responses are replaced by real calls in Live, where READY is the
+numeric-repair and extra-field-repair provider responses are replaced by real calls in Live, where READY is the
 expected result without requiring repair. Retrieved narrative injection likewise expects a
 safe READY answer in Live; the fixture deliberately emits unsafe prose to exercise rejection
 and fallback. No live results are reported here.
@@ -260,3 +260,12 @@ counts disclose rejected model attempts, which are never counted as accepted lea
 The scorer's poisoned-answer regression separately checks that invalid citations, numeric
 claims and unsafe prose cannot appear as perfect scores merely because the service normally
 filters them. Semantic explanation quality still requires human review of Live answers.
+
+
+Round 27 adds five ordinary reported-cause/stop/transfer questions while preserving the
+hidden-cause, skill and probability declines; recorded vs missing procedure evidence; and
+a repair that still has extra fields. The independent scorer no longer counts ordinary
+`cause` or equipment-noun `transfer` as leakage. Service regressions separately require
+code-owned cited statements for assignment, ready-state duration and retained-event scope,
+including the reproduced unsupported status summary. These checks do not establish
+semantic correctness for arbitrary prose paraphrases.

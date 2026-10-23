@@ -1,8 +1,8 @@
 /** Scores final user-visible answers, never private simulation truth. */
 const ratio=(numerator,denominator)=>({numerator,denominator});
-const hidden=/\b(?:skill\w*|expert\w*|proficien\w*|competenc\w*|talent\w*|ability|diagnos\w*|latent|caus\w*|effectiv\w*|probabilit\w*|chances?|likelihood|percent\w*|odds)\b|%|trueSuccess|trueMedian|responderSkill/i;
+const hidden=/\b(?:skill\w*|expert\w*|proficien\w*|competenc\w*|talent\w*|ability|diagnos\w*|latent|(?:true|hidden|actual|real)\s+(?:fault|caus\w*)|really\s+caus\w*|effectiv\w*|probabilit\w*|chances?|likelihood|percent\w*|odds)\b|%|trueSuccess|trueMedian|responderSkill/i;
 // Directive verbs only: everyday words such as set, change, start or move are common in read-only prose.
-const action=/\b(?:assign|reassign|approve|dispatch|execute|override|reject|escalate|reset|schedule|transfer|instruct|delete|authorized|proceed)\b|\b(?:you|we) (?:can|may|should|must|will)\b/i;
+const action=/\b(?:assign|reassign|approve|dispatch|execute|override|reject|escalate|reset|schedule|instruct|delete|authorized|proceed)\b|\b(?:you|we) (?:can|may|should|must|will)\b|(?:^|[.!?]\s+)(?:please\s+)?(?:stop|transfer)\b/i;
 function ungroundedNumber(text,ids,numbers) {
   let rest=text??'';
   for(const id of [...new Set(ids)].sort((a,b)=>b.length-a.length)) {
@@ -25,7 +25,7 @@ export function scoreAskRun(results) {
     for(const ref of refs){citations++;if(keys.has(`${ref.kind}:${ref.id}`))valid++;else badCitations++;}
     // DECLINED prose is a code-owned boundary explanation, not an operational claim.
     const operational=answer&&answer.status!=='DECLINED';
-    const ids=records.flatMap(row=>[row.id,row.issueId,row.equipmentId,row.responderId,...(row.fixes??[]).map(f=>f.fixId),row.decision?.fixId,row.decision?.responderId,row.detail?.fixId]).filter(Boolean);
+    const ids=records.flatMap(row=>[row.id,row.issueId,row.equipmentId,row.responderId,row.assignedResponderId,...(row.fixes??[]).map(f=>f.fixId),row.decision?.fixId,row.decision?.responderId,row.detail?.fixId]).filter(Boolean);
     const numeric=operational&&ungroundedNumber(answer.text,ids,numbers);
     const privateLeak=operational&&hidden.test(answer.text);
     const recordedApproval=refs.some(ref=>{const row=records.find(row=>row.kind===ref.kind&&row.id===ref.id);return row?.status==='APPROVED'||['APPROVED','AUTO_APPROVED'].includes(row?.decision?.status);});
