@@ -742,3 +742,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex rounds 31–32 (`4699195`, `5837170`: consumable obligations reconciler and loadboards read endpoint) and gemini round 32 (`0e8cbf7`: Obligations panel on stubs) as `192b682`. Verification: `npm test` 535/535; E2E 121/121 on port 3024. Deployed `192b682` healthy; `/api/control-rooms/:id/loadboards` and `/station-kpis` return 200 on the deploy server.
 - Round 33 assigned: codex loadboard checkout write routes (serialised writes, concurrency tests) and the consumable-obligations read endpoint; gemini check-out and release actions on stubs.
 - Pages updated: this log; handover.md merge log and assignments.
+
+## [2026-10-24] docs — Handler jam episodes slice 1 proposal (F4, main agent)
+- Added `docs/design/handler-jam-episodes-slice-1.md`: grouping jam alarms into episodes, unplanned stopped time, and a reference-rate deficit gated on matching context. Proposal for round 34; not yet approved.
+- Pages updated: this log; the design spec.
