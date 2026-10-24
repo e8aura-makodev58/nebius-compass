@@ -1,4 +1,5 @@
 import { setHtml } from "./render-lifecycle.js";
+import { trapFocus } from "./focus-trap.js";
 
 /**
  * Loadboard inventory and checkout panel (F3 + F8 UI).
@@ -1188,6 +1189,8 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
           panelState.addFormError = null;
           updateUI();
           element.querySelector(".lb-toggle-add-btn")?.focus();
+        } else if (e.key === "Tab") {
+          trapFocus(addForm, e);
         }
       });
 
@@ -1413,6 +1416,8 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
           if (prevCellId) {
             element.querySelector(`.lb-readiness-chip[data-readiness-cell-id="${prevCellId}"]`)?.focus();
           }
+        } else if (e.key === "Tab") {
+          trapFocus(readinessDrawer, e);
         }
       });
     }
@@ -1424,6 +1429,14 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
         panelState.selectedBoardId = panelState.selectedBoardId === boardId ? null : boardId;
         updateUI();
         element.querySelector(`.lb-action-btn[data-board-id="${boardId}"]`)?.focus();
+      });
+      btn.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && panelState.selectedBoardId === btn.dataset.boardId) {
+          e.preventDefault();
+          panelState.selectedBoardId = null;
+          updateUI();
+          element.querySelector(`.lb-action-btn[data-board-id="${btn.dataset.boardId}"]`)?.focus();
+        }
       });
     });
 
@@ -1438,6 +1451,8 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
           if (boardId) {
             element.querySelector(`.lb-action-btn[data-board-id="${boardId}"]`)?.focus();
           }
+        } else if (e.key === "Tab") {
+          trapFocus(drawer, e);
         }
       });
     });
@@ -1489,6 +1504,8 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
           delete panelState.checkoutSelectedStation[boardId];
           updateUI();
           element.querySelector(`.lb-checkout-btn[data-board-id="${boardId}"]`)?.focus();
+        } else if (e.key === "Tab") {
+          trapFocus(form, e);
         }
       });
 

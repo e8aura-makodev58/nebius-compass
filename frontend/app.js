@@ -12,6 +12,7 @@ import { initTiling } from "./tiling.js";
 import { initParetoPanel } from "./pareto.js";
 import { setHtml } from "./render-lifecycle.js";
 import { layoutProjectedLabels } from "./map-label-layout.js";
+import { trapFocus } from "./focus-trap.js";
 
 const elements = Object.fromEntries([
   "floor", "issue-summary", "issue-list", "event-feed", "responder-list", "station-list", "personnel-tab", "stations-tab", "baseline-panel", "recommendation-panel", "simulation-controls",
@@ -1160,9 +1161,19 @@ elements["control-search-input"].addEventListener("keydown", (event) => {
   if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); searchActiveIndex = results.length ? (searchActiveIndex + (event.key === "ArrowDown" ? 1 : -1) + results.length) % results.length : 0; renderSearchPalette(); return; }
   if (event.key === "Enter" && results[searchActiveIndex]) { event.preventDefault(); selectSearchResult(results[searchActiveIndex].type, results[searchActiveIndex].id); }
 });
+elements["control-search-palette"].addEventListener("keydown", (event) => {
+  if (event.key === "Tab") trapFocus(elements["control-search-palette"], event);
+});
 document.addEventListener("keydown", (event) => {
   const target = event.target;
   const inFormField = target instanceof HTMLElement && (target.matches("input, textarea, select") || target.isContentEditable);
+  const openLauncher = document.querySelector(".screen-launcher[open]");
+  if (openLauncher && event.key === "Escape") {
+    event.preventDefault();
+    openLauncher.open = false;
+    openLauncher.querySelector("summary")?.focus();
+    return;
+  }
   if (searchOpen && event.key === "Escape") { event.preventDefault(); closeSearchPalette(); return; }
   if (inFormField || event.defaultPrevented || currentView !== "control" || currentState?.mode !== "LIVE") return;
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openSearchPalette(); }
@@ -1272,6 +1283,20 @@ function renderAnalytics(analytics) {
   elements["analytics-content"].querySelectorAll("[data-analytics-equipment]").forEach((button) => { button.onclick = () => { analyticsDrilldown = { type: "equipment", value: button.dataset.analyticsEquipment }; renderAnalytics(analytics); document.querySelector(".equipment-fact-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }; });
   elements["analytics-content"].querySelectorAll("[data-analytics-class]").forEach((button) => { button.onclick = () => { analyticsDrilldown = { type: "class", value: button.dataset.analyticsClass }; renderAnalytics(analytics); }; });
   elements["analytics-content"].querySelector("[data-analytics-close]")?.addEventListener("click", () => { const returnFocus = analyticsReturnFocus; analyticsDrilldown = null; renderAnalytics(analytics); document.querySelector(returnFocus)?.focus(); });
+  const drillPanel = elements["analytics-content"].querySelector("#analytics-drill");
+  if (drillPanel) {
+    drillPanel.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        const returnFocus = analyticsReturnFocus;
+        analyticsDrilldown = null;
+        renderAnalytics(analytics);
+        document.querySelector(returnFocus)?.focus();
+      } else if (e.key === "Tab") {
+        trapFocus(drillPanel, e);
+      }
+    });
+  }
   elements["analytics-content"].querySelector("[data-analytics-equipment-close]")?.addEventListener("click", () => { analyticsDrilldown = null; renderAnalytics(analytics); });
   elements["analytics-content"].querySelectorAll("[data-equipment-filter]").forEach((button) => { button.onclick = () => { analyticsEquipmentFilter = button.dataset.equipmentFilter; analyticsEquipmentPage = 0; renderAnalytics(analytics); }; });
   elements["analytics-content"].querySelector("#analytics-equipment-search")?.addEventListener("input", (event) => { analyticsEquipmentQuery = event.target.value; analyticsEquipmentPage = 0; renderAnalytics(analytics); document.querySelector("#analytics-equipment-search")?.focus(); });

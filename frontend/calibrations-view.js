@@ -1,4 +1,5 @@
 import { setHtml } from "./render-lifecycle.js";
+import { trapFocus } from "./focus-trap.js";
 
 /**
  * Calibrations panel (F8 Slice 2 UI).
@@ -1011,6 +1012,8 @@ export function initCalibrations({ element, request, escape, roomId, getState })
           panelState.formError = null;
           updateUI();
           element.querySelector(".cal-toggle-add-btn")?.focus();
+        } else if (e.key === "Tab") {
+          trapFocus(form, e);
         }
       };
 
@@ -1176,6 +1179,8 @@ export function initCalibrations({ element, request, escape, roomId, getState })
           panelState.corrFormError = null;
           updateUI();
           element.querySelector(".cal-toggle-add-corr-btn")?.focus();
+        } else if (e.key === "Tab") {
+          trapFocus(corrForm, e);
         }
       };
 

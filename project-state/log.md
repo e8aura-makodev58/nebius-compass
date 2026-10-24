@@ -988,3 +988,21 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 42 (pure changeover readiness check) and gemini round 42 (changeover readiness panel on stubs) as `1b8cdf7`. Verification: `npm test` 612/612; E2E 175/175 on port 3024. Deployed `1b8cdf7` healthy. GET-only smoke test: all endpoints 200.
 - Assigned round 43: codex changeover record entry and readiness read route; gemini keyboard-only pass over all workspace panels.
 - Pages updated: this log; handover.md merge log and assignments.
+
+## [2026-10-24] fix — Keyboard-only pass across all workspace panels (round 43, gemini)
+- Conducted keyboard-only navigation and accessibility pass across all 13 workspace panels (Staffing, Field reports/Investigation, Map, Issues, Events, Context/Dispatch, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness):
+  - Verified tab order follows DOM reading order with zero positive `tabindex` attributes across all 13 panels.
+  - Enforced visible focus rings with `outline: 2px solid var(--accent)` (>= 2px outline width) and proper contrast across inputs, buttons, selects, and summary elements in `frontend/base.css`, `frontend/station-kpis.css`, `frontend/calibrations.css`, `frontend/loadboards.css`, `frontend/obligations.css`, `frontend/handler-episodes.css`, and `frontend/analytics.css`.
+  - Created reusable focus trapping utility `frontend/focus-trap.js` (`trapFocus`) and wired it into dialogs, drawers, and popups:
+    - Search palette (`#control-search-palette`): traps focus, closes on `Escape`, and restores focus to opener.
+    - Ask Compass dialog (`#ask-dialog`): closes on `Escape` and restores focus to opener.
+    - Investigation case dialog (`.inv-case-dialog`): restores focus to case button trigger on close.
+    - Loadboards add drawer (`.lb-add-drawer`), inspect drawer (`.lb-detail-drawer`), and checkout form (`.lb-checkout-form`): trap focus, close on `Escape`, and restore focus to trigger buttons.
+    - Calibrations add drawer (`.cal-add-drawer`) and correlation add drawer (`.cal-add-corr-drawer`): trap focus, close on `Escape`, and restore focus to toggle buttons.
+    - Obligations inspect drawer (`.obl-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
+    - Handler episodes inspect drawer (`.he-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
+    - Station KPIs filter dropdown (`.kpi-filter-dropdown`): traps focus when open, closes on `Escape`, and restores focus to summary.
+    - Screen launcher menu (`.screen-launcher`): closes on `Escape` and restores focus to summary.
+    - Analytics drill-down panel (`#analytics-drill`): traps focus, closes on `Escape`, and restores focus to drill trigger button.
+- Added comprehensive E2E test suite in `e2e/keyboard-pass-r43.spec.mjs` verifying tab order across all 13 panels, outline width >= 2px, focus trapping, Escape dismissal, and trigger focus return.
+- Pages updated: project-state/frontend/overview.md; this log.

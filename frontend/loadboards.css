@@ -86,7 +86,8 @@
 }
 
 .lb-search-input:focus {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--accent);
 }
@@ -122,7 +123,8 @@
 }
 
 .lb-condition-select:focus {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--accent);
 }
@@ -345,7 +347,8 @@
 }
 
 .lb-action-btn:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--accent);
 }
@@ -367,7 +370,8 @@
 }
 
 .lb-checkout-btn:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
 }
 
@@ -389,7 +393,8 @@
 }
 
 .lb-release-btn:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--warn-ink);
 }
@@ -433,7 +438,8 @@
 }
 
 .lb-add-cal-action:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--accent);
 }
@@ -519,7 +525,8 @@
 
 .lb-station-select:focus,
 .lb-program-select:focus {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--accent);
 }
@@ -545,7 +552,8 @@
 }
 
 .lb-submit-checkout-btn:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
 }
 
@@ -563,7 +571,8 @@
 }
 
 .lb-cancel-checkout-btn:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--rule-strong);
 }
@@ -808,7 +817,8 @@
 }
 
 .lb-readiness-chip:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
 }
 

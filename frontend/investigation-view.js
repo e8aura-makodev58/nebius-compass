@@ -259,15 +259,17 @@ function bind(target, state, { escape, request, onState }, previousOverride = nu
     bindOverride(detail, inv, state, send, previousOverride, escape);
     detail.querySelectorAll('[data-inv-action="feedback"]').forEach((b) => { b.onclick = () => send(`${inv.id}:feedback`, `/investigations/${encodeURIComponent(inv.id)}/feedback`, { useful: b.dataset.useful === 'true' }); });
   }
+  let lastCaseTrigger = null;
   const dialog = target.querySelector('[data-inv-case-dialog]');
   target.querySelectorAll('[data-case-id]').forEach((b) => { b.onclick = async () => {
+    lastCaseTrigger = b;
     const body = dialog.querySelector('[data-inv-case-body]');
     body.innerHTML = '<p class="inv-meta">Loading case…</p>';
     dialog.showModal?.();
     try { body.innerHTML = caseMarkup(await request(`/cases/${encodeURIComponent(b.dataset.caseId)}`), escape); }
     catch (error) { body.innerHTML = `<p class="load-error">${escape(error.message)}</p>`; }
   }; });
-  if (dialog) dialog.onclose = rerender;
+  if (dialog) dialog.onclose = () => { rerender(); lastCaseTrigger?.focus?.(); };
 }
 
 /** Settings → Demo: room investigation policy (PATCH /demo/investigation-policy). */
