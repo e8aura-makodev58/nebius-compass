@@ -767,3 +767,18 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Known: the checkout route has no per-user authentication, consistent with the existing mutation routes. Open for the user to decide.
 - Approved F4 slice 1 (`docs/design/handler-jam-episodes-slice-1.md`) for round 34; codex builds the pure module, gemini the stub-first episodes panel.
 - Pages updated: this log; handover.md merge log and assignments.
+
+## [2026-10-24] feature — Handler jam episodes and throughput deficit panel (Round 34, F4 slice 1 UI)
+- Built the **Handler episodes** panel (`frontend/handler-episodes-view.js`, `frontend/handler-episodes.css`) in the workspace, registered across Dockview tiling (`frontend/tiling.js`), phone workspace navigation (`frontend/workspace-nav.js`, `frontend/layout.css`), and SPA boot controller (`frontend/app.js`).
+- Data contract: lists jam episodes with `episodeId`, `reasonCode`, `jamCount`, `unplannedStoppedMinutes`, `classification` (`PATTERN` or `SINGLE_EVENT`), and alarm IDs trail chips (`alarmIds`).
+- Deficit display contract:
+  - When `deficitStatus === "ESTIMATE"`, displays `Estimate: N units` alongside basis (`referenceUnitsPerHour`, `windowMinutes`, `denominator`).
+  - When `deficitStatus === "SUPPRESSED"`, displays `Suppressed:` with suppression reason codes (`PROGRAM_CHANGED`, `SITE_COUNT_CHANGED`, etc.) explaining comparison gate requirements.
+  - Strict compliance: never calls deficit "measured" or "measured recoverable production", and avoids causal attribution language.
+- Window metrics banner: displays window UTC interval, unplanned stopped minutes, planned stop minutes, running minutes, and accepted units/min.
+- Interactive controls: instant search input filtering (preserving focus and selection range across keystrokes), classification select dropdown (`ALL`, `PATTERN`, `SINGLE_EVENT`), manual refresh, reset filters button, and keyboard-reachable episode inspection drawer (`.he-detail-drawer`).
+- Responsive layouts: desktop table (≥901px) and phone cards (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+- Deterministic synthetic fallback for offline/unmounted state (404), with robust loading, empty, and forced-failure error/retry states.
+- Added comprehensive E2E test suite in `e2e/handler-episodes.spec.mjs` (9/9 tests passing).
+- Verification: `npm test` 546/546 passed; full Chromium E2E suite 136/136 passed on port 3022; ports 3022 and 3122 verified free.
+- Pages updated: project-state/frontend/overview.md; this log.
