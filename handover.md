@@ -97,8 +97,8 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | STOP (no open task; round 27 merged 2026-10-23) |
-| gemini | STOP (no open task; round 27 merged 2026-10-22) |
+| codex | RUN (round 28, 2026-10-24) |
+| gemini | RUN (round 28, 2026-10-24) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
 
@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | none (round 27 merged 2026-10-23) | — |
-| gemini | none (round 27 merged 2026-10-22) | — |
+| codex | Station KPI panel, backend: rated throughput, station-kpis module, route, tests (round 28) | 28 |
+| gemini | Station KPI panel, frontend: panel, filter, window controls, phone layout, states (round 28) | 28 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1258,6 +1258,24 @@ your watcher.
   Nebius palette with no lime as text. At most 4 screenshots under
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
+
+**Round 28 (2026-10-24) — station KPI panel (spec: `docs/design/station-kpi-panel.md`).** Read the spec
+first; it is the contract. Start with `git merge master` (protocol step 1).
+
+- **codex (backend).** Implement section 2 and 3 of the spec: add `ratedUnitsPerHour` to equipment with
+  validation and a deterministic migration (hash of station ID, range 40–120) for both rooms; write
+  `backend/src/station-kpis.mjs` as a pure function over the same facts analytics uses (reuse the downtime union
+  rule from `analytics-service.mjs`; do not copy it); add the `GET /api/control-rooms/:roomId/station-kpis` route
+  with the query validation and error codes in section 3; hermetic tests for the acceptance list in section 5. The
+  endpoint must not advance or change the simulation. Use **port 3021** for E2E. Run both suites, update
+  `project-state/backend/` pages and `log.md`, commit, and set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini (frontend).** Build the Station KPIs panel from section 1 of the spec: a workspace tile registered
+  like the other panels, the station filter (search, All, None), the window controls (Latest, Previous, Next, and a
+  select of recent windows), the bucket table or cards, the totals row, the "DERIVED_FROM_UPTIME" label, and the
+  loading, empty and error states. Until codex lands the endpoint, use route stubs that return the exact shape in
+  section 3. Write `e2e/station-kpi.spec.mjs` only for the panel's own behaviour; main will extend it at merge.
+  Phone (375 px) and desktop (1280 px) must have no horizontal scroll. Use **port 3022** for E2E. Run both suites,
+  update `project-state/frontend/overview.md` and `log.md`, commit, and set `READY FOR MERGE`. Do not change `backend/`.
 
 **Round 27 (2026-10-21) — codex: fix Ask Compass decline causes and grounding gaps.** Start with
 `git merge master` (protocol step 1). Source: your `docs/product/ask-compass-decline-findings.md`, which
