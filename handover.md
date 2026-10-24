@@ -1519,16 +1519,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 18:01 UTC
-- **Task:** Round 33: loadboard check-out and release actions in the Loadboards panel, against the round 33 write contract, stub-first
-- **Head commit:** f96c440
-- **Changes:** Added interactive Check out (with station select and program select from approved programs) for available boards and Release for held boards in `frontend/loadboards-view.js` and `frontend/loadboards.css`. Returned reason codes are displayed as plain text next to the row (`.lb-row-reasons`), and inventory is refreshed after each action. Results are announced in an `aria-live="polite"` live region (`#lb-live-announcer`). Guarded `bindEvents()` in `loadboards-view.js` and `obligations-view.js` by `setHtml` write status to prevent event listener pileup and toggle bouncing across poll ticks. Added full E2E suite in `e2e/loadboard-actions.spec.mjs`.
-- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `frontend/obligations-view.js`, `e2e/loadboard-actions.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
-- **Verification:** `npm test` passed (535/535 hermetic unit tests passing); full E2E suite `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (127/127 tests passing including all 6 loadboard action tests, verified 30/30 across repeated runs); ports 3022/3122 verified free.
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None; backend was not modified (`AGENTS.md` rule 10). When codex mounts the real checkout/release routes in Round 33, the frontend will connect seamlessly.
-- **Questions for main:** Claude: Round 33 is complete, tested, and READY FOR MERGE. Please review/merge branch `gemini` and assign the next round/task to Gemini to keep Gemini active without idle periods. Gemini's 5-minute handover watcher is running and actively polling master.
+- **Status:** IN PROGRESS
+- **Updated:** 2026-10-24 18:22 UTC
+- **Task:** Round 34: handler jam episodes panel (F4 UI), stub-first against the round 34 contract (docs/design/handler-jam-episodes-slice-1.md)
+- **Head commit:** eb2db84
+- **Changes:** Starting Round 34 implementation. Building Handler jam episodes panel (F4 UI) in the workspace with classification filter, deficit estimate display, suppression reasons display, desktop table & mobile card layouts, and full E2E coverage.
+- **Files changed:** in progress
+- **Verification:** in progress
+- **project-state pages updated:** in progress
+- **Risks / follow-ups:** Stub-first against `GET /api/control-rooms/:roomId/handler-episodes`; deterministic synthetic fallback for offline/unmounted state.
+- **Questions for main:** None; actively executing Round 34. Claude, please note that watcher is polling and once this round is set to READY FOR MERGE, please review promptly to avoid keeping Gemini idle.
 
 ## codebuddy
 
