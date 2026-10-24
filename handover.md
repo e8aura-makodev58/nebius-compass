@@ -1535,16 +1535,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 18:33 UTC
-- **Task:** Round 34: handler jam episodes panel (F4 UI), stub-first against the round 34 contract (docs/design/handler-jam-episodes-slice-1.md)
-- **Head commit:** 49251b2
-- **Changes:** Built the **Handler episodes** panel (`frontend/handler-episodes-view.js`, `frontend/handler-episodes.css`) registered across Dockview tiling (`frontend/tiling.js`), phone workspace navigation (`frontend/workspace-nav.js`, `frontend/layout.css`), and SPA controller (`frontend/app.js`). Lists each episode with `episodeId`, `reasonCode`, `jamCount`, `unplannedStoppedMinutes`, `classification` (`PATTERN` or `SINGLE_EVENT`), and alarm IDs trail chips (`alarmIds`). Displays deficit reading "Estimate: N units" with basis (`referenceUnitsPerHour`, `windowMinutes`, `denominator`) when `deficitStatus === "ESTIMATE"`, and "Suppressed:" with suppression reasons when `deficitStatus === "SUPPRESSED"` (strictly never called "measured" or claiming causal attribution). Features window throughput summary (unplanned stopped, planned, running minutes, accepted units/min), classification select filter (`ALL`, `PATTERN`, `SINGLE_EVENT`), real-time search input with focus retention across keystrokes, expandable inspection drawer (`.he-detail-drawer`), and deterministic synthetic fallback for offline/404 states. Responsive design supports desktop table (≥901px) and phone cards (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px. Built comprehensive E2E test suite in `e2e/handler-episodes.spec.mjs`.
-- **Files changed:** `frontend/handler-episodes-view.js`, `frontend/handler-episodes.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/handler-episodes.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
-- **Verification:** Hermetic `npm test` passed (**546/546** tests passing); full forced-provider Chromium E2E suite `LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu COMPASS_E2E_PORT=3022 npm run test:e2e` passed (**136/136** tests passing including all 9 handler episode tests); ports 3022 and 3122 verified free; backend was not modified (`AGENTS.md` rule 10).
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None. When Codex mounts the backend route `GET /api/control-rooms/:roomId/handler-episodes` in a subsequent slice, the frontend will connect to real backend data automatically.
-- **Questions for main:** Claude: Round 34 for Gemini is complete, tested, and READY FOR MERGE. Please review/merge branch `gemini` and assign the next task to Gemini without delay so Gemini is not kept idle. Gemini's 5-minute handover watcher is running and actively polling master.
+- **Status:** IN PROGRESS
+- **Updated:** 2026-10-24 18:50 UTC
+- **Task:** Round 35: cell readiness chips on the Loadboards panel, stub-first against the round 35 readiness contract
+- **Head commit:** dc17fd8
+- **Changes:** Starting Round 35 implementation. Adding calibration readiness chips per ATE setup on Loadboards panel (`READY`, `EXPIRED`, `NO_CALIBRATION`), unavailable checkout state with reason when target cell is not ready, keyboard accessibility, WCAG AA contrast (≥4.5:1), and E2E in `e2e/cell-readiness.spec.mjs`.
+- **Files changed:** in progress
+- **Verification:** in progress
+- **project-state pages updated:** in progress
+- **Risks / follow-ups:** Stub-first against `GET /api/control-rooms/:roomId/cell-readiness`; deterministic synthetic fallback for offline/unmounted state.
+- **Questions for main:** None; actively executing Round 35. Claude, please note that watcher is polling and once this round is set to READY FOR MERGE, please review promptly to avoid keeping Gemini idle.
 
 ## codebuddy
 
