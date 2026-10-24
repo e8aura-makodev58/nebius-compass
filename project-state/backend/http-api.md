@@ -46,6 +46,7 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | POST | `/loadboards/checkout` | `{requestId,boardId,cellId,programRevision}` → `{decision,reasons,reservation}` through the normal serialized room write path. |
 | POST | `/loadboards/release` | `{reservationId,cellId}` → the same response envelope. Host supplies the simulation timestamp. |
 | GET | `/consumable-obligations` | `{roomId,asOf,obligations}`: explicit persisted slice-2 rows, with no reconciliation on GET. |
+| GET | `/cell-readiness` | `{roomId,asOf,cells:[{cellId,readiness,reasons,instruments}]}` for cells in private calibration rows, at the room simulation clock. Shared read-only Live/Offline projection; no clock advancement. |
 | GET | `/loadboards` | Read-only public loadboard inventory; empty when the room has no inventory. Shared Live/Offline builder, no clock advancement. |
 | GET | `/station-kpis` | Shared Live/Offline four-bucket station throughput/uptime projection. Optional `windowEnd` and comma-separated `stations`; see below. |
 | GET | `/analytics/pareto` | Issue Pareto for one period: `level=DAY\|WEEK\|MONTH` (default MONTH), optional `period=<index>` (0 = current; default the most recent complete). Returns the period list, totals and two drill trees: issue class → observed symptom → applied fix, and floor → station, each with issue count, downtime minutes and failed attempts (`pareto-analytics.mjs`). Offline returns `available: false`. |
@@ -300,3 +301,15 @@ and applies the hidden-truth guard. The response contains roomId, current simula
 asOf and obligations only; counter packets and reconciliation digests are excluded.
 Both modes use raw read projections without advancing the clock, running evaluation
 or writing state. Missing history is an empty array. Room 404/503 errors are unchanged.
+
+
+## Calibration readiness read (round 35)
+
+GET `/api/control-rooms/:roomId/cell-readiness` returns every distinct cell in the
+room's optional private `calibrations`, sorted by cellId. Missing rows yield cells: [].
+Instrument entries expose instrumentId, calibrationId, dueAt and CURRENT/EXPIRED
+state for the latest effective calibration. Future-only cells are NO_CALIBRATION.
+Unknown rooms retain the normal 404. All decisions use asOf from simulationTime;
+GET does not reconcile, mutate, advance time or call providers. The pure checkout
+function now accepts readiness, but the command HTTP adapter is deliberately not
+wired to it yet (deferred in the approved slice-1 spec).

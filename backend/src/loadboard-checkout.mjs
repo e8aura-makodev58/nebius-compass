@@ -52,10 +52,11 @@ function validateRequest(request) {
   requireValue(request.requestId.length <= 116, 'requestId length');
   return timestamp(request.requestedAt);
 }
-function checkout(inventory, request, copyInventory = true) {
+function checkout(inventory, request, copyInventory = true, readiness) {
   const board = inventory.boards.find(row => row.boardId === request.boardId);
   const held = inventory.reservations.filter(row => row.status === 'HELD');
   const reasons = [];
+  if (readiness !== undefined && readiness.readiness !== 'READY') reasons.push('CELL_NOT_READY');
   if (!board) reasons.push('BOARD_UNKNOWN');
   else {
     if (board.condition !== 'SERVICEABLE') reasons.push('CONDITION_BLOCKED');
@@ -74,9 +75,15 @@ function checkout(inventory, request, copyInventory = true) {
   return { decision: 'ALLOCATED', reasons: [], inventory: next, reservation };
 }
 
-export function checkoutBoard(inventory, request) {
+export function checkoutBoard(inventory, request, readiness) {
   validateLoadboardInventory(inventory); validateRequest(request);
-  return checkout(inventory, request);
+  if (readiness !== undefined) {
+    fields(readiness, ['cellId', 'at', 'readiness', 'reasons', 'instruments']);
+    requireValue(readiness.cellId === request.cellId && timestamp(readiness.at) === timestamp(request.requestedAt), 'readiness cell/time mismatch');
+    requireValue(['READY', 'EXPIRED', 'NO_CALIBRATION'].includes(readiness.readiness), 'readiness status');
+    requireValue(Array.isArray(readiness.reasons) && Array.isArray(readiness.instruments), 'readiness arrays');
+  }
+  return checkout(inventory, request, true, readiness);
 }
 
 export function checkoutBatch(inventory, requests) {

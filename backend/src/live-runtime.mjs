@@ -1,3 +1,4 @@
+import { buildCellReadiness } from './cell-readiness.mjs';
 import { createLoadboardService } from './loadboard-service.mjs';
 import { buildConsumableObligations } from './consumable-obligations.mjs';
 import { buildLoadboards } from './loadboards.mjs';
@@ -352,6 +353,7 @@ export function createLiveRuntime({
     checkoutLoadboard: input => loadboardService.checkout(input),
     releaseLoadboard: input => loadboardService.release(input),
     async consumableObligations(query) { return store.project ? store.project(state => buildConsumableObligations(state, query)) : buildConsumableObligations(await store.snapshot(), query); },
+    async cellReadiness(query) { return store.project ? store.project(state => buildCellReadiness(state, query)) : buildCellReadiness(await store.snapshot(), query); },
     async loadboards(query) { return store.project ? store.project(state => buildLoadboards(state, query)) : buildLoadboards(await store.snapshot(), query); },
     async stationKpis(query) { return store.project ? store.project(state => buildStationKpis(state, query)) : buildStationKpis(await store.snapshot(), query); },
     async analyticsPareto(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildParetoAnalytics(state, query)) : buildParetoAnalytics(await store.snapshot(), query)) }; },
@@ -494,6 +496,7 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
     async checkoutLoadboard(input) { return active().checkoutLoadboard(input); },
     async releaseLoadboard(input) { return active().releaseLoadboard(input); },
     async consumableObligations(query) { return active().consumableObligations(query); },
+    async cellReadiness(query) { return active().cellReadiness(query); },
     async loadboards(query) { return active().loadboards(query); },
     async stationKpis(query) { return active().stationKpis(query); },
     async analyticsPareto(query) { return mode === "LIVE" ? liveRuntime.analyticsPareto(query) : { mode: "OFFLINE", available: false }; },

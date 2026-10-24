@@ -791,3 +791,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 34 (handler jam episodes pure module) and gemini round 34 (Handler episodes panel on stubs) as `8b4fa83`. Verification: `npm test` 559/559; E2E 136/136 on port 3024. Deployed `8b4fa83` healthy; loadboards, obligations and station-KPI endpoints return 200 on the deploy server.
 - Added `docs/design/calibration-readiness-slice-1.md` (F8 slice 1), approved for round 35: a deterministic cell readiness function and a checkout gate. Correlation evidence stays a separate record.
 - Pages updated: this log; the design spec; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Calibration readiness and optional checkout gate (round 35)
+- Added import-free calibration selection and conservative readiness, an optional pure checkout gate preserving legacy callers, and a shared read-only room GET at the simulation clock. Private source history stays outside ordinary snapshots; no checkout POST integration or ingestion is added in this slice.
+- Pages updated: backend/overview.md, backend/domain-model.md, backend/http-api.md; source ambiguity rules recorded in docs/decisions.md.
