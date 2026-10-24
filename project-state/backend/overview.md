@@ -47,6 +47,7 @@ one TypeScript type file; there is no build step.
 | `assignment-service.mjs` | Lower-level assignment record creation and participation history (shared math). |
 | `workforce-continuity.mjs` | Four-crew rotation, shift availability, rest/duty limits, queue-first priority, and synthetic responder provisioning. Owns `WORKFORCE_POLICY_VERSION`, `CREW_IDS`, `MIN_REST_HOURS`, `MAX_DUTY_HOURS`. |
 | `responder-location.mjs` | Deterministic responder positioning: move to an issue's equipment (role-seeded offset) or back to the duty station. |
+| `calibration-service.mjs` | Shared serialized calibration entry, idempotent identity retries and explicit historical GET projection. See [http-api.md](http-api.md). |
 | `calibration-readiness.mjs` | Pure `cellReadiness(calibrations,cellId,at)`, effective calibration selection, strict source validation and conservative expiry. No imports. See [domain-model.md](domain-model.md). |
 | `cell-readiness.mjs` | Explicit Live/Offline room readiness GET projection at the room clock. |
 | `handler-jam-episodes.mjs` | Standalone pure alarm grouping, interval-union stopped time and gated reference-rate deficit estimates. No imports or runtime wiring. See [domain-model.md](domain-model.md). |
@@ -138,3 +139,6 @@ cost ledger, 120-day atomic persistence, UTC budget gate and one-per-day exhaust
 All chat transports share it; see model-providers.md for accounting boundaries and settings API.
 
 `assistant-tools.mjs` supplies Ask Compass’s seven public-only read-only projections and per-tool numeric metrics; see [assistant.md](assistant.md).
+
+Shared synthetic calibration seed facts live in `backend/seed/calibrations.mjs` and
+are copied independently into Live and Offline seeds for each room.

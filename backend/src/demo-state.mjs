@@ -1,3 +1,4 @@
+import { createSeedCalibrations } from '../seed/calibrations.mjs';
 import { readFileSync } from "node:fs";
 import { createBuildingEquipment } from "../seed/floor-layout.mjs";
 
@@ -9,7 +10,7 @@ const rawSeed = JSON.parse(readFileSync(seedUrl, "utf8"));
  * comes from the deterministic three-floor layout, which pins the six original
  * ground-floor machines to their original coordinates.
  */
-const scenarioASeed = { ...rawSeed, equipment: createBuildingEquipment() };
+const scenarioASeed = { ...rawSeed, calibrations: createSeedCalibrations(), equipment: createBuildingEquipment() };
 
 /**
  * Return an independent, canonical initial state for every demo reset.

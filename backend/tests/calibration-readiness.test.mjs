@@ -105,6 +105,6 @@ test('Offline endpoint shares rules without clock advancement or network, includ
     const first = await get(runtime); assert.equal(first.status, 200); const rows = seedFactory().calibrations;
     assert.equal(first.body.cells[0].readiness, cellReadiness(rows, 'ATE-1', first.body.asOf).readiness);
     now += 86_400_000; assert.deepEqual(await get(runtime), first); assert.equal(Object.hasOwn(offline.snapshot(), 'calibrations'), false);
-    const empty = createDemoRuntime({ mode: 'fixture' }, createTempAuditStore()); assert.deepEqual((await get(empty)).body.cells, []);
+    const empty = createDemoRuntime({ mode: 'fixture' }, createTempAuditStore(), null, { seedFactory: () => ({ ...createInitialDemoState(), calibrations: [] }) }); assert.deepEqual((await get(empty)).body.cells, []);
   } finally { globalThis.fetch = original; }
 });

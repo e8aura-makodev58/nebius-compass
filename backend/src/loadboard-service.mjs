@@ -1,3 +1,4 @@
+import { cellReadiness } from './calibration-readiness.mjs';
 /** Host-owned loadboard commands, serialized by the normal room store adapter. */
 import { checkoutBoard, releaseBoard } from './loadboard-checkout.mjs';
 import { cloneDraftValue } from './live-draft.mjs';
@@ -32,7 +33,7 @@ export function createLoadboardService(store) {
         // Native structuredClone in the pure domain module cannot accept COW proxies.
         const inventory = state.loadboardInventory === undefined ? { boards: [], reservations: [] } : cloneDraftValue(state.loadboardInventory);
         const at = state.simulationState.simulationTime;
-        const result = checkout ? checkoutBoard(inventory, { ...request, requestedAt: at }) : releaseBoard(inventory, { ...request, releasedAt: at });
+        const result = checkout ? checkoutBoard(inventory, { ...request, requestedAt: at }, cellReadiness(state.calibrations === undefined ? [] : state.calibrations, request.cellId, at)) : releaseBoard(inventory, { ...request, releasedAt: at });
         const response = publicResult(result);
         if (result.decision === 'ALLOCATED' || result.decision === 'RELEASED') {
           // Keep journal patches bounded as released-reservation history grows.

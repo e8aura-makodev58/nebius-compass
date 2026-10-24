@@ -1,3 +1,4 @@
+import { createSeedCalibrations } from './calibrations.mjs';
 import { initializeFaults } from '../src/fault-truth.mjs';
 import { createInitialDemoState } from "../src/demo-state.mjs";
 import { BASELINE_CONFIG, LIVE_SCHEMA_VERSION } from "../src/live-schema.mjs";
@@ -32,6 +33,7 @@ export function createLiveSeed() {
     status: unresolvedEquipmentIds.has(item.id) ? "ISSUE_ACTIVE" : "NORMAL",
   }));
   return initializeFaults(provisionWorkforce({
+    calibrations: createSeedCalibrations(),
     schemaVersion: LIVE_SCHEMA_VERSION,
     revision: 0,
     consumableObligations: [],

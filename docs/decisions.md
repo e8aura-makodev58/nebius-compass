@@ -1301,3 +1301,20 @@ POST wiring, so this round exposes the read endpoint and optional pure gate only
 legacy HTTP and batch behavior remains unchanged. Raw calibration history is excluded
 from ordinary public snapshots in both modes. Provisioning/schema enforcement beyond
 reader validation and the required-instrument configuration remain later work.
+
+
+## 2026-10-24 — Round 36 calibration entry and server enforcement
+
+Round 36 supersedes round 35's deferred checkout wiring: readiness is computed from
+current rows at the simulation clock inside the checkout store mutation. Missing
+existing-room records fail closed rather than silently injecting calibration facts.
+Shared independent synthetic seeds cover both cells/modes/rooms on creation/reset.
+POST appends valid facts, returns RECORDED (or UNCHANGED for an exact identity retry),
+and rejects identity or same-instant conflicts as 400. Validation occurs before
+queueing and against latest history inside the queue. Future entries remain allowed
+and ineffective until calibratedAt. No calibration facts are automatically renewed.
+
+The assignment's Calibrations panel contract also requires GET calibrations; the
+backend supplies it as an explicit read-only history projection, with per-record
+FUTURE/CURRENT/EXPIRED time validity, independent of latest-record readiness selection.
+The existing readiness GET remains the authoritative effective cell decision.

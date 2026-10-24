@@ -1,3 +1,4 @@
+import { createCalibrationService, buildCalibrations } from './calibration-service.mjs';
 import { buildCellReadiness } from './cell-readiness.mjs';
 import { createLoadboardService } from './loadboard-service.mjs';
 import { buildConsumableObligations } from './consumable-obligations.mjs';
@@ -68,6 +69,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     },
   };
   const assistant = createAskService(investigationStore,{mode:'fixture'});
+  const calibrationService = createCalibrationService(investigationStore);
   const loadboardService = createLoadboardService(investigationStore);
   const investigations = createInvestigationService(investigationStore,{investigatorOptions:{mode:'fixture'},rankingOptions:{mode:'fixture'},narratorOptions:{mode:'fixture'}});
   async function finishInvestigationWork() { while (await investigations.runNext()) {} }
@@ -254,6 +256,8 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
   return {
     snapshot,
     reconcileConsumables: () => reconcileRoomConsumables(investigationStore),
+    enterCalibration: input => calibrationService.enter(input),
+    calibrations: query => buildCalibrations(demoState, query),
     checkoutLoadboard: input => loadboardService.checkout(input),
     releaseLoadboard: input => loadboardService.release(input),
     consumableObligations: query => buildConsumableObligations(demoState, query),

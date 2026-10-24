@@ -211,3 +211,87 @@ test('checkout/release journal only changed custody rows even with substantial r
   assert.equal((await store.snapshot()).loadboardInventory.reservations.length, 501);
   assert.deepEqual(await readDurableLiveState(filePath), await store.snapshot());
 });
+
+
+const calibration = overrides => ({ calibrationId: 'CAL-ENTRY', cellId: 'ATE-1', instrumentId: 'ENTRY-PS', calibratedAt: '2026-08-01T08:00:00Z', dueAt: '2027-08-01T08:00:00Z', ...overrides });
+test('checkout route fails closed for missing/expired calibrations and entry enables checkout at the room clock', async t => {
+  const { store, handler } = await live(t);
+  await store.mutate('remove-calibrations', state => { state.calibrations = []; });
+  const before = await store.snapshot();
+  const missing = await request(handler, '/loadboards/checkout', checkout());
+  assert.equal(missing.status, 200); assert.deepEqual(missing.body.reasons, ['CELL_NOT_READY']);
+  assert.deepEqual((await store.snapshot()).loadboardInventory, before.loadboardInventory);
+  const expired = calibration({ dueAt: before.simulationState.simulationTime });
+  assert.deepEqual((await request(handler, '/calibrations', expired)).body, { decision: 'RECORDED', reasons: [] });
+  assert.equal((await request(handler, '/cell-readiness')).body.cells[0].readiness, 'EXPIRED');
+  assert.ok((await request(handler, '/loadboards/checkout', checkout())).body.reasons.includes('CELL_NOT_READY'));
+  const current = calibration({ calibrationId: 'CAL-RENEW', calibratedAt: before.simulationState.simulationTime });
+  assert.equal((await request(handler, '/calibrations', current)).body.decision, 'RECORDED');
+  assert.equal((await request(handler, '/cell-readiness')).body.cells[0].readiness, 'READY');
+  const allocated = await request(handler, '/loadboards/checkout', checkout());
+  assert.equal(allocated.body.decision, 'ALLOCATED'); assert.equal(allocated.body.reservation.heldSince, before.simulationState.simulationTime);
+});
+test('entry validates before queue, rejects concurrent conflicting identities and retries without duplicate history', async t => {
+  const { store, handler, filePath } = await live(t); const before = await store.snapshot();
+  for (const body of [{}, { ...calibration(), extra: 1 }, calibration({ dueAt: 'bad' }), calibration({ dueAt: '2026-07-01T00:00:00Z' }), calibration({ instrumentId: 'responderSkills' })]) {
+    assert.equal((await request(handler, '/calibrations', body)).status, 400);
+  }
+  assert.deepEqual(await store.snapshot(), before);
+  const results = await Promise.all([request(handler, '/calibrations', calibration()), request(handler, '/calibrations', calibration({ dueAt: '2028-08-01T08:00:00Z' }))]);
+  assert.deepEqual(results.map(x => x.status).sort(), [200, 400]);
+  const added = (await store.snapshot()).calibrations.find(x => x.calibrationId === 'CAL-ENTRY');
+  assert.deepEqual((await request(handler, '/calibrations', added)).body, { decision: 'UNCHANGED', reasons: [] });
+  assert.equal((await store.snapshot()).calibrations.filter(x => x.calibrationId === 'CAL-ENTRY').length, 1);
+  assert.equal((await request(handler, '/calibrations', { ...added, calibrationId: 'SAME-INSTANT' })).status, 400);
+  const restarted = createLiveStore({ filePath, historyRetentionDays: 0 });
+  assert.equal((await request(handlerFor(createLiveRuntime({ store: restarted })), '/calibrations', added)).body.decision, 'UNCHANGED');
+  assert.equal((await request(handler, '/calibrations', calibration(), { room: 'unknown' })).status, 404);
+  assert.equal((await request(handler, '/calibrations', calibration(), { headers: { 'content-type': 'text/plain' } })).status, 415);
+  assert.equal((await request(handler, '/calibrations', calibration(), { headers: { origin: 'https://other.test' } })).status, 403);
+});
+test('calibration entries and checkout share the real write queue; read ledger is immutable and room-scoped', async t => {
+  const { store, runtime } = await live(t), other = await live(t);
+  await store.mutate('clear', state => { state.calibrations = []; });
+  const handler = handlerFor(runtime, other.runtime);
+  const [entry, allocation] = await Promise.all([request(handler, '/calibrations', calibration()), request(handler, '/loadboards/checkout', checkout())]);
+  assert.equal(entry.status, 200); assert.equal(allocation.body.decision, 'ALLOCATED');
+  const before = await store.snapshot(), read = await request(handler, '/calibrations');
+  assert.equal(read.body.roomId, 'plant-1'); assert.equal(read.body.asOf, before.simulationState.simulationTime);
+  assert.equal(read.body.calibrations[0].state, 'CURRENT');
+  assert.deepEqual(Object.keys(read.body.calibrations[0]).sort(), ['calibrationId', 'cellId', 'instrumentId', 'calibratedAt', 'dueAt', 'state'].sort());
+  assert.deepEqual(await store.snapshot(), before); assert.equal((await request(handler, '/calibrations', undefined, { room: 'plant-2' })).body.calibrations.some(x => x.calibrationId === 'CAL-ENTRY'), false);
+});
+test('failed calibration journal entry rolls back and retry recovers', async t => {
+  let fail = false; const { store, handler } = await live(t, { beforeCommit: () => { if (fail) throw Error('entry fault'); } });
+  const before = await store.snapshot(); fail = true;
+  assert.equal((await request(handler, '/calibrations', calibration())).status, 500);
+  assert.deepEqual(await store.snapshot(), before); fail = false;
+  assert.equal((await request(handler, '/calibrations', calibration())).body.decision, 'RECORDED');
+});
+test('Offline manual entry and gated checkout use identical rules without providers', async () => {
+  const seedFactory = () => ({ ...createInitialDemoState(), loadboardInventory: inventory(), calibrations: [] });
+  const offline = createDemoRuntime({ mode: 'fixture' }, createTempAuditStore(), null, { now: () => 0, seedFactory });
+  const runtime = createApplicationRuntime({ liveRuntime: {}, offlineRuntime: offline, initialMode: 'OFFLINE' });
+  const handler = handlerFor(runtime), original = globalThis.fetch; globalThis.fetch = () => { throw Error('network forbidden'); };
+  try {
+    assert.ok((await request(handler, '/loadboards/checkout', checkout())).body.reasons.includes('CELL_NOT_READY'));
+    const at = (await request(handler, '/calibrations')).body.asOf;
+    const current = calibration({ calibratedAt: at });
+    assert.equal((await request(handler, '/calibrations', current)).body.decision, 'RECORDED');
+    assert.equal((await request(handler, '/calibrations', current)).body.decision, 'UNCHANGED');
+    assert.equal((await request(handler, '/calibrations', { ...current, dueAt: at })).status, 400);
+    assert.equal((await request(handler, '/loadboards/checkout', checkout())).body.decision, 'ALLOCATED');
+    assert.equal((await request(handler, '/calibrations')).body.asOf, at);
+  } finally { globalThis.fetch = original; }
+});
+test('both room instances have independent READY calibration seeds in Live and Offline', async t => {
+  const first = await live(t), second = await live(t), handler = handlerFor(first.runtime, second.runtime);
+  for (const room of ['plant-1', 'plant-2']) {
+    const response = await request(handler, '/cell-readiness', undefined, { room });
+    assert.deepEqual(response.body.cells.map(x => [x.cellId, x.readiness]), [['ATE-1', 'READY'], ['ATE-2', 'READY']]);
+  }
+  for (let index = 0; index < 2; index++) {
+    const offline = createDemoRuntime({ mode: 'fixture' }, createTempAuditStore(), null, { now: () => 0 });
+    assert.deepEqual(offline.cellReadiness().cells.map(x => [x.cellId, x.readiness]), [['ATE-1', 'READY'], ['ATE-2', 'READY']]);
+  }
+});

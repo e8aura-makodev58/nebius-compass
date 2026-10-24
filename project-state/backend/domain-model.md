@@ -371,13 +371,37 @@ validated, without any clock, store, simulation or model dependency.
 `checkoutBoard(inventory,request,readiness?)` optionally consumes this result for the
 same requested cell and instant. Non-READY adds CELL_NOT_READY alongside all existing
 failing rules, preserving inventory. Wrong-cell/stale packets are invalid. Omission
-preserves legacy behavior; batch behavior is unchanged. **Checkout HTTP wiring is
-deferred by the slice-1 spec**: the round-33 command adapter still omits this argument.
+preserves legacy behavior; batch behavior is unchanged. **Checkout HTTP wiring is enforced in round 36**: the command adapter evaluates
+readiness inside the same serialized transaction as allocation.
 
 Optional private room `calibrations` rows feed `cell-readiness.mjs` and its dedicated
-GET projection in both modes. No default rows or ingestion/mutation route are added;
-missing rows produce an empty cell list. Raw history is excluded from ordinary
+GET projection in both modes. Shared synthetic seed rows cover ATE-1 and ATE-2; missing rows in an existing
+room still produce an empty cell list. Manual entries use the round-36 POST. Raw history is excluded from ordinary
 Live/Offline snapshots; the dedicated endpoint exposes only latest instrument facts
 and readiness at the existing simulation clock. Reads do not advance time, revise
 state, call providers or change calibration history. Source validation happens in
 the pure reader; no persisted-schema migration is introduced in this slice.
+
+
+## Manual calibrations and enforced checkout (round 36)
+
+`calibration-service.mjs` validates exactly the five source fields before queuing,
+then validates against current history inside store.mutate. New entries append one
+row and return RECORDED; exact identity retries return UNCHANGED without duplicate
+history. Conflicting identity or competing same-instant records are malformed (400).
+Dates canonicalize to UTC milliseconds. Future facts are permitted but cannot make
+readiness current early. This is the shared Live/Offline mutation path, with rollback
+on journal failure in Live and no provider dependency in Offline.
+
+`loadboard-service.mjs` now computes cellReadiness from current private rows at the
+transaction simulation clock before checkoutBoard, so missing/expired cells yield
+CELL_NOT_READY along with all other failing rules. Calibration entry and checkout
+use the same queue; a read before queuing cannot authorize an allocation. Release
+remains possible when calibration has expired.
+
+`backend/seed/calibrations.mjs` provides independent synthetic ATE-1/ATE-2 records to
+both Live and Offline seeds, hence both room instances. Due dates follow both seed
+clocks; expiry remains real as simulated time advances. Existing persisted rooms are
+not silently backfilled: use entry or an authorized reset. The GET ledger shows all
+history with per-record FUTURE/CURRENT/EXPIRED validity at asOf; effective readiness
+continues to select the latest calibration per instrument. Old records are retained.

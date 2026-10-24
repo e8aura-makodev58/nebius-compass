@@ -46,6 +46,8 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | POST | `/loadboards/checkout` | `{requestId,boardId,cellId,programRevision}` → `{decision,reasons,reservation}` through the normal serialized room write path. |
 | POST | `/loadboards/release` | `{reservationId,cellId}` → the same response envelope. Host supplies the simulation timestamp. |
 | GET | `/consumable-obligations` | `{roomId,asOf,obligations}`: explicit persisted slice-2 rows, with no reconciliation on GET. |
+| POST | `/calibrations` | Strict five-field manual entry through the serialized store; returns `{decision:RECORDED\|UNCHANGED,reasons:[]}`. Conflicts/malformed requests return 400. |
+| GET | `/calibrations` | `{roomId,asOf,calibrations}`: explicit history with per-record FUTURE/CURRENT/EXPIRED validity at room time. |
 | GET | `/cell-readiness` | `{roomId,asOf,cells:[{cellId,readiness,reasons,instruments}]}` for cells in private calibration rows, at the room simulation clock. Shared read-only Live/Offline projection; no clock advancement. |
 | GET | `/loadboards` | Read-only public loadboard inventory; empty when the room has no inventory. Shared Live/Offline builder, no clock advancement. |
 | GET | `/station-kpis` | Shared Live/Offline four-bucket station throughput/uptime projection. Optional `windowEnd` and comma-separated `stations`; see below. |
@@ -310,6 +312,18 @@ room's optional private `calibrations`, sorted by cellId. Missing rows yield cel
 Instrument entries expose instrumentId, calibrationId, dueAt and CURRENT/EXPIRED
 state for the latest effective calibration. Future-only cells are NO_CALIBRATION.
 Unknown rooms retain the normal 404. All decisions use asOf from simulationTime;
-GET does not reconcile, mutate, advance time or call providers. The pure checkout
-function now accepts readiness, but the command HTTP adapter is deliberately not
-wired to it yet (deferred in the approved slice-1 spec).
+GET does not reconcile, mutate, advance time or call providers. The checkout HTTP adapter now enforces this gate inside the write transaction
+(round 36); missing/expired cells reject with CELL_NOT_READY at HTTP 200.
+
+
+## Calibration entry (round 36)
+
+POST `/api/control-rooms/:roomId/calibrations` accepts exactly calibrationId, cellId,
+instrumentId, calibratedAt and dueAt. Dates must be valid UTC, with dueAt not before
+calibratedAt. Unknown/protected fields are invalid. New rows return HTTP 200 with
+`{decision:"RECORDED",reasons:[]}`; exact identity retries return UNCHANGED. Conflicting
+identities or same-instant competing records return 400 and do not alter history.
+Future calibration dates are allowed but ignored by readiness until effective.
+Normal JSON/origin and room guards apply. GET returns all explicit rows, canonical
+UTC dates and their per-record time validity; it does not advance clocks or mutate.
+No calibration row is copied into ordinary state/model payloads.

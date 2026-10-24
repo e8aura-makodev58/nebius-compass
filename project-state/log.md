@@ -814,3 +814,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Gap recorded: the server does not enforce the readiness gate yet; round 36 wires it. Live rooms have no calibration rows yet.
 - Assigned round 36: codex wires the server gate, adds the calibration entry route and seeds calibrations; gemini builds the Calibrations panel on stubs.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Enforced checkout readiness and manual calibration entry (round 36)
+- Checkout now evaluates calibration readiness inside the serialized transaction in both modes. Added strict journaled calibration entry with conflict validation and idempotent retries, read-only explicit ledger GET, and independent synthetic ATE-1/ATE-2 calibration seeds. Regenerated the deterministic investigation lifecycle fixture; only the new calibration seed field changed.
+- Pages updated: backend/domain-model.md, backend/http-api.md, backend/overview.md; entry response and existing-room policy recorded in docs/decisions.md.
