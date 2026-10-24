@@ -767,3 +767,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Known: the checkout route has no per-user authentication, consistent with the existing mutation routes. Open for the user to decide.
 - Approved F4 slice 1 (`docs/design/handler-jam-episodes-slice-1.md`) for round 34; codex builds the pure module, gemini the stub-first episodes panel.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Pure handler jam episodes (round 34)
+- Added deterministic alarm episodes, union-based unplanned stopped time, accepted-unit running rate and context-gated reference-rate deficit estimates. Strict validation, immutable inputs and complete trails preserve application-owned evidence without causal claims or runtime dependencies.
+- Pages updated: backend/overview.md, backend/domain-model.md; boundary/rounding decisions recorded in docs/decisions.md.

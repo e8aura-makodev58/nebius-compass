@@ -319,3 +319,37 @@ seed injection; defaults and reset remain the normal scenario. No inventory impo
 or production provisioning endpoint is added. The dedicated obligations read builder
 publishes only the existing strict obligation rows, without exposing counter sources
 or initiating reconciliation/ordinary Issue dispatch.
+
+
+## Handler jam episodes (round 34, F4 slice 1)
+
+`handler-jam-episodes.mjs` exports `buildHandlerJamEpisodes(input)` over the approved
+`docs/design/handler-jam-episodes-slice-1.md` packet. It has no imports, I/O, clock,
+store, model or runtime wiring. All input fields are explicit; caller metadata and
+hidden responder facts cannot be copied into output.
+
+Alarms sort by occurredAt then lexical alarmId. Duplicate identities count once;
+conflicting occurrence/reason facts throw TypeError. Ingestion time never drives
+order. Missing/null occurrence counts once in excludedAlarms. Valid alarms outside
+the half-open window are ignored. Consecutive alarms with the same reason and an
+inclusive policy gap form an episode, with EP- plus its first alarm ID, a complete
+trail and PATTERN/SINGLE_EVENT classification. Reasons are opaque uppercase codes,
+not diagnoses. Jam windows end at the next run start at or after occurrence, or the
+window end. Both per-episode and global stopped time use unions minus the clipped
+planned-stop union; overlapping episodes must not be summed for the station total.
+
+Context is carried forward from the latest observation at/before window start;
+subsequent observations apply until replaced. Missing/null coverage suppresses the
+estimate, as do mismatching program/site counts, absent/zero reference, or less than
+one running minute. Conflicting observations at one timestamp are invalid. All gate
+failures are returned in stable order; raw evidence remains available. Deficit units
+are an ESTIMATE from reference rate times unplanned stop duration, never a measured
+loss or a causal claim. Suppressed estimates and their basis are null.
+
+Arithmetic uses exact milliseconds before independently rounding minute/unit display
+values to nearest integer; the running rate uses the exact denominator and rounds
+to two decimals (null only at zero running duration). Run counts are nonnegative
+integers on disjoint intervals fully inside or outside the query window. A run
+crossing a window edge is rejected because no count attribution/prorating contract
+exists. Planned intervals may overlap and cross boundaries. This pure slice adds no
+persisted entity, HTTP route, counter ingestion or responder/dispatch behavior.

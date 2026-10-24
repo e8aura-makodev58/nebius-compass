@@ -1259,3 +1259,25 @@ must be retained. The pure reconciler returns an identity-derived base ID; the r
 assigns deterministic history-based episode suffixes on collision, never using time/randomness.
 Only one episode may be OPEN for a lifecycle/kind; closed identities and links are immutable.
 Raw sources, digest and obligation history stay outside ordinary public snapshots/models.
+
+
+## 2026-10-24 — Handler episode slice-1 boundary conventions (round 34)
+
+The approved round-34 board assignment authorizes the spec despite its historical
+proposal header. The pure function is named buildHandlerJamEpisodes. Query windows
+are half-open; occurrence/reason conflicts for a repeated alarm identity and
+conflicting context at one instant are invalid rather than order-dependent.
+Missing occurrence counts once per identity; outside-window occurrences are ignored.
+Context observations are a carried-forward step function, requiring a fact at or
+before the window start. The current program must also match the supplied station
+program, just as site count must match. The one-minute estimate gate is evaluated
+before display rounding. All failed gates are preserved in documented order.
+
+Exact millisecond durations drive arithmetic; displayed minutes and estimated units
+round independently to nearest integer, and rates to two decimals. Episode durations
+can overlap, so only the station union is additive with planned/running time (display
+rounding can differ by a minute). Counts are accepted only on disjoint run intervals
+fully within or outside the query; crossing a boundary is invalid because the spec
+supplies no partial-interval count attribution. This avoids inventing prorated units.
+A missing/zero reference suppresses the estimate; suppressed deficitBasis is null.
+These conventions add no runtime route or mutation and do not infer jam causes.

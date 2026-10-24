@@ -47,6 +47,7 @@ one TypeScript type file; there is no build step.
 | `assignment-service.mjs` | Lower-level assignment record creation and participation history (shared math). |
 | `workforce-continuity.mjs` | Four-crew rotation, shift availability, rest/duty limits, queue-first priority, and synthetic responder provisioning. Owns `WORKFORCE_POLICY_VERSION`, `CREW_IDS`, `MIN_REST_HOURS`, `MAX_DUTY_HOURS`. |
 | `responder-location.mjs` | Deterministic responder positioning: move to an issue's equipment (role-seeded offset) or back to the duty station. |
+| `handler-jam-episodes.mjs` | Standalone pure alarm grouping, interval-union stopped time and gated reference-rate deficit estimates. No imports or runtime wiring. See [domain-model.md](domain-model.md). |
 | `loadboard-service.mjs` | Shared command adapter: strict client bodies, host simulation timestamps, serialized pure checkout/release and public responses. See [http-api.md](http-api.md). |
 | `consumable-obligations.mjs` | Pure explicit public ledger projection for the dedicated room GET, without evaluation or writes. |
 | `loadboards.mjs` | Pure, explicit public loadboard inventory projection for the room read endpoint; no clock, write or model calls. See [http-api.md](http-api.md). |
