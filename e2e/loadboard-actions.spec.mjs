@@ -32,6 +32,19 @@ const INITIAL_LOADBOARDS_PAYLOAD = {
 };
 
 test.describe("Loadboard check-out and release actions (F3 slice 2 UI)", () => {
+  // Checkout is gated on cell readiness (F8 slice 1); these flows assume a ready ATE-1 setup.
+  test.beforeEach(async ({ page }) => {
+    await page.route(/.*\/api\/control-rooms\/[^/]+\/cell-readiness.*/, (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        roomId: "plant-1",
+        asOf: "2026-10-24T12:00:00.000Z",
+        cells: [{ cellId: "ATE-1", readiness: "READY", reasons: [], instruments: [] }],
+      }),
+    }));
+  });
+
   test("checks out an available board with station and program selection, refreshes inventory and announces in live region", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
 
