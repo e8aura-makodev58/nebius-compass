@@ -1,4 +1,5 @@
 import { setHtml } from "./render-lifecycle.js";
+import { trapFocus } from "./focus-trap.js";
 
 /**
  * Station KPI panel: 3-hourly buckets in 12-hour windows.
@@ -673,6 +674,8 @@ export function initStationKpis({ element, request, escape, roomId, getState }) 
           panelState.filterOpen = false;
           dropdown.querySelector("summary")?.focus();
           e.stopPropagation();
+        } else if (e.key === "Tab" && dropdown.open) {
+          trapFocus(dropdown, e);
         }
       });
     }

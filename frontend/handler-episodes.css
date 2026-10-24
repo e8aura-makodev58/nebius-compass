@@ -224,7 +224,8 @@
 }
 
 .he-search-input:focus {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--accent);
 }
@@ -257,7 +258,8 @@
 }
 
 .he-classification-select:focus {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   box-shadow: var(--focus-ring);
   border-color: var(--accent);
 }

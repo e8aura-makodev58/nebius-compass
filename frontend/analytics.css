@@ -174,7 +174,7 @@ body.busy button { cursor: wait; }
 .pareto-bar rect { fill: var(--chart-1); opacity: .88; }
 .pareto-bar.drillable { cursor: pointer; }
 .pareto-bar.drillable:hover rect, .pareto-bar.drillable:focus-visible rect { opacity: 1; stroke: var(--accent-ink); stroke-width: 2; }
-.pareto-bar:focus { outline: none; }
+.pareto-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pareto-value { fill: var(--ink); font: 600 11px var(--font-sans); }
 .pareto-label { fill: var(--ink-2); font: 500 11px var(--font-sans); }
 .pareto-axis { fill: var(--ink-3); font: 500 10px var(--font-sans); }
@@ -187,7 +187,8 @@ body.busy button { cursor: wait; }
 .pareto-pie svg { width: min(240px, 100%); height: auto; }
 .pareto-slice { stroke: var(--paper-raised); stroke-width: 2; }
 .pareto-slice.drillable { cursor: pointer; }
-.pareto-slice.drillable:hover, .pareto-slice.drillable:focus-visible { opacity: .82; outline: none; }
+.pareto-slice.drillable:hover { opacity: .82; }
+.pareto-slice.drillable:focus-visible { opacity: .82; outline: 2px solid var(--accent); outline-offset: 2px; }
 .slice-0 { fill: var(--chart-1); background: var(--chart-1); } .slice-1 { fill: var(--chart-2); background: var(--chart-2); }
 .slice-2 { fill: var(--chart-3); background: var(--chart-3); } .slice-3 { fill: var(--chart-4); background: var(--chart-4); }
 .slice-4 { fill: var(--chart-5); background: var(--chart-5); } .slice-5 { fill: var(--chart-other); background: var(--chart-other); }

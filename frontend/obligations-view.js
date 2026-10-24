@@ -1,4 +1,5 @@
 import { setHtml } from "./render-lifecycle.js";
+import { trapFocus } from "./focus-trap.js";
 
 /**
  * Consumable life obligations panel (F1 slice 2 UI).
@@ -479,6 +480,14 @@ export function initObligations({ element, request, escape, roomId, getState }) 
         updateUI();
         element.querySelector(`.obl-action-btn[data-obligation-id="${obligationId}"]`)?.focus();
       });
+      btn.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && panelState.selectedObligationId === btn.dataset.obligationId) {
+          e.preventDefault();
+          panelState.selectedObligationId = null;
+          updateUI();
+          element.querySelector(`.obl-action-btn[data-obligation-id="${btn.dataset.obligationId}"]`)?.focus();
+        }
+      });
     });
 
     // Inspect detail drawer keyboard Escape
@@ -492,6 +501,8 @@ export function initObligations({ element, request, escape, roomId, getState }) 
           if (obligationId) {
             element.querySelector(`.obl-action-btn[data-obligation-id="${obligationId}"]`)?.focus();
           }
+        } else if (e.key === "Tab") {
+          trapFocus(drawer, e);
         }
       });
     });

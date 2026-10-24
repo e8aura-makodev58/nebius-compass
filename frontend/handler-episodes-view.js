@@ -1,4 +1,5 @@
 import { setHtml } from "./render-lifecycle.js";
+import { trapFocus } from "./focus-trap.js";
 
 /**
  * Handler jam episodes and throughput deficit panel (F4 UI).
@@ -556,6 +557,14 @@ export function initHandlerEpisodes({ element, request, escape, roomId, getState
         updateUI();
         element.querySelector(`.he-action-btn[data-episode-id="${episodeId}"]`)?.focus();
       });
+      btn.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && panelState.selectedEpisodeId === btn.dataset.episodeId) {
+          e.preventDefault();
+          panelState.selectedEpisodeId = null;
+          updateUI();
+          element.querySelector(`.he-action-btn[data-episode-id="${btn.dataset.episodeId}"]`)?.focus();
+        }
+      });
     });
 
     // Inspect detail drawer keyboard Escape
@@ -569,6 +578,8 @@ export function initHandlerEpisodes({ element, request, escape, roomId, getState
           if (episodeId) {
             element.querySelector(`.he-action-btn[data-episode-id="${episodeId}"]`)?.focus();
           }
+        } else if (e.key === "Tab") {
+          trapFocus(drawer, e);
         }
       });
     });

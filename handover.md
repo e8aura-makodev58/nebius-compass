@@ -1676,29 +1676,54 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 22:37 UTC
-- **Task:** Round 42: changeover readiness panel, stub-first against the round 42 read contract
-- **Head commit:** `9c900ed`
+- **Updated:** 2026-10-24 23:06 UTC
+- **Task:** Round 43: keyboard-only pass over all workspace panels (tab order, focus visibility, dialog focus return)
+- **Head commit:** `08f976e`
 - **Changes:**
-  - Added the **Changeover readiness** panel (`frontend/changeover-readiness-view.js`, `frontend/changeover-readiness.css`):
-    - Displays changeover metadata card (`changeoverId`, `cellId`, `targetProgramRevision`, `startsAt`, `status`) and one row/card per requirement check (`LOADBOARD_AVAILABLE`, `CELL_READY`, `KIT_AVAILABLE`, `CREW_QUALIFIED`) with explicit text results (`PASS`, `FAIL`, `UNKNOWN`), plain-text reasons, and assigned `boardId` on `PASS`.
-    - Adheres strictly to the rule that never color alone carries a result; all result and status badges render bold descriptive text meeting WCAG AA contrast (≥ 4.5:1).
-    - Displays unmet requirements panel listing reason codes and an explicit notice explaining kit and crew facts are not yet recorded in slice 1.
-    - Interactive changeover select dropdown (`CO-0031`, `CO-0032`, `CO-0033`) and manual refresh button with live announcer updates (`#co-live-announcer`).
-    - Built stub-first against read contract `GET /api/control-rooms/:roomId/changeovers/:changeoverId/readiness` with deterministic synthetic fallback, loading, empty, and forced-failure error/retry states.
-    - Registered in Dockview tiling layout (`frontend/tiling.js`), phone workspace navigation (`frontend/workspace-nav.js`), and HTML scaffold (`frontend/index.html`). Preserved legacy layout compatibility (`isLegacy6` through `isLegacy11`).
-    - Fully responsive between desktop table layout (≥901px) and mobile cards layout (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
-  - Added dedicated E2E test suite in `e2e/changeover-readiness.spec.mjs` (4/4 tests passing).
-- **Files changed:** `frontend/changeover-readiness-view.js`, `frontend/changeover-readiness.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/changeover-readiness.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`
+  - Completed workspace-wide keyboard-only accessibility pass across all 13 workspace panels (Staffing, Field reports/Investigation, Map, Issues, Events, Context/Dispatch, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness):
+    - Verified sequential tab order follows DOM reading order with zero positive `tabindex` attributes across all 13 panels.
+    - Enforced visible focus rings with `outline: 2px solid var(--accent)` (>= 2px outline width) and proper contrast across inputs, buttons, selects, and summary elements in `frontend/base.css`, `frontend/station-kpis.css`, `frontend/calibrations.css`, `frontend/loadboards.css`, `frontend/obligations.css`, `frontend/handler-episodes.css`, and `frontend/analytics.css`.
+    - Created reusable focus trapping utility `frontend/focus-trap.js` (`trapFocus(container, event)`) wrapping Tab / Shift+Tab within visible, non-disabled interactive elements.
+    - Wired accessible focus trapping, Escape dismiss, and trigger focus return across:
+      - Search palette (`#control-search-palette`): traps focus, closes on `Escape`, and restores focus to opener (`#open-control-search`).
+      - Ask Compass dialog (`#ask-dialog`): closes on `Escape` and restores focus to opener (`#open-ask`).
+      - Investigation case dialog (`.inv-case-dialog`): restores focus to case button trigger on close.
+      - Loadboards add drawer (`.lb-add-drawer`), inspect drawer (`.lb-detail-drawer`), and checkout form (`.lb-checkout-form`): trap focus, close on `Escape`, and restore focus to trigger buttons.
+      - Calibrations add drawer (`.cal-add-drawer`) and correlation add drawer (`.cal-add-corr-drawer`): trap focus, close on `Escape`, and restore focus to toggle buttons.
+      - Obligations inspect drawer (`.obl-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
+      - Handler episodes inspect drawer (`.he-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
+      - Station KPIs filter dropdown (`.kpi-filter-dropdown`): traps focus when open, closes on `Escape`, and restores focus to summary.
+      - Screen launcher menu (`.screen-launcher`): closes on `Escape` and restores focus to summary.
+      - Analytics drill-down panel (`#analytics-drill`): traps focus, closes on `Escape`, and restores focus to drill trigger button.
+  - Added comprehensive E2E test suite in `e2e/keyboard-pass-r43.spec.mjs` (11/11 tests passing) covering tab order across all 13 panels, outline width >= 2px, focus trapping, Escape dismissal, and trigger focus return.
+- **Files changed:**
+  - `frontend/focus-trap.js`
+  - `frontend/base.css`
+  - `frontend/analytics.css`
+  - `frontend/investigation.css`
+  - `frontend/station-kpis.css`
+  - `frontend/loadboards.css`
+  - `frontend/obligations.css`
+  - `frontend/handler-episodes.css`
+  - `frontend/app.js`
+  - `frontend/investigation-view.js`
+  - `frontend/loadboards-view.js`
+  - `frontend/calibrations-view.js`
+  - `frontend/obligations-view.js`
+  - `frontend/handler-episodes-view.js`
+  - `frontend/station-kpis-view.js`
+  - `e2e/keyboard-pass-r43.spec.mjs`
+  - `project-state/frontend/overview.md`
+  - `project-state/log.md`
+  - `handover.md`
 - **Verification:**
-  - `npm test`: 604/604 passing (hermetic, no network, no backend writes).
-  - Targeted unit/E2E: `tiling-layout.test.mjs` (4/4), `e2e/changeover-readiness.spec.mjs` (4/4), `e2e/station-kpi.spec.mjs` (5/5), `e2e/calibrations.spec.mjs` (7/7), `e2e/handler-episodes.spec.mjs` (11/11), `e2e/panel-audit-r39.spec.mjs` (6/6), `e2e/phone-audit.spec.mjs` (5/5) — all passing on port 3022.
-  - Full Chromium E2E suite (`COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`): 175/175 passing.
-  - Ports 3022 and 3122 confirmed completely free (`ss -ltn | grep -E ':3022|:3122'`).
-  - Strictly zero changes to `backend/`.
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`
-- **Risks / follow-ups:** None. Backend route for changeovers does not exist yet (as expected for slice 1), and stub-first synthetic fallback handles 404 gracefully.
-- **Questions for main:** Ready for merge review. Watcher remains active.
+  - `npm test`: 612/612 passed (hermetic, zero writes to `backend/data/`).
+  - Targeted E2E `e2e/keyboard-pass-r43.spec.mjs`: 11/11 passed on port 3022.
+  - Full Chromium E2E suite `npm run test:e2e`: 186/186 passed on port 3022.
+  - Ports 3022 and 3122 confirmed completely free (`ss -ltn`).
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** None. No backend files touched.
+- **Questions for main:** Ready for merge. Watcher remains active.
 
 ## codebuddy
 

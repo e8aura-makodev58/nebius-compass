@@ -82,6 +82,16 @@
   color: var(--ink);
 }
 
+.kpi-filter-dropdown summary:focus-visible,
+.kpi-filter-search input:focus-visible,
+.kpi-filter-actions button:focus-visible,
+.kpi-mode-btn:focus-visible,
+.kpi-refresh-btn:focus-visible,
+.kpi-window-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .kpi-filter-dropdown summary::-webkit-details-marker {
   display: none;
 }
