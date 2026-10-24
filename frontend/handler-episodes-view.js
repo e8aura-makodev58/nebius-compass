@@ -174,7 +174,7 @@ export function handlerEpisodesMarkup({ escape, panelState }) {
     <div class="handler-episodes-panel">
       <header class="he-header">
         <div>
-          <p class="eyebrow">Station Operations · F4</p>
+          <p class="eyebrow">ATE Setup Operations · F4</p>
           <h3 id="handler-episodes-heading">Handler Episodes</h3>
         </div>
         <div class="he-header-meta">

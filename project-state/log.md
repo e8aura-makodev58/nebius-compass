@@ -937,3 +937,22 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 40 (correlation records read endpoint) and gemini round 40 (correlation section in the Calibrations panel) as `08c3b58`. Verification: `npm test` 597/597; E2E 171/171 on port 3024. Deployed `08c3b58` healthy. GET-only smoke test: all endpoints 200.
 - Assigned round 41: codex handler jam inputs (append-only alarm, run and planned-stop entry) and the handler episodes read route; gemini ATE terminology pass on the new panels.
 - Pages updated: this log; handover.md merge log and assignments.
+
+## [2026-10-24] refactor — ATE terminology pass on Station KPIs and Handler episodes panels (round 41, gemini)
+- Performed terminology pass in visible labels only across Station KPIs and Handler episodes panels, matching `docs/design/station-kpi-panel.md` §1 where "station" refers to a physical ATE setup:
+  - In `frontend/station-kpis-view.js`:
+    - Updated eyebrow from "Station throughput" to "ATE setup throughput".
+    - Updated filter summary and trigger aria-label to "ATE setups (N of M)" and "Filter ATE setups".
+    - Updated station search input placeholder and aria-label to "Search ATE setups…" and "Search ATE setups".
+    - Updated options list aria-label and empty search label to "ATE setup list" and "No matching ATE setups".
+    - Updated empty state text to "No ATE setups selected" / "Select at least one ATE setup using the filter above…".
+    - Updated table column header from "Station" to "ATE setup".
+    - Updated desktop table footer and mobile totals card headers from "Totals (N station[s])" to "Totals (N ATE setup[s])".
+    - Kept panel title "Station KPIs", DOM IDs (`#station-kpi-heading`), data attributes (`data-station-id`, `data-kpi-station`), and CSS classes unchanged.
+  - In `frontend/handler-episodes-view.js`:
+    - Updated header eyebrow from "Station Operations · F4" to "ATE Setup Operations · F4".
+    - Preserved raw identifier rendering (`HANDLER-A`), `.he-station-badge`, and data attributes.
+  - In `e2e/station-kpi.spec.mjs`:
+    - Updated assertions matching visible text for totals summaries ("Totals (2 ATE setups)", "Totals (1 ATE setup)") and empty state ("No ATE setups selected").
+- Verification: `npm test` 597/597 passed; targeted E2E suites (`e2e/station-kpi.spec.mjs`, `e2e/handler-episodes.spec.mjs`, `e2e/panel-audit-r39.spec.mjs`, `e2e/phone-audit.spec.mjs`) 27/27 passed; full Chromium E2E suite 171/171 passed on port 3022. Port 3022 cleanly released.
+- Pages updated: project-state/frontend/overview.md; this log.

@@ -106,7 +106,7 @@ test.describe("Station KPI panel", () => {
     // Verify totals row
     const totalsRow = panel.locator(".kpi-totals-row");
     await expect(totalsRow).toBeVisible();
-    await expect(totalsRow).toContainText("Totals (2 stations)");
+    await expect(totalsRow).toContainText("Totals (2 ATE setups)");
 
     // No horizontal scroll at 1280px
     const fitsViewport = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
@@ -147,7 +147,7 @@ test.describe("Station KPI panel", () => {
     // Click None -> should render empty state
     await panel.locator(".kpi-action-none").click();
     await expect(panel.locator(".kpi-empty")).toBeVisible();
-    await expect(panel.locator(".kpi-empty")).toContainText("No stations selected");
+    await expect(panel.locator(".kpi-empty")).toContainText("No ATE setups selected");
     await expect(panel.locator(".kpi-table")).toBeHidden();
 
     // Click All -> restores table
@@ -162,7 +162,7 @@ test.describe("Station KPI panel", () => {
     await station1Checkbox.click();
     await expect(panel.locator('.kpi-table tbody tr[data-station-id="EQ-01"]')).toBeHidden();
     await expect(panel.locator('.kpi-table tbody tr[data-station-id="EQ-02"]')).toBeVisible();
-    await expect(panel.locator(".kpi-totals-row")).toContainText("Totals (1 station)");
+    await expect(panel.locator(".kpi-totals-row")).toContainText("Totals (1 ATE setup)");
 
     // Toggle off Station 2 checkbox -> back to empty state
     const station2Checkbox = panel.locator('input[data-kpi-station="EQ-02"]');
