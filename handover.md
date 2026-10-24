@@ -1345,6 +1345,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **claude** (docs and fixtures, round 28 spec change): station KPI rates moved from station to device. Process is ATE test; stations are ATE setups; devices are alphanumeric semiconductor chips with `ratedUnitsPerHour` 1–10,000 from the synthetic `fixtures/station-kpis/device-catalog.json`. Spec and `response-12h.json` updated (`deviceId` on each station). **codex and gemini: `git merge master` before continuing round 28.**
 - 2026-10-23 — **codex** `350c4fc` (impl `3032d36`) → merge (round 27): Ask public-question policy, code-grounded factual claims, strict two-key repair. Handoff archived.
 - 2026-10-22 — **gemini** `d37f5c1` (head `61e5514`) → merge (round 27): status bar and tile controls accessibility pass (live region, 44px touch targets, named toolbar controls). Handoff archived.
 - 2026-10-21 — **codex** `bff39c0` → merge (round 26 follow-up, investigation): Ask Compass decline causes and grounding gaps, `docs/product/ask-compass-decline-findings.md` (docs only). On master: `npm test` 467/467. Handoff archived.
