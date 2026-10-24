@@ -476,21 +476,153 @@
   font-weight: 600;
 }
 
+/* Correlation Records Section */
+.cal-corr-section {
+  margin-top: 24px;
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cal-corr-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cal-corr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 820px;
+}
+
+.cal-corr-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.cal-corr-note {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+  background: var(--paper-raised);
+  border-left: 3px solid var(--accent);
+  padding: 8px 12px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.cal-corr-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Add Correlation Drawer */
+.cal-add-corr-drawer {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Correlation Table */
+.cal-corr-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+
+.cal-corr-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.cal-corr-table th {
+  background: var(--paper-raised);
+  color: var(--ink-2);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.cal-corr-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule-subtle);
+  color: var(--ink);
+}
+
+.cal-corr-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cal-corr-table tbody tr:hover {
+  background: var(--selection-hover);
+}
+
+/* Correlation Badges */
+.cal-badge-pass {
+  background: #166534;
+  color: #fff;
+}
+
+.cal-badge-fail {
+  background: #991b1b;
+  color: #fff;
+}
+
+.cal-badge-inconclusive {
+  background: #854d0e;
+  color: #fff;
+}
+
+/* Correlation Cards (Mobile) */
+.cal-corr-cards-list {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* Responsive adjustments for mobile <= 900px */
 @media (max-width: 900px) {
-  .cal-table-container {
+  .cal-table-container,
+  .cal-corr-table-container {
     display: none;
   }
 
-  .cal-cards-list {
+  .cal-cards-list,
+  .cal-corr-cards-list {
     display: flex;
   }
 
   .cal-toggle-add-btn,
+  .cal-toggle-add-corr-btn,
   .cal-refresh-btn,
   .cal-submit-btn,
+  .cal-submit-corr-btn,
   .cal-cancel-form-btn,
+  .cal-cancel-corr-btn,
   .cal-close-form-btn,
+  .cal-close-corr-form-btn,
   .cal-reset-filters-btn,
   .cal-retry-button {
     min-height: 44px;

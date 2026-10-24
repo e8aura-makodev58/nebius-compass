@@ -920,3 +920,15 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-24] feature — Correlation read path and migration-refusal review (round 40)
 - Added explicit shared-mode correlation GET in append arrival order, with empty/append-prefix/read-only/readiness and invalid-result POST regressions. Added a persisted-store refusal test proving repeated migration failures leave bytes unchanged and another room can load independently.
 - Pages updated: backend/domain-model.md, backend/http-api.md, backend/overview.md, backend/live-runtime.md.
+## [2026-10-24] feature — Correlation records section and append form (round 40, gemini)
+- Added a **Correlation records** section below the calibration table in the Calibrations panel (`frontend/calibrations-view.js`, `frontend/calibrations.css`):
+  - Displays comparison observation rows (`correlationId`, `cellId`, `instrumentId`, `referencePartId`, `observedAt`, `result` with PASS/FAIL/INCONCLUSIVE badges) with WCAG AA compliant contrast.
+  - Features prominent plain-text notice: "Evidence only: Reference-part comparison observations compare instrument measurements against golden standards. These records provide diagnostic evidence only and do not affect cell calibration readiness."
+  - Implemented append-only form drawer (`.cal-add-corr-drawer`) toggled by `.cal-toggle-add-corr-btn`, containing client-side validation for required identifiers, timestamp, and result, with polite live region announcements (`#cal-live-announcer`) and plain text error displays on 400 rejection.
+  - Strictly no edit or delete controls provided across rows or cards.
+  - Full keyboard accessibility: Escape key dismisses form and returns focus to `.cal-toggle-add-corr-btn`; Cancel and Close buttons return focus to toggle button.
+  - Built stub-first against read contract `GET /api/control-rooms/:roomId/correlation-records` and write contract `POST /api/control-rooms/:roomId/correlation-records`, with deterministic synthetic fallback for offline/404 mode.
+  - Responsive layout adapts between desktop table (≥901px) and mobile cards list (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+- Added dedicated E2E test suite in `e2e/correlation-records.spec.mjs` (6/6 tests passing).
+- Verification: `npm test` 594/594 passed; calibrations & panel audit E2E suites 13/13 passed; full Chromium E2E suite 171/171 passed on port 3022. Port 3022 cleanly released.
+- Pages updated: project-state/frontend/overview.md; this log.

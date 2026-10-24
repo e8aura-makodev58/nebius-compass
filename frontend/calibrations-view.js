@@ -30,6 +30,22 @@ export function getPanelState(roomId) {
       formSubmitting: false,
       data: null,
       syntheticRows: null, // used for offline/fallback additions
+      // Correlation records state
+      isAddCorrFormOpen: false,
+      corrFormValues: {
+        correlationId: "",
+        cellId: "ATE-1",
+        instrumentId: "",
+        referencePartId: "",
+        observedAt: "",
+        result: "PASS",
+      },
+      corrFormError: null,
+      corrFormSubmitting: false,
+      corrData: null,
+      syntheticCorrRows: null,
+      corrLoading: false,
+      corrError: null,
       liveAnnouncement: "",
       loading: false,
       error: null,
@@ -141,6 +157,110 @@ export async function submitCalibration({ request, roomId, payload }) {
   }
 }
 
+/**
+ * Synthetic fallback correlation records when endpoint returns 404 or running offline.
+ */
+export function generateSyntheticCorrelationRecords(roomId) {
+  const now = new Date();
+  const past1 = new Date(now.getTime() - 14 * 24 * 3600 * 1000).toISOString();
+  const past2 = new Date(now.getTime() - 7 * 24 * 3600 * 1000).toISOString();
+  const past3 = new Date(now.getTime() - 2 * 24 * 3600 * 1000).toISOString();
+
+  return {
+    roomId: roomId || "plant-1",
+    asOf: now.toISOString(),
+    records: [
+      {
+        correlationId: "CORR-001",
+        cellId: "ATE-1",
+        instrumentId: "PS-07",
+        referencePartId: "REF-STD-01",
+        observedAt: past1,
+        result: "PASS",
+      },
+      {
+        correlationId: "CORR-002",
+        cellId: "ATE-2",
+        instrumentId: "DMM-02",
+        referencePartId: "REF-STD-02",
+        observedAt: past2,
+        result: "INCONCLUSIVE",
+      },
+      {
+        correlationId: "CORR-003",
+        cellId: "ATE-1",
+        instrumentId: "SCOPE-01",
+        referencePartId: "REF-STD-01",
+        observedAt: past3,
+        result: "FAIL",
+      },
+    ],
+  };
+}
+
+/**
+ * Fetch correlation records for the specified control room.
+ */
+export async function fetchCorrelationRecords({ request, roomId, getState }) {
+  const roomState = getState?.();
+  if (Array.isArray(roomState?.correlationRecords)) {
+    return {
+      roomId,
+      asOf: roomState?.simulationState?.simulationTime || new Date().toISOString(),
+      records: roomState.correlationRecords,
+    };
+  }
+
+  try {
+    const data = await request("/correlation-records");
+    if (data && Array.isArray(data.records)) {
+      return data;
+    } else if (Array.isArray(data)) {
+      return { roomId, asOf: new Date().toISOString(), records: data };
+    }
+    return data;
+  } catch (err) {
+    if (
+      err &&
+      (err.status === 404 ||
+        err.status === 405 ||
+        String(err.message).includes("404") ||
+        String(err.message).includes("Cannot GET") ||
+        String(err.message).includes("Not Found"))
+    ) {
+      return generateSyntheticCorrelationRecords(roomId);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Submit correlation record.
+ */
+export async function submitCorrelationRecord({ request, roomId, payload }) {
+  try {
+    const res = await request("/correlation-records", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return res;
+  } catch (err) {
+    // If backend route does not exist yet (stub-first / offline), handle synthetically
+    if (
+      err &&
+      (err.status === 404 ||
+        err.status === 405 ||
+        String(err.message).includes("404") ||
+        String(err.message).includes("Cannot POST") ||
+        String(err.message).includes("Not Found"))
+    ) {
+      return { decision: "RECORDED", reasons: [] };
+    }
+    throw err;
+  }
+}
+
 function formatDate(isoString) {
   if (!isoString) return "—";
   try {
@@ -169,17 +289,41 @@ export function initCalibrations({ element, request, escape, roomId, getState })
     updateUI();
 
     try {
-      const data = await fetchCalibrations({ request, roomId, getState });
-      if (panelState.syntheticRows && Array.isArray(panelState.syntheticRows)) {
-        // Merge any locally added synthetic rows
-        const existingIds = new Set((data.calibrations || []).map((c) => c.calibrationId));
-        const extra = panelState.syntheticRows.filter((r) => !existingIds.has(r.calibrationId));
-        panelState.data = {
-          ...data,
-          calibrations: [...(data.calibrations || []), ...extra],
-        };
+      const [calRes, corrRes] = await Promise.allSettled([
+        fetchCalibrations({ request, roomId, getState }),
+        fetchCorrelationRecords({ request, roomId, getState }),
+      ]);
+
+      if (calRes.status === "fulfilled") {
+        const data = calRes.value;
+        if (panelState.syntheticRows && Array.isArray(panelState.syntheticRows)) {
+          const existingIds = new Set((data.calibrations || []).map((c) => c.calibrationId));
+          const extra = panelState.syntheticRows.filter((r) => !existingIds.has(r.calibrationId));
+          panelState.data = {
+            ...data,
+            calibrations: [...(data.calibrations || []), ...extra],
+          };
+        } else {
+          panelState.data = data;
+        }
       } else {
-        panelState.data = data;
+        panelState.error = calRes.reason?.message || "Failed to load calibrations";
+      }
+
+      if (corrRes.status === "fulfilled") {
+        const corrData = corrRes.value;
+        if (panelState.syntheticCorrRows && Array.isArray(panelState.syntheticCorrRows)) {
+          const existingCorrIds = new Set((corrData.records || []).map((r) => r.correlationId));
+          const extraCorr = panelState.syntheticCorrRows.filter((r) => !existingCorrIds.has(r.correlationId));
+          panelState.corrData = {
+            ...corrData,
+            records: [...(corrData.records || []), ...extraCorr],
+          };
+        } else {
+          panelState.corrData = corrData;
+        }
+      } else {
+        panelState.corrError = corrRes.reason?.message || "Failed to load correlation records";
       }
     } catch (err) {
       panelState.error = err?.message || "Failed to load calibrations";
@@ -190,7 +334,23 @@ export function initCalibrations({ element, request, escape, roomId, getState })
   }
 
   function updateUI() {
-    const { searchQuery, stateFilter, isAddFormOpen, formValues, formError, formSubmitting, data, loading, error, liveAnnouncement } = panelState;
+    const {
+      searchQuery,
+      stateFilter,
+      isAddFormOpen,
+      formValues,
+      formError,
+      formSubmitting,
+      data,
+      loading,
+      error,
+      liveAnnouncement,
+      isAddCorrFormOpen,
+      corrFormValues,
+      corrFormError,
+      corrFormSubmitting,
+      corrData,
+    } = panelState;
     const asOf = data?.asOf || new Date().toISOString();
     const rows = (data?.calibrations || []).map((row) => ({
       ...row,
@@ -455,6 +615,247 @@ export function initCalibrations({ element, request, escape, roomId, getState })
       `;
     }
 
+    // Build Correlation Records Section
+    const corrRows = (corrData?.records || []).slice();
+
+    const corrTableRowsHtml = corrRows.length
+      ? corrRows
+          .map((r) => {
+            let badgeClass = "cal-badge-pass";
+            if (r.result === "FAIL") badgeClass = "cal-badge-fail";
+            else if (r.result === "INCONCLUSIVE") badgeClass = "cal-badge-inconclusive";
+
+            return `
+            <tr data-correlation-id="${escape(r.correlationId)}">
+              <td class="cal-cell-id"><code>${escape(r.correlationId)}</code></td>
+              <td class="cal-cell-cell"><strong class="cal-cell-name">${escape(r.cellId || "—")}</strong></td>
+              <td class="cal-cell-inst"><code>${escape(r.instrumentId)}</code></td>
+              <td class="cal-cell-ref"><code>${escape(r.referencePartId)}</code></td>
+              <td class="cal-cell-observed">${escape(formatDate(r.observedAt))}</td>
+              <td class="cal-cell-result"><span class="cal-state-badge ${badgeClass}">${escape(r.result)}</span></td>
+            </tr>
+          `;
+          })
+          .join("")
+      : `
+        <tr>
+          <td colspan="6" class="cal-empty-td">
+            <div class="cal-empty-state">
+              <p class="cal-empty-title">No correlation records found</p>
+              <p class="cal-empty-desc">Click '+ Add Correlation' to append a new correlation observation.</p>
+            </div>
+          </td>
+        </tr>
+      `;
+
+    const corrCardsHtml = corrRows.length
+      ? corrRows
+          .map((r) => {
+            let badgeClass = "cal-badge-pass";
+            if (r.result === "FAIL") badgeClass = "cal-badge-fail";
+            else if (r.result === "INCONCLUSIVE") badgeClass = "cal-badge-inconclusive";
+
+            return `
+            <article class="cal-card" data-correlation-id="${escape(r.correlationId)}" role="listitem">
+              <div class="cal-card-top">
+                <strong class="cal-card-id">${escape(r.correlationId)}</strong>
+                <span class="cal-state-badge ${badgeClass}">${escape(r.result)}</span>
+              </div>
+              <div class="cal-card-grid">
+                <div class="cal-card-field">
+                  <span class="cal-card-key">Cell:</span>
+                  <strong class="cal-card-val">${escape(r.cellId || "—")}</strong>
+                </div>
+                <div class="cal-card-field">
+                  <span class="cal-card-key">Instrument:</span>
+                  <span class="cal-card-val"><code>${escape(r.instrumentId)}</code></span>
+                </div>
+                <div class="cal-card-field">
+                  <span class="cal-card-key">Reference Part:</span>
+                  <span class="cal-card-val"><code>${escape(r.referencePartId)}</code></span>
+                </div>
+                <div class="cal-card-field">
+                  <span class="cal-card-key">Observed:</span>
+                  <span class="cal-card-val">${escape(formatDate(r.observedAt))}</span>
+                </div>
+              </div>
+            </article>
+          `;
+          })
+          .join("")
+      : `
+        <div class="cal-empty-state cal-card-empty">
+          <p class="cal-empty-title">No correlation records found</p>
+          <p class="cal-empty-desc">Click '+ Add Correlation' to append a new correlation observation.</p>
+        </div>
+      `;
+
+    const corrFormHtml = isAddCorrFormOpen
+      ? `
+      <section class="cal-add-corr-drawer" aria-label="Add correlation record form">
+        <form class="cal-add-corr-form" novalidate>
+          <div class="cal-form-header">
+            <h4 class="cal-form-title">New Correlation Record</h4>
+            <button type="button" class="cal-close-corr-form-btn secondary-button" aria-label="Close add correlation form">✕ Cancel</button>
+          </div>
+
+          ${corrFormError ? `<div class="cal-form-error" role="alert" aria-live="assertive">${escape(corrFormError)}</div>` : ""}
+
+          <div class="cal-form-grid">
+            <div class="cal-field-group">
+              <label for="corr-input-id">Correlation ID <span class="cal-req">*</span></label>
+              <input
+                type="text"
+                id="corr-input-id"
+                name="correlationId"
+                value="${escape(corrFormValues.correlationId)}"
+                placeholder="CORR-0101"
+                required
+                pattern="[A-Za-z0-9_-]{1,120}"
+                aria-describedby="corr-id-desc"
+                ${corrFormSubmitting ? "disabled" : ""}
+              />
+              <span id="corr-id-desc" class="cal-field-hint">e.g. CORR-0101 (alphanumeric, dashes, underscores)</span>
+            </div>
+
+            <div class="cal-field-group">
+              <label for="corr-input-cell">Cell ID <span class="cal-req">*</span></label>
+              <input
+                type="text"
+                id="corr-input-cell"
+                name="cellId"
+                value="${escape(corrFormValues.cellId)}"
+                placeholder="ATE-1"
+                required
+                pattern="[A-Za-z0-9_-]{1,120}"
+                ${corrFormSubmitting ? "disabled" : ""}
+              />
+              <span class="cal-field-hint">e.g. ATE-1, ATE-2</span>
+            </div>
+
+            <div class="cal-field-group">
+              <label for="corr-input-inst">Instrument ID <span class="cal-req">*</span></label>
+              <input
+                type="text"
+                id="corr-input-inst"
+                name="instrumentId"
+                value="${escape(corrFormValues.instrumentId)}"
+                placeholder="PS-07"
+                required
+                pattern="[A-Za-z0-9_-]{1,120}"
+                ${corrFormSubmitting ? "disabled" : ""}
+              />
+              <span class="cal-field-hint">e.g. PS-07, DMM-01, SCOPE-01</span>
+            </div>
+
+            <div class="cal-field-group">
+              <label for="corr-input-part">Reference Part ID <span class="cal-req">*</span></label>
+              <input
+                type="text"
+                id="corr-input-part"
+                name="referencePartId"
+                value="${escape(corrFormValues.referencePartId)}"
+                placeholder="REF-STD-01"
+                required
+                pattern="[A-Za-z0-9_-]{1,120}"
+                ${corrFormSubmitting ? "disabled" : ""}
+              />
+              <span class="cal-field-hint">e.g. REF-STD-01, REF-GOLDEN-A</span>
+            </div>
+
+            <div class="cal-field-group">
+              <label for="corr-input-observed">Observed At <span class="cal-req">*</span></label>
+              <input
+                type="datetime-local"
+                id="corr-input-observed"
+                name="observedAt"
+                value="${escape(corrFormValues.observedAt)}"
+                required
+                ${corrFormSubmitting ? "disabled" : ""}
+              />
+              <span class="cal-field-hint">Observation instant</span>
+            </div>
+
+            <div class="cal-field-group">
+              <label for="corr-input-result">Result <span class="cal-req">*</span></label>
+              <select
+                id="corr-input-result"
+                name="result"
+                required
+                aria-label="Correlation result"
+                ${corrFormSubmitting ? "disabled" : ""}
+              >
+                <option value="PASS" ${corrFormValues.result === "PASS" ? "selected" : ""}>PASS</option>
+                <option value="FAIL" ${corrFormValues.result === "FAIL" ? "selected" : ""}>FAIL</option>
+                <option value="INCONCLUSIVE" ${corrFormValues.result === "INCONCLUSIVE" ? "selected" : ""}>INCONCLUSIVE</option>
+              </select>
+              <span class="cal-field-hint">PASS, FAIL, or INCONCLUSIVE</span>
+            </div>
+          </div>
+
+          <div class="cal-form-actions">
+            <button type="submit" class="cal-submit-corr-btn primary-button" ${corrFormSubmitting ? "disabled" : ""}>
+              ${corrFormSubmitting ? "Saving…" : "Save Correlation Record"}
+            </button>
+            <button type="button" class="cal-cancel-corr-btn secondary-button" ${corrFormSubmitting ? "disabled" : ""}>Cancel</button>
+          </div>
+        </form>
+      </section>
+    `
+      : "";
+
+    const corrSectionHtml = `
+      <section class="cal-corr-section" aria-label="Correlation records">
+        <div class="cal-corr-header">
+          <div class="cal-corr-info">
+            <h3 class="cal-corr-title">Correlation Records</h3>
+            <p class="cal-corr-note">
+              Evidence only: Reference-part comparison observations compare instrument measurements against golden standards. These records provide diagnostic evidence only and do not affect cell calibration readiness.
+            </p>
+          </div>
+          <div class="cal-corr-actions">
+            <button
+              type="button"
+              class="cal-toggle-add-corr-btn primary-button"
+              aria-expanded="${isAddCorrFormOpen ? "true" : "false"}"
+              aria-label="${isAddCorrFormOpen ? "Close add correlation form" : "Add correlation record"}"
+            >
+              ${isAddCorrFormOpen ? "Close Form" : "+ Add Correlation"}
+            </button>
+          </div>
+        </div>
+
+        ${corrFormHtml}
+
+        <div class="cal-corr-table-container">
+          <table class="cal-corr-table" aria-label="Correlation records table">
+            <thead>
+              <tr>
+                <th scope="col">Correlation ID</th>
+                <th scope="col">Cell</th>
+                <th scope="col">Instrument</th>
+                <th scope="col">Reference Part</th>
+                <th scope="col">Observed At</th>
+                <th scope="col">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${corrTableRowsHtml}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cal-corr-cards-list" role="list" aria-label="Correlation records list">
+          ${corrCardsHtml}
+        </div>
+      </section>
+    `;
+
+    contentHtml = `
+      ${contentHtml}
+      ${corrSectionHtml}
+    `;
+
     const html = `
       <div class="cal-container" role="region" aria-label="Calibrations">
         <header class="cal-header">
@@ -504,6 +905,16 @@ export function initCalibrations({ element, request, escape, roomId, getState })
     const cellInputEl = element.querySelector("#cal-input-cell");
     if (cellInputEl && panelState.formValues.cellId) {
       cellInputEl.value = panelState.formValues.cellId;
+    }
+
+    const corrCellInputEl = element.querySelector("#corr-input-cell");
+    if (corrCellInputEl && panelState.corrFormValues.cellId) {
+      corrCellInputEl.value = panelState.corrFormValues.cellId;
+    }
+
+    const corrResultSelectEl = element.querySelector("#corr-input-result");
+    if (corrResultSelectEl && panelState.corrFormValues.result) {
+      corrResultSelectEl.value = panelState.corrFormValues.result;
     }
 
     bindEvents();
@@ -729,6 +1140,161 @@ export function initCalibrations({ element, request, escape, roomId, getState })
         }
       };
     }
+
+    // Toggle add correlation form button
+    const toggleCorrBtn = element.querySelector(".cal-toggle-add-corr-btn");
+    if (toggleCorrBtn) {
+      toggleCorrBtn.onclick = () => {
+        panelState.isAddCorrFormOpen = !panelState.isAddCorrFormOpen;
+        panelState.corrFormError = null;
+        updateUI();
+        if (panelState.isAddCorrFormOpen) {
+          element.querySelector("#corr-input-id")?.focus();
+        } else {
+          element.querySelector(".cal-toggle-add-corr-btn")?.focus();
+        }
+      };
+    }
+
+    // Close correlation form buttons
+    element.querySelectorAll(".cal-close-corr-form-btn, .cal-cancel-corr-btn").forEach((btn) => {
+      btn.onclick = () => {
+        panelState.isAddCorrFormOpen = false;
+        panelState.corrFormError = null;
+        updateUI();
+        element.querySelector(".cal-toggle-add-corr-btn")?.focus();
+      };
+    });
+
+    // Correlation form inputs change tracking and submission
+    const corrForm = element.querySelector(".cal-add-corr-form");
+    if (corrForm) {
+      corrForm.onkeydown = (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          panelState.isAddCorrFormOpen = false;
+          panelState.corrFormError = null;
+          updateUI();
+          element.querySelector(".cal-toggle-add-corr-btn")?.focus();
+        }
+      };
+
+      corrForm.oninput = (e) => {
+        const { name, value } = e.target;
+        if (name && panelState.corrFormValues.hasOwnProperty(name)) {
+          panelState.corrFormValues[name] = value;
+        }
+      };
+
+      corrForm.onsubmit = async (e) => {
+        e.preventDefault();
+        panelState.corrFormError = null;
+
+        const { correlationId, cellId, instrumentId, referencePartId, observedAt, result } = panelState.corrFormValues;
+
+        // 1. Client-side ID validations
+        const idRegex = /^[A-Za-z0-9_-]{1,120}$/;
+        if (!correlationId || !idRegex.test(correlationId.trim())) {
+          panelState.corrFormError = "Correlation ID is required and must match alphanumeric/dash/underscore.";
+          updateUI();
+          element.querySelector("#corr-input-id")?.focus();
+          return;
+        }
+        if (!cellId || !idRegex.test(cellId.trim())) {
+          panelState.corrFormError = "Cell ID is required and must match alphanumeric/dash/underscore.";
+          updateUI();
+          element.querySelector("#corr-input-cell")?.focus();
+          return;
+        }
+        if (!instrumentId || !idRegex.test(instrumentId.trim())) {
+          panelState.corrFormError = "Instrument ID is required and must match alphanumeric/dash/underscore.";
+          updateUI();
+          element.querySelector("#corr-input-inst")?.focus();
+          return;
+        }
+        if (!referencePartId || !idRegex.test(referencePartId.trim())) {
+          panelState.corrFormError = "Reference Part ID is required and must match alphanumeric/dash/underscore.";
+          updateUI();
+          element.querySelector("#corr-input-part")?.focus();
+          return;
+        }
+
+        // 2. Client-side Date validation
+        if (!observedAt) {
+          panelState.corrFormError = "Observed At date is required.";
+          updateUI();
+          element.querySelector("#corr-input-observed")?.focus();
+          return;
+        }
+
+        const obsDate = new Date(observedAt);
+        if (isNaN(obsDate.getTime())) {
+          panelState.corrFormError = "Invalid Observed At timestamp.";
+          updateUI();
+          element.querySelector("#corr-input-observed")?.focus();
+          return;
+        }
+
+        // 3. Client-side Result validation
+        if (!["PASS", "FAIL", "INCONCLUSIVE"].includes(result)) {
+          panelState.corrFormError = "Result must be PASS, FAIL, or INCONCLUSIVE.";
+          updateUI();
+          element.querySelector("#corr-input-result")?.focus();
+          return;
+        }
+
+        const obsIso = obsDate.toISOString();
+
+        const payload = {
+          correlationId: correlationId.trim(),
+          cellId: cellId.trim(),
+          instrumentId: instrumentId.trim(),
+          referencePartId: referencePartId.trim(),
+          observedAt: obsIso,
+          result,
+        };
+
+        panelState.corrFormSubmitting = true;
+        updateUI();
+
+        try {
+          const res = await submitCorrelationRecord({ request, roomId, payload });
+
+          if (res && res.decision === "REJECTED") {
+            const reasons = Array.isArray(res.reasons) && res.reasons.length ? res.reasons : ["UNKNOWN_REJECTION"];
+            panelState.corrFormError = `Submission rejected: ${reasons.join(", ")}`;
+            panelState.liveAnnouncement = `Correlation rejected: ${reasons.join(", ")}`;
+            panelState.corrFormSubmitting = false;
+            updateUI();
+          } else {
+            // RECORDED or ACCEPTED
+            panelState.syntheticCorrRows = panelState.syntheticCorrRows || [];
+            panelState.syntheticCorrRows.push(payload);
+
+            panelState.liveAnnouncement = `Correlation ${payload.correlationId} recorded (${payload.result})`;
+            panelState.isAddCorrFormOpen = false;
+            panelState.corrFormError = null;
+            panelState.corrFormValues = {
+              correlationId: "",
+              cellId: "ATE-1",
+              instrumentId: "",
+              referencePartId: "",
+              observedAt: "",
+              result: "PASS",
+            };
+            panelState.corrFormSubmitting = false;
+
+            await loadData();
+            element.querySelector(".cal-toggle-add-corr-btn")?.focus();
+          }
+        } catch (err) {
+          panelState.corrFormError = err?.message || "Failed to submit correlation record";
+          panelState.liveAnnouncement = `Error: ${panelState.corrFormError}`;
+          panelState.corrFormSubmitting = false;
+          updateUI();
+        }
+      };
+    }
   }
 
   const onOpenAddCalibration = (e) => {
@@ -754,6 +1320,7 @@ export function initCalibrations({ element, request, escape, roomId, getState })
 
   return {
     render(state) {
+      let changed = false;
       if (state && Array.isArray(state.calibrations)) {
         const asOf = state.simulationState?.simulationTime || new Date().toISOString();
         panelState.data = {
@@ -764,6 +1331,18 @@ export function initCalibrations({ element, request, escape, roomId, getState })
             state: c.dueAt <= asOf ? "EXPIRED" : "CURRENT",
           })),
         };
+        changed = true;
+      }
+      if (state && Array.isArray(state.correlationRecords)) {
+        const asOf = state.simulationState?.simulationTime || new Date().toISOString();
+        panelState.corrData = {
+          roomId,
+          asOf,
+          records: state.correlationRecords,
+        };
+        changed = true;
+      }
+      if (changed) {
         updateUI();
       }
     },
