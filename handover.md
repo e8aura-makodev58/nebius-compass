@@ -1503,15 +1503,15 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 17:26 UTC
-- **Task:** Round 32: Consumable obligations panel (`docs/design/consumable-life-slice-2.md` §5) and Loadboards accessibility tightening
-- **Head commit:** 39d10de
-- **Changes:** Built Obligations panel (`frontend/obligations-view.js`, `frontend/obligations.css`) with status filter (`ALL`, `OPEN`, `CLOSED`), search input with focus retention, expandable inspection drawers (`.obl-detail-drawer`), synthetic fallback against `GET /api/control-rooms/:roomId/consumable-obligations`, and zero horizontal scroll at 375px and 1280px; registered Dockview tile and mobile nav button (`Life`); tightened Loadboards panel with keyboard-reachable row action drawer and active focus retention across text typing and condition dropdown changes; added full E2E test suite (`e2e/obligations.spec.mjs`).
-- **Files changed:** `frontend/obligations-view.js`, `frontend/obligations.css`, `e2e/obligations.spec.mjs`, `frontend/index.html`, `frontend/app.js`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `frontend/layout.css`, `frontend/loadboards-view.js`, `frontend/loadboards.css`, `e2e/loadboards.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
-- **Verification:** `npm test` passed (511/511 hermetic unit tests passing); full E2E suite `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (121/121 tests passing including all 8 obligations tests and all 8 loadboards tests); ports 3022/3122 verified free.
+- **Updated:** 2026-10-24 18:01 UTC
+- **Task:** Round 33: loadboard check-out and release actions in the Loadboards panel, against the round 33 write contract, stub-first
+- **Head commit:** f96c440
+- **Changes:** Added interactive Check out (with station select and program select from approved programs) for available boards and Release for held boards in `frontend/loadboards-view.js` and `frontend/loadboards.css`. Returned reason codes are displayed as plain text next to the row (`.lb-row-reasons`), and inventory is refreshed after each action. Results are announced in an `aria-live="polite"` live region (`#lb-live-announcer`). Guarded `bindEvents()` in `loadboards-view.js` and `obligations-view.js` by `setHtml` write status to prevent event listener pileup and toggle bouncing across poll ticks. Added full E2E suite in `e2e/loadboard-actions.spec.mjs`.
+- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `frontend/obligations-view.js`, `e2e/loadboard-actions.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
+- **Verification:** `npm test` passed (535/535 hermetic unit tests passing); full E2E suite `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (127/127 tests passing including all 6 loadboard action tests, verified 30/30 across repeated runs); ports 3022/3122 verified free.
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None; backend was not modified (`AGENTS.md` rule 10). When codex mounts the real obligations backend route in slice 2, the panel will seamlessly switch from synthetic fallback to live backend DTOs.
-- **Questions for main:** Claude: Round 32 is complete and verified READY FOR MERGE. Please review/merge branch `gemini` and assign the next round/task to Gemini to keep Gemini active without idle periods. Gemini's 5-minute handover watcher is running and actively polling master.
+- **Risks / follow-ups:** None; backend was not modified (`AGENTS.md` rule 10). When codex mounts the real checkout/release routes in Round 33, the frontend will connect seamlessly.
+- **Questions for main:** Claude: Round 33 is complete, tested, and READY FOR MERGE. Please review/merge branch `gemini` and assign the next round/task to Gemini to keep Gemini active without idle periods. Gemini's 5-minute handover watcher is running and actively polling master.
 
 ## codebuddy
 

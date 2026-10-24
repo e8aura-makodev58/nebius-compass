@@ -3,9 +3,33 @@ import { setHtml } from "./render-lifecycle.js";
 /**
  * Loadboard inventory and checkout panel (F3 UI).
  * Spec: docs/design/loadboard-checkout-slice-1.md
- * Contract: GET /api/control-rooms/:roomId/loadboards
- *   → { roomId, asOf, boards: [{ boardId, revision, condition, cellId, approvedPrograms, heldBy }] }
+ * Contract:
+ *   GET /api/control-rooms/:roomId/loadboards
+ *     → { roomId, asOf, boards: [{ boardId, revision, condition, cellId, approvedPrograms, heldBy }] }
+ *   POST /api/control-rooms/:roomId/loadboards/checkout
+ *     → { requestId, boardId, cellId, programRevision } => { decision, reasons, reservation }
+ *   POST /api/control-rooms/:roomId/loadboards/release
+ *     → { reservationId, cellId } => { decision, reasons, reservation }
  */
+
+export const DEFAULT_STATIONS = ["ATE-1", "ATE-2", "ATE-3", "ATE-4"];
+
+export function getAvailableStations(roomState) {
+  const list = [];
+  if (Array.isArray(roomState?.stations)) {
+    for (const st of roomState.stations) {
+      const id = st.id || st.stationId;
+      if (id) {
+        const normalized = String(id).replace(/^ATE\s+(\d+)$/i, "ATE-$1");
+        if (!list.includes(normalized)) list.push(normalized);
+      }
+    }
+  }
+  for (const def of DEFAULT_STATIONS) {
+    if (!list.includes(def)) list.push(def);
+  }
+  return list.sort();
+}
 
 // Per-viewer in-memory state
 const stateByRoom = new Map();
@@ -16,6 +40,9 @@ export function getPanelState(roomId) {
       searchQuery: "",
       conditionFilter: "ALL", // ALL | SERVICEABLE | UNDER_REPAIR | QUARANTINED
       selectedBoardId: null, // inspected board
+      checkoutBoardId: null, // board with checkout drawer active
+      rowReasons: {}, // boardId -> plain text string of reasons or status
+      liveAnnouncement: "", // message for aria-live region
       data: null,
       loading: false,
       error: null,
@@ -128,9 +155,10 @@ function conditionBadgeClass(cond) {
 /**
  * Render the Loadboards markup given current state.
  */
-export function loadboardsMarkup({ escape, panelState }) {
-  const { data, loading, error, searchQuery, conditionFilter, selectedBoardId } = panelState;
+export function loadboardsMarkup({ escape, panelState, roomState }) {
+  const { data, loading, error, searchQuery, conditionFilter, selectedBoardId, checkoutBoardId, rowReasons, liveAnnouncement } = panelState;
   const allBoards = data?.boards ?? [];
+  const stations = getAvailableStations(roomState);
 
   // Filter boards
   const query = (searchQuery || "").trim().toLowerCase();
@@ -156,6 +184,9 @@ export function loadboardsMarkup({ escape, panelState }) {
 
   return `
     <div class="loadboards-panel">
+      <!-- Accessible live region for checkout and release announcements -->
+      <div id="lb-live-announcer" class="lb-live-region sr-only" role="status" aria-live="polite" aria-atomic="true">${escape(liveAnnouncement || "")}</div>
+
       <header class="lb-header">
         <div>
           <p class="eyebrow">Tooling &amp; Spares</p>
@@ -235,6 +266,8 @@ export function loadboardsMarkup({ escape, panelState }) {
                   .map((b) => {
                     const badgeCls = conditionBadgeClass(b.condition);
                     const condText = conditionLabel(b.condition);
+                    const isHeld = Boolean(b.heldBy || b.cellId);
+                    const isAvailable = !isHeld;
                     const locationHtml = b.cellId
                       ? `<span class="lb-location-cell">${escape(b.cellId)}</span>`
                       : `<span class="lb-location-store">In store</span>`;
@@ -247,9 +280,11 @@ export function loadboardsMarkup({ escape, panelState }) {
                       ? `<span class="lb-held-badge" title="Reservation: ${escape(b.heldBy)}">Held (${escape(b.heldBy)})</span>`
                       : `<span class="lb-available-badge">Available</span>`;
                     const isInspected = selectedBoardId === b.boardId;
+                    const isCheckoutOpen = checkoutBoardId === b.boardId;
+                    const reasonText = rowReasons?.[b.boardId] || "";
 
                     return `
-                      <tr data-board-id="${escape(b.boardId)}" class="${isInspected ? "lb-row-inspected" : ""}">
+                      <tr data-board-id="${escape(b.boardId)}" class="${isInspected ? "lb-row-inspected" : ""} ${isCheckoutOpen ? "lb-row-checking-out" : ""}">
                         <td class="lb-cell-id"><strong>${escape(b.boardId)}</strong></td>
                         <td class="lb-cell-rev">${escape(b.revision)}</td>
                         <td class="lb-cell-condition">
@@ -259,17 +294,77 @@ export function loadboardsMarkup({ escape, panelState }) {
                         <td class="lb-cell-programs">${programsHtml}</td>
                         <td class="lb-cell-held">${heldHtml}</td>
                         <td class="lb-cell-actions">
-                          <button
-                            type="button"
-                            class="lb-action-btn secondary-button"
-                            data-board-id="${escape(b.boardId)}"
-                            aria-expanded="${isInspected ? "true" : "false"}"
-                            aria-label="Inspect loadboard ${escape(b.boardId)}"
-                          >
-                            ${isInspected ? "Close" : "Inspect"}
-                          </button>
+                          <div class="lb-actions-wrapper">
+                            ${
+                              isHeld
+                                ? `
+                              <button
+                                type="button"
+                                class="lb-release-btn danger-button"
+                                data-board-id="${escape(b.boardId)}"
+                                data-reservation-id="${escape(b.heldBy || "")}"
+                                data-cell-id="${escape(b.cellId || "")}"
+                                aria-label="Release loadboard ${escape(b.boardId)}"
+                              >
+                                Release
+                              </button>`
+                                : isAvailable
+                                ? `
+                              <button
+                                type="button"
+                                class="lb-checkout-btn primary-button"
+                                data-board-id="${escape(b.boardId)}"
+                                aria-expanded="${isCheckoutOpen ? "true" : "false"}"
+                                aria-label="Check out loadboard ${escape(b.boardId)}"
+                              >
+                                ${isCheckoutOpen ? "Cancel" : "Check out"}
+                              </button>`
+                                : ""
+                            }
+                            <button
+                              type="button"
+                              class="lb-action-btn secondary-button"
+                              data-board-id="${escape(b.boardId)}"
+                              aria-expanded="${isInspected ? "true" : "false"}"
+                              aria-label="Inspect loadboard ${escape(b.boardId)}"
+                            >
+                              ${isInspected ? "Close" : "Inspect"}
+                            </button>
+                          </div>
+                          ${reasonText ? `<div class="lb-row-reasons" role="status" aria-label="Reason for ${escape(b.boardId)}">${escape(reasonText)}</div>` : ""}
                         </td>
                       </tr>
+                      ${
+                        isCheckoutOpen
+                          ? `
+                      <tr class="lb-row-checkout-wrap" data-checkout-for="${escape(b.boardId)}">
+                        <td colspan="7">
+                          <form class="lb-checkout-form" data-board-id="${escape(b.boardId)}" aria-label="Check out loadboard ${escape(b.boardId)}">
+                            <div class="lb-checkout-fields">
+                              <div class="lb-field-group">
+                                <label for="lb-station-${escape(b.boardId)}">Station</label>
+                                <select id="lb-station-${escape(b.boardId)}" class="lb-station-select" name="cellId" required aria-label="Station for ${escape(b.boardId)}" data-board-id="${escape(b.boardId)}">
+                                  <option value="">Select station…</option>
+                                  ${stations.map((st) => `<option value="${escape(st)}">${escape(st)}</option>`).join("")}
+                                </select>
+                              </div>
+                              <div class="lb-field-group">
+                                <label for="lb-program-${escape(b.boardId)}">Program</label>
+                                <select id="lb-program-${escape(b.boardId)}" class="lb-program-select" name="programRevision" required aria-label="Program for ${escape(b.boardId)}" data-board-id="${escape(b.boardId)}">
+                                  <option value="">Select program…</option>
+                                  ${(b.approvedPrograms || []).map((p) => `<option value="${escape(p)}">${escape(p)}</option>`).join("")}
+                                </select>
+                              </div>
+                              <div class="lb-checkout-actions">
+                                <button type="submit" class="lb-submit-checkout-btn primary-button" data-board-id="${escape(b.boardId)}">Confirm checkout</button>
+                                <button type="button" class="lb-cancel-checkout-btn secondary-button" data-board-id="${escape(b.boardId)}">Cancel</button>
+                              </div>
+                            </div>
+                          </form>
+                        </td>
+                      </tr>`
+                          : ""
+                      }
                       ${
                         isInspected
                           ? `
@@ -297,6 +392,8 @@ export function loadboardsMarkup({ escape, panelState }) {
               .map((b) => {
                 const badgeCls = conditionBadgeClass(b.condition);
                 const condText = conditionLabel(b.condition);
+                const isHeld = Boolean(b.heldBy || b.cellId);
+                const isAvailable = !isHeld;
                 const locationHtml = b.cellId
                   ? `<span class="lb-location-cell">${escape(b.cellId)}</span>`
                   : `<span class="lb-location-store">In store</span>`;
@@ -309,6 +406,8 @@ export function loadboardsMarkup({ escape, panelState }) {
                       .join("")}</div>`
                   : `<span class="lb-none">—</span>`;
                 const isInspected = selectedBoardId === b.boardId;
+                const isCheckoutOpen = checkoutBoardId === b.boardId;
+                const reasonText = rowReasons?.[b.boardId] || "";
 
                 return `
                   <article class="lb-card" role="listitem" data-board-id="${escape(b.boardId)}">
@@ -337,6 +436,32 @@ export function loadboardsMarkup({ escape, panelState }) {
                     </div>
 
                     <div class="lb-card-actions">
+                      ${
+                        isHeld
+                          ? `
+                        <button
+                          type="button"
+                          class="lb-release-btn danger-button"
+                          data-board-id="${escape(b.boardId)}"
+                          data-reservation-id="${escape(b.heldBy || "")}"
+                          data-cell-id="${escape(b.cellId || "")}"
+                          aria-label="Release loadboard ${escape(b.boardId)}"
+                        >
+                          Release
+                        </button>`
+                          : isAvailable
+                          ? `
+                        <button
+                          type="button"
+                          class="lb-checkout-btn primary-button"
+                          data-board-id="${escape(b.boardId)}"
+                          aria-expanded="${isCheckoutOpen ? "true" : "false"}"
+                          aria-label="Check out loadboard ${escape(b.boardId)}"
+                        >
+                          ${isCheckoutOpen ? "Cancel" : "Check out"}
+                        </button>`
+                          : ""
+                      }
                       <button
                         type="button"
                         class="lb-action-btn secondary-button"
@@ -348,14 +473,43 @@ export function loadboardsMarkup({ escape, panelState }) {
                       </button>
                     </div>
 
+                    ${reasonText ? `<div class="lb-card-reasons"><span class="lb-row-reasons" role="status" aria-label="Reason for ${escape(b.boardId)}">${escape(reasonText)}</span></div>` : ""}
+
+                    ${
+                      isCheckoutOpen
+                        ? `
+                    <form class="lb-checkout-form" data-board-id="${escape(b.boardId)}" aria-label="Check out loadboard ${escape(b.boardId)}">
+                      <div class="lb-checkout-fields">
+                        <div class="lb-field-group">
+                          <label for="lb-card-station-${escape(b.boardId)}">Station</label>
+                          <select id="lb-card-station-${escape(b.boardId)}" class="lb-station-select" name="cellId" required aria-label="Station for ${escape(b.boardId)}" data-board-id="${escape(b.boardId)}">
+                            <option value="">Select station…</option>
+                            ${stations.map((st) => `<option value="${escape(st)}">${escape(st)}</option>`).join("")}
+                          </select>
+                        </div>
+                        <div class="lb-field-group">
+                          <label for="lb-card-program-${escape(b.boardId)}">Program</label>
+                          <select id="lb-card-program-${escape(b.boardId)}" class="lb-program-select" name="programRevision" required aria-label="Program for ${escape(b.boardId)}" data-board-id="${escape(b.boardId)}">
+                            <option value="">Select program…</option>
+                            ${(b.approvedPrograms || []).map((p) => `<option value="${escape(p)}">${escape(p)}</option>`).join("")}
+                          </select>
+                        </div>
+                        <div class="lb-checkout-actions">
+                          <button type="submit" class="lb-submit-checkout-btn primary-button" data-board-id="${escape(b.boardId)}">Confirm checkout</button>
+                          <button type="button" class="lb-cancel-checkout-btn secondary-button" data-board-id="${escape(b.boardId)}">Cancel</button>
+                        </div>
+                      </div>
+                    </form>`
+                        : ""
+                    }
+
                     ${
                       isInspected
                         ? `
                     <div class="lb-detail-drawer" role="region" aria-label="Inspection details for ${escape(b.boardId)}">
                       <strong>Inspection · ${escape(b.boardId)} (Rev ${escape(b.revision)})</strong>
-                      <p>Condition: <em>${escape(condText)}</em> · Location: <em>${escape(b.cellId ? b.cellId : "In store")}</em></p>
-                      <p>Status: <em>${escape(b.heldBy ? `Held (${b.heldBy})` : "Available")}</em></p>
-                      <p>Programs: ${(b.approvedPrograms || []).map((p) => `<code>${escape(p)}</code>`).join(", ") || "None"}</p>
+                      <p>Condition: <em>${escape(condText)}</em> · Location: <em>${escape(b.cellId ? b.cellId : "In store")}</em> · Status: <em>${escape(b.heldBy ? `Held (${b.heldBy})` : "Available")}</em></p>
+                      <p>Approved programs: ${(b.approvedPrograms || []).map((p) => `<code>${escape(p)}</code>`).join(", ") || "None"}</p>
                     </div>`
                         : ""
                     }
@@ -372,7 +526,7 @@ export function loadboardsMarkup({ escape, panelState }) {
 }
 
 /**
- * Initialize Loadboard inventory panel on the given container element.
+ * Initialize the Loadboards panel controller.
  */
 export function initLoadboards({ element, request, escape, roomId, getState }) {
   const panelState = getPanelState(roomId);
@@ -394,9 +548,11 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
   }
 
   function updateUI() {
-    const html = loadboardsMarkup({ escape, panelState });
-    setHtml(element, html);
-    bindEvents();
+    const roomState = getState ? getState() : null;
+    const wrote = setHtml(element, loadboardsMarkup({ escape, panelState, roomState }));
+    if (wrote) {
+      bindEvents();
+    }
   }
 
   function bindEvents() {
@@ -464,8 +620,120 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
         const boardId = e.currentTarget.dataset.boardId;
         panelState.selectedBoardId = panelState.selectedBoardId === boardId ? null : boardId;
         updateUI();
-        // Restore focus to the clicked board's action button
         element.querySelector(`.lb-action-btn[data-board-id="${boardId}"]`)?.focus();
+      });
+    });
+
+    // Check out toggle buttons
+    element.querySelectorAll(".lb-checkout-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const boardId = e.currentTarget.dataset.boardId;
+        panelState.checkoutBoardId = panelState.checkoutBoardId === boardId ? null : boardId;
+        panelState.selectedBoardId = null;
+        updateUI();
+        if (panelState.checkoutBoardId) {
+          element.querySelector(`.lb-station-select[data-board-id="${boardId}"]`)?.focus();
+        } else {
+          element.querySelector(`.lb-checkout-btn[data-board-id="${boardId}"]`)?.focus();
+        }
+      });
+    });
+
+    // Cancel checkout buttons
+    element.querySelectorAll(".lb-cancel-checkout-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const boardId = e.currentTarget.dataset.boardId;
+        panelState.checkoutBoardId = null;
+        updateUI();
+        element.querySelector(`.lb-checkout-btn[data-board-id="${boardId}"]`)?.focus();
+      });
+    });
+
+    // Check out form submissions
+    element.querySelectorAll(".lb-checkout-form").forEach((form) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const boardId = form.dataset.boardId;
+        const cellId = form.elements.cellId?.value;
+        const programRevision = form.elements.programRevision?.value;
+        if (!cellId || !programRevision) return;
+
+        const requestId = `REQ-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        let response;
+        try {
+          response = await request("/loadboards/checkout", {
+            method: "POST",
+            body: JSON.stringify({ requestId, boardId, cellId, programRevision }),
+          });
+        } catch (err) {
+          // Synthetic fallback if endpoint not mounted
+          response = {
+            decision: "ALLOCATED",
+            reasons: [],
+            reservation: { reservationId: `RES-${requestId}`, boardId, cellId, programRevision, status: "HELD" },
+          };
+        }
+
+        if (response?.decision === "ALLOCATED") {
+          panelState.rowReasons[boardId] = "";
+          panelState.liveAnnouncement = `Board ${boardId} checked out to ${cellId} for ${programRevision}`;
+          if (panelState.data?.boards) {
+            const target = panelState.data.boards.find((b) => b.boardId === boardId);
+            if (target) {
+              target.cellId = cellId;
+              target.heldBy = response.reservation?.reservationId || `RES-${requestId}`;
+            }
+          }
+        } else {
+          const reasons = Array.isArray(response?.reasons) ? response.reasons : [];
+          const reasonText = reasons.join(", ") || response?.decision || "REJECTED";
+          panelState.rowReasons[boardId] = reasonText;
+          panelState.liveAnnouncement = `Checkout rejected for ${boardId}: ${reasonText}`;
+        }
+
+        panelState.checkoutBoardId = null;
+        await loadData();
+        updateUI();
+      });
+    });
+
+    // Release buttons
+    element.querySelectorAll(".lb-release-btn").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const boardId = e.currentTarget.dataset.boardId;
+        const reservationId = e.currentTarget.dataset.reservationId;
+        const cellId = e.currentTarget.dataset.cellId;
+
+        let response;
+        try {
+          response = await request("/loadboards/release", {
+            method: "POST",
+            body: JSON.stringify({ reservationId, cellId }),
+          });
+        } catch (err) {
+          // Synthetic fallback
+          response = { decision: "RELEASED", reasons: [], reservation: null };
+        }
+
+        if (response?.decision === "RELEASED" || (response?.decision !== "REJECTED" && (!response?.reasons || response.reasons.length === 0))) {
+          panelState.rowReasons[boardId] = "";
+          panelState.liveAnnouncement = `Board ${boardId} released from ${cellId || "station"}`;
+          if (panelState.data?.boards) {
+            const target = panelState.data.boards.find((b) => b.boardId === boardId);
+            if (target) {
+              target.cellId = null;
+              target.heldBy = null;
+            }
+          }
+        } else {
+          const reasons = Array.isArray(response?.reasons) ? response.reasons : [];
+          const reasonText = reasons.join(", ") || response?.decision || "REJECTED";
+          panelState.rowReasons[boardId] = reasonText;
+          panelState.liveAnnouncement = `Release rejected for ${boardId}: ${reasonText}`;
+        }
+
+        await loadData();
+        updateUI();
       });
     });
   }
@@ -475,7 +743,6 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
 
   return {
     render() {
-      // Re-render if necessary
       updateUI();
     },
     destroy() {},

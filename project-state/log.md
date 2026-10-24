@@ -751,3 +751,13 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added shared Live/Offline checkout/release services and room POST routes through normal store mutations. Timestamps are host-owned, all eligibility reads occur inside the serial queue, replies expose only decision/reasons/reservation, and consumed request identities cannot create duplicate reservations.
 - Added the explicit read-only consumable-obligations GET with private source/digest exclusion. Hermetic tests cover concurrent board/cell requests, restart retries, wrong-cell releases, client-body/header guards, rollback/recovery, mode parity, room isolation and read-only public history. Commands journal only changed custody rows; a large-history replay regression checks bounded frames.
 - Pages updated: backend/http-api.md, backend/domain-model.md, backend/overview.md.
+## [2026-10-24] feature — Loadboard check-out and release actions (Round 33, F3 slice 2 UI)
+- Added interactive **Check out** and **Release** actions to the Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) against write contracts `POST /api/control-rooms/:roomId/loadboards/checkout` and `POST /api/control-rooms/:roomId/loadboards/release`.
+- For available boards (`cellId === null` and `heldBy === null`), added Check out button with inline/drawer checkout form featuring Station picker (`ATE-1`, `ATE-2`, etc.) and Program picker from board's `approvedPrograms`.
+- For held boards, added Release button (`.lb-release-btn`).
+- Displays returned `reasons` as plain text next to the row (`.lb-row-reasons`), and refreshes inventory after each action.
+- Added polite live region announcement (`#lb-live-announcer`) for checkout/release allocations, rejections, and releases.
+- Hardened view event lifecycle: guarded `bindEvents()` in both `loadboards-view.js` and `obligations-view.js` with `setHtml` write status to prevent event listener pileup and toggle bouncing across poll ticks.
+- Added comprehensive E2E test suite in `e2e/loadboard-actions.spec.mjs` (6/6 tests passing, verified across 30 repeated runs).
+- Verification: `npm test` 535/535 passed; full Chromium E2E suite 127/127 passed on port 3022; ports 3022 and 3122 free.
+- Pages updated: project-state/frontend/overview.md; this log.
