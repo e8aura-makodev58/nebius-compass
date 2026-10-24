@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="/obligations.css" />
     <link rel="stylesheet" href="/handler-episodes.css" />
     <link rel="stylesheet" href="/calibrations.css" />
+    <link rel="stylesheet" href="/changeover-readiness.css" />
     <link rel="stylesheet" href="/layout.css" />
   </head>
   <body>
@@ -54,7 +55,7 @@
             <p class="search-help">Up to 5 matches per category · ↑ ↓ to move · Enter to select · Esc to close</p>
           </div>
         </section>
-        <nav id="workspace-nav" class="workspace-nav" aria-label="Workspace panels"><button type="button" data-workspace="issues" aria-pressed="true">Issues <span data-issues-count>0</span></button><button type="button" data-workspace="floor" aria-pressed="false">Floor</button><button type="button" data-workspace="staffing" aria-pressed="false">Decisions <span data-decisions-count hidden>0</span></button><button type="button" data-workspace="events" aria-pressed="false">Events</button><button type="button" data-workspace="kpis" aria-pressed="false">KPIs</button><button type="button" data-workspace="loadboards" aria-pressed="false">Boards</button><button type="button" data-workspace="obligations" aria-pressed="false" title="Consumable obligations">Life</button><button type="button" data-workspace="episodes" aria-pressed="false" title="Handler jam episodes">Jams</button><button type="button" data-workspace="calibrations" aria-pressed="false" title="Instrument calibrations">Cals</button></nav>
+        <nav id="workspace-nav" class="workspace-nav" aria-label="Workspace panels"><button type="button" data-workspace="issues" aria-pressed="true">Issues <span data-issues-count>0</span></button><button type="button" data-workspace="floor" aria-pressed="false">Floor</button><button type="button" data-workspace="staffing" aria-pressed="false">Decisions <span data-decisions-count hidden>0</span></button><button type="button" data-workspace="events" aria-pressed="false">Events</button><button type="button" data-workspace="kpis" aria-pressed="false">KPIs</button><button type="button" data-workspace="loadboards" aria-pressed="false">Boards</button><button type="button" data-workspace="obligations" aria-pressed="false" title="Consumable obligations">Life</button><button type="button" data-workspace="episodes" aria-pressed="false" title="Handler jam episodes">Jams</button><button type="button" data-workspace="calibrations" aria-pressed="false" title="Instrument calibrations">Cals</button><button type="button" data-workspace="changeovers" aria-pressed="false" title="Changeover readiness">Changeovers</button></nav>
         <section class="dashboard" aria-label="ResponseCompass operational dashboard">
           <section class="floor-section" aria-labelledby="floor-heading">
             <div class="section-heading"><div><p class="eyebrow">Persistent environment</p><h2 id="floor-heading">Manufacturing Floor</h2></div><div class="legend"><span><i class="legend-dot equipment-dot"></i>Normal</span><span><i class="legend-dot issue-dot"></i>Issue</span><span><i class="legend-dot responder-dot"></i>Available</span><span><i class="legend-dot assigned-dot"></i>Assigned</span></div></div>
@@ -68,6 +69,7 @@
           <section id="obligations-tile" class="obligations-tile" aria-label="Obligations"></section>
           <section id="handler-episodes-tile" class="handler-episodes-tile" aria-label="Handler Episodes"></section>
           <section id="calibrations-tile" class="calibrations-tile" aria-label="Calibrations"></section>
+          <section id="changeover-readiness-tile" class="changeover-readiness-tile" aria-label="Changeover readiness"></section>
           <aside class="context-panel" aria-labelledby="issue-heading">
             <p id="context-eyebrow" class="eyebrow">Station Status</p><h2 id="issue-heading">Station status</h2><div id="issue-summary" class="issue-summary" aria-live="polite"></div><div id="baseline-panel" class="baseline-panel" aria-live="polite"></div><div id="recommendation-panel" class="recommendation-panel" aria-live="polite"></div><hr /><div class="sidebar-tabs" role="tablist" aria-label="Shift details"><button id="personnel-tab" type="button" role="tab" aria-selected="true" aria-controls="responder-list">Shift Personnel</button><button id="stations-tab" type="button" role="tab" aria-selected="false" aria-controls="station-list">Stations</button></div><div id="responder-list" class="responder-list" role="tabpanel" aria-labelledby="personnel-tab"></div><div id="station-list" class="station-list" role="tabpanel" aria-labelledby="stations-tab" hidden></div>
           </aside>
