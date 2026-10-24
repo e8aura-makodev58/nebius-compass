@@ -147,7 +147,7 @@ async function readJsonBody(request, maxLength = 2000) {
  * "/state", "/issues/:id/raise", etc. — the same literals as before the
  * prefix existed).
  */
-async function handleRoomScopedRoute({ request, response, path, runtime, logger, url }) {
+async function handleRoomScopedRoute({ request, response, path, runtime, logger, url, roomId }) {
   if (request.method === 'POST' && path === '/ask') return sendJson(response,200,await runtime.ask(await readJsonBody(request,4096)));
   const askMatch=/^\/ask\/([^/]+)$/.exec(path);
   if(request.method==='GET'&&askMatch)return sendJson(response,200,await runtime.getAsk(decodeURIComponent(askMatch[1])));
@@ -183,6 +183,13 @@ async function handleRoomScopedRoute({ request, response, path, runtime, logger,
     const state = await runtime.snapshot();
     const key = path === "/issues" ? "issues" : path === "/responders" ? "responders" : "operationalEvents";
     return sendJson(response, 200, { mode: state.mode, simulationTime: state.simulationState?.simulationTime ?? null, [key]: state[key] ?? [] });
+  }
+  if (request.method === "GET" && path === "/station-kpis") {
+    const params = url.searchParams;
+    const badWindow = [...params.keys()].some(key => !['windowEnd', 'stations'].includes(key)) || params.getAll('windowEnd').length > 1;
+    const code = badWindow ? 'INVALID_WINDOW' : params.getAll('stations').length > 1 ? 'UNKNOWN_STATION' : null;
+    if (code) return sendJson(response, 400, { error: code, code });
+    return sendJson(response, 200, await runtime.stationKpis({ roomId, windowEnd: params.get('windowEnd') ?? undefined, stations: params.get('stations') ?? undefined }));
   }
   if (request.method === "GET" && path === "/analytics") {
     return sendJson(response, 200, await runtime.analytics());
@@ -424,7 +431,7 @@ export function createRequestHandler(manager, logger = null, settingsService = n
         // recordActivity in control-room-manager.mjs).
         if (request.method !== "GET") manager.recordActivity?.(room.id);
         if (request.method === "POST" && roomMatch[2] === "/activity") return sendJson(response, 202, { accepted: true });
-        const handled = await handleRoomScopedRoute({ request, response, path: roomMatch[2] || "", runtime: room.applicationRuntime, logger, url });
+        const handled = await handleRoomScopedRoute({ request, response, path: roomMatch[2] || "", runtime: room.applicationRuntime, logger, url, roomId: room.id ?? roomId });
         if (handled) return handled;
         // A known route prefix with no matching room-scoped branch: fall
         // through to the same 405/serveStatic handling as an unknown path,

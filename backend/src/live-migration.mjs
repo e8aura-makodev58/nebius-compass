@@ -22,7 +22,7 @@ function migrateToBuilding(state) {
   state.equipment = building.map((item) => {
     const previous = existing.get(item.id);
     // Keep live status and any operator-visible fields; only add the floor.
-    return previous ? { ...previous, floor: item.floor } : item;
+    return previous ? { ...previous, floor: item.floor, ratedUnitsPerHour: previous.ratedUnitsPerHour === undefined ? item.ratedUnitsPerHour : previous.ratedUnitsPerHour } : item;
   });
   const seededFloors = { "R-ENGR104": 1, "R-ENGR028": 1, "R-TECH216": 2, "R-OPER088": 2, "R-TECH073": 3, "R-OPER142": 3 };
   for (const responder of state.responders) responder.floor ??= seededFloors[responder.id] ?? 1;

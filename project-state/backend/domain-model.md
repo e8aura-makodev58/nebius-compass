@@ -160,3 +160,13 @@ DTO. Closed unlinked reports and their full orphan investigation rows expire by 
 count cap; compact investigation facts and sequence high-water marks survive reclamation.
 Report admission's real-time window is process-local, while the open backlog cap is
 checked against persisted report/investigation state. See investigation.md for limits.
+
+
+## Station throughput plan (round 28)
+
+Every equipment row has `ratedUnitsPerHour`, an integer in 40–120. It is a public
+synthetic planning parameter, independent of responder skill, outcome truth and RNG.
+`backend/seed/floor-layout.mjs` derives the default with an FNV-style station-ID hash;
+new Live and Offline seeds share it. `live-migration.mjs` fills only missing values
+when loading existing rooms (including both registered plants); configured values are
+preserved and invalid explicit values fail `validateLiveState`.

@@ -635,3 +635,10 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added `docs/design/investigation-history-at-scale.md`: how the investigator retrieves and grades history, what breaks at hundreds of testers over years, and the storage and retrieval design to settle before integrating with a live maintenance record.
 - Recommendation: a relational case store with indexed structured retrieval and full-text search on narratives first; vector search only if a measured narrative-recall benchmark shows the gap. Docs only; no code changed.
 - Pages updated: docs/design/investigation-history-at-scale.md; this log.
+
+
+## [2026-10-24] feature — Station KPI backend (round 28)
+- Added deterministic station-ID-hashed rated throughput, validation and load migration, plus a pure shared Live/Offline twelve-hour station KPI projection and room route. Reuses analytics downtime union and compact archived facts; reads never advance either runtime.
+- Regenerated the small investigation lifecycle dataset; verified its only change is the new equipment plan field, with outcomes and RNG unchanged. Removed the analytics coverage helper's spread-argument limit for long event histories.
+- Hermetic coverage checks alignment, overlap/spanning/open downtime, cutoff, archives, missing coverage, selection/totals, errors, migration/RNG stability and read-only mode isolation. Written UTC boundaries take precedence over the illustrative unaligned fixture; main owns that fixture.
+- Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md.

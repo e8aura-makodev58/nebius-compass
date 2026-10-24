@@ -12,6 +12,7 @@ import { createResolutionEngine } from "./resolution-engine.mjs";
 import { createScheduler } from "./scheduler.mjs";
 import { createSimulationClock } from "./simulation-clock.mjs";
 import { buildAnalytics, buildPeriodAnalytics } from "./analytics-service.mjs";
+import { buildStationKpis } from './station-kpis.mjs';
 import { buildParetoAnalytics } from "./pareto-analytics.mjs";
 import { createIssueAuditRecord } from "./live-schema.mjs";
 import { applyWorkforceTrigger, selectNextQueuedIssue, priorityForIssue, requestStaffingRecheck } from "./workforce-continuity.mjs";
@@ -341,6 +342,7 @@ export function createLiveRuntime({
     decideInvestigation: (id,input,action) => investigations.decide(id,input,action),
     async analytics() { return { mode: "LIVE", ...(store.project ? await store.project(buildAnalytics) : buildAnalytics(await store.snapshot())) }; },
     async analyticsPeriod(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildPeriodAnalytics(state, query)) : buildPeriodAnalytics(await store.snapshot(), query)) }; },
+    async stationKpis(query) { return store.project ? store.project(state => buildStationKpis(state, query)) : buildStationKpis(await store.snapshot(), query); },
     async analyticsPareto(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildParetoAnalytics(state, query)) : buildParetoAnalytics(await store.snapshot(), query)) }; },
     async reset() {
       await store.reset();
@@ -477,6 +479,7 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
     async reset() { return mode === "LIVE" ? liveRuntime.reset() : { mode: "OFFLINE", ...offlineRuntime.reset() }; },
     async analytics() { return mode === "LIVE" ? liveRuntime.analytics() : { mode: "OFFLINE", available: false }; },
     async analyticsPeriod(query) { return mode === "LIVE" ? liveRuntime.analyticsPeriod(query) : { mode: "OFFLINE", available: false }; },
+    async stationKpis(query) { return active().stationKpis(query); },
     async analyticsPareto(query) { return mode === "LIVE" ? liveRuntime.analyticsPareto(query) : { mode: "OFFLINE", available: false }; },
     async startSimulation() { requireMode("LIVE", "Simulation controls require Live mode"); return liveRuntime.start(); },
     async pauseSimulation() { requireMode("LIVE", "Simulation controls require Live mode"); return liveRuntime.pause(); },
