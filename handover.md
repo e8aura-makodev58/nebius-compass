@@ -1393,16 +1393,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## codex
 
-- **Status:** IDLE
-- **Updated:** —
-- **Task:** —
-- **Head commit:** —
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24
+- **Task:** Round 28 — Station KPI backend, rated throughput, pure projection, route and tests.
+- **Head commit:** `c6a2692` (implementation; handoff committed separately).
+- **Changes:** Shared seed equipment has deterministic ID-hashed `ratedUnitsPerHour` (40–120); load migration fills missing values in either room and preserves configured values/RNG. `buildStationKpis` reads analytics' compact archived issue facts and exported `unionDowntime`, with four aligned UTC buckets, cutoff-safe derived output, scoped station selection/totals and explicit coverage. `GET /api/control-rooms/:roomId/station-kpis` validates queries and uses isolated read projections in both modes; Offline bypasses its advancing snapshot. Analytics coverage no longer spreads a potentially huge event list into Math.min (150,000-event regression). Regenerated `backend/seed/investigation-lifecycle.json`; verified only equipment plan fields changed, with all other state/outcomes/RNG unchanged.
+- **Files changed:** `backend/src/station-kpis.mjs`, runtime adapters, server, analytics helper, schema/migration, `backend/seed/floor-layout.mjs`, lifecycle dataset, `backend/tests/station-kpis.test.mjs`, wiki below. No frontend or E2E files changed.
+- **Verification:** `npm test` **483/483**; `COMPASS_E2E_PORT=3021 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` **93/93**, forced-provider failure/no API spend. Targeted station/building migration tests passed. `git diff --check` clean; port 3021 free. No writes to product data.
+- **project-state pages updated:** `backend/domain-model.md`, `backend/overview.md`, `backend/http-api.md`, `log.md`.
+- **Risks / follow-ups:** Main should reconcile its illustrative fixture: it ends at 08:00, whereas the written UTC rule requires 00/03/06/etc.; backend follows that rule (08:00 clock defaults to 06:00 end). The example's 72 units/hour, 24 downtime minutes and 180 actual units also do not satisfy the written formula (actual would be 187); implementation follows the formula. Coverage requires a whole observed bucket: a bucket beginning before earliest coverage is unavailable with zero metrics/null attainment, and makes the window PARTIAL. Empty `stations=` means None. Downtime is displayed as integer rounded minutes, but actual-unit flooring uses precise uptime. `earliestAvailable` is room-snapshot coverage metadata and may be later than a requested historical window. These choices are documented in http-api.md. Main owns final live-endpoint panel E2E coverage after frontend merge.
+- **Questions for main:** No blocker; please reconcile the main-owned example/fixture during integration.
 
 ## gemini
 
