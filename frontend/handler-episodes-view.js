@@ -557,6 +557,21 @@ export function initHandlerEpisodes({ element, request, escape, roomId, getState
         element.querySelector(`.he-action-btn[data-episode-id="${episodeId}"]`)?.focus();
       });
     });
+
+    // Inspect detail drawer keyboard Escape
+    element.querySelectorAll(".he-detail-drawer").forEach((drawer) => {
+      drawer.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          const episodeId = panelState.selectedEpisodeId;
+          panelState.selectedEpisodeId = null;
+          updateUI();
+          if (episodeId) {
+            element.querySelector(`.he-action-btn[data-episode-id="${episodeId}"]`)?.focus();
+          }
+        }
+      });
+    });
   }
 
   // Initial load

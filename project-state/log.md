@@ -888,3 +888,20 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Smoke test: plant-1 lists the three seeded boards. A checkout of LB-0398 to ATE-1 was ALLOCATED because my smoke test wrote a real reservation to live state. I released it immediately (RELEASED; board back in store). Recorded so the live state history is understood.
 - Review follow-ups assigned to codex in round 39: the migration edge case with orphaned reservations, the obligation reconciler wiring check, and the F8 correlation record (separate, not gating). Gemini: audit of the panels from rounds 31–38.
 - Pages updated: this log; handover.md merge log and assignments.
+
+## [2026-10-24] fix — Audit and harden rounds 31–38 panels at 375px and 1280px (round 39, gemini)
+- Audited the five panels added in rounds 31–38 (Obligations, Loadboards with Add board drawer, Calibrations, Handler episodes, Station KPIs) across mobile (375px) and desktop (1280px):
+  - Verified zero horizontal scroll across all 5 panels at 375px mobile and 1280px desktop.
+  - Verified touch targets >= 44px across all interactive controls in all 5 panels on mobile (resolving clickable label boundaries for station KPI selection checkboxes).
+  - Verified accessible names across all interactive controls (buttons, links, inputs, selects, textareas).
+  - Fixed WCAG AA text contrast: darkened `.he-deficit-tag` background from `#22c55e` to `#166534`, lifting contrast with white text from 2.28:1 to 8.01:1 (well above the 4.5:1 threshold).
+  - Added Escape key dismiss handlers returning focus to their respective triggers:
+    - `.lb-checkout-form` dismisses and focuses `.lb-checkout-btn[data-board-id]`.
+    - `.lb-readiness-detail-drawer` dismisses and focuses `.lb-readiness-chip[data-readiness-cell-id]`.
+    - `.lb-detail-drawer` dismisses and focuses `.lb-action-btn[data-board-id]`.
+    - `.cal-add-form` dismisses and focuses `.cal-toggle-add-btn`.
+    - `.obl-detail-drawer` dismisses and focuses `.obl-action-btn[data-obligation-id]`.
+    - `.he-detail-drawer` dismisses and focuses `.he-action-btn[data-episode-id]`.
+  - Added dedicated E2E audit suite in `e2e/panel-audit-r39.spec.mjs` (6/6 tests passing).
+- Verification: `npm test` 588/588 passed; full Chromium E2E suite 165/165 passed on port 3022; port 3022 cleanly released.
+- Pages updated: project-state/frontend/overview.md; this log.
