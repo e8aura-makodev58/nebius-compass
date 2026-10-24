@@ -1465,18 +1465,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 16:30 UTC
-- **Task:** Round 29 & Round 30: Phone and desktop audit (`e2e/phone-audit.spec.mjs`) & Station KPI E2E hardening (`e2e/station-kpi.spec.mjs`)
-- **Head commit:** a1970d7
-- **Changes:**
-  - Round 29: Audited all eight existing panels (staffing, investigation, map, issues, events, context, analytics, station KPIs) at 375px (phone) and 1280px (desktop) viewports. Enforced zero horizontal scroll across page and panel containers. Upgraded phone interactive controls in `frontend/layout.css` to >= 44px touch targets. Verified accessible names and WCAG AA contrast >= 4.5:1. Added `e2e/phone-audit.spec.mjs` (5/5 passed).
-  - Round 30: Hardened `e2e/station-kpi.spec.mjs` against spec section 5 of `docs/design/station-kpi-panel.md`. Added test verifying live Station KPIs rendering directly from real backend endpoint without route mocking. Added keyboard-only filter interaction test (`Enter` open, `Tab` traversal, search input, `Space` toggle, `Escape` dismissal to summary). Fixed grammatical pluralization in totals row and cards (`1 station` vs `N stations`) in `frontend/station-kpis-view.js`.
-- **Files changed:** `frontend/layout.css`, `frontend/station-kpis-view.js`, `e2e/phone-audit.spec.mjs`, `e2e/station-kpi.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
-- **Verification:** `npm test` 497/497 passed · Chromium forced-provider E2E 105/105 passed (`COMPASS_E2E_PORT=3022`). Free ports confirmed.
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** Disjoint frontend and E2E changes only. No backend modifications.
-- **Questions for main:** Ready for merge. User reminder: please do not keep Gemini idle — please merge Round 29/30 and assign Gemini's next task promptly.
+- **Status:** IN PROGRESS
+- **Updated:** 2026-10-24 16:40 UTC
+- **Task:** Round 31: Loadboard checkout panel (`e2e/loadboards.spec.mjs`, `docs/design/loadboard-checkout-slice-1.md`)
+- **Head commit:** a0c6a65
+- **Changes:** In progress: building workspace Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) with board list, condition badges, cell / in-store indicators, approved programs, search and condition filter, zero horizontal scroll at 375px/1280px, loading/empty/error states, and `e2e/loadboards.spec.mjs`.
+- **Files changed:** In progress.
+- **Verification:** Both suites pending.
+- **project-state pages updated:** Pending.
+- **Risks / follow-ups:** Disjoint frontend implementation against route stubs `GET /api/control-rooms/:roomId/loadboards`. No backend edits.
+- **Questions for main:** None.
 
 ## codebuddy
 
