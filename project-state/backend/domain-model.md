@@ -293,14 +293,14 @@ later asset-to-station/issue-class contract and is not invented here.
 ## Loadboard read projection (round 32)
 
 A room may carry private `loadboardInventory` in the existing pure checkout
-inventory shape (`boards`, `reservations`). No default inventory is manufactured,
-and GET never creates it.
+inventory shape (`boards`, `reservations`). GET never creates inventory. Round 38 migration provisions synthetic boards only
+when persisted inventory is absent or has no board rows.
 `loadboards.mjs` exposes only explicit board facts and the current HELD reservation
 ID through the dedicated room read route. Released reservation detail and unrelated
 source metadata are not projected or copied into normal state/model payloads.
 The shared `validateLoadboardInventory` helper is exported from the pure checkout
-module for current-fact projection validation. Inventory provisioning remains
-separate; round 33 command APIs below operate on the existing inventory.
+module for current-fact projection validation. Round 38 adds manual board entry; round 33 command APIs below operate on the
+existing inventory.
 
 
 ## Loadboard command ownership (round 33)
@@ -315,8 +315,7 @@ No separate request cache or direct file writer is introduced.
 
 Live and Offline share the service and public response projection. Offline supports
 an internal synthetic seedFactory option, defensively copied, analogous to Live's
-seed injection; defaults and reset remain the normal scenario. No inventory import
-or production provisioning endpoint is added. The dedicated obligations read builder
+seed injection; defaults and reset remain the normal scenario. Round 38 adds manual board entry through this same mutation adapter. The dedicated obligations read builder
 publishes only the existing strict obligation rows, without exposing counter sources
 or initiating reconciliation/ordinary Issue dispatch.
 
@@ -419,3 +418,24 @@ an already configured room and never renews expiry. Reapplying it yields identic
 state. The normal Live-store load/checkpoint path persists the upgrade without
 resetting the simulation clock, revision, inventory or operational history. Offline
 continues to use its existing shared seeded calibration records.
+
+
+## Board entry and existing-room inventory migration (round 38)
+
+`loadboard-service.mjs` exposes enterBoard through POST loadboards/boards in both
+modes. Explicit board fields are checked by validateLoadboardInventory before the
+queue. Omitted cellId defaults to null; a non-null cell must exist in the room's
+calibration rows (the current cell registry). Cell existence does not claim READY.
+Inside the serialized mutation, duplicate board IDs and unknown cells fail with 400;
+a successful entry appends only the board and returns ADDED with empty reasons.
+Existing board/reservation history remains unchanged; no reservation is invented.
+Normal request guards apply and journal failure publishes nothing.
+
+`live-migration.mjs` adds independent synthetic LB-0412/LB-0398 SERVICEABLE and
+LB-0204 UNDER_REPAIR rows, all in store, when loadboardInventory is absent or its
+boards array is empty. Synthetic approved programs come from backend/seed/loadboards.mjs.
+Absent inventory gets empty reservations; existing reservation history is preserved.
+Any existing board rows prevent seeding entirely. Repeated migration is identical,
+and normal load/checkpoint persistence retains subsequent custody and manual entries.
+This migration covers persisted Live rooms; new seeds and Offline retain their
+existing behavior until configured via the shared entry endpoint.

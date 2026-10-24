@@ -1330,3 +1330,19 @@ This is deterministic migration at normal load, not recurring automatic renewal;
 second application has identical output and advancing time cannot refresh records.
 The existing Live migration checkpoint path durably installs the new field without
 a reset, wall-clock dependency, provider call or operational mutation.
+
+
+## 2026-10-24 — Board entry cell registry and migration preservation (round 38)
+
+The current cell registry is the room's calibration rows (ATE IDs are distinct from
+equipment IDs). Entry validates a supplied non-null cell against those rows inside
+the mutation queue; existence is separate from readiness. Omitted cellId means in
+store. Duplicate IDs are 400, never upserts; successful entry returns ADDED with no
+reservation. Both modes use the same service and input validator.
+
+The authorized Live migration seeds only absent or boardless inventory. It creates
+no reservations and preserves any existing reservation history in a boardless
+inventory rather than deleting historical facts. Any nonempty board list is left
+untouched, including custom/custodied/repair rows. Synthetic program mapping is
+LB-0412 and LB-0204 to SR1260-P3, LB-0398 to PM0096-P2. No fresh-mode seed policy is
+changed; the assignment targets persisted Live rooms and manual entry.

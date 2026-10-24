@@ -864,3 +864,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Verified on the server: ATE-1 and ATE-2 are READY in plant-1. A checkout to ATE-1 is no longer blocked by calibration; it is rejected only with BOARD_UNKNOWN, because live rooms have no loadboards.
 - Assigned round 38: codex adds a board entry route and seeds synthetic boards into existing rooms; gemini adds an Add board form.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Manual board entry and existing-room inventory (round 38)
+- Added strict shared-mode serialized board entry with duplicate/cell checks, plus idempotent synthetic board provisioning for absent/boardless persisted Live inventory. Existing rows/history are preserved. Regenerated the reproducible investigation fixture; only loadboardInventory changed.
+- Pages updated: backend/domain-model.md, backend/http-api.md, backend/overview.md, backend/live-runtime.md; cell registry and reservation-preservation decisions recorded in docs/decisions.md.

@@ -295,3 +295,43 @@ test('both room instances have independent READY calibration seeds in Live and O
     assert.deepEqual(offline.cellReadiness().cells.map(x => [x.cellId, x.readiness]), [['ATE-1', 'READY'], ['ATE-2', 'READY']]);
   }
 });
+
+const newBoard = overrides => ({ boardId: 'LB-NEW', revision: 'A', condition: 'SERVICEABLE', approvedPrograms: ['SR1260-P3'], ...overrides });
+test('board entry defaults to store, accepts existing cells and rejects duplicate or unknown cell without changing inventory', async t => {
+  const { store, handler } = await live(t);
+  assert.deepEqual((await request(handler, '/loadboards/boards', newBoard())).body, { decision: 'ADDED', reasons: [] });
+  assert.equal((await store.snapshot()).loadboardInventory.boards.find(row => row.boardId === 'LB-NEW').cellId, null);
+  const before = await store.snapshot(); assert.equal((await request(handler, '/loadboards/boards', newBoard())).status, 400);
+  assert.deepEqual(await store.snapshot(), before);
+  assert.equal((await request(handler, '/loadboards/boards', newBoard({ boardId: 'LB-CELL', cellId: 'ATE-2' }))).status, 200);
+  const after = await store.snapshot();
+  assert.equal((await request(handler, '/loadboards/boards', newBoard({ boardId: 'LB-BAD', cellId: 'UNKNOWN' }))).status, 400);
+  assert.deepEqual(await store.snapshot(), after); assert.deepEqual(after.loadboardInventory.reservations, []);
+});
+test('concurrent duplicate board entries serialize to one addition and malformed input fails before writes', async t => {
+  const { store, handler } = await live(t), before = await store.snapshot();
+  for (const body of [{}, newBoard({ extra: true }), newBoard({ condition: 'UNKNOWN' }), newBoard({ approvedPrograms: 'P3' }), newBoard({ approvedPrograms: ['responderSkills'] }), newBoard({ cellId: '' })]) assert.equal((await request(handler, '/loadboards/boards', body)).status, 400);
+  assert.deepEqual(await store.snapshot(), before);
+  const results = await Promise.all([request(handler, '/loadboards/boards', newBoard()), request(handler, '/loadboards/boards', newBoard())]);
+  assert.deepEqual(results.map(row => row.status).sort(), [200, 400]);
+  assert.equal((await store.snapshot()).loadboardInventory.boards.filter(row => row.boardId === 'LB-NEW').length, 1);
+  assert.equal((await request(handler, '/loadboards/boards', newBoard(), { room: 'unknown' })).status, 404);
+  assert.equal((await request(handler, '/loadboards/boards', newBoard(), { headers: { 'content-type': 'text/plain' } })).status, 415);
+  assert.equal((await request(handler, '/loadboards/boards', newBoard(), { headers: { origin: 'https://other.test' } })).status, 403);
+});
+test('board entry journal failure rolls back and a retry recovers', async t => {
+  let fail = false; const { store, handler } = await live(t, { beforeCommit: () => { if (fail) throw Error('board fault'); } });
+  const before = await store.snapshot(); fail = true;
+  assert.equal((await request(handler, '/loadboards/boards', newBoard())).status, 500); assert.deepEqual(await store.snapshot(), before);
+  fail = false; assert.equal((await request(handler, '/loadboards/boards', newBoard())).body.decision, 'ADDED');
+});
+test('Offline board entry uses the same rules, supports absent inventory and enables checkout without network', async () => {
+  const runtime = createDemoRuntime({ mode: 'fixture' }, createTempAuditStore(), null, { now: () => 0 });
+  const handler = handlerFor(runtime), original = globalThis.fetch; globalThis.fetch = () => { throw Error('network forbidden'); };
+  try {
+    assert.equal((await request(handler, '/loadboards/boards', newBoard())).body.decision, 'ADDED');
+    assert.equal((await request(handler, '/loadboards/boards', newBoard())).status, 400);
+    assert.equal((await request(handler, '/loadboards/boards', newBoard({ boardId: 'OTHER', cellId: 'UNKNOWN' }))).status, 400);
+    assert.equal((await request(handler, '/loadboards/checkout', checkout('OFFLINE-NEW', { boardId: 'LB-NEW' }))).body.decision, 'ALLOCATED');
+  } finally { globalThis.fetch = original; }
+});

@@ -1,3 +1,4 @@
+import { createSeedLoadboards } from '../seed/loadboards.mjs';
 import { createSeedCalibrations } from '../seed/calibrations.mjs';
 import { deviceById } from './device-catalog.mjs';
 import { recoverInvestigations } from './investigation-service.mjs';
@@ -114,6 +115,11 @@ export function migrateLiveState(input) {
     input.calibrations = createSeedCalibrations().map(row => ({ ...row,
       calibratedAt: new Date(at - 7 * day).toISOString(), dueAt: new Date(at + 60 * day).toISOString(),
     }));
+  }
+  if (input.loadboardInventory === undefined) input.loadboardInventory = { boards: createSeedLoadboards(), reservations: [] };
+  else if (Array.isArray(input.loadboardInventory?.boards) && input.loadboardInventory.boards.length === 0) {
+    // Preserve any pre-existing reservation history; never manufacture reservations.
+    input.loadboardInventory.boards = createSeedLoadboards();
   }
   if (input.consumableObligations === undefined) input.consumableObligations = [];
   for (const issue of input.issues ?? []) {

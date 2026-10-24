@@ -51,7 +51,7 @@ one TypeScript type file; there is no build step.
 | `calibration-readiness.mjs` | Pure `cellReadiness(calibrations,cellId,at)`, effective calibration selection, strict source validation and conservative expiry. No imports. See [domain-model.md](domain-model.md). |
 | `cell-readiness.mjs` | Explicit Live/Offline room readiness GET projection at the room clock. |
 | `handler-jam-episodes.mjs` | Standalone pure alarm grouping, interval-union stopped time and gated reference-rate deficit estimates. No imports or runtime wiring. See [domain-model.md](domain-model.md). |
-| `loadboard-service.mjs` | Shared command adapter: strict client bodies, host simulation timestamps, serialized pure checkout/release and public responses. See [http-api.md](http-api.md). |
+| `loadboard-service.mjs` | Shared command adapter: strict client bodies, serialized manual board entry, host simulation timestamps, pure checkout/release and public responses. See [http-api.md](http-api.md). |
 | `consumable-obligations.mjs` | Pure explicit public ledger projection for the dedicated room GET, without evaluation or writes. |
 | `loadboards.mjs` | Pure, explicit public loadboard inventory projection for the room read endpoint; no clock, write or model calls. See [http-api.md](http-api.md). |
 | `loadboard-checkout.mjs` | Pure board checkout, ordered batch and release transitions over caller-owned inventory; exact program compatibility and single board/cell allocation. No imports or runtime integration. See [domain-model.md](domain-model.md). |
@@ -142,3 +142,6 @@ All chat transports share it; see model-providers.md for accounting boundaries a
 
 Shared synthetic calibration seed facts live in `backend/seed/calibrations.mjs` and
 are copied independently into Live and Offline seeds for each room.
+
+`backend/seed/loadboards.mjs` supplies independent synthetic board rows for the
+round-38 persisted Live-room inventory migration.

@@ -43,6 +43,7 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | GET | `/equipment/:equipmentId/issues` | LIVE station history with the same pagination. |
 | GET | `/responders`, `/events` | Individual resource lists; events are the recent public feed. |
 | GET | `/analytics` | Fixed-snapshot analytics. |
+| POST | `/loadboards/boards` | Manual board entry; explicit inventory fields, optional cellId defaulting null. Returns `{decision:"ADDED",reasons:[]}`; malformed, duplicate or unknown-cell entries return 400. |
 | POST | `/loadboards/checkout` | `{requestId,boardId,cellId,programRevision}` → `{decision,reasons,reservation}` through the normal serialized room write path. |
 | POST | `/loadboards/release` | `{reservationId,cellId}` → the same response envelope. Host supplies the simulation timestamp. |
 | GET | `/consumable-obligations` | `{roomId,asOf,obligations}`: explicit persisted slice-2 rows, with no reconciliation on GET. |
@@ -327,3 +328,15 @@ Future calibration dates are allowed but ignored by readiness until effective.
 Normal JSON/origin and room guards apply. GET returns all explicit rows, canonical
 UTC dates and their per-record time validity; it does not advance clocks or mutate.
 No calibration row is copied into ordinary state/model payloads.
+
+
+## Board entry (round 38)
+
+POST `/api/control-rooms/:roomId/loadboards/boards` accepts boardId, revision,
+condition, approvedPrograms and optional cellId (default null). The existing strict
+inventory validator checks fields and values; unknown/protected fields are invalid.
+Non-null cellId must appear in the room's calibration rows. Duplicate boardId,
+unknown cell or malformed input returns 400; success returns HTTP 200 with
+`{decision:"ADDED",reasons:[]}`. Eligibility for later checkout is still evaluated
+separately. Entry uses the same serialized store path as checkout and does not add
+reservations or rewrite existing rows. Live and Offline share the service.

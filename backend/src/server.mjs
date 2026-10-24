@@ -186,6 +186,7 @@ async function handleRoomScopedRoute({ request, response, path, runtime, logger,
   }
   if (request.method === 'POST' && path === '/calibrations') return sendJson(response, 200, await runtime.enterCalibration(await readJsonBody(request)));
   if (request.method === 'GET' && path === '/calibrations') return sendJson(response, 200, await runtime.calibrations({ roomId }));
+  if (request.method === 'POST' && path === '/loadboards/boards') return sendJson(response, 200, await runtime.enterLoadboard(await readJsonBody(request)));
   if (request.method === 'POST' && path === '/loadboards/checkout') return sendJson(response, 200, await runtime.checkoutLoadboard(await readJsonBody(request)));
   if (request.method === 'POST' && path === '/loadboards/release') return sendJson(response, 200, await runtime.releaseLoadboard(await readJsonBody(request)));
   if (request.method === 'GET' && path === '/cell-readiness') return sendJson(response, 200, await runtime.cellReadiness({ roomId }));

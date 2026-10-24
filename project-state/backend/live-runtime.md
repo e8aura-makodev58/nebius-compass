@@ -212,3 +212,8 @@ persisted-room load path: absent/empty history gets ATE-1/ATE-2 synthetic record
 at simulationTime minus seven / plus sixty days. The store checkpoints a changed
 migration before publishing. Nonempty history is retained, so expired records never
 renew just because the room restarts. See [domain-model.md](domain-model.md).
+
+
+Round 38 extends the same load migration with synthetic loadboard inventory when
+absent or boardless. Any existing boards prevent seeding; reservation history is
+preserved, and repeat migration cannot undo custody changes or manual entry.

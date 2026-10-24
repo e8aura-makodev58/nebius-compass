@@ -1,6 +1,6 @@
 import { cellReadiness } from './calibration-readiness.mjs';
 /** Host-owned loadboard commands, serialized by the normal room store adapter. */
-import { checkoutBoard, releaseBoard } from './loadboard-checkout.mjs';
+import { checkoutBoard, releaseBoard, validateLoadboardInventory } from './loadboard-checkout.mjs';
 import { cloneDraftValue } from './live-draft.mjs';
 import { assertNoResponderSkill } from './live-schema.mjs';
 
@@ -54,5 +54,26 @@ export function createLoadboardService(store) {
       throw error;
     }
   }
-  return { checkout: input => perform('checkout', input), release: input => perform('release', input) };
+  async function enterBoard(input) {
+    let board;
+    try {
+      if (!input || (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null)) throw invalid();
+      // cellId alone is optional; all other source fields and unknown fields are checked by the shared validator.
+      board = { ...input, cellId: input.cellId === undefined ? null : input.cellId };
+      validateLoadboardInventory({ boards: [board], reservations: [] });
+      assertNoResponderSkill(board);
+      board = structuredClone(board);
+    } catch { throw invalid(); }
+    const transaction = await store.mutate('loadboard-entry', state => {
+      const inventory = state.loadboardInventory === undefined ? { boards: [], reservations: [] } : cloneDraftValue(state.loadboardInventory);
+      validateLoadboardInventory(inventory);
+      if (inventory.boards.some(row => row.boardId === board.boardId)) throw invalid();
+      if (board.cellId !== null && !(state.calibrations ?? []).some(row => row.cellId === board.cellId)) throw invalid();
+      if (state.loadboardInventory === undefined) state.loadboardInventory = { boards: [board], reservations: [] };
+      else state.loadboardInventory.boards.push(board);
+      return { decision: 'ADDED', reasons: [] };
+    });
+    return transaction.result;
+  }
+  return { checkout: input => perform('checkout', input), release: input => perform('release', input), enterBoard };
 }

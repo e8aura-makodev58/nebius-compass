@@ -258,6 +258,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     reconcileConsumables: () => reconcileRoomConsumables(investigationStore),
     enterCalibration: input => calibrationService.enter(input),
     calibrations: query => buildCalibrations(demoState, query),
+    enterLoadboard: input => loadboardService.enterBoard(input),
     checkoutLoadboard: input => loadboardService.checkout(input),
     releaseLoadboard: input => loadboardService.release(input),
     consumableObligations: query => buildConsumableObligations(demoState, query),
