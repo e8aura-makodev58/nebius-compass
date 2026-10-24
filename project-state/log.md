@@ -761,3 +761,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added comprehensive E2E test suite in `e2e/loadboard-actions.spec.mjs` (6/6 tests passing, verified across 30 repeated runs).
 - Verification: `npm test` 535/535 passed; full Chromium E2E suite 127/127 passed on port 3022; ports 3022 and 3122 free.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 33 merge, deploy and round 34 assignment (main agent)
+- Merged codex round 33 (serialised loadboard checkout and release routes, obligations read endpoint) and gemini round 33 (check-out and release UI) as `5d8054d`. Verification: `npm test` 546/546; E2E 127/127 on port 3024. Deployed `5d8054d` healthy; loadboards, obligations and station-kpi endpoints return 200 on the deploy server; an empty checkout body returns 400.
+- Known: the checkout route has no per-user authentication, consistent with the existing mutation routes. Open for the user to decide.
+- Approved F4 slice 1 (`docs/design/handler-jam-episodes-slice-1.md`) for round 34; codex builds the pure module, gemini the stub-first episodes panel.
+- Pages updated: this log; handover.md merge log and assignments.

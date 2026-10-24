@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 33: loadboard checkout write routes (F3 slice 2) with serial store writes and concurrency tests (section 2 of round 33 bullets) | 33 |
-| gemini | Round 33: loadboard check-out and release actions in the Loadboards panel, against the round 33 write contract, stub-first | 33 |
+| codex | Round 34: handler jam episodes slice 1 (F4), pure module and tests (spec approved in round 34 bullets) | 34 |
+| gemini | Round 34: handler jam episodes panel (F4 UI), stub-first against the round 34 contract | 34 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,22 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 34 (2026-10-24) — handler jam episodes (F4 slice 1).** Start with `git merge master`.
+
+- **codex.** Implement `docs/design/handler-jam-episodes-slice-1.md` (approved for build). Build a pure module
+  `backend/src/handler-jam-episodes.mjs` with the function in sections 3–6 (episodes, stopped time, planned-stop exclusion,
+  reference-rate deficit gate, output shape). No I/O, clock, store, or imports from simulation, responder or analytics. Add
+  `backend/tests/handler-jam-episodes.test.mjs` for every item in section 7, including the no-causal-language check. Use
+  **port 3021**. Run both suites, update `project-state/backend/`, commit, set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Build a **Handler episodes** panel in the workspace, registered like the others. It lists each episode with
+  `episodeId`, `reasonCode`, `jamCount`, `unplannedStoppedMinutes`, `classification` (PATTERN or SINGLE_EVENT), the alarm IDs,
+  and a deficit line. The deficit reads "Estimate: N units" with its basis when `deficitStatus` is ESTIMATE, and "Suppressed:" with
+  the reasons when SUPPRESSED. Never call it measured. Stub-first against the response shape
+  `{ stationId, window, episodes, excludedAlarms, unplannedStoppedMinutes, plannedStopMinutes, runningMinutes, acceptedUnitsPerRunningMinute, deficitStatus, estimatedDeficitUnits, deficitBasis, suppressionReasons }`
+  (the route `GET /api/control-rooms/:roomId/handler-episodes` comes in a later codex round). Include 375 px and 1280 px no-horizontal-scroll checks,
+  loading, empty and error states. E2E in `e2e/handler-episodes.spec.mjs`. Do not change `backend/`. Use **port 3022**. Run both
+  suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 33 (2026-10-24) — loadboard checkout routes (F3 slice 2) and check-out UI.** Start with `git merge master`.
 
 - **codex.** Add two routes to `backend/src/server.mjs` that call the pure module (`loadboard-checkout.mjs`) through the store's
@@ -1432,6 +1448,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `e4657c4`…`b30da05` (branch `codex`, round 33) and **gemini** `60b8bbd`/`1a43d02` (round 33) → merge `5d8054d`: loadboard checkout and release routes through the serialised store path (`backend/src/loadboard-service.mjs`), the consumable obligations read endpoint, and the check-out and release UI with live-region results. `npm test` 546/546; E2E 127/127 on port 3024. Deployed `5d8054d`, healthy; `/loadboards`, `/consumable-obligations`, `/station-kpis` return 200; an empty checkout body returns 400. Note: the checkout route follows the existing mutation pattern and has no per-user auth (same as `/ask`, `/reports`); see the open auth question in the round 33 notes.
 - 2026-10-24 — **codex** `4699195`/`5837170` (branch `codex`, rounds 31–32) → merge: consumable obligations reconciler and room-state rows (`backend/src/consumable-life-obligations.mjs`, `consumable-life-service.mjs`), and the read-only loadboards endpoint `GET /api/control-rooms/:roomId/loadboards` (`backend/src/loadboards.mjs`). `npm test` 535/535.
 - 2026-10-24 — **gemini** `0e8cbf7`/`0542bb5` (branch `gemini`, round 32) → merge: Obligations panel (`frontend/obligations-view.js`) on stubs, Loadboards keyboard and focus tightening. Merged with codex as `192b682`. E2E 121/121 on port 3024. Deployed `192b682`, healthy; `/loadboards` and `/station-kpis` return 200 on the server.
 - 2026-10-24 — **gemini** `73ce39f` (branch `gemini`, round 31) → merge: read-only Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`, `e2e/loadboards.spec.mjs`) on route stubs until the backend endpoint lands. `npm test` 511/511; E2E 112/112 on port 3024. Deployed `73ce39f`, healthy. Note: on the server the panel shows its error state until the endpoint exists.
