@@ -1679,7 +1679,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 - **Verification:** Focused existing changeover API/pure tests **15/15**; git diff --check clean. This was the explicitly assigned E2E-free docs-only follow-up, so no browser/full-suite rerun or server start. Previous round-43 implementation verification remains recorded as 619/619 unit and 175/175 E2E; those counts are not claimed as a fresh run. No API spend/product-data writes.
 - **project-state pages updated:** backend/http-api.md, log.md.
 - **Remaining work / blockers:** None; documentation complete before the 23:45 UTC run stop. No partial work left.
-- **Questions for main:** Please review/merge round 44. If more work is intended before the run stop, queue a concrete task per the user's direction; otherwise record the run-stop state on the board. This committed handoff is the delivery channel; direct messaging is unavailable. Existing watcher left unchanged; no second worker started.
+- **Questions for main:** Pending-review reminder 1 (2026-10-24): master still assigns round 44 without acknowledging documentation `e390a4a` / ready handoff `f48c458`. Please confirm review status and merge or record required revisions. Documentation is complete, with no partial work or blocker; verification remains unchanged. If further work is intended before the run stop, queue a concrete task per the user's direction; otherwise record the run-stop state on the board. Delivery is limited to this committed board update because direct messaging is unavailable. Existing watcher left unchanged; no second worker started.
 
 ## gemini
 
