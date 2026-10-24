@@ -670,6 +670,12 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Updated `e2e/station-kpi.spec.mjs` with assertions for ATE setup names, device IDs, rated throughput strings, and refreshed metric fixture values.
 - Pages updated: project-state/frontend/overview.md; this log.
 
+## [2026-10-24] docs — Station KPI rates per ATE device, consumable life and loadboard specs (main agent)
+- Stations are ATE setups; units are semiconductor devices with alphanumeric names. Rated UPH belongs to the device (1–10,000, synthetic catalog `fixtures/station-kpis/device-catalog.json`), not the station. `docs/design/station-kpi-panel.md` sections 1, 2, 3, 6 updated; fixture `response-12h.json` now carries `deviceId`.
+- Added `docs/design/consumable-life-slice-1.md` (F1 slice 1) and `docs/design/loadboard-checkout-slice-1.md` (F3 slice 1, round 30).
+- Merged codex round 28 follow-up and round 29 (`5f9ce57`, merge of codex branch): device catalog in station KPIs, consumable life evaluator. Merged gemini round 28 follow-up. Verification on master: `npm test` 497/497; E2E 98/98 on port 3024; deployed `5f9ce57` healthy; `/api/control-rooms/plant-1/station-kpis` returns READY on the deploy server.
+- Pages updated: this log; docs/design specs; handover.md merge log and round 30 assignments.
+
 ## [2026-10-24] quality — Phone and desktop audit of existing panels (Round 29)
 - Audited all eight existing panels (staffing, investigation, map, issues, events, context, analytics, and station KPIs) at 375px (phone) and 1280px (desktop) viewports.
 - Enforced zero horizontal scroll across page and panel containers at 375px and 1280px.
