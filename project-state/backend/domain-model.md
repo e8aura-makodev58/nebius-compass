@@ -210,3 +210,45 @@ and a selected cleaning baseline greater than the latest known reading. Malforme
 throw TypeError rather than returning OK. Identifiers are bounded alphanumeric/underscore/
 hyphen strings (replacement `#` allowed); obligation delimiters are reserved. Valid unit
 mismatches and reading decreases produce RECONCILE as required, with no unit conversion.
+
+
+## Loadboard checkout transitions (round 30, F3 slice 1)
+
+`backend/src/loadboard-checkout.mjs` is an import-free pure domain library. Callers
+supply `{boards,reservations}` and timestamped requests; there is no registry, route,
+store, UI, model, wall clock or runtime integration in this slice.
+
+`checkoutBoard(inventory, {requestId,boardId,cellId,programRevision,requestedAt})`
+returns `{decision,reasons,inventory,reservation}`. Allocation requires a SERVICEABLE
+board physically in store (`cellId:null`), no HELD row for that board or requested
+cell, and an exact approved-program-list match for the board revision. Every known
+failed rule is returned, sorted: BOARD_UNKNOWN, CONDITION_BLOCKED, BOARD_NOT_IN_STORE,
+BOARD_HELD, PROGRAM_NOT_APPROVED, CELL_ALREADY_HOLDING. An unknown board does not
+invent condition or compatibility facts; independent held/cell conflicts still count.
+RELEASED history does not occupy a board or cell.
+
+ALLOCATED sets the copied board location and appends one HELD row with
+`reservationId = RES-<requestId>` and `heldSince = requestedAt`. REJECTED returns
+null reservation and a new inventory with unchanged content. Copies include nested
+compatibility lists and history, so returned data cannot mutate caller-owned inputs.
+
+`checkoutBatch(inventory,requests)` returns `{inventory,decisions}`. Requests sort
+by parsed UTC timestamp, then lexical requestId without locale dependence. Each
+ordered decision includes requestId, decision, reasons and reservation; the final
+inventory is returned once, avoiding a full history copy per request. Transitions use
+a single private inventory copy, giving one winner for a board or cell without
+mutating caller inputs. Empty batches return an independent inventory.
+The future store layer must provide the same serialized order; this library provides
+no locking or persistent transaction boundary.
+
+`releaseBoard(inventory,{reservationId,releasedAt,cellId})` uses the same decision
+envelope, with RELEASED or REJECTED. A matching HELD row and matching reservation
+cell are required. Success records releasedAt, changes the row to RELEASED, preserves
+history and returns the board to store. Unknown, already-released or wrong-cell
+requests return NO_HELD_RESERVATION and unchanged copied inventory.
+
+Malformed fields, impossible UTC dates, duplicate board/reservation/batch request
+identities, release-before-checkout and absent board detail for an authorized release
+throw TypeError. Re-request after release uses a new requestId; reusing a historical
+reservation identity cannot append duplicate history. Input field sets are explicit,
+so hidden or arbitrary fields are rejected rather than copied into decisions.

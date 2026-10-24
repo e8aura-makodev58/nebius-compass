@@ -675,3 +675,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added `docs/design/consumable-life-slice-1.md` (F1 slice 1) and `docs/design/loadboard-checkout-slice-1.md` (F3 slice 1, round 30).
 - Merged codex round 28 follow-up and round 29 (`5f9ce57`, merge of codex branch): device catalog in station KPIs, consumable life evaluator. Merged gemini round 28 follow-up. Verification on master: `npm test` 497/497; E2E 98/98 on port 3024; deployed `5f9ce57` healthy; `/api/control-rooms/plant-1/station-kpis` returns READY on the deploy server.
 - Pages updated: this log; docs/design specs; handover.md merge log and round 30 assignments.
+
+
+## [2026-10-24] feature — Loadboard checkout pure transitions (round 30, F3 slice 1)
+- Added import-free checkout, timestamp/request-ID-ordered batches, and release with copied inventories. All failing eligibility rules are returned; exact program compatibility and HELD board/cell conflicts are deterministic, and release preserves history.
+- Added hermetic acceptance coverage for competing requests, compatibility/condition/location gates, every failure code, release/re-checkout, determinism, input isolation and invalid/hidden field rejection. No route, store, clock, model, UI or runtime integration.
+- Pages updated: backend/domain-model.md, backend/overview.md.
