@@ -1346,3 +1346,21 @@ inventory rather than deleting historical facts. Any nonempty board list is left
 untouched, including custom/custodied/repair rows. Synthetic program mapping is
 LB-0412 and LB-0204 to SR1260-P3, LB-0398 to PM0096-P2. No fresh-mode seed policy is
 changed; the assignment targets persisted Live rooms and manual entry.
+
+
+## 2026-10-24 — Review safeguards and correlation record contract (round 39)
+
+Current routes cannot delete a board, but the older pure validator permitted HELD
+reservations without a board, so legacy/external state can contain them. The migration
+must refuse such history before synthetic seeding, including IDs matching a seed,
+and the pure inventory validator now rejects it. RELEASED history can reference a
+retired board and is preserved. This narrows the round-38 preservation rule safely.
+
+The approved F8 section 6 specifies date/instrument/reference comparison facts but
+no exact packet. Slice 2 uses correlationId, cellId, instrumentId, referencePartId,
+observedAt and result PASS/FAIL/INCONCLUSIVE, with strict fields and UTC dates. It is
+an independent optional private history: no calibration foreign-key requirement is
+invented, and no result can affect readiness. Duplicate IDs are rejected (400),
+not upserted; new entries return RECORDED. Prior sequence and every prior field are
+immutable under Live schema validation. No update/delete/list route is introduced;
+normal reset remains the history boundary. Both modes use the same append service.

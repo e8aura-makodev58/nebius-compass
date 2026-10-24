@@ -60,7 +60,7 @@ test('unknown boards are rejected without inventing condition or compatibility f
   const input = inventory();
   assert.deepEqual(checkoutBoard(input, request('X', { boardId: 'LB-UNKNOWN' })).reasons, ['BOARD_UNKNOWN']);
   input.reservations = [held('RES-missing', { boardId: 'LB-UNKNOWN', cellId: 'ATE-1' })];
-  assert.deepEqual(checkoutBoard(input, request('X', { boardId: 'LB-UNKNOWN' })).reasons, ['BOARD_HELD', 'BOARD_UNKNOWN', 'CELL_ALREADY_HOLDING']);
+  assert.throws(() => checkoutBoard(input, request('X', { boardId: 'LB-UNKNOWN' })), /HELD reservation references absent board/);
 });
 
 test('simultaneous competing batch requests allocate the lower requestId exactly once with deterministic inventory threading', () => {

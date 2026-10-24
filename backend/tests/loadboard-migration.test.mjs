@@ -36,3 +36,13 @@ test('persisted migrated room checks out LB-0398 to READY cell and retains inven
   const before = await store.snapshot(), restarted = createLiveStore({ filePath, historyRetentionDays: 0 });
   assert.deepEqual((await restarted.snapshot()).loadboardInventory, before.loadboardInventory);
 });
+
+test('migration refuses orphan HELD history before seeding even if a seed ID would appear to repair it', () => {
+  for (const boardId of ['LB-0398', 'MISSING']) {
+    const input = state(); input.loadboardInventory = { boards: [], reservations: [{ reservationId: 'RES-ORPHAN', boardId, cellId: 'ATE-1', programRevision: 'PM0096-P2', status: 'HELD', heldSince: input.simulationState.simulationTime }] };
+    const before = structuredClone(input);
+    assert.throws(() => validateLoadboardInventory(input.loadboardInventory), /HELD reservation references absent board/);
+    assert.throws(() => migrateLiveState(input), /Cannot migrate loadboard inventory: HELD reservation references absent board/);
+    assert.deepEqual(input, before);
+  }
+});

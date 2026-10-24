@@ -1,3 +1,4 @@
+import { createCorrelationService } from './correlation-service.mjs';
 import { createCalibrationService, buildCalibrations } from './calibration-service.mjs';
 import { buildCellReadiness } from './cell-readiness.mjs';
 import { createLoadboardService } from './loadboard-service.mjs';
@@ -69,6 +70,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     },
   };
   const assistant = createAskService(investigationStore,{mode:'fixture'});
+  const correlationService = createCorrelationService(investigationStore);
   const calibrationService = createCalibrationService(investigationStore);
   const loadboardService = createLoadboardService(investigationStore);
   const investigations = createInvestigationService(investigationStore,{investigatorOptions:{mode:'fixture'},rankingOptions:{mode:'fixture'},narratorOptions:{mode:'fixture'}});
@@ -199,7 +201,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
       supportOfferDueAtRealTime = null;
       offlineRematchPromise = null;
     }
-    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, calibrations, ...publicState } = structuredClone(demoState);
+    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, calibrations, correlationRecords, ...publicState } = structuredClone(demoState);
     const { rngStreams, ...publicSimulationState } = publicState.simulationState;
     publicState.simulationState = publicSimulationState;
     publicState.resolutionAttempts = publicState.resolutionAttempts.map(redactAttempt);
@@ -256,6 +258,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
   return {
     snapshot,
     reconcileConsumables: () => reconcileRoomConsumables(investigationStore),
+    enterCorrelationRecord: input => correlationService.enter(input),
     enterCalibration: input => calibrationService.enter(input),
     calibrations: query => buildCalibrations(demoState, query),
     enterLoadboard: input => loadboardService.enterBoard(input),

@@ -116,6 +116,12 @@ export function migrateLiveState(input) {
       calibratedAt: new Date(at - 7 * day).toISOString(), dueAt: new Date(at + 60 * day).toISOString(),
     }));
   }
+  if (Array.isArray(input.loadboardInventory?.reservations)) {
+    const boardIds = new Set((input.loadboardInventory.boards ?? []).map(row => row.boardId));
+    if (input.loadboardInventory.reservations.some(row => row.status === 'HELD' && !boardIds.has(row.boardId))) {
+      throw new TypeError('Cannot migrate loadboard inventory: HELD reservation references absent board');
+    }
+  }
   if (input.loadboardInventory === undefined) input.loadboardInventory = { boards: createSeedLoadboards(), reservations: [] };
   else if (Array.isArray(input.loadboardInventory?.boards) && input.loadboardInventory.boards.length === 0) {
     // Preserve any pre-existing reservation history; never manufacture reservations.

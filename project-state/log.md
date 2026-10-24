@@ -888,3 +888,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Smoke test: plant-1 lists the three seeded boards. A checkout of LB-0398 to ATE-1 was ALLOCATED because my smoke test wrote a real reservation to live state. I released it immediately (RELEASED; board back in store). Recorded so the live state history is understood.
 - Review follow-ups assigned to codex in round 39: the migration edge case with orphaned reservations, the obligation reconciler wiring check, and the F8 correlation record (separate, not gating). Gemini: audit of the panels from rounds 31–38.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] fix — Orphan custody safeguard and independent correlation facts (round 39)
+- Migration now refuses orphan HELD reservations before seeding; the shared inventory validator also rejects them. Confirmed the existing scheduled server obligation hook and its hermetic changed-counter regression. Added pure append-only correlation validation and shared-mode serialized entry, with no readiness effect.
+- Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md, backend/live-runtime.md; correlation packet contract recorded in docs/decisions.md.

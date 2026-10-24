@@ -44,6 +44,8 @@ export function validateLoadboardInventory(inventory) {
     }
   }
   unique(inventory.boards, 'boardId'); unique(inventory.reservations, 'reservationId');
+  const boardIds = new Set(inventory.boards.map(row => row.boardId));
+  requireValue(inventory.reservations.every(row => row.status !== 'HELD' || boardIds.has(row.boardId)), 'HELD reservation references absent board');
 }
 function validateRequest(request) {
   fields(request, ['requestId', 'boardId', 'cellId', 'programRevision', 'requestedAt']);

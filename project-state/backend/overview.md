@@ -47,6 +47,8 @@ one TypeScript type file; there is no build step.
 | `assignment-service.mjs` | Lower-level assignment record creation and participation history (shared math). |
 | `workforce-continuity.mjs` | Four-crew rotation, shift availability, rest/duty limits, queue-first priority, and synthetic responder provisioning. Owns `WORKFORCE_POLICY_VERSION`, `CREW_IDS`, `MIN_REST_HOURS`, `MAX_DUTY_HOURS`. |
 | `responder-location.mjs` | Deterministic responder positioning: move to an issue's equipment (role-seeded offset) or back to the duty station. |
+| `correlation-records.mjs` | Import-free, explicit append-only reference-part comparison validator; independent of calibration readiness. |
+| `correlation-service.mjs` | Shared serialized entry for private correlation facts, without gate mutation or model calls. See [http-api.md](http-api.md). |
 | `calibration-service.mjs` | Shared serialized calibration entry, idempotent identity retries and explicit historical GET projection. See [http-api.md](http-api.md). |
 | `calibration-readiness.mjs` | Pure `cellReadiness(calibrations,cellId,at)`, effective calibration selection, strict source validation and conservative expiry. No imports. See [domain-model.md](domain-model.md). |
 | `cell-readiness.mjs` | Explicit Live/Offline room readiness GET projection at the room clock. |

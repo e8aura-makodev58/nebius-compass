@@ -1,3 +1,4 @@
+import { createCorrelationService } from './correlation-service.mjs';
 import { createCalibrationService, buildCalibrations } from './calibration-service.mjs';
 import { buildCellReadiness } from './cell-readiness.mjs';
 import { createLoadboardService } from './loadboard-service.mjs';
@@ -44,6 +45,7 @@ export function createLiveRuntime({
   const staffingService = createStaffingService(store, { agentOptions, ...(requestStaffingRecommendation ? { requestRanking: requestStaffingRecommendation } : {}) });
   const investigations = createInvestigationService(store, { investigatorOptions, rankingOptions: agentOptions, narratorOptions });
   const assistant = createAskService(store,{assistantOptions});
+  const correlationService = createCorrelationService(store);
   const calibrationService = createCalibrationService(store);
   const loadboardService = createLoadboardService(store);
   let investigationWork = null;
@@ -352,6 +354,7 @@ export function createLiveRuntime({
     decideInvestigation: (id,input,action) => investigations.decide(id,input,action),
     async analytics() { return { mode: "LIVE", ...(store.project ? await store.project(buildAnalytics) : buildAnalytics(await store.snapshot())) }; },
     async analyticsPeriod(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildPeriodAnalytics(state, query)) : buildPeriodAnalytics(await store.snapshot(), query)) }; },
+    enterCorrelationRecord: input => correlationService.enter(input),
     enterCalibration: input => calibrationService.enter(input),
     async calibrations(query) { return store.project ? store.project(state => buildCalibrations(state, query)) : buildCalibrations(await store.snapshot(), query); },
     enterLoadboard: input => loadboardService.enterBoard(input),
@@ -498,6 +501,7 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
     async reset() { return mode === "LIVE" ? liveRuntime.reset() : { mode: "OFFLINE", ...offlineRuntime.reset() }; },
     async analytics() { return mode === "LIVE" ? liveRuntime.analytics() : { mode: "OFFLINE", available: false }; },
     async analyticsPeriod(query) { return mode === "LIVE" ? liveRuntime.analyticsPeriod(query) : { mode: "OFFLINE", available: false }; },
+    async enterCorrelationRecord(input) { return active().enterCorrelationRecord(input); },
     async enterCalibration(input) { return active().enterCalibration(input); },
     async calibrations(query) { return active().calibrations(query); },
     async enterLoadboard(input) { return active().enterLoadboard(input); },

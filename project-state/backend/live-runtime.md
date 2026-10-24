@@ -217,3 +217,12 @@ renew just because the room restarts. See [domain-model.md](domain-model.md).
 Round 38 extends the same load migration with synthetic loadboard inventory when
 absent or boardless. Any existing boards prevent seeding; reservation history is
 preserved, and repeat migration cannot undo custody changes or manual entry.
+
+
+Round 39 confirms the existing source-change obligation hook:
+createLiveRuntime.runScheduledTick snapshots the room, calls reconcileRoomConsumables,
+then advances a RUNNING clock. Paused rooms still reconcile changed counter packets;
+GET and unchanged/clock-only ticks do not trigger a reconciliation write. Coverage:
+`consumable-life-obligations.test.mjs`, scheduled-hook test.
+The Live schema also validates append-only correlationRecords history on changed
+rows; normal reset starts fresh. Correlation entry never calls readiness/reconciliation.

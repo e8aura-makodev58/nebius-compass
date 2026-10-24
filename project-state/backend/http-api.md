@@ -47,6 +47,7 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | POST | `/loadboards/checkout` | `{requestId,boardId,cellId,programRevision}` → `{decision,reasons,reservation}` through the normal serialized room write path. |
 | POST | `/loadboards/release` | `{reservationId,cellId}` → the same response envelope. Host supplies the simulation timestamp. |
 | GET | `/consumable-obligations` | `{roomId,asOf,obligations}`: explicit persisted slice-2 rows, with no reconciliation on GET. |
+| POST | `/correlation-records` | Append explicit correlation facts; returns `{decision:"RECORDED",reasons:[]}`. Invalid/duplicate identities are 400; readiness is unaffected. |
 | POST | `/calibrations` | Strict five-field manual entry through the serialized store; returns `{decision:RECORDED\|UNCHANGED,reasons:[]}`. Conflicts/malformed requests return 400. |
 | GET | `/calibrations` | `{roomId,asOf,calibrations}`: explicit history with per-record FUTURE/CURRENT/EXPIRED validity at room time. |
 | GET | `/cell-readiness` | `{roomId,asOf,cells:[{cellId,readiness,reasons,instruments}]}` for cells in private calibration rows, at the room simulation clock. Shared read-only Live/Offline projection; no clock advancement. |
@@ -340,3 +341,16 @@ unknown cell or malformed input returns 400; success returns HTTP 200 with
 `{decision:"ADDED",reasons:[]}`. Eligibility for later checkout is still evaluated
 separately. Entry uses the same serialized store path as checkout and does not add
 reservations or rewrite existing rows. Live and Offline share the service.
+
+
+## Correlation entry (round 39, F8 slice 2)
+
+POST `/api/control-rooms/:roomId/correlation-records` accepts exactly correlationId,
+cellId, instrumentId, referencePartId, observedAt and result (PASS/FAIL/INCONCLUSIVE).
+Dates are strict UTC and canonicalized to milliseconds; IDs are bounded synthetic
+identifiers. The route appends one fact through the shared serialized room mutation
+path; it never updates an existing record or changes calibration readiness.
+Success is HTTP 200 `{decision:"RECORDED",reasons:[]}`. Duplicate/conflicting IDs,
+invalid dates, unsupported/unknown/protected fields return 400. Normal JSON/origin
+and room guards apply. No correlation GET, update or delete route is added; ordinary
+state polling excludes this private history in both modes.

@@ -434,8 +434,44 @@ Normal request guards apply and journal failure publishes nothing.
 `live-migration.mjs` adds independent synthetic LB-0412/LB-0398 SERVICEABLE and
 LB-0204 UNDER_REPAIR rows, all in store, when loadboardInventory is absent or its
 boards array is empty. Synthetic approved programs come from backend/seed/loadboards.mjs.
-Absent inventory gets empty reservations; existing reservation history is preserved.
-Any existing board rows prevent seeding entirely. Repeated migration is identical,
+Absent inventory gets empty reservations; existing RELEASED reservation history is preserved. Orphan HELD reservations
+are invalid and migration refuses them before seeding. Any existing board rows
+prevent seeding entirely. Repeated migration is identical,
 and normal load/checkpoint persistence retains subsequent custody and manual entries.
 This migration covers persisted Live rooms; new seeds and Offline retain their
 existing behavior until configured via the shared entry endpoint.
+
+
+## Review safeguards and correlation facts (round 39)
+
+`validateLoadboardInventory` rejects every HELD reservation whose board is absent.
+Previously the pure validator allowed this, so legacy/external persisted input could
+contain orphan custody even though current entry/release routes do not remove boards.
+`migrateLiveState` checks this before adding synthetic rows and throws a clear error,
+including when the missing ID matches a seed board. RELEASED history may reference
+retired boards and remains preserved. Migration never invents a custody repair.
+
+`correlation-records.mjs` defines a separate optional private correlationRecords
+array. Each row has exactly correlationId, cellId, instrumentId, referencePartId,
+observedAt (UTC), and result (PASS, FAIL or INCONCLUSIVE). IDs are unique, bounded
+synthetic identifiers. The pure validator rejects unknown fields, invalid dates,
+unsupported results, deletion, editing or reordering of prior history. Existing
+rooms treat absent history as empty without manufacturing records or a migration.
+The Live schema enforces append-only transitions; normal reset starts a new history.
+
+`correlation-service.mjs` shares the normal Live/Offline store mutation path. POST
+validates before queueing, copies/canonicalizes the observation timestamp, then
+checks uniqueness against current history and appends one row. Duplicate/conflicting
+IDs return 400 rather than upserting; success is RECORDED with empty reasons.
+There are no update/delete endpoints. Records are excluded from ordinary snapshots
+and model inputs; no list route is added in this slice. Calibration readiness reads
+only calibrations, so no result can authorize, expire or renew a cell.
+
+The round-31 server obligation hook is confirmed in
+`live-runtime.mjs:createLiveRuntime.runScheduledTick`: it calls
+reconcileRoomConsumables(store,snapshot) before checking RUNNING or advancing time.
+The existing scheduled-hook test changes private counters in a paused room and
+checks a new obligation, then no repeat write for unchanged inputs/clock-only ticks.
+The control-room manager's process scheduler invokes room.liveRuntime.runScheduledTick
+per room. This remains source-change
+reconciliation, not work on GET and not an unimplemented counter-ingress route.
