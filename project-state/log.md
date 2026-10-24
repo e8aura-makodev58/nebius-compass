@@ -635,3 +635,37 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added `docs/design/investigation-history-at-scale.md`: how the investigator retrieves and grades history, what breaks at hundreds of testers over years, and the storage and retrieval design to settle before integrating with a live maintenance record.
 - Recommendation: a relational case store with indexed structured retrieval and full-text search on narratives first; vector search only if a measured narrative-recall benchmark shows the gap. Docs only; no code changed.
 - Pages updated: docs/design/investigation-history-at-scale.md; this log.
+
+
+## [2026-10-24] feature — Station KPI backend (round 28)
+- Added deterministic station-ID-hashed rated throughput, validation and load migration, plus a pure shared Live/Offline twelve-hour station KPI projection and room route. Reuses analytics downtime union and compact archived facts; reads never advance either runtime.
+- Regenerated the small investigation lifecycle dataset; verified its only change is the new equipment plan field, with outcomes and RNG unchanged. Removed the analytics coverage helper's spread-argument limit for long event histories.
+- Hermetic coverage checks alignment, overlap/spanning/open downtime, cutoff, archives, missing coverage, selection/totals, errors, migration/RNG stability and read-only mode isolation. Written UTC boundaries take precedence over the illustrative unaligned fixture; main owns that fixture.
+- Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md.
+
+
+## [2026-10-24] feature — Device-based station KPI plan (round 28 follow-up)
+- Added an immutable twenty-device module catalog, deterministic station-to-device seeds/migration, device/rate validation, and `deviceId` in station KPI rows. Rates now come from devices; all other KPI contracts remain unchanged.
+- Regenerated the small lifecycle dataset and verified only equipment device/plan fields changed. Targeted coverage checks fixture parity, plan-cache nonauthority, device preservation and unchanged RNG.
+- Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md.
+
+
+## [2026-10-24] feature — Consumable life pure policy evaluator (round 29, F1 slice 1)
+- Added a standalone import-free evaluator with separate lifetime/since-clean balances, exact status precedence, sorted reasons and lifecycle/policy/version/status obligation keys. Unknown counts remain null; reconciliation blocks derived balances. No store, route, UI, clock or simulation integration.
+- Added hermetic tests for every acceptance item, including cleaning/replacement independence, equality boundaries, reordered data, future cleaning cutoff, unknown/decreasing counters, determinism and rejection of hidden/invalid input fields.
+- Pages updated: backend/domain-model.md, backend/overview.md.
+## [2026-10-24] feature — Station KPI panel frontend (Round 28)
+- Implemented the Station KPI panel (`frontend/station-kpis-view.js`, `frontend/station-kpis.css`) according to `docs/design/station-kpi-panel.md`.
+- Displays 3-hour bucket metrics in a 12-hour window (actual output, planned expected units, attainment percentage, downtime minutes, issues raised) and totals row/card across selected stations.
+- Registered workspace panel in Dockview (`frontend/tiling.js`) and phone workspace navigation (`frontend/workspace-nav.js`).
+- Added per-viewer in-memory station filter (search, All, None, checkbox selection) and window navigation (Latest, Previous 12 h, Next 12 h disabled at Latest, recent windows select).
+- Displayed explicit "DERIVED_FROM_UPTIME" source label and provided loading, empty, and forced-failure error states with retry affordance.
+- Responsive views: desktop table (≥901px / 1280px) and phone cards (≤900px / 375px with 4 stacked buckets per card) with zero horizontal scroll and touch targets ≥ 44px.
+- Verified in dedicated test suite `e2e/station-kpi.spec.mjs` against synthetic fixture `fixtures/station-kpis/response-12h.json`.
+- Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] feature — Station KPI panel ATE and device rate labels (Round 28 follow-up)
+- Updated Station KPI panel headers and cards to display ATE setup name, `deviceId`, and rated throughput (`ATE 1 · SR1260 · 1,260 UPH` and `ATE 2 · PM0096 · 96 UPH`) per spec section 2.
+- Updated synthetic fallback stubs (`DEVICE_CATALOG`, ATE equipment mapping, and UPH formatting helper).
+- Updated `e2e/station-kpi.spec.mjs` with assertions for ATE setup names, device IDs, rated throughput strings, and refreshed metric fixture values.
+- Pages updated: project-state/frontend/overview.md; this log.

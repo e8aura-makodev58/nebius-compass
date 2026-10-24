@@ -169,7 +169,7 @@ export function priorPeriod(bounds, level) {
   return { start: bounds.start - span, end: bounds.start };
 }
 
-function unionDowntime(state, start, end, snapshotMs) {
+export function unionDowntime(state, start, end, snapshotMs) {
   const byEquipment = new Map();
   for (const issue of state.issues) {
     const left = Math.max(start, Date.parse(issue.downtimeStartedAt ?? issue.raisedAt));
@@ -185,8 +185,12 @@ function unionDowntime(state, start, end, snapshotMs) {
 }
 
 export function observedHistoryStart(state, snapshotMs) {
-  const timestamps = state.operationalEvents.map((event) => Date.parse(event.simulationTimestamp)).filter(Number.isFinite);
-  return timestamps.length ? Math.min(...timestamps) : snapshotMs;
+  let earliest = Infinity;
+  for (const event of state.operationalEvents) {
+    const timestamp = Date.parse(event.simulationTimestamp);
+    if (Number.isFinite(timestamp)) earliest = Math.min(earliest, timestamp);
+  }
+  return earliest === Infinity ? snapshotMs : earliest;
 }
 
 function fixMetrics(state, bounds = null, snapshotMs = Date.parse(state.simulationState.simulationTime)) {

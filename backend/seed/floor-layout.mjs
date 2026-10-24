@@ -1,3 +1,5 @@
+import { deviceForStation } from '../src/device-catalog.mjs';
+
 /**
  * Deterministic three-floor building layout.
  *
@@ -76,5 +78,5 @@ export function createBuildingEquipment() {
 
   // Scenario A raises ISS-104 against EQ-04, which must present as needing attention.
   equipment.find((item) => item.id === "EQ-04").status = "ATTENTION_REQUIRED";
-  return equipment;
+  return equipment.map(item => ({ ...item, ...deviceForStation(item.id) }));
 }

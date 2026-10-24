@@ -1421,29 +1421,33 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## codex
 
-- **Status:** IDLE
-- **Updated:** —
-- **Task:** —
-- **Head commit:** —
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24
+- **Task:** Round 28 device follow-up and round 29 consumable life slice 1, completed in that order with separate ready handoffs.
+- **Head commit:** `ded1c24` (round 29 implementation; final handoff committed separately). Device follow-up: `40168b3`, ready handoff `5a6cda1`.
+- **Changes:** Round 28 follow-up adds the immutable twenty-device catalog, deterministic station-ID-hash device seeds/migration, device/rate validation and catalog-derived KPI rates with `deviceId`. All other KPI contracts unchanged; lifecycle seed regenerated with only device/plan fields changing. Round 29 adds import-free `evaluateConsumableLife({policy,asset,readings,cleanings})`: cumulative lifetime and since-clean balances, specified status precedence, stable sorted reasons and exact lifecycle/policy/version/status obligation keys. No route, store, UI, clock or runtime integration. Null counts never become zero; mismatched units/decreasing counters reconcile, with uncertain derived balances null. Cleaning cannot restore exhausted lifetime; replacement lifecycles are independent.
+- **Files changed:** Device follow-up: catalog, floor layout, lifecycle seed, schema/migration, station KPI module/tests and wiki. Round 29: `backend/src/consumable-life.mjs`, `backend/tests/consumable-life.test.mjs`, wiki below. No frontend/E2E changes.
+- **Verification:** Device follow-up `npm test` **484/484**, forced-provider Chromium E2E **93/93**, targeted station tests **12/12**. Round 29 `npm test` **497/497**, forced-provider Chromium E2E **93/93**, targeted consumable tests **13/13** covering every section 7 acceptance item. Both E2E runs used 3021; port is free. `git diff --check` clean. No live calls or product-data writes.
+- **project-state pages updated:** backend/domain-model.md, backend/overview.md, backend/http-api.md (device follow-up), log.md.
+- **Risks / follow-ups:** Device rates are synthetic and need engineering confirmation; station names are preserved for frontend ATE formatting. Hash defaults need not match the illustrative fixture mapping. Consumable inputs use exact public field sets and safe nonnegative integer counters; malformed policy/date/identity/baseline facts throw TypeError, while unit/decrease problems return RECONCILE. The spec's sample cleaning occurs after its latest reading, so its example OK output conflicts with section 3; code follows the written cutoff and ignores later cleanings (regression tested). No issue creation, asset registry or persistence is added in this slice. Prior station UTC/history/rounding notes remain applicable.
+- **Questions for main:** Pending-review reminder 1 (2026-10-24): `40168b3` (device follow-up) and `ded1c24` (consumable life), with final handoff `6ba6c9b`, remain unmerged on master. Please acknowledge/review each part or record requested revisions, and assign the next concrete task now per the user's request to keep Codex supplied with work. No implementation blocker. Please reconcile the main-owned examples when integrating. Delivery is through this committed board update; direct messaging is unavailable.
 
 ## gemini
 
-- **Status:** IDLE
-- **Updated:** —
-- **Task:** —
-- **Head commit:** —
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24 15:55 UTC
+- **Task:** Round 28 follow-up: ATE and device labels on the station KPI panel (`docs/design/station-kpi-panel.md`)
+- **Head commit:** 3068e6f
+- **Changes:**
+  - Implemented ATE setup name, `deviceId`, and rated throughput formatting (`formatUph`) across station cards and desktop table headers (e.g. `ATE 1 · SR1260 · 1,260 UPH` and `ATE 2 · PM0096 · 96 UPH`) per spec section 2.
+  - Updated `generateSyntheticResponse` route fallback in `frontend/station-kpis-view.js` with `DEVICE_CATALOG`, ATE station naming, and device-rate mapping.
+  - Updated `e2e/station-kpi.spec.mjs` asserting ATE setup names, device IDs, rated throughput strings, and refreshed metric fixture values.
+  - Verified with `npm test` and full Chromium E2E suite on port 3022.
+- **Files changed:** `frontend/station-kpis-view.js`, `frontend/station-kpis.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/station-kpi.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
+- **Verification:** `npm test` 472/472 passed · Chromium forced-provider E2E 98/98 passed (`COMPASS_E2E_PORT=3022`). Free ports confirmed.
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** Ready for merge. Upon merge, Gemini will proceed immediately to Round 29 (`e2e/phone-audit.spec.mjs` and accessibility/responsive fixes across all existing panels).
+- **Questions for main:** Ready for merge. User reminder: please do not keep Gemini idle — please merge Round 28 follow-up and assign Round 29 promptly.
 
 ## codebuddy
 

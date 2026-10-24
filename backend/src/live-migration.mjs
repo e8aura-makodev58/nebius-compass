@@ -1,3 +1,4 @@
+import { deviceById } from './device-catalog.mjs';
 import { recoverInvestigations } from './investigation-service.mjs';
 import { migrateInvestigationRecords } from './investigation-records.mjs';
 import { initializeFaults } from './fault-truth.mjs';
@@ -21,8 +22,10 @@ function migrateToBuilding(state) {
   const existing = new Map(state.equipment.map((item) => [item.id, item]));
   state.equipment = building.map((item) => {
     const previous = existing.get(item.id);
-    // Keep live status and any operator-visible fields; only add the floor.
-    return previous ? { ...previous, floor: item.floor } : item;
+    // Preserve live fields while filling the floor and device-based plan.
+    if (!previous) return item;
+    if (previous.deviceId === undefined) return { ...previous, floor: item.floor, deviceId: item.deviceId, ratedUnitsPerHour: item.ratedUnitsPerHour };
+    return { ...previous, floor: item.floor, ratedUnitsPerHour: previous.ratedUnitsPerHour === undefined ? deviceById(previous.deviceId)?.ratedUnitsPerHour : previous.ratedUnitsPerHour };
   });
   const seededFloors = { "R-ENGR104": 1, "R-ENGR028": 1, "R-TECH216": 2, "R-OPER088": 2, "R-TECH073": 3, "R-OPER142": 3 };
   for (const responder of state.responders) responder.floor ??= seededFloors[responder.id] ?? 1;

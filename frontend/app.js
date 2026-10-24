@@ -1,6 +1,7 @@
 import { initWorkspaceNav } from "./workspace-nav.js";
 import { renderStaffing } from './staffing-view.js';
 import { renderInvestigations, investigationPolicyMarkup, bindInvestigationPolicy, investigationAnalyticsMarkup, selectInvestigation } from './investigation-view.js';
+import { initStationKpis } from './station-kpis-view.js';
 import { initAsk } from './ask-view.js';
 import { initTiling } from "./tiling.js";
 import { initParetoPanel } from "./pareto.js";
@@ -57,6 +58,7 @@ const paretoRoot = document.querySelector("#pareto-panel");
 let paretoPanel = null;
 let workspaceNav = null;
 let askView = { render() {} };
+let stationKpisView = null;
 let currentView = "control";
 let currentSettingsTab = "api";
 let actionInFlight = false;
@@ -1081,7 +1083,7 @@ function render(state) {
   const previousMode = currentState?.mode;
   if (previousMode && previousMode !== state.mode) { stationHistoryCache.clear(); selectedIssueId = null; selectedStationId = null; selectedResponderId = null; clearEventSelection(); }
   workspaceNav?.update(state);
-  currentState = state; renderStatusBar(state); const live = state.mode === "LIVE"; elements["simulation-controls"].hidden = !live; elements["control-room-search"].hidden = !live; if (!live && searchOpen) closeSearchPalette(); elements["offline-reset-button"].hidden = live; elements["live-mode-button"].classList.toggle("active", live); elements["offline-mode-button"].classList.toggle("active", !live); renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render}); renderInvestigations(state, {escape: escapeHtml, request: roomApi, onState: render}); askView.render(); renderResponders(state); renderStations(state); renderSidebarTabs(); if (currentView === "settings" && currentSettingsTab === "demo") renderDemoContinuity(state);
+  currentState = state; renderStatusBar(state); const live = state.mode === "LIVE"; elements["simulation-controls"].hidden = !live; elements["control-room-search"].hidden = !live; if (!live && searchOpen) closeSearchPalette(); elements["offline-reset-button"].hidden = live; elements["live-mode-button"].classList.toggle("active", live); elements["offline-mode-button"].classList.toggle("active", !live); renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render}); renderInvestigations(state, {escape: escapeHtml, request: roomApi, onState: render}); askView.render(); if (stationKpisView) stationKpisView.render(state); renderResponders(state); renderStations(state); renderSidebarTabs(); if (currentView === "settings" && currentSettingsTab === "demo") renderDemoContinuity(state);
   if (currentView === "settings" && currentSettingsTab === "demo") renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render});
   if (!live) { renderOffline(state); renderAgentActivity(state); return; }
   elements["simulation-time"].textContent = new Date(state.simulationState.simulationTime).toISOString().replace("T", " ").slice(0, 16); elements["simulation-status"].textContent = statusLabel(state.simulationState.status); renderSpeedOptions(state.simulationState.speedMultiplier); elements["pause-resume-button"].textContent = state.simulationState.status === "RUNNING" ? "Pause" : "Resume";
@@ -1090,7 +1092,7 @@ function render(state) {
 
 async function api(url, options = {}) {
   const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 45_000);
-  try { const method = (options.method ?? "GET").toUpperCase(); const response = await fetch(url, { ...options, headers: options.body || ["POST", "PUT", "PATCH", "DELETE"].includes(method) ? { "content-type": "application/json" } : undefined, signal: controller.signal }); if (!response.ok) { const payload = await response.json().catch(() => ({})); const error = new Error(payload.error ?? "Compass request failed"); error.payload = payload; throw error; } return response.json(); }
+  try { const method = (options.method ?? "GET").toUpperCase(); const response = await fetch(url, { ...options, headers: options.body || ["POST", "PUT", "PATCH", "DELETE"].includes(method) ? { "content-type": "application/json" } : undefined, signal: controller.signal }); if (!response.ok) { const payload = await response.json().catch(() => ({})); const error = new Error(payload.error ?? "Compass request failed"); error.payload = payload; error.status = response.status; throw error; } return response.json(); }
   catch (error) { if (error.name === "AbortError") throw new Error("Compass did not respond within 45 seconds. Check application logs."); throw error; }
   finally { clearTimeout(timeout); }
 }
@@ -1626,6 +1628,16 @@ function bootControlRoom() {
   paretoPanel = initParetoPanel(document.querySelector("#pareto-panel"), { roomApi, isVisible: () => currentView === "analytics" && !document.hidden });
   if (displayScreen) bootDisplayScreen();
   else workspaceNav = initWorkspaceNav({onReveal: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS)});
+  const stationKpiNode = document.querySelector("#station-kpi-tile");
+  if (stationKpiNode) {
+    stationKpisView = initStationKpis({
+      element: stationKpiNode,
+      request: roomApi,
+      escape: escapeHtml,
+      roomId: currentControlRoomId,
+      getState: () => currentState,
+    });
+  }
   if (!displayScreen) initTiling({ onMapResize: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS), displayHref: (screen) => `/rooms/${encodeURIComponent(currentControlRoomId)}/display/${screen}` });
   if (!displayScreen) askView = initAsk({ escape: escapeHtml, request: roomApi, getState: () => currentState, onState: render, getContextIssueId: () => selectedIssueId, navigate: navigateToCitation });
   document.querySelector('#active-room-name').textContent = currentControlRoomId;

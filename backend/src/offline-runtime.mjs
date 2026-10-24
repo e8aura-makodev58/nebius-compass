@@ -1,3 +1,4 @@
+import { buildStationKpis } from './station-kpis.mjs';
 import { createAskService } from './assistant.mjs';
 import { claimInvestigationDeadlines } from './investigation-policy.mjs';
 import { finishInvestigationDeadline } from './investigation-service.mjs';
@@ -245,6 +246,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
 
   return {
     snapshot,
+    stationKpis:query => buildStationKpis(demoState, query),
     ask:(input)=>assistant.ask(input),
     getAsk:(id)=>assistant.get(id),
     updateInvestigationPolicy:(input)=>investigations.updatePolicy(input),

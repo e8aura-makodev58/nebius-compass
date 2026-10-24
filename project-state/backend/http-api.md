@@ -43,6 +43,7 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | GET | `/equipment/:equipmentId/issues` | LIVE station history with the same pagination. |
 | GET | `/responders`, `/events` | Individual resource lists; events are the recent public feed. |
 | GET | `/analytics` | Fixed-snapshot analytics. |
+| GET | `/station-kpis` | Shared Live/Offline four-bucket station throughput/uptime projection. Optional `windowEnd` and comma-separated `stations`; see below. |
 | GET | `/analytics/pareto` | Issue Pareto for one period: `level=DAY\|WEEK\|MONTH` (default MONTH), optional `period=<index>` (0 = current; default the most recent complete). Returns the period list, totals and two drill trees: issue class → observed symptom → applied fix, and floor → station, each with issue count, downtime minutes and failed attempts (`pareto-analytics.mjs`). Offline returns `available: false`. |
 | POST | `/mode` | Switch the room between `LIVE` and `OFFLINE`. |
 | POST | `/simulation/start`, `/pause`, `/resume` | Clock run-state. |
@@ -200,3 +201,42 @@ is allowed for CLI/testing. These guards provide no identity authentication or o
 authorization. Report flooding additionally returns 429 / `REPORT_RATE_LIMIT` or
 `REPORT_BACKLOG_FULL`; see investigation.md. JSON body limits are byte-based and return
 413 / `REQUEST_TOO_LARGE`; malformed JSON returns 400 / `INVALID_JSON`.
+
+
+## Station KPIs (round 28)
+
+`GET /api/control-rooms/:id/station-kpis` returns exactly `roomId`, `asOf`, `window`,
+`status`, `earliestAvailable`, `buckets`, `stations`, and `totals` from
+`backend/src/station-kpis.mjs`. It reads one frozen raw state projection; neither mode
+advances its clock, finalizes work or calls a provider. Offline deliberately bypasses
+its ordinary advancing `snapshot()` method.
+
+- `windowEnd`: optional UTC ISO timestamp with seconds and optional three-digit
+  milliseconds, on a 00/03/06/09/12/15/18/21 UTC boundary, no later than the clock.
+  Default is the latest such boundary; the window starts twelve hours earlier.
+  Invalid, impossible, unaligned, future or repeated values return 400 `INVALID_WINDOW`.
+- `stations`: omitted selects all; an explicit empty string selects none. At most 200
+  comma-separated `EQ-` equipment IDs; invalid/unknown IDs or repeated query keys return
+  400 `UNKNOWN_STATION`. Duplicate IDs are deduplicated; equipment order is preserved.
+  Unknown query keys return 400 `INVALID_WINDOW`.
+- Each interval is `[start,end)`. Issues raised after the requested end are excluded;
+  open or later-resolved downtime is clipped at the end. `unionDowntime`, exported from
+  analytics, unions overlapping intervals per station. Archived compact issue facts are
+  read through `analyticHistory`, with no archive I/O.
+- Station rows include `deviceId`; rates come from the immutable device catalog, not a station-specific setting.
+- Expected units are device-rated units/hour × 3. Actual units are floored from precise uptime;
+  displayed downtime minutes are rounded to the nearest integer to honor the API's
+  integer fields. Attainment has one decimal, or null for zero expected units.
+  Actual units are labelled `DERIVED_FROM_UPTIME`, not production-counter readings.
+- Coverage uses analytics' retained event boundary (including compact coverage facts)
+  at the room snapshot. `earliestAvailable` is coverage metadata, which may be later
+  than a historical window. A bucket starting before coverage is unavailable: its
+  metrics are zero with null attainment. All four buckets remain in the response;
+  any unavailable bucket makes the window `PARTIAL`. This avoids projecting a full
+  three-hour plan/actual denominator over a partly unobserved bucket.
+- Totals sum only returned stations, including zero totals for an empty selection.
+  No issue, responder, assignment, private truth or other internal identifiers appear.
+
+The written UTC-boundary rule is authoritative; the illustrative 08:00-ending fixture
+in `docs/design/station-kpi-panel.md` / `fixtures/station-kpis/` is unaligned. Backend
+validation follows the written rule; main owns reconciliation of that example.
