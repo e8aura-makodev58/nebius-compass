@@ -1,0 +1,174 @@
+{
+  "roomId": "plant-1",
+  "asOf": "2026-09-01T08:00:00.000Z",
+  "window": {
+    "start": "2026-08-31T20:00:00.000Z",
+    "end": "2026-09-01T08:00:00.000Z",
+    "hours": 12,
+    "bucketHours": 3
+  },
+  "status": "READY",
+  "earliestAvailable": "2026-08-25T00:00:00.000Z",
+  "buckets": [
+    {
+      "start": "2026-08-31T20:00:00.000Z",
+      "end": "2026-08-31T23:00:00.000Z",
+      "available": true
+    },
+    {
+      "start": "2026-08-31T23:00:00.000Z",
+      "end": "2026-09-01T02:00:00.000Z",
+      "available": true
+    },
+    {
+      "start": "2026-09-01T02:00:00.000Z",
+      "end": "2026-09-01T05:00:00.000Z",
+      "available": true
+    },
+    {
+      "start": "2026-09-01T05:00:00.000Z",
+      "end": "2026-09-01T08:00:00.000Z",
+      "available": true
+    }
+  ],
+  "stations": [
+    {
+      "stationId": "EQ-01",
+      "name": "Station 1",
+      "floor": 1,
+      "ratedUnitsPerHour": 72,
+      "buckets": [
+        {
+          "start": "2026-08-31T20:00:00.000Z",
+          "end": "2026-08-31T23:00:00.000Z",
+          "available": true,
+          "expectedUnits": 216,
+          "actualUnits": 187,
+          "attainmentPercent": 86.6,
+          "downtimeMinutes": 24,
+          "issuesRaised": 1,
+          "source": "DERIVED_FROM_UPTIME"
+        },
+        {
+          "start": "2026-08-31T23:00:00.000Z",
+          "end": "2026-09-01T02:00:00.000Z",
+          "available": true,
+          "expectedUnits": 216,
+          "actualUnits": 216,
+          "attainmentPercent": 100.0,
+          "downtimeMinutes": 0,
+          "issuesRaised": 0,
+          "source": "DERIVED_FROM_UPTIME"
+        },
+        {
+          "start": "2026-09-01T02:00:00.000Z",
+          "end": "2026-09-01T05:00:00.000Z",
+          "available": true,
+          "expectedUnits": 216,
+          "actualUnits": 144,
+          "attainmentPercent": 66.7,
+          "downtimeMinutes": 60,
+          "issuesRaised": 1,
+          "source": "DERIVED_FROM_UPTIME"
+        },
+        {
+          "start": "2026-09-01T05:00:00.000Z",
+          "end": "2026-09-01T08:00:00.000Z",
+          "available": true,
+          "expectedUnits": 216,
+          "actualUnits": 201,
+          "attainmentPercent": 93.1,
+          "downtimeMinutes": 12,
+          "issuesRaised": 1,
+          "source": "DERIVED_FROM_UPTIME"
+        }
+      ]
+    },
+    {
+      "stationId": "EQ-02",
+      "name": "Station 2",
+      "floor": 1,
+      "ratedUnitsPerHour": 96,
+      "buckets": [
+        {
+          "start": "2026-08-31T20:00:00.000Z",
+          "end": "2026-08-31T23:00:00.000Z",
+          "available": true,
+          "expectedUnits": 288,
+          "actualUnits": 288,
+          "attainmentPercent": 100.0,
+          "downtimeMinutes": 0,
+          "issuesRaised": 0,
+          "source": "DERIVED_FROM_UPTIME"
+        },
+        {
+          "start": "2026-08-31T23:00:00.000Z",
+          "end": "2026-09-01T02:00:00.000Z",
+          "available": true,
+          "expectedUnits": 288,
+          "actualUnits": 240,
+          "attainmentPercent": 83.3,
+          "downtimeMinutes": 30,
+          "issuesRaised": 1,
+          "source": "DERIVED_FROM_UPTIME"
+        },
+        {
+          "start": "2026-09-01T02:00:00.000Z",
+          "end": "2026-09-01T05:00:00.000Z",
+          "available": true,
+          "expectedUnits": 288,
+          "actualUnits": 288,
+          "attainmentPercent": 100.0,
+          "downtimeMinutes": 0,
+          "issuesRaised": 0,
+          "source": "DERIVED_FROM_UPTIME"
+        },
+        {
+          "start": "2026-09-01T05:00:00.000Z",
+          "end": "2026-09-01T08:00:00.000Z",
+          "available": true,
+          "expectedUnits": 288,
+          "actualUnits": 136,
+          "attainmentPercent": 47.2,
+          "downtimeMinutes": 95,
+          "issuesRaised": 1,
+          "source": "DERIVED_FROM_UPTIME"
+        }
+      ]
+    }
+  ],
+  "totals": [
+    {
+      "start": "2026-08-31T20:00:00.000Z",
+      "end": "2026-08-31T23:00:00.000Z",
+      "expectedUnits": 504,
+      "actualUnits": 475,
+      "downtimeMinutes": 24,
+      "issuesRaised": 1
+    },
+    {
+      "start": "2026-08-31T23:00:00.000Z",
+      "end": "2026-09-01T02:00:00.000Z",
+      "expectedUnits": 504,
+      "actualUnits": 456,
+      "downtimeMinutes": 30,
+      "issuesRaised": 1
+    },
+    {
+      "start": "2026-09-01T02:00:00.000Z",
+      "end": "2026-09-01T05:00:00.000Z",
+      "expectedUnits": 504,
+      "actualUnits": 432,
+      "downtimeMinutes": 60,
+      "issuesRaised": 1
+    },
+    {
+      "start": "2026-09-01T05:00:00.000Z",
+      "end": "2026-09-01T08:00:00.000Z",
+      "expectedUnits": 504,
+      "actualUnits": 337,
+      "downtimeMinutes": 107,
+      "issuesRaised": 2
+    }
+  ]
+}
