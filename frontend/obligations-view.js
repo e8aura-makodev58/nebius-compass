@@ -480,6 +480,21 @@ export function initObligations({ element, request, escape, roomId, getState }) 
         element.querySelector(`.obl-action-btn[data-obligation-id="${obligationId}"]`)?.focus();
       });
     });
+
+    // Inspect detail drawer keyboard Escape
+    element.querySelectorAll(".obl-detail-drawer").forEach((drawer) => {
+      drawer.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          const obligationId = panelState.selectedObligationId;
+          panelState.selectedObligationId = null;
+          updateUI();
+          if (obligationId) {
+            element.querySelector(`.obl-action-btn[data-obligation-id="${obligationId}"]`)?.focus();
+          }
+        }
+      });
+    });
   }
 
   // Initial load

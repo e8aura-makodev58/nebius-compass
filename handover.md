@@ -1611,34 +1611,21 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 20:49 UTC
-- **Task:** Round 38: board entry form on the Loadboards panel, stub-first against the round 38 contract
-- **Head commit:** `af7303b`
-- **Changes:**
-  - Added expandable Add Board drawer (`.lb-add-drawer`) on the Loadboards panel toggled by `.lb-toggle-add-btn` with accessible `aria-expanded` and focus management.
-  - Implemented form fields: `boardId` (required text), `revision` (required text), `condition` (select: `SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`), optional `cellId` (text input with datalist station autocomplete suggestions), and `approvedPrograms` (comma-separated list).
-  - Client-side validation: verifies non-empty required fields, alphanumeric identifiers, and valid program tokens before network calls. Surfaces plain text validation errors in `.lb-form-error` and polite live region (`#lb-live-announcer`).
-  - Server communication: POSTs payload `{ boardId, revision, condition, cellId, approvedPrograms }` to `/api/control-rooms/:roomId/loadboards/boards` returning `{ decision: "ADDED" | "REJECTED", reasons: [] }`.
-  - Surfaces plain text server rejection reasons (`res.reasons`) in `.lb-form-error` and keeps drawer open.
-  - Stub-first deterministic fallback: checks duplicate `boardId` locally and falls back to rejection (`DUPLICATE_BOARD_ID`) or acceptance (`ADDED`), prepending to `data.boards` immediately when endpoint returns 404.
-  - Keyboard accessibility: Escape/Cancel closes drawer and restores focus to `.lb-toggle-add-btn`; focus moves to `#lb-input-board-id` on drawer open or rejection.
-  - Responsive layout: touch targets $\ge 44\text{px}$ and zero horizontal scroll at 375px and 1280px.
-  - Added dedicated E2E test suite in `e2e/board-entry.spec.mjs` (6/6 tests passing).
-- **Files changed:**
-  - `frontend/loadboards-view.js`
-  - `frontend/loadboards.css`
-  - `e2e/board-entry.spec.mjs`
-  - `project-state/frontend/overview.md`
-  - `project-state/log.md`
-  - `handover.md`
-- **Verification:**
-  - `npm test`: 581/581 passing hermetically (0 failures).
-  - Targeted E2E suites: 37/37 passing on port 3022 (`e2e/board-entry.spec.mjs`, `e2e/loadboards.spec.mjs`, `e2e/loadboard-actions.spec.mjs`, `e2e/cell-readiness.spec.mjs`, `e2e/calibration-link.spec.mjs`, `e2e/calibrations.spec.mjs`).
-  - Full Chromium E2E suite: 159/159 passing on port 3022.
-  - Ports 3022 and 3122 verified free (`ss -ltn | grep -E ':(3022|3122)'` returns 0).
+- **Updated:** 2026-10-24 21:15 UTC
+- **Task:** Round 39: phone and desktop audit of the rounds 31–38 panels (Obligations, Loadboards with Add board drawer, Calibrations, Handler episodes, Station KPIs)
+- **Head commit:** `7885215`
+- **Changes:** Audited all five panels added in rounds 31–38 (Obligations, Loadboards with Add board drawer, Calibrations, Handler episodes, Station KPIs) at 375px mobile and 1280px desktop viewports:
+  - Zero horizontal scroll: verified across all 5 panels at 375px and 1280px (`scrollWidth <= clientWidth`).
+  - Touch targets: verified all interactive elements meet or exceed 44px min-height/width on 375px mobile (including resolving `<label class="kpi-station-item">` wrappers for station KPI checkboxes).
+  - Accessible names: verified every interactive control (`button`, `a`, `input`, `select`, `textarea`) has an accessible name via text content, `aria-label`, or associated `<label>`.
+  - Contrast: identified and fixed low-contrast `.he-deficit-tag` in `handler-episodes.css` by darkening background from `#22c55e` (2.28:1 contrast) to `#166534` (8.01:1 contrast against white text, WCAG AA compliant). Verified text contrast >= 4.5:1 across all visible text in all 5 panels.
+  - Focus restoration on close: added Escape key dismiss and focus return on `.lb-checkout-form` (to `.lb-checkout-btn`), `.lb-readiness-detail-drawer` (to `.lb-readiness-chip`), `.lb-detail-drawer` (to `.lb-action-btn`), `.cal-add-form` (to `.cal-toggle-add-btn`), `.obl-detail-drawer` (to `.obl-action-btn`), and `.he-detail-drawer` (to `.he-action-btn`). Verified station KPIs `<details>` closes on Escape with focus return to `<summary>`.
+  - Created dedicated E2E audit suite in `e2e/panel-audit-r39.spec.mjs` (6/6 passing).
+- **Files changed:** `frontend/loadboards-view.js`, `frontend/calibrations-view.js`, `frontend/obligations-view.js`, `frontend/handler-episodes-view.js`, `frontend/handler-episodes.css`, `e2e/panel-audit-r39.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`. No `backend/` files modified.
+- **Verification:** `npm test` **588/588** passed; targeted E2E suite `e2e/panel-audit-r39.spec.mjs` **6/6** passed; full Chromium E2E suite `npm run test:e2e` **165/165** passed on port 3022. Checked port 3022 and 3122 are clean and free.
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None. Built stub-first against `POST /api/control-rooms/:roomId/loadboards/boards` with local fallback, ready for seamless backend pairing with Codex.
-- **Questions for main:** None. Ready for merge. Reminder: please keep tasks flowing so Gemini is not left idle. Background handover watcher remains running.
+- **Risks / follow-ups:** None. All audit requirements satisfied with zero horizontal scroll, >= 44px touch targets, accessible names, WCAG AA contrast, and trigger focus returns.
+- **Questions for main:** None. Round 39 audit and fixes complete, verified, and ready for merge. Watcher remains active.
 
 ## codebuddy
 

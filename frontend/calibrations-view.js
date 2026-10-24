@@ -593,6 +593,16 @@ export function initCalibrations({ element, request, escape, roomId, getState })
     // Form inputs change tracking
     const form = element.querySelector(".cal-add-form");
     if (form) {
+      form.onkeydown = (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          panelState.isAddFormOpen = false;
+          panelState.formError = null;
+          updateUI();
+          element.querySelector(".cal-toggle-add-btn")?.focus();
+        }
+      };
+
       form.oninput = (e) => {
         const { name, value } = e.target;
         if (name && panelState.formValues.hasOwnProperty(name)) {

@@ -1401,6 +1401,22 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
       });
     }
 
+    // Readiness detail drawer keyboard Escape
+    const readinessDrawer = element.querySelector(".lb-readiness-detail-drawer");
+    if (readinessDrawer) {
+      readinessDrawer.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          const prevCellId = panelState.selectedReadinessCellId;
+          panelState.selectedReadinessCellId = null;
+          updateUI();
+          if (prevCellId) {
+            element.querySelector(`.lb-readiness-chip[data-readiness-cell-id="${prevCellId}"]`)?.focus();
+          }
+        }
+      });
+    }
+
     // Row action buttons: toggle inspect
     element.querySelectorAll(".lb-action-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
@@ -1408,6 +1424,21 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
         panelState.selectedBoardId = panelState.selectedBoardId === boardId ? null : boardId;
         updateUI();
         element.querySelector(`.lb-action-btn[data-board-id="${boardId}"]`)?.focus();
+      });
+    });
+
+    // Inspect detail drawer keyboard Escape
+    element.querySelectorAll(".lb-detail-drawer").forEach((drawer) => {
+      drawer.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          const boardId = panelState.selectedBoardId;
+          panelState.selectedBoardId = null;
+          updateUI();
+          if (boardId) {
+            element.querySelector(`.lb-action-btn[data-board-id="${boardId}"]`)?.focus();
+          }
+        }
       });
     });
 
@@ -1450,6 +1481,17 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
 
     // Check out form submissions
     element.querySelectorAll(".lb-checkout-form").forEach((form) => {
+      form.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          const boardId = form.dataset.boardId;
+          panelState.checkoutBoardId = null;
+          delete panelState.checkoutSelectedStation[boardId];
+          updateUI();
+          element.querySelector(`.lb-checkout-btn[data-board-id="${boardId}"]`)?.focus();
+        }
+      });
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const boardId = form.dataset.boardId;
