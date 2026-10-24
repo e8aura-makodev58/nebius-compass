@@ -1281,3 +1281,23 @@ fully within or outside the query; crossing a boundary is invalid because the sp
 supplies no partial-interval count attribution. This avoids inventing prorated units.
 A missing/zero reference suppresses the estimate; suppressed deficitBasis is null.
 These conventions add no runtime route or mutation and do not infer jam causes.
+
+
+## 2026-10-24 — Calibration slice-1 source and gate boundaries (round 35)
+
+The board explicitly adds a read endpoint to the approved pure-module spec. Its
+source is optional private room calibrations; no default rows or ingestion API are
+invented. Cells are listed from all source rows, including future-only cells, whose
+readiness is NO_CALIBRATION. Future rows do not introduce effective instruments early.
+Strict explicit row fields reject unrelated/correlation facts; exact duplicate
+identities count once, conflicting identities and same-instant competing calibration
+records are invalid rather than selecting readiness by input order. DueAt must not
+precede calibratedAt; equality is a valid immediately-expired record.
+
+The optional checkout argument is the complete cellReadiness result. Its cell and
+instant must match the request, preventing accidental stale or cross-cell reuse.
+All existing failing rules remain reported. The spec explicitly defers checkout
+POST wiring, so this round exposes the read endpoint and optional pure gate only;
+legacy HTTP and batch behavior remains unchanged. Raw calibration history is excluded
+from ordinary public snapshots in both modes. Provisioning/schema enforcement beyond
+reader validation and the required-instrument configuration remain later work.

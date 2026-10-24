@@ -792,6 +792,10 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added `docs/design/calibration-readiness-slice-1.md` (F8 slice 1), approved for round 35: a deterministic cell readiness function and a checkout gate. Correlation evidence stays a separate record.
 - Pages updated: this log; the design spec; handover.md merge log and assignments.
 
+
+## [2026-10-24] feature — Calibration readiness and optional checkout gate (round 35)
+- Added import-free calibration selection and conservative readiness, an optional pure checkout gate preserving legacy callers, and a shared read-only room GET at the simulation clock. Private source history stays outside ordinary snapshots; no checkout POST integration or ingestion is added in this slice.
+- Pages updated: backend/overview.md, backend/domain-model.md, backend/http-api.md; source ambiguity rules recorded in docs/decisions.md.
 ## [2026-10-24] feature — Setup calibration readiness chips and checkout gate on Loadboards panel (Round 35, F8 slice 1 UI)
 - Implemented setup calibration readiness gate on the **Loadboards** panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) stub-first against `docs/design/calibration-readiness-slice-1.md`.
 - Calibration readiness strip (`.lb-readiness-bar`): displays readiness chips per ATE setup (`READY`, `EXPIRED`, `NO_CALIBRATION`) with clear status text and reasons (`CALIBRATION_EXPIRED`, `NO_CALIBRATION_RECORD`). Clicking a chip opens an expandable instrument calibration details drawer (`.lb-readiness-detail-drawer`) displaying instrument ID, calibration ID, due date, and state.

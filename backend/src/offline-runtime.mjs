@@ -1,3 +1,4 @@
+import { buildCellReadiness } from './cell-readiness.mjs';
 import { createLoadboardService } from './loadboard-service.mjs';
 import { buildConsumableObligations } from './consumable-obligations.mjs';
 import { buildLoadboards } from './loadboards.mjs';
@@ -196,7 +197,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
       supportOfferDueAtRealTime = null;
       offlineRematchPromise = null;
     }
-    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, ...publicState } = structuredClone(demoState);
+    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, calibrations, ...publicState } = structuredClone(demoState);
     const { rngStreams, ...publicSimulationState } = publicState.simulationState;
     publicState.simulationState = publicSimulationState;
     publicState.resolutionAttempts = publicState.resolutionAttempts.map(redactAttempt);
@@ -256,6 +257,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     checkoutLoadboard: input => loadboardService.checkout(input),
     releaseLoadboard: input => loadboardService.release(input),
     consumableObligations: query => buildConsumableObligations(demoState, query),
+    cellReadiness: query => buildCellReadiness(demoState, query),
     loadboards: query => buildLoadboards(demoState, query),
     stationKpis:query => buildStationKpis(demoState, query),
     ask:(input)=>assistant.ask(input),

@@ -353,3 +353,31 @@ integers on disjoint intervals fully inside or outside the query window. A run
 crossing a window edge is rejected because no count attribution/prorating contract
 exists. Planned intervals may overlap and cross boundaries. This pure slice adds no
 persisted entity, HTTP route, counter ingestion or responder/dispatch behavior.
+
+
+## Calibration readiness (round 35, F8 slice 1)
+
+`calibration-readiness.mjs` exports import-free `cellReadiness(calibrations,cellId,at)`
+and source validation. Rows have exactly calibrationId, cellId, instrumentId,
+calibratedAt and dueAt. The latest effective calibratedAt per instrument wins;
+future rows are ignored. DueAt is exclusive: equality is EXPIRED. Every effective
+instrument must be current and at least one must exist for READY. Missing/future-only
+cells return NO_CALIBRATION; expired instruments return CALIBRATION_EXPIRED. Instrument
+facts sort lexically. Correlation evidence is separate and cannot change this gate.
+Conflicting IDs or different records at the same cell/instrument/instant throw;
+identical duplicate facts count once. UTC timestamps and non-reversed validity are
+validated, without any clock, store, simulation or model dependency.
+
+`checkoutBoard(inventory,request,readiness?)` optionally consumes this result for the
+same requested cell and instant. Non-READY adds CELL_NOT_READY alongside all existing
+failing rules, preserving inventory. Wrong-cell/stale packets are invalid. Omission
+preserves legacy behavior; batch behavior is unchanged. **Checkout HTTP wiring is
+deferred by the slice-1 spec**: the round-33 command adapter still omits this argument.
+
+Optional private room `calibrations` rows feed `cell-readiness.mjs` and its dedicated
+GET projection in both modes. No default rows or ingestion/mutation route are added;
+missing rows produce an empty cell list. Raw history is excluded from ordinary
+Live/Offline snapshots; the dedicated endpoint exposes only latest instrument facts
+and readiness at the existing simulation clock. Reads do not advance time, revise
+state, call providers or change calibration history. Source validation happens in
+the pure reader; no persisted-schema migration is introduced in this slice.
