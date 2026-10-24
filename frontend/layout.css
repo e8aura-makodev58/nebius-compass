@@ -130,7 +130,7 @@
 
 /* Staffing shares the console and display approval UI. */
 .staffing-tile { min-width: 0; min-height: 0; overflow: auto; padding: 16px; background: var(--paper-raised); overflow-wrap: anywhere; }
-.station-kpi-tile, .loadboards-tile { min-width: 0; min-height: 0; overflow: auto; background: var(--paper-raised); overflow-wrap: anywhere; }
+.station-kpi-tile, .loadboards-tile, .obligations-tile { min-width: 0; min-height: 0; overflow: auto; background: var(--paper-raised); overflow-wrap: anywhere; }
 .staffing-tile h3 { margin-top: 0; }
 .staffing-open { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .staffing-open details, .staffing-open li { min-width: 0; }
@@ -147,6 +147,7 @@
 .display-mode:not([data-display="investigation"]) #investigation-tile { display: none !important; }
 .display-mode:not([data-display="stationKpis"]) #station-kpi-tile { display: none !important; }
 .display-mode:not([data-display="loadboards"]) #loadboards-tile { display: none !important; }
+.display-mode:not([data-display="obligations"]) #obligations-tile { display: none !important; }
 .display-mode[data-display="staffing"] .floor-section, .display-mode[data-display="staffing"] .context-panel { display: none !important; }
 .display-mode[data-display="staffing"] #staffing-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
 .display-mode[data-display="investigation"] .floor-section, .display-mode[data-display="investigation"] .context-panel { display: none !important; }
@@ -155,7 +156,9 @@
 .display-mode[data-display="stationKpis"] #station-kpi-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
 .display-mode[data-display="loadboards"] .floor-section, .display-mode[data-display="loadboards"] .context-panel { display: none !important; }
 .display-mode[data-display="loadboards"] #loadboards-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
-@media (max-width: 900px) { .staffing-tile, .station-kpi-tile, .loadboards-tile { border-top: 1px solid var(--rule); } }
+.display-mode[data-display="obligations"] .floor-section, .display-mode[data-display="obligations"] .context-panel { display: none !important; }
+.display-mode[data-display="obligations"] #obligations-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
+@media (max-width: 900px) { .staffing-tile, .station-kpi-tile, .loadboards-tile, .obligations-tile { border-top: 1px solid var(--rule); } }
 
 /* Compact decisions keep the recommended action ahead of expandable evidence. */
 .staffing-tile { padding: 14px; font-size: .8rem; line-height: 1.45; }
@@ -197,14 +200,14 @@
   body:not(.display-mode) .simulation-bar .eyebrow { font-size: .68rem; margin: 0; }
   #open-control-search kbd, #open-control-search span[aria-hidden="true"] { display: none; }
   body:not(.display-mode) .control-room-search { margin-bottom: 6px; }
-  body:not(.display-mode) .workspace-nav { position: sticky; top: 0; z-index: 20; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 6px 0 10px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--paper-sunk); }
-  .workspace-nav button { display: flex; gap: 4px; align-items: center; justify-content: center; min-width: 0; min-height: 44px; padding: 4px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink-2); box-shadow: none; font-size: .76rem; }
+  body:not(.display-mode) .workspace-nav { position: sticky; top: 0; z-index: 20; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; padding: 4px; margin: 6px 0 10px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--paper-sunk); }
+  .workspace-nav button { display: flex; gap: 4px; align-items: center; justify-content: center; min-width: 0; min-height: 44px; padding: 4px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink-2); box-shadow: none; font-size: .74rem; }
   .workspace-nav button[aria-pressed="true"] { background: var(--paper-raised); color: var(--accent-ink); box-shadow: var(--shadow-sm); }
   .workspace-nav span { min-width: 16px; padding: 1px 4px; border-radius: var(--radius-pill); color: var(--accent-ink); background: var(--accent-wash); font: 600 .66rem var(--font-mono); }
   body:not(.display-mode) .dashboard { display: block; }
   body:not(.display-mode) .floor-section { padding: 12px; }
   body:not(.display-mode) .context-panel { border-top: 1px solid var(--rule); }
-  body:not(.display-mode) .context-panel, body:not(.display-mode) .staffing-tile, body:not(.display-mode) .station-kpi-tile, body:not(.display-mode) .loadboards-tile { scroll-margin-top: 64px; }
+  body:not(.display-mode) .context-panel, body:not(.display-mode) .staffing-tile, body:not(.display-mode) .station-kpi-tile, body:not(.display-mode) .loadboards-tile, body:not(.display-mode) .obligations-tile { scroll-margin-top: 64px; }
   body:not(.display-mode):not([data-workspace-view="floor"]) .floor-section > .section-heading,
   body:not(.display-mode):not([data-workspace-view="floor"]) #floor,
   body:not(.display-mode):not([data-workspace-view="issues"]) .context-panel,
@@ -212,11 +215,13 @@
   body:not(.display-mode):not([data-workspace-view="staffing"]) #investigation-tile,
   body:not(.display-mode):not([data-workspace-view="kpis"]) #station-kpi-tile,
   body:not(.display-mode):not([data-workspace-view="loadboards"]) #loadboards-tile,
+  body:not(.display-mode):not([data-workspace-view="obligations"]) #obligations-tile,
   body:not(.display-mode):not([data-workspace-view="issues"]) .lower-grid > section:has(#issue-list),
   body:not(.display-mode):not([data-workspace-view="events"]) .lower-grid > section:has(#event-feed),
   body:not(.display-mode)[data-workspace-view="staffing"] .floor-section,
   body:not(.display-mode)[data-workspace-view="kpis"] .floor-section,
-  body:not(.display-mode)[data-workspace-view="loadboards"] .floor-section { display: none; }
+  body:not(.display-mode)[data-workspace-view="loadboards"] .floor-section,
+  body:not(.display-mode)[data-workspace-view="obligations"] .floor-section { display: none; }
   body:not(.display-mode)[data-workspace-view="floor"] .lower-grid { display: none; }
   body:not(.display-mode) .lower-grid { display: block; margin-top: 0; }
   body:not(.display-mode) .issue-list { max-height: 260px; overflow-y: auto; }
