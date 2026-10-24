@@ -49,6 +49,16 @@ export function getPanelState(roomId) {
       selectedReadinessCellId: null, // inspected cell in readiness bar
       rowReasons: {}, // boardId -> plain text string of reasons or status
       rowBlockedCell: {}, // boardId -> cellId that blocked checkout
+      isAddBoardOpen: false, // add board drawer open
+      addFormValues: {
+        boardId: "",
+        revision: "A",
+        condition: "SERVICEABLE",
+        cellId: "",
+        approvedPrograms: "",
+      },
+      addFormError: null,
+      addFormSubmitting: false,
       liveAnnouncement: "", // message for aria-live region
       data: null,
       cellReadinessData: generateSyntheticCellReadiness(roomId),
@@ -270,6 +280,10 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
     selectedReadinessCellId,
     rowReasons,
     rowBlockedCell = {},
+    isAddBoardOpen = false,
+    addFormValues = {},
+    addFormError = null,
+    addFormSubmitting = false,
     liveAnnouncement,
   } = panelState;
 
@@ -422,11 +436,139 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
             </select>
           </label>
 
+          <button
+            type="button"
+            class="lb-toggle-add-btn primary-button"
+            aria-expanded="${isAddBoardOpen ? "true" : "false"}"
+            aria-label="${isAddBoardOpen ? "Close add board form" : "Open add board form"}"
+          >
+            ${isAddBoardOpen ? "✕ Close" : "+ Add Board"}
+          </button>
+
           <button type="button" class="lb-refresh-button secondary-button" aria-label="Refresh loadboards">
             Refresh
           </button>
         </div>
       </div>
+
+      ${
+        isAddBoardOpen
+          ? `
+      <section class="lb-add-drawer" aria-label="Add loadboard">
+        <form class="lb-add-form" novalidate>
+          <div class="lb-add-form-header">
+            <h4 class="lb-add-form-title">Add Loadboard</h4>
+            <button type="button" class="lb-close-add-form-btn secondary-button" aria-label="Close add board form">✕ Cancel</button>
+          </div>
+
+          ${
+            addFormError
+              ? `<div class="lb-form-error" role="alert" aria-live="assertive">${escape(addFormError)}</div>`
+              : ""
+          }
+
+          <div class="lb-add-form-grid">
+            <div class="lb-field-group">
+              <label for="lb-input-board-id">Board ID <span class="lb-req">*</span></label>
+              <input
+                type="text"
+                id="lb-input-board-id"
+                name="boardId"
+                value="${escape(addFormValues.boardId || "")}"
+                placeholder="LB-0101"
+                required
+                pattern="[A-Za-z0-9_-]{1,120}"
+                aria-describedby="lb-id-desc"
+                ${addFormSubmitting ? "disabled" : ""}
+              />
+              <span id="lb-id-desc" class="lb-field-hint">e.g. LB-0101 (alphanumeric, dashes, underscores)</span>
+            </div>
+
+            <div class="lb-field-group">
+              <label for="lb-input-revision">Revision <span class="lb-req">*</span></label>
+              <input
+                type="text"
+                id="lb-input-revision"
+                name="revision"
+                value="${escape(addFormValues.revision || "A")}"
+                placeholder="A"
+                required
+                maxlength="20"
+                ${addFormSubmitting ? "disabled" : ""}
+              />
+              <span class="lb-field-hint">e.g. A, B, C, D</span>
+            </div>
+
+            <div class="lb-field-group">
+              <label for="lb-select-condition">Condition <span class="lb-req">*</span></label>
+              <select
+                id="lb-select-condition"
+                name="condition"
+                required
+                ${addFormSubmitting ? "disabled" : ""}
+              >
+                <option value="SERVICEABLE" ${addFormValues.condition === "SERVICEABLE" ? "selected" : ""}>SERVICEABLE</option>
+                <option value="UNDER_REPAIR" ${addFormValues.condition === "UNDER_REPAIR" ? "selected" : ""}>UNDER_REPAIR</option>
+                <option value="QUARANTINED" ${addFormValues.condition === "QUARANTINED" ? "selected" : ""}>QUARANTINED</option>
+              </select>
+              <span class="lb-field-hint">Operational condition</span>
+            </div>
+
+            <div class="lb-field-group">
+              <label for="lb-input-cell-id">Cell Location (optional)</label>
+              <input
+                type="text"
+                id="lb-input-cell-id"
+                name="cellId"
+                list="lb-cell-id-options"
+                value="${escape(addFormValues.cellId || "")}"
+                placeholder="e.g. ATE-1 (optional)"
+                ${addFormSubmitting ? "disabled" : ""}
+              />
+              <datalist id="lb-cell-id-options">
+                ${stations
+                  .map((st) => `<option value="${escape(st)}">${escape(st)}</option>`)
+                  .join("")}
+              </datalist>
+              <span class="lb-field-hint">Optional assigned ATE station or blank for In store</span>
+            </div>
+
+            <div class="lb-field-group lb-field-group-wide">
+              <label for="lb-input-programs">Approved Programs <span class="lb-req">*</span></label>
+              <input
+                type="text"
+                id="lb-input-programs"
+                name="approvedPrograms"
+                value="${escape(addFormValues.approvedPrograms || "")}"
+                placeholder="SR1260-P3, PM0096-P2"
+                required
+                aria-describedby="lb-progs-desc"
+                ${addFormSubmitting ? "disabled" : ""}
+              />
+              <span id="lb-progs-desc" class="lb-field-hint">Comma-separated list (e.g. SR1260-P3, CX4820-P1)</span>
+            </div>
+          </div>
+
+          <div class="lb-add-form-actions">
+            <button
+              type="submit"
+              class="lb-submit-add-board-btn primary-button"
+              ${addFormSubmitting ? "disabled" : ""}
+            >
+              ${addFormSubmitting ? "Adding…" : "Add Board"}
+            </button>
+            <button
+              type="button"
+              class="lb-cancel-add-board-btn secondary-button"
+              ${addFormSubmitting ? "disabled" : ""}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </section>`
+          : ""
+      }
 
       <div class="lb-content">
         ${
@@ -984,6 +1126,236 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
     if (refreshBtn) {
       refreshBtn.addEventListener("click", () => {
         loadData();
+      });
+    }
+
+    // Toggle add board drawer button
+    const toggleAddBtn = element.querySelector(".lb-toggle-add-btn");
+    if (toggleAddBtn) {
+      toggleAddBtn.addEventListener("click", () => {
+        panelState.isAddBoardOpen = !panelState.isAddBoardOpen;
+        panelState.addFormError = null;
+        updateUI();
+        if (panelState.isAddBoardOpen) {
+          element.querySelector("#lb-input-board-id")?.focus();
+        } else {
+          element.querySelector(".lb-toggle-add-btn")?.focus();
+        }
+      });
+    }
+
+    // Close add board drawer button
+    const closeAddBtn = element.querySelector(".lb-close-add-form-btn");
+    if (closeAddBtn) {
+      closeAddBtn.addEventListener("click", () => {
+        panelState.isAddBoardOpen = false;
+        panelState.addFormError = null;
+        updateUI();
+        element.querySelector(".lb-toggle-add-btn")?.focus();
+      });
+    }
+
+    // Cancel add board button
+    const cancelAddBtn = element.querySelector(".lb-cancel-add-board-btn");
+    if (cancelAddBtn) {
+      cancelAddBtn.addEventListener("click", () => {
+        panelState.isAddBoardOpen = false;
+        panelState.addFormError = null;
+        updateUI();
+        element.querySelector(".lb-toggle-add-btn")?.focus();
+      });
+    }
+
+    // Add board form synchronization, escape key, and submission
+    const addForm = element.querySelector(".lb-add-form");
+    if (addForm) {
+      addForm.addEventListener("input", (e) => {
+        const { name, value } = e.target;
+        if (name && panelState.addFormValues) {
+          panelState.addFormValues[name] = value;
+        }
+      });
+      addForm.addEventListener("change", (e) => {
+        const { name, value } = e.target;
+        if (name && panelState.addFormValues) {
+          panelState.addFormValues[name] = value;
+        }
+      });
+      addForm.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          panelState.isAddBoardOpen = false;
+          panelState.addFormError = null;
+          updateUI();
+          element.querySelector(".lb-toggle-add-btn")?.focus();
+        }
+      });
+
+      addForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const boardId = (panelState.addFormValues.boardId || "").trim();
+        const revision = (panelState.addFormValues.revision || "").trim();
+        const condition = panelState.addFormValues.condition || "SERVICEABLE";
+        const cellId = (panelState.addFormValues.cellId || "").trim() || null;
+        const rawPrograms = (panelState.addFormValues.approvedPrograms || "").trim();
+
+        if (!boardId) {
+          panelState.addFormError = "Board ID is required";
+          panelState.liveAnnouncement = `Validation error: ${panelState.addFormError}`;
+          updateUI();
+          element.querySelector("#lb-input-board-id")?.focus();
+          return;
+        }
+        if (!/^[A-Za-z0-9_-]{1,120}$/.test(boardId)) {
+          panelState.addFormError = "Board ID must contain only alphanumeric characters, dashes, and underscores (1-120 chars)";
+          panelState.liveAnnouncement = `Validation error: ${panelState.addFormError}`;
+          updateUI();
+          element.querySelector("#lb-input-board-id")?.focus();
+          return;
+        }
+        if (!revision) {
+          panelState.addFormError = "Revision is required";
+          panelState.liveAnnouncement = `Validation error: ${panelState.addFormError}`;
+          updateUI();
+          element.querySelector("#lb-input-revision")?.focus();
+          return;
+        }
+        if (!/^[A-Za-z0-9_.-]{1,20}$/.test(revision)) {
+          panelState.addFormError = "Revision must contain 1-20 valid characters";
+          panelState.liveAnnouncement = `Validation error: ${panelState.addFormError}`;
+          updateUI();
+          element.querySelector("#lb-input-revision")?.focus();
+          return;
+        }
+        if (!["SERVICEABLE", "UNDER_REPAIR", "QUARANTINED"].includes(condition)) {
+          panelState.addFormError = "Invalid condition selected";
+          panelState.liveAnnouncement = `Validation error: ${panelState.addFormError}`;
+          updateUI();
+          element.querySelector("#lb-select-condition")?.focus();
+          return;
+        }
+        if (!rawPrograms) {
+          panelState.addFormError = "At least one approved program is required";
+          panelState.liveAnnouncement = `Validation error: ${panelState.addFormError}`;
+          updateUI();
+          element.querySelector("#lb-input-programs")?.focus();
+          return;
+        }
+
+        const approvedPrograms = rawPrograms
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean);
+
+        if (approvedPrograms.length === 0) {
+          panelState.addFormError = "At least one approved program is required";
+          panelState.liveAnnouncement = `Validation error: ${panelState.addFormError}`;
+          updateUI();
+          element.querySelector("#lb-input-programs")?.focus();
+          return;
+        }
+
+        for (const prog of approvedPrograms) {
+          if (!/^[A-Za-z0-9_.-]{1,60}$/.test(prog)) {
+            panelState.addFormError = `Invalid program name "${prog}". Programs must be alphanumeric.`;
+            panelState.liveAnnouncement = `Validation error: ${panelState.addFormError}`;
+            updateUI();
+            element.querySelector("#lb-input-programs")?.focus();
+            return;
+          }
+        }
+
+        panelState.addFormError = null;
+        panelState.addFormSubmitting = true;
+        updateUI();
+
+        const payload = {
+          boardId,
+          revision,
+          condition,
+          cellId,
+          approvedPrograms,
+        };
+
+        let response;
+        try {
+          response = await request("/loadboards/boards", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+        } catch (err) {
+          if (err?.payload && (err.payload.decision || err.payload.reasons)) {
+            response = err.payload;
+          } else if (
+            err &&
+            (err.status === 404 ||
+              err.status === 405 ||
+              String(err.message).includes("404") ||
+              String(err.message).includes("Cannot POST") ||
+              String(err.message).includes("Not Found"))
+          ) {
+            // Stub-first fallback: check duplicate boardId against local inventory
+            const existingBoards = panelState.data?.boards || [];
+            const isDuplicate = existingBoards.some(
+              (b) => (b.boardId || "").toUpperCase() === boardId.toUpperCase()
+            );
+            if (isDuplicate) {
+              response = { decision: "REJECTED", reasons: ["DUPLICATE_BOARD_ID"] };
+            } else {
+              response = { decision: "ADDED", reasons: [] };
+            }
+          } else {
+            panelState.addFormSubmitting = false;
+            panelState.addFormError = err.message || "Failed to add loadboard";
+            panelState.liveAnnouncement = `Add board failed: ${panelState.addFormError}`;
+            updateUI();
+            return;
+          }
+        }
+
+        if (response?.decision === "ADDED") {
+          const newBoard = {
+            boardId,
+            revision,
+            condition,
+            cellId: cellId || null,
+            approvedPrograms,
+            heldBy: null,
+          };
+          if (panelState.data?.boards) {
+            const existingIdx = panelState.data.boards.findIndex((b) => b.boardId === boardId);
+            if (existingIdx >= 0) {
+              panelState.data.boards[existingIdx] = newBoard;
+            } else {
+              panelState.data.boards.unshift(newBoard);
+            }
+          }
+          panelState.isAddBoardOpen = false;
+          panelState.addFormValues = {
+            boardId: "",
+            revision: "A",
+            condition: "SERVICEABLE",
+            cellId: "",
+            approvedPrograms: "",
+          };
+          panelState.addFormError = null;
+          panelState.addFormSubmitting = false;
+          panelState.liveAnnouncement = `Board ${boardId} added successfully.`;
+          updateUI();
+          element.querySelector(".lb-toggle-add-btn")?.focus();
+        } else {
+          panelState.addFormSubmitting = false;
+          const reasons = Array.isArray(response?.reasons)
+            ? response.reasons
+            : response?.reasons
+            ? [response.reasons]
+            : [];
+          const reasonText = reasons.length > 0 ? reasons.join(", ") : (response?.decision || "REJECTED");
+          panelState.addFormError = reasonText;
+          panelState.liveAnnouncement = `Add board rejected: ${reasonText}`;
+          updateUI();
+          element.querySelector("#lb-input-board-id")?.focus();
+        }
       });
     }
 

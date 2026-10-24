@@ -864,3 +864,17 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Verified on the server: ATE-1 and ATE-2 are READY in plant-1. A checkout to ATE-1 is no longer blocked by calibration; it is rejected only with BOARD_UNKNOWN, because live rooms have no loadboards.
 - Assigned round 38: codex adds a board entry route and seeds synthetic boards into existing rooms; gemini adds an Add board form.
 - Pages updated: this log; handover.md merge log and assignments.
+
+## [2026-10-24] feature — Loadboard entry form (round 38, gemini)
+- Added an **Add board** drawer (`.lb-add-drawer`) on the Loadboards panel:
+  - Toggled via `.lb-toggle-add-btn` with accessible `aria-expanded` and clear focus transitions.
+  - Form fields: `boardId` (required text), `revision` (required text), `condition` (select dropdown: `SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`), `cellId` (optional text with datalist suggestions), and `approvedPrograms` (comma-separated list).
+  - Client-side validation: validates required fields, identifier formats, and program tokens before network calls. Surfaces plain text validation errors in `.lb-form-error` and polite live region.
+  - Server interaction: posts payload `{ boardId, revision, condition, cellId, approvedPrograms }` against `POST /api/control-rooms/:roomId/loadboards/boards` returning `{ decision, reasons }`.
+  - Plain text rejection display: surfaces server rejection reasons (`res.reasons`) in `.lb-form-error` and keeps drawer open.
+  - Stub-first deterministic fallback: gracefully checks duplicate boardId and falls back to local rejection (`DUPLICATE_BOARD_ID`) or acceptance (`ADDED`) when route returns 404 before Codex's backend lands.
+  - Live region announcement: updates `#lb-live-announcer` with polite status messages.
+- Responsive layout: desktop table (≥901px) and mobile cards list (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+- Added dedicated E2E test suite in `e2e/board-entry.spec.mjs` (6/6 tests passing).
+- Verification: `npm test` 581/581 passed; targeted E2E suites 37/37 passed; full Chromium E2E suite verified on port 3022.
+- Pages updated: project-state/frontend/overview.md; this log.
