@@ -1409,7 +1409,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 - **Status:** READY FOR MERGE
 - **Updated:** 2026-10-24
 - **Task:** Station KPI panel, frontend: panel, filter, window controls, phone layout, states (`docs/design/station-kpi-panel.md`)
-- **Head commit:** <PENDING_COMMIT>
+- **Head commit:** e96b83c
 - **Changes:**
   - Implemented Station KPI panel (`frontend/station-kpis-view.js`, `frontend/station-kpis.css`) showing 3-hourly bucket metrics across 12-hour windows (actual output, planned expected units, attainment percentage, downtime minutes, issues raised) and totals summary across selected stations.
   - Registered workspace panel in Dockview (`frontend/tiling.js`) docked within the staffing group with backward compatibility for legacy 6-panel layouts and active-tab accessibility.
