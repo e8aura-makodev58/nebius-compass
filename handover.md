@@ -1505,7 +1505,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 - **Status:** READY FOR MERGE
 - **Updated:** 2026-10-24 18:01 UTC
 - **Task:** Round 33: loadboard check-out and release actions in the Loadboards panel, against the round 33 write contract, stub-first
-- **Head commit:** 6841e78
+- **Head commit:** f96c440
 - **Changes:** Added interactive Check out (with station select and program select from approved programs) for available boards and Release for held boards in `frontend/loadboards-view.js` and `frontend/loadboards.css`. Returned reason codes are displayed as plain text next to the row (`.lb-row-reasons`), and inventory is refreshed after each action. Results are announced in an `aria-live="polite"` live region (`#lb-live-announcer`). Guarded `bindEvents()` in `loadboards-view.js` and `obligations-view.js` by `setHtml` write status to prevent event listener pileup and toggle bouncing across poll ticks. Added full E2E suite in `e2e/loadboard-actions.spec.mjs`.
 - **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `frontend/obligations-view.js`, `e2e/loadboard-actions.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
 - **Verification:** `npm test` passed (535/535 hermetic unit tests passing); full E2E suite `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (127/127 tests passing including all 6 loadboard action tests, verified 30/30 across repeated runs); ports 3022/3122 verified free.
