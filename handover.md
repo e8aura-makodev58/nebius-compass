@@ -1590,23 +1590,34 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 20:25 UTC
-- **Task:** Round 37: link a blocked checkout to the calibration form (reason, focus move)
-- **Head commit:** `2365c3f`
+- **Updated:** 2026-10-24 20:49 UTC
+- **Task:** Round 38: board entry form on the Loadboards panel, stub-first against the round 38 contract
+- **Head commit:** `af7303b`
 - **Changes:**
-  - Linked rejected loadboard checkout (`CELL_NOT_READY`) and non-ready stationed boards to the Calibrations entry form:
-    - Display readiness reason next to the row in `.lb-row-reasons` (desktop table) and `.lb-card-reasons` (mobile cards).
-    - Added keyboard-reachable, labelled non-submitting action `<button type="button" class="lb-add-cal-action">Add calibration for <cellId></button>`.
-    - Activating the action reveals the Calibrations panel (switches workspace view on phone, activates Dockview panel via `window.CompassTiling.activatePanel` on desktop), opens the Add Calibration drawer with `cellId` pre-filled, and moves focus to `#cal-input-id` without auto-submitting.
-    - Also included the action in the `.lb-checkout-station-warning` container when selecting an unready station.
-    - Handled `compass:open-add-calibration` custom event bridge and exposed `openAddForm({ cellId })` in `calibrations-view.js`.
-  - Responsive design: touch targets $\ge 44\text{px}$ on mobile (`min-height: 44px`) and zero horizontal scroll at 375px and 1280px.
-  - Added dedicated E2E test suite in `e2e/calibration-link.spec.mjs` (4/4 tests passing: desktop table, mobile cards, keyboard Enter navigation, and stationed board flow).
-- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `frontend/calibrations-view.js`, `frontend/tiling.js`, `e2e/calibration-link.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Verification:** Hermetic `npm test` passed (**577/577** tests); full Chromium E2E suite passed (**153/153** tests) on port 3022 with forced provider failures; targeted loadboard & calibration suites **31/31** passed; ports 3022 and 3122 confirmed clean (`ss -ltn | grep -E ':(3022|3122)'`). Zero live network calls and zero writes to `backend/data/`.
+  - Added expandable Add Board drawer (`.lb-add-drawer`) on the Loadboards panel toggled by `.lb-toggle-add-btn` with accessible `aria-expanded` and focus management.
+  - Implemented form fields: `boardId` (required text), `revision` (required text), `condition` (select: `SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`), optional `cellId` (text input with datalist station autocomplete suggestions), and `approvedPrograms` (comma-separated list).
+  - Client-side validation: verifies non-empty required fields, alphanumeric identifiers, and valid program tokens before network calls. Surfaces plain text validation errors in `.lb-form-error` and polite live region (`#lb-live-announcer`).
+  - Server communication: POSTs payload `{ boardId, revision, condition, cellId, approvedPrograms }` to `/api/control-rooms/:roomId/loadboards/boards` returning `{ decision: "ADDED" | "REJECTED", reasons: [] }`.
+  - Surfaces plain text server rejection reasons (`res.reasons`) in `.lb-form-error` and keeps drawer open.
+  - Stub-first deterministic fallback: checks duplicate `boardId` locally and falls back to rejection (`DUPLICATE_BOARD_ID`) or acceptance (`ADDED`), prepending to `data.boards` immediately when endpoint returns 404.
+  - Keyboard accessibility: Escape/Cancel closes drawer and restores focus to `.lb-toggle-add-btn`; focus moves to `#lb-input-board-id` on drawer open or rejection.
+  - Responsive layout: touch targets $\ge 44\text{px}$ and zero horizontal scroll at 375px and 1280px.
+  - Added dedicated E2E test suite in `e2e/board-entry.spec.mjs` (6/6 tests passing).
+- **Files changed:**
+  - `frontend/loadboards-view.js`
+  - `frontend/loadboards.css`
+  - `e2e/board-entry.spec.mjs`
+  - `project-state/frontend/overview.md`
+  - `project-state/log.md`
+  - `handover.md`
+- **Verification:**
+  - `npm test`: 581/581 passing hermetically (0 failures).
+  - Targeted E2E suites: 37/37 passing on port 3022 (`e2e/board-entry.spec.mjs`, `e2e/loadboards.spec.mjs`, `e2e/loadboard-actions.spec.mjs`, `e2e/cell-readiness.spec.mjs`, `e2e/calibration-link.spec.mjs`, `e2e/calibrations.spec.mjs`).
+  - Full Chromium E2E suite: 159/159 passing on port 3022.
+  - Ports 3022 and 3122 verified free (`ss -ltn | grep -E ':(3022|3122)'` returns 0).
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** When Codex's migration lands to seed calibration rows for live rooms, checkout will succeed for ready setups and the link will guide operators for any expired/uncalibrated setups.
-- **Questions for main:** Claude: Round 37 is complete, verified hermetically across both unit (577/577) and full Chromium E2E (153/153) suites, and ready for merge. Per user's explicit reminder, please do not keep Gemini idle: please review and merge commit `2365c3f` promptly, then assign the next concrete task.
+- **Risks / follow-ups:** None. Built stub-first against `POST /api/control-rooms/:roomId/loadboards/boards` with local fallback, ready for seamless backend pairing with Codex.
+- **Questions for main:** None. Ready for merge. Reminder: please keep tasks flowing so Gemini is not left idle. Background handover watcher remains running.
 
 ## codebuddy
 

@@ -1054,6 +1054,139 @@
   color: #fdba74 !important;
 }
 
+/* ========================================================
+   Add Board Drawer (Round 38 UI)
+   ======================================================== */
+.lb-toggle-add-btn {
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lb-add-drawer {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 8px;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.lb-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lb-add-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 8px;
+}
+
+.lb-add-form-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.lb-close-add-form-btn {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+
+.lb-form-error {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: #fff1f2;
+  border: 1px solid #e11d48;
+  color: #881337;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+:root[data-theme="dark"] .lb-form-error {
+  background: rgba(225, 29, 72, 0.15);
+  color: #fecdd3;
+  border-color: rgba(225, 29, 72, 0.5);
+}
+
+.lb-add-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.lb-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lb-field-group-wide {
+  grid-column: 1 / -1;
+}
+
+.lb-field-group label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lb-req {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.lb-field-hint {
+  font-size: 0.68rem;
+  color: var(--ink-2);
+}
+
+.lb-field-group input,
+.lb-field-group select {
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunk);
+  color: var(--ink);
+  outline: none;
+  min-height: 34px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.lb-field-group input:focus,
+.lb-field-group select:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.lb-add-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 900px) {
   .lb-readiness-chip {
     min-height: 44px;
@@ -1065,5 +1198,26 @@
     padding: 8px 14px;
     font-size: 0.8rem;
     box-sizing: border-box;
+  }
+  .lb-toggle-add-btn,
+  .lb-close-add-form-btn,
+  .lb-submit-add-board-btn,
+  .lb-cancel-add-board-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lb-field-group input,
+  .lb-field-group select {
+    min-height: 44px;
+    font-size: 16px; /* prevent iOS zoom */
+  }
+  .lb-add-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .lb-add-drawer {
+    padding: 10px 12px;
   }
 }
