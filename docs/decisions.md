@@ -1231,3 +1231,31 @@ remains for the main agent to measure after merge.
 - The user directed that AMD documents be removed from the repo while the AMD provider code stays in place as a selectable provider. `Compass_AMD_Token_Factory_Integration_Guide.md` is deleted, and its references in `AGENTS.md` rule 1, `.env.example` and `backend/src/provider-controls.mjs` are removed. `AGENTS.md` rules 3 and 4 remain binding for AMD provider code.
 - Still present by design: the AMD provider code and tests, the `AMD_TOKEN_FACTORY_*` variables, and `docs/submission/assets/AMDResponseCompass.png`, which the deck build script uses as its cover image.
 - Main agent (claude), at the user's direction.
+
+
+## 2026-10-24 — Round 31 consumable source and obligation-history contract
+
+The round 31 assignment explicitly approves the slice-2 design despite its older proposal
+header. The design does not name a room counter source or an asset-to-station/Issue mapping.
+This implementation uses private optional `consumableInputs` containing one current slice-1
+input packet per asset, and persists only the specified obligation work rows. No ordinary
+Issue class, station identity or responder authorization is inferred; that integration and
+counter ingestion remain later slices. An optional clarification was requested while work
+continued with this bounded contract.
+
+A canonical source digest includes readings, cleaning, policy and lifecycle facts, not the
+clock. These other facts must participate so cleaning acknowledgements, policy revision and
+replacement can reconcile even before another numeric reading. Digest and row changes commit
+atomically through the existing store. Reads/unchanged ticks do no obligation work.
+
+Explicit replacement means a new current lifecycle for the same asset. Missing evaluations
+or NO_DATA do not mean retirement and cannot close work. UNKNOWN/RECONCILE share one review
+identity and preserve existing cleaning/replacement obligations; policy supersession can
+transfer still-required review work without discharging it. A valid slice-1 counter evaluation
+is the source evidence for resolution, never a timer or cleaning of invalid counters.
+
+The design's status-based obligationKey recurs across cleaning cycles, while closed rows
+must be retained. The pure reconciler returns an identity-derived base ID; the room applicator
+assigns deterministic history-based episode suffixes on collision, never using time/randomness.
+Only one episode may be OPEN for a lifecycle/kind; closed identities and links are immutable.
+Raw sources, digest and obligation history stay outside ordinary public snapshots/models.

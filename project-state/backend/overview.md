@@ -48,6 +48,8 @@ one TypeScript type file; there is no build step.
 | `workforce-continuity.mjs` | Four-crew rotation, shift availability, rest/duty limits, queue-first priority, and synthetic responder provisioning. Owns `WORKFORCE_POLICY_VERSION`, `CREW_IDS`, `MIN_REST_HOURS`, `MAX_DUTY_HOURS`. |
 | `responder-location.mjs` | Deterministic responder positioning: move to an issue's equipment (role-seeded offset) or back to the duty station. |
 | `loadboard-checkout.mjs` | Pure board checkout, ordered batch and release transitions over caller-owned inventory; exact program compatibility and single board/cell allocation. No imports or runtime integration. See [domain-model.md](domain-model.md). |
+| `consumable-life-obligations.mjs` | Pure obligation reconciliation, strict row/history validation and deterministic recurring episode application. See [domain-model.md](domain-model.md). |
+| `consumable-life-service.mjs` | Room counter-change digest gate and normal-store reconciliation hook, shared by runtime adapters. See [live-runtime.md](live-runtime.md). |
 | `consumable-life.mjs` | Standalone pure socket/contactor counter-policy evaluator; cleaning/lifetime balances, ordered statuses and stable obligation keys. No imports or runtime wiring. See [domain-model.md](domain-model.md). |
 | `device-catalog.mjs` | Immutable synthetic device IDs/rates and deterministic station-to-device defaults; no fixture I/O or RNG. |
 | `station-kpis.mjs` | Pure shared Live/Offline station output projection: four UTC three-hour buckets, rated plan, downtime-union-derived units, selected-station totals and history coverage. No model, RNG or mutation. See [http-api.md](http-api.md). |

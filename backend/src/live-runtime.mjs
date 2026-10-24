@@ -1,3 +1,4 @@
+import { reconcileRoomConsumables } from './consumable-life-service.mjs';
 import { createAskService } from './assistant.mjs';
 import { createInvestigationService } from './investigation-service.mjs';
 import {cloneDraftValue} from './live-draft.mjs';
@@ -317,6 +318,7 @@ export function createLiveRuntime({
     lastRealTick = now;
     try {
       const snapshot = await store.snapshot();
+      await reconcileRoomConsumables(store, snapshot);
       if (snapshot.simulationState.status === "RUNNING") {
         await loopContext.run(true, () => advanceSimulation(elapsed));
       }
@@ -328,6 +330,7 @@ export function createLiveRuntime({
   return {
     mode: "LIVE",
     store,
+    reconcileConsumables: () => reconcileRoomConsumables(store),
     ask:(input)=>assistant.ask(input),
     getAsk:(id)=>assistant.get(id),
     async snapshot() { return withState(null); },
@@ -465,6 +468,7 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
       mode = nextMode;
       return this.snapshot();
     },
+    async reconcileConsumables() { return active().reconcileConsumables(); },
     async ask(input) { return active().ask(input); },
     async getAsk(id) { return active().getAsk(id); },
     async updateInvestigationPolicy(input) { return active().updateInvestigationPolicy(input); },

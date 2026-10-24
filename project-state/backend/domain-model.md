@@ -252,3 +252,39 @@ identities, release-before-checkout and absent board detail for an authorized re
 throw TypeError. Re-request after release uses a new requestId; reusing a historical
 reservation identity cannot append duplicate history. Input field sets are explicit,
 so hidden or arbitrary fields are rejected rather than copied into decisions.
+
+
+## Consumable obligation episodes (round 31, F1 slice 2)
+
+`consumable-life-obligations.mjs` reconciles current slice-1 evaluations with OPEN
+obligations. Rows have exactly obligationId, obligationKey, assetId, lifecycleId,
+policyId, policyVersion, kind, status, openedAt, closedAt, closeReason and supersededBy.
+CLEAN_DUE maps to CLEANING, REPLACE_DUE to REPLACEMENT, and UNKNOWN/RECONCILE to the
+same RECONCILIATION identity. OK/WARN/NO_DATA create nothing. At most one OPEN row
+exists per lifecycle/kind; policy changes explicitly close/reopen required work.
+
+One current lifecycle/policy evaluation per asset is required. A different explicitly
+current lifecycle for the same asset retires old-lifecycle obligations with REPLACED.
+Omission is never retirement: absent evaluations and NO_DATA preserve existing work.
+UNKNOWN/RECONCILE may add a reconciliation obligation but cannot discharge existing
+cleaning/replacement work. Cleaning cannot satisfy a still-due lifetime or fix an
+invalid counter source. Valid corrected readings can resolve reconciliation; clock
+passage cannot. Kind/policy supersessions link to the successor obligation. Each
+change records the supplied observedAt in openedAt or closedAt; identity never uses time.
+
+Identity-derived IDs include length-prefixed lifecycle/policy fields, policy version
+and kind. The room applicator appends deterministic `~2`, `~3`, … episode suffixes when
+an already-closed semantic obligation recurs. Closed rows and prior identities remain
+immutable, including repeated cleaning cycles with the same obligationKey. Schema
+checks reject extra/responder fields, duplicate active identities, invalid dates,
+missing/cyclic supersession targets and edits/deletion of prior history. Reset alone
+starts new history. Existing rooms migrate to an empty array without evaluating data.
+
+The private optional `consumableInputs` array contains current slice-1 input packets
+(`policy`, `asset`, `readings`, `cleanings`), one per asset. Their dates must not exceed
+the room clock; no counter ingestion route or registry is added. They are schema
+validated with the existing evaluator. A private `consumableReconciliation.inputDigest`
+records the last applied canonical input digest. Source packets, digest and obligation
+history are excluded from ordinary Live/Offline public snapshots and model inputs.
+This slice persists obligation work only: ordinary Issue/dispatch mapping needs the
+later asset-to-station/issue-class contract and is not invented here.

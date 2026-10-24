@@ -34,6 +34,7 @@ export function createLiveSeed() {
   return initializeFaults(provisionWorkforce({
     schemaVersion: LIVE_SCHEMA_VERSION,
     revision: 0,
+    consumableObligations: [],
     simulationState: {
       id: "simulation-state",
       simulationTime: simulationStart,

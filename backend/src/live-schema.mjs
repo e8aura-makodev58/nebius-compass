@@ -1,3 +1,5 @@
+import { validateConsumableObligationRows } from './consumable-life-obligations.mjs';
+import { evaluateConsumableLife } from './consumable-life.mjs';
 import { deviceById } from './device-catalog.mjs';
 import { cloneDraftValue } from './live-draft.mjs';
 import { publicInvestigationState, investigationDTO, reportDTO } from './investigation-public.mjs';
@@ -54,6 +56,24 @@ export function validateLiveState(state, { previous = null } = {}) {
   const changed=(key)=>{if(!previous)return state[key]??[];if(state[key]===previous[key])return [];const old=new Set(previous[key]??[]);return (state[key]??[]).filter(row=>!old.has(row));};
   assert(state && typeof state === "object", "state must be an object");
   validateFaultTruth(state);
+  assert(Array.isArray(state.consumableObligations), 'consumableObligations must be an array');
+  if (!previous || state.consumableObligations !== previous.consumableObligations) validateConsumableObligationRows(state.consumableObligations, previous?.consumableObligations ?? []);
+  if (state.consumableInputs !== undefined && (!previous || state.consumableInputs !== previous.consumableInputs)) {
+    assert(Array.isArray(state.consumableInputs), 'consumableInputs must be an array');
+    const owners = new Set(), lifecycles = new Set(), clock = Date.parse(state.simulationState.simulationTime);
+    for (const input of state.consumableInputs) {
+      const evaluation = evaluateConsumableLife(input);
+      assert(!owners.has(evaluation.assetId) && !lifecycles.has(evaluation.lifecycleId), 'duplicate current consumable lifecycle');
+      owners.add(evaluation.assetId); lifecycles.add(evaluation.lifecycleId);
+      assert(Date.parse(input.asset.installedAt) <= clock && input.readings.every(row => Date.parse(row.observedAt) <= clock)
+        && input.cleanings.every(row => Date.parse(row.cleanedAt) <= clock), 'future consumable counter facts');
+    }
+  }
+  if (state.consumableReconciliation !== undefined) {
+    const marker = state.consumableReconciliation;
+    assert(marker && (Object.getPrototypeOf(marker) === Object.prototype || Object.getPrototypeOf(marker) === null) && Reflect.ownKeys(marker).length === 1 && Object.hasOwn(marker, 'inputDigest') && typeof marker.inputDigest === 'string' && /^[a-f0-9]{64}$/.test(marker.inputDigest), 'invalid consumable reconciliation marker');
+  }
+
   if(state.investigationPolicy) {
     const policy=state.investigationPolicy;
     assert(['OPERATOR','AUTO_APPROVE_SAFE'].includes(policy.investigationApproval),'Invalid investigation approval policy');
@@ -313,7 +333,7 @@ export function createPublicLiveSnapshot(state, { validated = false } = {}) {
   if (!validated) validateLiveState(state);
   // Select before cloning. Neither private history nor archived analytic facts
   // belong in the polled payload, even transiently.
-  const { responderSkills, resolutionHistory, historyRetention, faultTruth, fieldReports, investigations, investigationSequences, ...base } = state;
+  const { responderSkills, resolutionHistory, historyRetention, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, ...base } = state;
   const openIssues = state.issues.filter((row) => row.status !== "RESOLVED");
   const recentIssues = state.issues.filter((row) => row.status === "RESOLVED").sort((a, b) => Date.parse(b.resolvedAt) - Date.parse(a.resolvedAt)).slice(0, 100);
   const issueIds = new Set([...openIssues, ...recentIssues].map((row) => row.id));

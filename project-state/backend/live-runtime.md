@@ -185,3 +185,23 @@ are durable and replayed on restart; final safety validation and assignment are 
 Sequential `advanceSimulation` drains agent work for reproducible history generation, while
 the scheduled Live loop yields during provider waits. Room wrappers expose policy updates
 and re-investigation through the same service as Offline.
+
+
+## Counter-driven consumable reconciliation (round 31)
+
+`consumable-life-service.mjs` supplies the shared internal `reconcileConsumables()`
+operation. Live scheduled ticks call it before ordinary simulation work, including
+paused rooms, without advancing the clock. The same API-free service is available via
+the Offline/runtime adapter; no counter input route is added in either mode.
+
+Only changed counter-source packets trigger evaluation/writes. Their canonical digest
+includes policy, current lifecycle, readings and cleaning facts, with array/key order
+normalized; clock changes and ordinary GETs never trigger it. Frozen input identity
+caches avoid repeatedly hashing unchanged histories. A cleaning/policy/lifecycle change
+must trigger just like a new numeric reading, because each can change the obligation.
+
+The normal serialized store mutation re-reads current source inputs, evaluates slice 1,
+applies closes/opens and persists the digest in the same journal frame. Failed writes
+roll back both; restart retries an unapplied source exactly once. Concurrent calls on a
+room's store share one pending operation. Missing/cleared inputs keep previous work.
+No model, responder allocation or new ordinary simulation Issue is invoked by this hook.

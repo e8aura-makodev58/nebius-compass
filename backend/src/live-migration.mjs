@@ -104,6 +104,7 @@ export function migrateLiveState(input) {
   if (!["1.0", "2.0", "2.1"].includes(input?.schemaVersion)) throw new Error(`Unsupported live schema version ${input?.schemaVersion ?? "missing"}`);
   // Accept snapshots saved with the former suggestion field name.
   input = structuredClone(input);
+  if (input.consumableObligations === undefined) input.consumableObligations = [];
   for (const issue of input.issues ?? []) {
     issue.responseAction ??= issue.suggestedResponseAction;
     delete issue.suggestedResponseAction;

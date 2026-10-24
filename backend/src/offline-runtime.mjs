@@ -1,3 +1,4 @@
+import { reconcileRoomConsumables } from './consumable-life-service.mjs';
 import { buildStationKpis } from './station-kpis.mjs';
 import { createAskService } from './assistant.mjs';
 import { claimInvestigationDeadlines } from './investigation-policy.mjs';
@@ -34,6 +35,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
 
   function initializeOfflineState() {
     const state = createInitialDemoState();
+    state.consumableObligations = [];
     state.issues.forEach((issue) => { issue.complexity = issue.id === "ISS-104" ? "COMPLEX" : "STANDARD"; });
     const startedAt = state.issues.map((row) => row.raisedAt).sort().at(-1);
     state.simulationState = { status: "RUNNING", simulationTime: startedAt, rngStreams: { attempt: runtimeOptions.attemptSeed ?? 9_973 } };
@@ -190,7 +192,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
       supportOfferDueAtRealTime = null;
       offlineRematchPromise = null;
     }
-    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, ...publicState } = structuredClone(demoState);
+    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, ...publicState } = structuredClone(demoState);
     const { rngStreams, ...publicSimulationState } = publicState.simulationState;
     publicState.simulationState = publicSimulationState;
     publicState.resolutionAttempts = publicState.resolutionAttempts.map(redactAttempt);
@@ -246,6 +248,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
 
   return {
     snapshot,
+    reconcileConsumables: () => reconcileRoomConsumables(investigationStore),
     stationKpis:query => buildStationKpis(demoState, query),
     ask:(input)=>assistant.ask(input),
     getAsk:(id)=>assistant.get(id),
