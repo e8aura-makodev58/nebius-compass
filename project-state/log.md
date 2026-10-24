@@ -742,3 +742,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex rounds 31–32 (`4699195`, `5837170`: consumable obligations reconciler and loadboards read endpoint) and gemini round 32 (`0e8cbf7`: Obligations panel on stubs) as `192b682`. Verification: `npm test` 535/535; E2E 121/121 on port 3024. Deployed `192b682` healthy; `/api/control-rooms/:id/loadboards` and `/station-kpis` return 200 on the deploy server.
 - Round 33 assigned: codex loadboard checkout write routes (serialised writes, concurrency tests) and the consumable-obligations read endpoint; gemini check-out and release actions on stubs.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Serialized loadboard command routes and obligations read (round 33)
+- Added shared Live/Offline checkout/release services and room POST routes through normal store mutations. Timestamps are host-owned, all eligibility reads occur inside the serial queue, replies expose only decision/reasons/reservation, and consumed request identities cannot create duplicate reservations.
+- Added the explicit read-only consumable-obligations GET with private source/digest exclusion. Hermetic tests cover concurrent board/cell requests, restart retries, wrong-cell releases, client-body/header guards, rollback/recovery, mode parity, room isolation and read-only public history. Commands journal only changed custody rows; a large-history replay regression checks bounded frames.
+- Pages updated: backend/http-api.md, backend/domain-model.md, backend/overview.md.

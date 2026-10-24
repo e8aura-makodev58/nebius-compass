@@ -43,6 +43,9 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | GET | `/equipment/:equipmentId/issues` | LIVE station history with the same pagination. |
 | GET | `/responders`, `/events` | Individual resource lists; events are the recent public feed. |
 | GET | `/analytics` | Fixed-snapshot analytics. |
+| POST | `/loadboards/checkout` | `{requestId,boardId,cellId,programRevision}` → `{decision,reasons,reservation}` through the normal serialized room write path. |
+| POST | `/loadboards/release` | `{reservationId,cellId}` → the same response envelope. Host supplies the simulation timestamp. |
+| GET | `/consumable-obligations` | `{roomId,asOf,obligations}`: explicit persisted slice-2 rows, with no reconciliation on GET. |
 | GET | `/loadboards` | Read-only public loadboard inventory; empty when the room has no inventory. Shared Live/Offline builder, no clock advancement. |
 | GET | `/station-kpis` | Shared Live/Offline four-bucket station throughput/uptime projection. Optional `windowEnd` and comma-separated `stations`; see below. |
 | GET | `/analytics/pareto` | Issue Pareto for one period: `level=DAY\|WEEK\|MONTH` (default MONTH), optional `period=<index>` (0 = current; default the most recent complete). Returns the period list, totals and two drill trees: issue class → observed symptom → applied fix, and floor → station, each with issue count, downtime minutes and failed attempts (`pareto-analytics.mjs`). Offline returns `available: false`. |
@@ -255,10 +258,45 @@ The optional private `loadboardInventory` room field uses the existing checkout
 module's `{boards,reservations}` shape. Missing inventory returns `boards:[]`, with
 no synthetic fallback or state initialization. Current projected board/HELD facts
 reuse `validateLoadboardInventory`; arbitrary source fields are never copied. Raw
-inventory stays out of ordinary state polling. No inventory import/mutation route
-or persistent registry is introduced.
+inventory stays out of ordinary state polling. Inventory provisioning is separate;
+checkout/release commands are described in the round 33 section below.
 
 Live uses the store's serialized read projection; Offline projects its raw state
 without calling the advancing snapshot. Neither path advances a clock, writes to
 a store or calls a provider. Unknown/unavailable rooms retain the existing 404/503
-error shapes. The endpoint has no server-side filtering or checkout/release action.
+error shapes. This GET has no server-side filtering or checkout/release action.
+
+
+## Loadboard commands and consumable obligation reads (round 33)
+
+`POST /loadboards/checkout` and `POST /loadboards/release` use
+`loadboard-service.mjs`, shared by both runtime modes. Bodies contain exactly the
+fields in the route table: client requestedAt/releasedAt, inventory overrides,
+missing/extra fields, invalid identifiers and protected simulation markers return
+400 `INVALID_LOADBOARD_REQUEST`. Existing JSON content-type and same-origin guards
+apply. Valid domain rejections return HTTP 200 with sorted reasons and null
+reservation; successes return ALLOCATED or RELEASED and the public reservation row.
+No inventory, room revision or private source fields occur in the response.
+
+The service reads the latest inventory and simulation clock inside the normal store
+mutation, detaches COW proxies for the pure checkout/release module, and commits
+only successful inventory transitions, patching changed custody rows rather than
+rewriting released history into every journal frame. HTTP requests use the store's serial queue
+order; the existing pure batch API still sorts a supplied batch by timestamp/ID.
+Concurrent requests cannot allocate a board or cell twice. Retrying a held request
+returns a domain rejection without another reservation; consumed request IDs remain
+unusable after release/restart (400 if all other checkout conditions would pass).
+A fresh checkout after release uses a new requestId. Rejected commands may still
+advance the normal room transaction revision, but leave inventory unchanged.
+
+Live writes use the existing journal/failure-recovery path; Offline uses its normal
+synchronous in-memory mutation adapter and never calls a provider. The timestamp is
+the current stored simulation time, not wall time or an encoded client ID. Inventory
+provisioning remains separate: an unconfigured room rejects checkout as BOARD_UNKNOWN.
+
+`GET /consumable-obligations` returns every stored slice-2 row, explicitly projected
+from the private ledger by `consumable-obligations.mjs`. It validates row/link shape
+and applies the hidden-truth guard. The response contains roomId, current simulated
+asOf and obligations only; counter packets and reconciliation digests are excluded.
+Both modes use raw read projections without advancing the clock, running evaluation
+or writing state. Missing history is an empty array. Room 404/503 errors are unchanged.

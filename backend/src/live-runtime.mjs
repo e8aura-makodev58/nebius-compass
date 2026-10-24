@@ -1,3 +1,5 @@
+import { createLoadboardService } from './loadboard-service.mjs';
+import { buildConsumableObligations } from './consumable-obligations.mjs';
 import { buildLoadboards } from './loadboards.mjs';
 import { reconcileRoomConsumables } from './consumable-life-service.mjs';
 import { createAskService } from './assistant.mjs';
@@ -40,6 +42,7 @@ export function createLiveRuntime({
   const staffingService = createStaffingService(store, { agentOptions, ...(requestStaffingRecommendation ? { requestRanking: requestStaffingRecommendation } : {}) });
   const investigations = createInvestigationService(store, { investigatorOptions, rankingOptions: agentOptions, narratorOptions });
   const assistant = createAskService(store,{assistantOptions});
+  const loadboardService = createLoadboardService(store);
   let investigationWork = null;
   let investigationQueued = false;
   function scheduleInvestigationWork() {
@@ -346,6 +349,9 @@ export function createLiveRuntime({
     decideInvestigation: (id,input,action) => investigations.decide(id,input,action),
     async analytics() { return { mode: "LIVE", ...(store.project ? await store.project(buildAnalytics) : buildAnalytics(await store.snapshot())) }; },
     async analyticsPeriod(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildPeriodAnalytics(state, query)) : buildPeriodAnalytics(await store.snapshot(), query)) }; },
+    checkoutLoadboard: input => loadboardService.checkout(input),
+    releaseLoadboard: input => loadboardService.release(input),
+    async consumableObligations(query) { return store.project ? store.project(state => buildConsumableObligations(state, query)) : buildConsumableObligations(await store.snapshot(), query); },
     async loadboards(query) { return store.project ? store.project(state => buildLoadboards(state, query)) : buildLoadboards(await store.snapshot(), query); },
     async stationKpis(query) { return store.project ? store.project(state => buildStationKpis(state, query)) : buildStationKpis(await store.snapshot(), query); },
     async analyticsPareto(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildParetoAnalytics(state, query)) : buildParetoAnalytics(await store.snapshot(), query)) }; },
@@ -485,6 +491,9 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
     async reset() { return mode === "LIVE" ? liveRuntime.reset() : { mode: "OFFLINE", ...offlineRuntime.reset() }; },
     async analytics() { return mode === "LIVE" ? liveRuntime.analytics() : { mode: "OFFLINE", available: false }; },
     async analyticsPeriod(query) { return mode === "LIVE" ? liveRuntime.analyticsPeriod(query) : { mode: "OFFLINE", available: false }; },
+    async checkoutLoadboard(input) { return active().checkoutLoadboard(input); },
+    async releaseLoadboard(input) { return active().releaseLoadboard(input); },
+    async consumableObligations(query) { return active().consumableObligations(query); },
     async loadboards(query) { return active().loadboards(query); },
     async stationKpis(query) { return active().stationKpis(query); },
     async analyticsPareto(query) { return mode === "LIVE" ? liveRuntime.analyticsPareto(query) : { mode: "OFFLINE", available: false }; },

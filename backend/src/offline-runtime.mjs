@@ -1,3 +1,5 @@
+import { createLoadboardService } from './loadboard-service.mjs';
+import { buildConsumableObligations } from './consumable-obligations.mjs';
 import { buildLoadboards } from './loadboards.mjs';
 import { reconcileRoomConsumables } from './consumable-life-service.mjs';
 import { buildStationKpis } from './station-kpis.mjs';
@@ -35,8 +37,8 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
   let offlineEpochSimulationTime = 0;
 
   function initializeOfflineState() {
-    const state = createInitialDemoState();
-    state.consumableObligations = [];
+    const state = structuredClone((runtimeOptions.seedFactory ?? createInitialDemoState)());
+    state.consumableObligations ??= [];
     state.issues.forEach((issue) => { issue.complexity = issue.id === "ISS-104" ? "COMPLEX" : "STANDARD"; });
     const startedAt = state.issues.map((row) => row.raisedAt).sort().at(-1);
     state.simulationState = { status: "RUNNING", simulationTime: startedAt, rngStreams: { attempt: runtimeOptions.attemptSeed ?? 9_973 } };
@@ -65,6 +67,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     },
   };
   const assistant = createAskService(investigationStore,{mode:'fixture'});
+  const loadboardService = createLoadboardService(investigationStore);
   const investigations = createInvestigationService(investigationStore,{investigatorOptions:{mode:'fixture'},rankingOptions:{mode:'fixture'},narratorOptions:{mode:'fixture'}});
   async function finishInvestigationWork() { while (await investigations.runNext()) {} }
   let workflow = null;
@@ -250,6 +253,9 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
   return {
     snapshot,
     reconcileConsumables: () => reconcileRoomConsumables(investigationStore),
+    checkoutLoadboard: input => loadboardService.checkout(input),
+    releaseLoadboard: input => loadboardService.release(input),
+    consumableObligations: query => buildConsumableObligations(demoState, query),
     loadboards: query => buildLoadboards(demoState, query),
     stationKpis:query => buildStationKpis(demoState, query),
     ask:(input)=>assistant.ask(input),

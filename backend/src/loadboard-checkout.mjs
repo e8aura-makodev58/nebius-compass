@@ -1,6 +1,10 @@
 /** Pure inventory transitions. The caller supplies timestamps and serialized request order. */
-function requireValue(condition, message) {
-  if (!condition) throw new TypeError(`Invalid loadboard-checkout input: ${message}`);
+function requireValue(condition, message, code) {
+  if (!condition) {
+    const error = new TypeError(`Invalid loadboard-checkout input: ${message}`);
+    if (code) error.code = code;
+    throw error;
+  }
 }
 function fields(value, required, optional = []) {
   requireValue(value && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
@@ -63,7 +67,7 @@ function checkout(inventory, request, copyInventory = true) {
   const next = copyInventory ? structuredClone(inventory) : inventory;
   if (reasons.length) return { decision: 'REJECTED', reasons: reasons.sort(), inventory: next, reservation: null };
   const reservationId = `RES-${request.requestId}`;
-  requireValue(!inventory.reservations.some(row => row.reservationId === reservationId), 'requestId already used');
+  requireValue(!inventory.reservations.some(row => row.reservationId === reservationId), 'requestId already used', 'REQUEST_ID_ALREADY_USED');
   const reservation = { reservationId, boardId: request.boardId, cellId: request.cellId, programRevision: request.programRevision, status: 'HELD', heldSince: request.requestedAt };
   next.boards.find(row => row.boardId === request.boardId).cellId = request.cellId;
   next.reservations.push(reservation);
