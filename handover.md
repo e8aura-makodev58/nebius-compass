@@ -1676,30 +1676,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 22:37 UTC
-- **Task:** Round 42: changeover readiness panel, stub-first against the round 42 read contract
-- **Head commit:** `9c900ed`
-- **Changes:**
-  - Added the **Changeover readiness** panel (`frontend/changeover-readiness-view.js`, `frontend/changeover-readiness.css`):
-    - Displays changeover metadata card (`changeoverId`, `cellId`, `targetProgramRevision`, `startsAt`, `status`) and one row/card per requirement check (`LOADBOARD_AVAILABLE`, `CELL_READY`, `KIT_AVAILABLE`, `CREW_QUALIFIED`) with explicit text results (`PASS`, `FAIL`, `UNKNOWN`), plain-text reasons, and assigned `boardId` on `PASS`.
-    - Adheres strictly to the rule that never color alone carries a result; all result and status badges render bold descriptive text meeting WCAG AA contrast (≥ 4.5:1).
-    - Displays unmet requirements panel listing reason codes and an explicit notice explaining kit and crew facts are not yet recorded in slice 1.
-    - Interactive changeover select dropdown (`CO-0031`, `CO-0032`, `CO-0033`) and manual refresh button with live announcer updates (`#co-live-announcer`).
-    - Built stub-first against read contract `GET /api/control-rooms/:roomId/changeovers/:changeoverId/readiness` with deterministic synthetic fallback, loading, empty, and forced-failure error/retry states.
-    - Registered in Dockview tiling layout (`frontend/tiling.js`), phone workspace navigation (`frontend/workspace-nav.js`), and HTML scaffold (`frontend/index.html`). Preserved legacy layout compatibility (`isLegacy6` through `isLegacy11`).
-    - Fully responsive between desktop table layout (≥901px) and mobile cards layout (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
-  - Added dedicated E2E test suite in `e2e/changeover-readiness.spec.mjs` (4/4 tests passing).
-- **Files changed:** `frontend/changeover-readiness-view.js`, `frontend/changeover-readiness.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/changeover-readiness.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`
-- **Verification:**
-  - `npm test`: 604/604 passing (hermetic, no network, no backend writes).
-  - Targeted unit/E2E: `tiling-layout.test.mjs` (4/4), `e2e/changeover-readiness.spec.mjs` (4/4), `e2e/station-kpi.spec.mjs` (5/5), `e2e/calibrations.spec.mjs` (7/7), `e2e/handler-episodes.spec.mjs` (11/11), `e2e/panel-audit-r39.spec.mjs` (6/6), `e2e/phone-audit.spec.mjs` (5/5) — all passing on port 3022.
-  - Full Chromium E2E suite (`COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`): 175/175 passing.
-  - Ports 3022 and 3122 confirmed completely free (`ss -ltn | grep -E ':3022|:3122'`).
-  - Strictly zero changes to `backend/`.
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`
-- **Risks / follow-ups:** None. Backend route for changeovers does not exist yet (as expected for slice 1), and stub-first synthetic fallback handles 404 gracefully.
-- **Questions for main:** Ready for merge review. Watcher remains active.
+- **Status:** IN PROGRESS
+- **Updated:** 2026-10-24 22:50 UTC
+- **Task:** Round 43: keyboard-only pass over all workspace panels (tab order, focus visibility, dialog focus return)
+- **Head commit:** `4e83601`
+- **Changes:** Starting Round 43: Comprehensive keyboard-only pass across every workspace panel (Staffing, Investigation, Map, Issues, Events, Context, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness). Auditing tab order following reading order, focus visibility >= 2px, focus trapping in dialogs and drawers with trigger focus return on close/Escape, and adding `e2e/keyboard-pass-r43.spec.mjs`.
+- **Files changed:** in progress
+- **Verification:** in progress
+- **project-state pages updated:** in progress
+- **Risks / follow-ups:** Do not modify `backend/`. Use port 3022.
+- **Questions for main:** Round 43 started. Watcher remains active.
 
 ## codebuddy
 
