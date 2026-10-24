@@ -809,6 +809,25 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Verification: `npm test` 559/559 passed; full Chromium E2E suite 142/142 passed on port 3022; ports 3022 and 3122 verified free.
 - Pages updated: project-state/frontend/overview.md; this log.
 
+## [2026-10-24] feature — Calibration records panel and entry form (Round 36, F8 slice 2 UI)
+- Built the **Calibrations** panel (`frontend/calibrations-view.js`, `frontend/calibrations.css`) in the workspace, registered across Dockview tiling (`frontend/tiling.js`), phone workspace navigation (`frontend/workspace-nav.js`, `frontend/layout.css`), and SPA boot controller (`frontend/app.js`).
+- Data contract:
+  - Table of calibration records with `calibrationId`, `cellId`, `instrumentId`, `calibratedAt`, `dueAt`, and status badge (`CURRENT` / `EXPIRED`).
+  - Expandable add calibration drawer (`.cal-add-drawer`) with fields for `calibrationId`, `cellId`, `instrumentId`, `calibratedAt`, and `dueAt`.
+  - Client-side validation: verifies non-empty alphanumeric identifiers and checks that expiration deadline `dueAt >= calibratedAt`. Surfaces client-side error before network call if invalid.
+  - Plain text server reason display: surfaces server rejection reasons (`res.reasons`) in `.cal-form-error` on `REJECTED` outcomes without closing form.
+  - Live region announcement: updates `#cal-live-announcer` with polite status messages upon successful addition, rejection, or refresh.
+- Filtering & controls:
+  - Instant text search across calibration ID, cell, instrument, and state, retaining input focus across keystrokes.
+  - State filter dropdown (`ALL`, `CURRENT`, `EXPIRED`).
+  - Empty state with "Reset filters" affordance.
+  - Manual refresh button.
+- Responsive layout: desktop table (≥901px) and mobile cards list (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+- Built stub-first against read contract `GET /api/control-rooms/:roomId/calibrations` and write contract `POST /api/control-rooms/:roomId/calibrations` with deterministic synthetic fallback and offline parity.
+- Added dedicated E2E test suite in `e2e/calibrations.spec.mjs` (7/7 tests passing).
+- Verification: `npm test` 571/571 passed; full Chromium E2E suite 149/149 passed on port 3022; ports 3022 and 3122 verified free.
+- Pages updated: project-state/frontend/overview.md; this log.
+
 ## [2026-10-24] docs — Round 35 merge, deploy and round 36 assignment (main agent)
 - Merged codex round 35 (calibration readiness module, read endpoint, optional checkout gate) and gemini round 35 (readiness chips and client-side gate) as `79655af`. A test fix `59529e4` stubs ready cell readiness in the loadboard action E2E flows. Verification: `npm test` 571/571; E2E 142/142 on port 3024. Deployed `59529e4` healthy.
 - Gap recorded: the server does not enforce the readiness gate yet; round 36 wires it. Live rooms have no calibration rows yet.

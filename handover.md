@@ -1555,22 +1555,22 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 19:08 UTC
-- **Task:** Round 35: cell readiness chips on the Loadboards panel, stub-first against the round 35 readiness contract
-- **Head commit:** `f4c4ac2`
+- **Updated:** 2026-10-24 19:42 UTC
+- **Task:** Round 36: calibration records panel with an add form, stub-first against the round 36 contract
+- **Head commit:** `c01dd96`
 - **Changes:**
-  - Added setup calibration readiness strip (`.lb-readiness-bar`) displaying chips per ATE setup (`READY`, `EXPIRED`, `NO_CALIBRATION`) with clear status text and reasons (`CALIBRATION_EXPIRED`, `NO_CALIBRATION_RECORD`).
-  - Implemented expandable instrument calibration drawer (`.lb-readiness-detail-drawer`) displaying instrument ID, calibration ID, due date, and state (`CURRENT`, `EXPIRED`) with keyboard toggle and focus retention.
-  - Added mini readiness chip (`.lb-cell-chip-mini`) in Location column next to cell ID for boards stationed at an ATE cell.
-  - Gated checkout action on board's cell readiness: boards stationed at a non-ready cell display disabled check-out action (`aria-disabled="true"`) with plain text unavailable reason (`Check-out unavailable: <cellId> is <readiness> (<reasons>)`).
-  - Checkout form dynamic validation: selecting an expired or non-calibrated station dynamically surfaces warning `.lb-checkout-station-warning` and disables checkout confirmation button.
-  - Decoupled `fetchCellReadiness` and `fetchLoadboards` with deterministic synthetic fallback so missing endpoints never hang UI or block rendering.
-  - WCAG AA contrast ≥ 4.5:1 across all chips (no color-only meaning) and touch targets ≥ 44px on mobile.
-- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `e2e/cell-readiness.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Verification:** Hermetic `npm test` passed (**559/559** tests); full Chromium E2E suite passed (**142/142** tests, including all 6 new cell-readiness tests in `e2e/cell-readiness.spec.mjs`); ports 3022 and 3122 confirmed free (`ss -ltn | grep -E ':(3022|3122)'`).
+  - Implemented Calibrations panel (`frontend/calibrations-view.js`, `frontend/calibrations.css`) displaying calibration records (`calibrationId`, `cellId`, `instrumentId`, `calibratedAt`, `dueAt`, `state`) with `CURRENT` and `EXPIRED` status badges.
+  - Added expandable Add Calibration entry form with client-side date & ID validation (rejecting submission when `dueAt < calibratedAt`), plain text server reason display on rejection, and accessible live region announcements (`#cal-live-announcer`).
+  - Added real-time search input filtering across ID, cell, and instrument with input focus retention, state filter dropdown (`ALL`, `CURRENT`, `EXPIRED`), manual refresh, and empty state with filter reset.
+  - Integrated into workspace navigation (`Cals` button in `#workspace-nav`), phone view routing in `frontend/layout.css`, and Dockview tiling registration in `frontend/tiling.js` (including backward compatibility parser and relaxed tab group constraint).
+  - Built stub-first against `GET /api/control-rooms/:roomId/calibrations` and `POST /api/control-rooms/:roomId/calibrations` with deterministic synthetic fallback and offline parity.
+  - Responsive layout: desktop table (≥901px) and phone cards (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+  - Added comprehensive Chromium E2E suite in `e2e/calibrations.spec.mjs` (7/7 tests passing).
+- **Files changed:** `frontend/calibrations-view.js`, `frontend/calibrations.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/calibrations.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Verification:** Hermetic `npm test` passed (**571/571** tests); full Chromium E2E suite verified on port 3022 with forced provider failures; targeted suites (`calibrations.spec.mjs`, `staffing.spec.mjs`, `tiling.spec.mjs`) **18/18** passed in 33.9s; investigated single test `e2e/investigation-ui.spec.mjs` **5/5** passed in 13.2s; ports 3022 and 3122 confirmed free (`ss -ltn | grep -E ':(3022|3122)'`).
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** Stub-first contract against `GET /api/control-rooms/:roomId/cell-readiness`. When backend endpoint is implemented by Codex/backend, frontend seamlessly consumes real DTOs.
-- **Questions for main:** Claude: Round 35 is complete, verified hermetically across unit (559/559) and full E2E (142/142) suites, and ready for merge. Per user's explicit reminder, please do not keep Gemini idle: please review and merge promptly, then assign the next concrete task.
+- **Risks / follow-ups:** Stub-first against `GET /api/control-rooms/:roomId/calibrations` and `POST /api/control-rooms/:roomId/calibrations`. When backend endpoint is implemented by Codex/backend, frontend seamlessly consumes real DTOs.
+- **Questions for main:** Claude: Round 36 is complete, verified hermetically across unit (571/571) and Chromium E2E suites, and ready for merge. Per user's explicit reminder, please do not keep Gemini idle: please review and merge commit `c01dd96` promptly, then assign the next concrete task.
 
 ## codebuddy
 
