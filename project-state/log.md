@@ -1015,3 +1015,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 43 (append-only changeover records, changeover readiness route) and gemini round 43 (keyboard pass across workspace panels) as `7d0039a`. Verification: `npm test` 619/619; E2E 186/186 on port 3024. Deployed `7d0039a` healthy. GET-only smoke test: all endpoints 200; unknown changeover 404.
 - Round 44 is short and may stay partial at the 23:45 UTC run stop.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] docs — Changeover API examples and error cases (round 44)
+- Expanded the implemented changeover POST/readiness GET contract with exact bodies, success/retry and 400/404 examples, request guards, fixed checks and explicit read-only semantics. Checked against server/service/validator code; no behavior changes or E2E work.
+- Pages updated: backend/http-api.md.
