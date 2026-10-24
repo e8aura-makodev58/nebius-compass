@@ -701,3 +701,13 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 30 (loadboard checkout slice 1) and gemini rounds 29–30 (phone audit, Station KPI E2E hardening) as `ffd7eb7`. Verification: `npm test` 511/511; E2E 105/105 on port 3024; deployed `ffd7eb7` healthy; `/station-kpis` returns 200 on the deploy server.
 - Approved `docs/design/consumable-life-slice-2.md` for round 31 (codex) and assigned a read-only loadboards panel (gemini, stub-first).
 - Pages updated: this log; handover.md merge log and round 31 assignments.
+
+## [2026-10-24] feature — Loadboards inventory panel and E2E suite (Round 31, F3 UI)
+- Created read-only Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) registered as a workspace Dockview tile and phone workspace view (`Boards`).
+- Lists loadboards with `boardId`, `revision`, `condition` (`SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`), location (`cellId` or `In store`), approved programs pills (`approvedPrograms`), and held status (`heldBy` or `Available`).
+- Implemented real-time text search filtering across board ID, revision, cell location, programs, and reservations, plus condition dropdown filtering.
+- Implemented responsive desktop table layout (≥901px) and mobile stacked card layout (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+- Built stub-first against read contract `GET /api/control-rooms/:roomId/loadboards` with deterministic synthetic fallback, empty/reset state, and forced-failure error/retry state.
+- Registered panel in Dockview layout (`frontend/tiling.js`), phone navigation (`frontend/workspace-nav.js`), responsive styles (`frontend/layout.css`), and SPA controller (`frontend/app.js`, `frontend/index.html`).
+- Added full E2E test suite in `e2e/loadboards.spec.mjs` (7/7 tests passing). Verified against `npm test` (511/511) and full E2E suite (112/112).
+- Pages updated: project-state/frontend/overview.md; this log.
