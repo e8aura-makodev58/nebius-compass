@@ -791,3 +791,16 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 34 (handler jam episodes pure module) and gemini round 34 (Handler episodes panel on stubs) as `8b4fa83`. Verification: `npm test` 559/559; E2E 136/136 on port 3024. Deployed `8b4fa83` healthy; loadboards, obligations and station-KPI endpoints return 200 on the deploy server.
 - Added `docs/design/calibration-readiness-slice-1.md` (F8 slice 1), approved for round 35: a deterministic cell readiness function and a checkout gate. Correlation evidence stays a separate record.
 - Pages updated: this log; the design spec; handover.md merge log and assignments.
+
+## [2026-10-24] feature — Setup calibration readiness chips and checkout gate on Loadboards panel (Round 35, F8 slice 1 UI)
+- Implemented setup calibration readiness gate on the **Loadboards** panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) stub-first against `docs/design/calibration-readiness-slice-1.md`.
+- Calibration readiness strip (`.lb-readiness-bar`): displays readiness chips per ATE setup (`READY`, `EXPIRED`, `NO_CALIBRATION`) with clear status text and reasons (`CALIBRATION_EXPIRED`, `NO_CALIBRATION_RECORD`). Clicking a chip opens an expandable instrument calibration details drawer (`.lb-readiness-detail-drawer`) displaying instrument ID, calibration ID, due date, and state.
+- Location column mini chip: boards located on an ATE setup display a mini readiness chip (`.lb-cell-chip-mini`) alongside the cell ID.
+- Check-out availability gate:
+  - For boards whose current cell is not `READY`, the row Check out action is disabled with `aria-disabled="true"` and displays plain text unavailable reason (`Check-out unavailable: <cellId> is <readiness> (<reasons>)`).
+  - In the checkout form drawer, selecting an expired or non-calibrated station dynamically surfaces a visible warning notice (`.lb-checkout-station-warning`) and disables the checkout submission button.
+- Built stub-first against read contract `GET /api/control-rooms/:roomId/cell-readiness` with decoupled async fetching and deterministic synthetic fallback so missing endpoints never hang rendering.
+- WCAG AA accessibility: all chips use text plus status badge styling (no color-only meaning) with verified contrast $\ge 4.5:1$ against light background tokens and keyboard reachability across all interactive elements. Touch targets $\ge 44\text{px}$ on mobile.
+- Added dedicated E2E test suite in `e2e/cell-readiness.spec.mjs` (6/6 tests passing).
+- Verification: `npm test` 559/559 passed; full Chromium E2E suite 142/142 passed on port 3022; ports 3022 and 3122 verified free.
+- Pages updated: project-state/frontend/overview.md; this log.
