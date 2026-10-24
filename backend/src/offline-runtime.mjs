@@ -1,3 +1,4 @@
+import { buildLoadboards } from './loadboards.mjs';
 import { reconcileRoomConsumables } from './consumable-life-service.mjs';
 import { buildStationKpis } from './station-kpis.mjs';
 import { createAskService } from './assistant.mjs';
@@ -192,7 +193,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
       supportOfferDueAtRealTime = null;
       offlineRematchPromise = null;
     }
-    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, ...publicState } = structuredClone(demoState);
+    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, ...publicState } = structuredClone(demoState);
     const { rngStreams, ...publicSimulationState } = publicState.simulationState;
     publicState.simulationState = publicSimulationState;
     publicState.resolutionAttempts = publicState.resolutionAttempts.map(redactAttempt);
@@ -249,6 +250,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
   return {
     snapshot,
     reconcileConsumables: () => reconcileRoomConsumables(investigationStore),
+    loadboards: query => buildLoadboards(demoState, query),
     stationKpis:query => buildStationKpis(demoState, query),
     ask:(input)=>assistant.ask(input),
     getAsk:(id)=>assistant.get(id),

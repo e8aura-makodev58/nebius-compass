@@ -184,6 +184,7 @@ async function handleRoomScopedRoute({ request, response, path, runtime, logger,
     const key = path === "/issues" ? "issues" : path === "/responders" ? "responders" : "operationalEvents";
     return sendJson(response, 200, { mode: state.mode, simulationTime: state.simulationState?.simulationTime ?? null, [key]: state[key] ?? [] });
   }
+  if (request.method === "GET" && path === "/loadboards") return sendJson(response, 200, await runtime.loadboards({ roomId }));
   if (request.method === "GET" && path === "/station-kpis") {
     const params = url.searchParams;
     const badWindow = [...params.keys()].some(key => !['windowEnd', 'stations'].includes(key)) || params.getAll('windowEnd').length > 1;

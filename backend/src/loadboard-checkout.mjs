@@ -19,7 +19,7 @@ function timestamp(value) {
 function unique(rows, key) {
   requireValue(new Set(rows.map(row => row[key])).size === rows.length, `duplicate ${key}`);
 }
-function validateInventory(inventory) {
+export function validateLoadboardInventory(inventory) {
   fields(inventory, ['boards', 'reservations']);
   requireValue(Array.isArray(inventory.boards) && Array.isArray(inventory.reservations), 'inventory arrays');
   for (const board of inventory.boards) {
@@ -71,12 +71,12 @@ function checkout(inventory, request, copyInventory = true) {
 }
 
 export function checkoutBoard(inventory, request) {
-  validateInventory(inventory); validateRequest(request);
+  validateLoadboardInventory(inventory); validateRequest(request);
   return checkout(inventory, request);
 }
 
 export function checkoutBatch(inventory, requests) {
-  validateInventory(inventory);
+  validateLoadboardInventory(inventory);
   requireValue(Array.isArray(requests), 'requests array');
   const ordered = Array.from(requests, request => ({ request, at: validateRequest(request) }));
   unique(requests, 'requestId');
@@ -91,7 +91,7 @@ export function checkoutBatch(inventory, requests) {
 }
 
 export function releaseBoard(inventory, request) {
-  validateInventory(inventory);
+  validateLoadboardInventory(inventory);
   fields(request, ['reservationId', 'releasedAt', 'cellId']);
   text(request.reservationId); text(request.cellId);
   const released = timestamp(request.releasedAt);

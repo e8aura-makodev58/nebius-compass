@@ -722,3 +722,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added pure reconciliation, strict immutable obligation history, deterministic empty-array migration and a counter-source-change runtime hook through normal room journal writes. Missing/uncertain readings never discharge due work; repeated cleaning episodes preserve closed history.
 - Added private current counter input packets and a persisted digest because the design did not name a source field; no ingest route, ordinary Issue/dispatch mapping or UI was invented. Shared internal operation remains API-free in Offline. Source/state contract choices are recorded in docs/decisions.md.
 - Pages updated: backend/domain-model.md, backend/live-runtime.md, backend/overview.md.
+
+
+## [2026-10-24] feature — Read-only loadboards room endpoint (round 32)
+- Added a pure public inventory builder and GET /api/control-rooms/:roomId/loadboards, shared across Live/Offline without advancing clocks or writing state. Missing private inventory returns an empty list; only current HELD reservation IDs are linked, with unrelated metadata excluded.
+- Reused the pure checkout inventory validator and added hermetic empty/held/room-error, projection privacy, immutable read and Offline API-free checks. No frontend/E2E files or mutation routes changed.
+- Pages updated: backend/http-api.md, backend/domain-model.md, backend/overview.md.

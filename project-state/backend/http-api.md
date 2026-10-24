@@ -43,6 +43,7 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | GET | `/equipment/:equipmentId/issues` | LIVE station history with the same pagination. |
 | GET | `/responders`, `/events` | Individual resource lists; events are the recent public feed. |
 | GET | `/analytics` | Fixed-snapshot analytics. |
+| GET | `/loadboards` | Read-only public loadboard inventory; empty when the room has no inventory. Shared Live/Offline builder, no clock advancement. |
 | GET | `/station-kpis` | Shared Live/Offline four-bucket station throughput/uptime projection. Optional `windowEnd` and comma-separated `stations`; see below. |
 | GET | `/analytics/pareto` | Issue Pareto for one period: `level=DAY\|WEEK\|MONTH` (default MONTH), optional `period=<index>` (0 = current; default the most recent complete). Returns the period list, totals and two drill trees: issue class → observed symptom → applied fix, and floor → station, each with issue count, downtime minutes and failed attempts (`pareto-analytics.mjs`). Offline returns `available: false`. |
 | POST | `/mode` | Switch the room between `LIVE` and `OFFLINE`. |
@@ -240,3 +241,24 @@ its ordinary advancing `snapshot()` method.
 The written UTC-boundary rule is authoritative; the illustrative 08:00-ending fixture
 in `docs/design/station-kpi-panel.md` / `fixtures/station-kpis/` is unaligned. Backend
 validation follows the written rule; main owns reconciliation of that example.
+
+
+## Loadboards inventory read (round 32)
+
+`GET /api/control-rooms/:id/loadboards` returns exactly `{roomId,asOf,boards}` from
+`backend/src/loadboards.mjs`. Each board has `boardId`, `revision`, `condition`,
+`cellId`, `approvedPrograms` and `heldBy` (one HELD reservation ID or null).
+Board order follows the inventory list. RELEASED history never occupies a board;
+multiple current holds for one board fail rather than selecting an arbitrary owner.
+
+The optional private `loadboardInventory` room field uses the existing checkout
+module's `{boards,reservations}` shape. Missing inventory returns `boards:[]`, with
+no synthetic fallback or state initialization. Current projected board/HELD facts
+reuse `validateLoadboardInventory`; arbitrary source fields are never copied. Raw
+inventory stays out of ordinary state polling. No inventory import/mutation route
+or persistent registry is introduced.
+
+Live uses the store's serialized read projection; Offline projects its raw state
+without calling the advancing snapshot. Neither path advances a clock, writes to
+a store or calls a provider. Unknown/unavailable rooms retain the existing 404/503
+error shapes. The endpoint has no server-side filtering or checkout/release action.

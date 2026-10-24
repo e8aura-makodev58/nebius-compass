@@ -333,7 +333,7 @@ export function createPublicLiveSnapshot(state, { validated = false } = {}) {
   if (!validated) validateLiveState(state);
   // Select before cloning. Neither private history nor archived analytic facts
   // belong in the polled payload, even transiently.
-  const { responderSkills, resolutionHistory, historyRetention, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, ...base } = state;
+  const { responderSkills, resolutionHistory, historyRetention, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, ...base } = state;
   const openIssues = state.issues.filter((row) => row.status !== "RESOLVED");
   const recentIssues = state.issues.filter((row) => row.status === "RESOLVED").sort((a, b) => Date.parse(b.resolvedAt) - Date.parse(a.resolvedAt)).slice(0, 100);
   const issueIds = new Set([...openIssues, ...recentIssues].map((row) => row.id));

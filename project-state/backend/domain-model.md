@@ -288,3 +288,15 @@ records the last applied canonical input digest. Source packets, digest and obli
 history are excluded from ordinary Live/Offline public snapshots and model inputs.
 This slice persists obligation work only: ordinary Issue/dispatch mapping needs the
 later asset-to-station/issue-class contract and is not invented here.
+
+
+## Loadboard read projection (round 32)
+
+A room may carry private `loadboardInventory` in the existing pure checkout
+inventory shape (`boards`, `reservations`). It is not seeded or created on GET.
+`loadboards.mjs` exposes only explicit board facts and the current HELD reservation
+ID through the dedicated room read route. Released reservation detail and unrelated
+source metadata are not projected or copied into normal state/model payloads.
+The shared `validateLoadboardInventory` helper is exported from the pure checkout
+module for current-fact projection validation. Ingestion/registry persistence and
+checkout/release HTTP actions remain separate work.
