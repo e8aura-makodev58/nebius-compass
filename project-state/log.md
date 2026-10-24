@@ -844,3 +844,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Verified on the server: checkout to ATE-1 is rejected with `CELL_NOT_READY`. Live rooms have no calibration rows, so checkout is blocked until rows exist.
 - Assigned round 37: codex seeds calibration rows into existing live rooms by migration; gemini links a blocked checkout to the calibration form.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] fix — Provision missing existing-room calibrations (round 37)
+- Added the explicitly authorized idempotent Live migration for absent/empty calibration history, using room-relative synthetic ATE-1/ATE-2 dates. Nonempty history and expiry remain untouched; persisted-room checkout and restart are covered.
+- Pages updated: backend/domain-model.md, backend/live-runtime.md; authorization superseding the round-36 existing-room policy recorded in docs/decisions.md.

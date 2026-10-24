@@ -205,3 +205,10 @@ applies closes/opens and persists the digest in the same journal frame. Failed w
 roll back both; restart retries an unapplied source exactly once. Concurrent calls on a
 room's store share one pending operation. Missing/cleared inputs keep previous work.
 No model, responder allocation or new ordinary simulation Issue is invoked by this hook.
+
+
+Round 37 adds an idempotent calibration upgrade in `live-migration.mjs` on the normal
+persisted-room load path: absent/empty history gets ATE-1/ATE-2 synthetic records
+at simulationTime minus seven / plus sixty days. The store checkpoints a changed
+migration before publishing. Nonempty history is retained, so expired records never
+renew just because the room restarts. See [domain-model.md](domain-model.md).

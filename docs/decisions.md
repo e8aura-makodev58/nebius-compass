@@ -1318,3 +1318,15 @@ The assignment's Calibrations panel contract also requires GET calibrations; the
 backend supplies it as an explicit read-only history projection, with per-record
 FUTURE/CURRENT/EXPIRED time validity, independent of latest-record readiness selection.
 The existing readiness GET remains the authoritative effective cell decision.
+
+
+## 2026-10-24 — Authorized existing-room synthetic calibration migration (round 37)
+
+The round-37 assignment explicitly supersedes round 36's no-backfill policy for
+existing Live rooms. Absent or empty calibrations receive both synthetic cells with
+calibratedAt at simulationTime minus seven days and dueAt plus sixty days. Any
+nonempty history, including partial/future/expired records, is left unchanged.
+This is deterministic migration at normal load, not recurring automatic renewal;
+second application has identical output and advancing time cannot refresh records.
+The existing Live migration checkpoint path durably installs the new field without
+a reset, wall-clock dependency, provider call or operational mutation.

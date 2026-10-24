@@ -375,12 +375,12 @@ preserves legacy behavior; batch behavior is unchanged. **Checkout HTTP wiring i
 readiness inside the same serialized transaction as allocation.
 
 Optional private room `calibrations` rows feed `cell-readiness.mjs` and its dedicated
-GET projection in both modes. Shared synthetic seed rows cover ATE-1 and ATE-2; missing rows in an existing
-room still produce an empty cell list. Manual entries use the round-36 POST. Raw history is excluded from ordinary
+GET projection in both modes. Shared synthetic seed rows cover ATE-1 and ATE-2; the round-37 Live migration
+provisions missing/empty history on load. Manual entries use the round-36 POST. Raw history is excluded from ordinary
 Live/Offline snapshots; the dedicated endpoint exposes only latest instrument facts
 and readiness at the existing simulation clock. Reads do not advance time, revise
 state, call providers or change calibration history. Source validation happens in
-the pure reader; no persisted-schema migration is introduced in this slice.
+the pure reader; round 37 adds the missing-history migration below.
 
 
 ## Manual calibrations and enforced checkout (round 36)
@@ -401,7 +401,21 @@ remains possible when calibration has expired.
 
 `backend/seed/calibrations.mjs` provides independent synthetic ATE-1/ATE-2 records to
 both Live and Offline seeds, hence both room instances. Due dates follow both seed
-clocks; expiry remains real as simulated time advances. Existing persisted rooms are
-not silently backfilled: use entry or an authorized reset. The GET ledger shows all
+clocks; expiry remains real as simulated time advances. Existing persisted rooms with absent/empty history receive the explicitly authorized
+round-37 migration below; nonempty history is preserved. The GET ledger shows all
 history with per-record FUTURE/CURRENT/EXPIRED validity at asOf; effective readiness
 continues to select the latest calibration per instrument. Old records are retained.
+
+
+## Existing-room calibration migration (round 37)
+
+`migrateLiveState` fills absent or empty calibrations with synthetic ATE-1/ATE-2
+records using the shared seed identifiers. CalibratedAt is exactly seven days before
+the persisted simulation clock and dueAt is sixty days after it. No wall clock or RNG
+is used. The migration runs before both legacy/current schema branches and operates
+on a copied input. Existing nonempty rows are left intact, including expired,
+future-only and partial-cell history; the migration never fills missing cells in
+an already configured room and never renews expiry. Reapplying it yields identical
+state. The normal Live-store load/checkpoint path persists the upgrade without
+resetting the simulation clock, revision, inventory or operational history. Offline
+continues to use its existing shared seeded calibration records.

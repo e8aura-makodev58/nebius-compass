@@ -1,3 +1,4 @@
+import { createSeedCalibrations } from '../seed/calibrations.mjs';
 import { deviceById } from './device-catalog.mjs';
 import { recoverInvestigations } from './investigation-service.mjs';
 import { migrateInvestigationRecords } from './investigation-records.mjs';
@@ -104,6 +105,16 @@ export function migrateLiveState(input) {
   if (!["1.0", "2.0", "2.1"].includes(input?.schemaVersion)) throw new Error(`Unsupported live schema version ${input?.schemaVersion ?? "missing"}`);
   // Accept snapshots saved with the former suggestion field name.
   input = structuredClone(input);
+  // One-time synthetic upgrade for rooms predating calibration provisioning.
+  // Never extend or renew any existing calibration history, including expired rows.
+  if (input.calibrations === undefined || (Array.isArray(input.calibrations) && input.calibrations.length === 0)) {
+    const at = Date.parse(input.simulationState?.simulationTime);
+    if (!Number.isFinite(at)) throw new TypeError('Invalid calibration migration clock');
+    const day = 86_400_000;
+    input.calibrations = createSeedCalibrations().map(row => ({ ...row,
+      calibratedAt: new Date(at - 7 * day).toISOString(), dueAt: new Date(at + 60 * day).toISOString(),
+    }));
+  }
   if (input.consumableObligations === undefined) input.consumableObligations = [];
   for (const issue of input.issues ?? []) {
     issue.responseAction ??= issue.suggestedResponseAction;
