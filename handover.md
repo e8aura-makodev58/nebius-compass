@@ -1640,24 +1640,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 21:43 UTC
-- **Task:** Round 40: correlation records section in the Calibrations panel, stub-first against the round 40 read contract
-- **Head commit:** `bbc0f10`
-- **Changes:** Added a **Correlation records** section below the calibration table in the Calibrations panel:
-  - Displayed comparison observation rows (`correlationId`, `cellId`, `instrumentId`, `referencePartId`, `observedAt`, `result` PASS/FAIL/INCONCLUSIVE) with accessible contrast badges (forest green, dark red, and amber, all $\ge 5:1$).
-  - Displayed plain-text evidence-only notice: "Evidence only: Reference-part comparison observations compare instrument measurements against golden standards. These records provide diagnostic evidence only and do not affect cell calibration readiness."
-  - Implemented an append-only form (`.cal-add-corr-drawer`) toggled by `.cal-toggle-add-corr-btn` with client-side identifier/timestamp/result validation and polite live region announcements (`#cal-live-announcer`).
-  - No edit or delete controls exist across rows, cards, or drawers.
-  - Keyboard accessibility: Escape key dismisses form and returns focus to `.cal-toggle-add-corr-btn`; Cancel/Close buttons return focus to toggle button; toggle button focuses `#corr-input-id` on open.
-  - Stub-first against `GET /api/control-rooms/:roomId/correlation-records` and `POST /api/control-rooms/:roomId/correlation-records` with deterministic synthetic fallback and offline parity.
-  - Responsive design: desktop table (≥901px) and phone cards list (≤900px) with $\ge 44\text{px}$ touch targets and zero horizontal scroll at 375px and 1280px.
-  - Added dedicated E2E test suite in `e2e/correlation-records.spec.mjs` (6/6 tests passing).
-- **Files changed:** `frontend/calibrations-view.js`, `frontend/calibrations.css`, `e2e/correlation-records.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`. No `backend/` files modified.
-- **Verification:** `npm test` **594/594** passed; targeted E2E suite `e2e/correlation-records.spec.mjs` **6/6** passed; calibrations and panel audit suites **13/13** passed; full Chromium E2E suite `npm run test:e2e` **171/171** passed on port 3022. Ports 3022 and 3122 are clean and free.
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None. Readiness gate is strictly unaffected; records remain diagnostic evidence only.
-- **Questions for main:** None. Round 40 complete, verified, and ready for merge. Watcher remains active.
+- **Status:** IN PROGRESS
+- **Updated:** 2026-10-24 21:55 UTC
+- **Task:** Round 41: ATE terminology pass on the Station KPI and Handler episodes panels (visible labels only)
+- **Head commit:** `d8ae229`
+- **Changes:** Starting Round 41. Terminology pass: in visible labels only, updating Station KPI and Handler episodes panels to say "ATE setup" where they say "station" for a physical unit, matching `docs/design/station-kpi-panel.md` section 1. Preserving all API field names, IDs, and CSS classes. Updating affected E2E assertions.
+- **Files changed:** in progress
+- **Verification:** in progress
+- **project-state pages updated:** in progress
+- **Risks / follow-ups:** Do not modify `backend/`. Visible labels only; no API field names, IDs, or CSS classes changed. Use port 3022.
+- **Questions for main:** None. Round 41 started. Watcher remains active.
 
 ## codebuddy
 
