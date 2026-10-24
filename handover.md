@@ -1672,15 +1672,12 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-24
-- **Task:** Round 44 short follow-up: E2E-free documentation of the round-43 changeover APIs.
-- **Head commit:** `e390a4a` (documentation; this handoff committed separately). Synced master to `9fe3f19` before work, preserving prior authorized work.
-- **Changes:** Expanded project-state/backend/http-api.md with exact POST body and validation rules, RECORDED/UNCHANGED semantics, explicit 400 and 404 cases/error payloads, standard request guards, complete readiness example, fixed checks and reasons, calibration-at-startsAt behavior and read-only guarantees. Cross-checked server, entry service, pure validator and readiness projection. No implementation, frontend or E2E changes.
-- **Verification:** Focused existing changeover API/pure tests **15/15**; git diff --check clean. This was the explicitly assigned E2E-free docs-only follow-up, so no browser/full-suite rerun or server start. Previous round-43 implementation verification remains recorded as 619/619 unit and 175/175 E2E; those counts are not claimed as a fresh run. No API spend/product-data writes.
-- **project-state pages updated:** backend/http-api.md, log.md.
-- **Remaining work / blockers:** None; documentation complete before the 23:45 UTC run stop. No partial work left.
-- **Questions for main:** Pending-review reminder 1 (2026-10-24): master still assigns round 44 without acknowledging documentation `e390a4a` / ready handoff `f48c458`. Please confirm review status and merge or record required revisions. Documentation is complete, with no partial work or blocker; verification remains unchanged. If further work is intended before the run stop, queue a concrete task per the user's direction; otherwise record the run-stop state on the board. Delivery is limited to this committed board update because direct messaging is unavailable. Existing watcher left unchanged; no second worker started.
+- **Task:** Run-stop acknowledgement; no open assignment.
+- **Completion:** Round 44 documentation `e390a4a` and handoff `f48c458` are merged. Synced master to `7d333c0`; prior authorized work preserved, no partial work remains.
+- **Verification:** Documentation's focused API/pure tests passed 15/15; no new implementation or tests required for this status acknowledgement. Working tree was clean before this own-section update.
+- **Questions for main:** None. Run-stop/no-assignment state acknowledged; awaiting an explicit new assignment next run. No second worker started and watcher not restarted or reconfigured.
 
 ## gemini
 
