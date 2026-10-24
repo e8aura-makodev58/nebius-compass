@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 30: loadboard checkout slice 1 (F3), pure module and tests | 30 |
-| gemini | Round 29: phone and desktop audit of existing panels (in progress); then round 30 station KPI E2E hardening | 29, 30 |
+| codex | Round 31: consumable life slice 2 (F1), obligations as issues: reconciler, room-state rows, migration | 31 |
+| gemini | Round 31: loadboard checkout panel (F3), stub-first against the read endpoint in section 2 of the round 31 bullets | 31 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,21 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 31 (2026-10-24) — consumable obligations (F1 slice 2) and loadboard panel (F3 UI).** Start with `git merge master`.
+
+- **codex.** Implement `docs/design/consumable-life-slice-2.md` (approved for build): the pure reconciler
+  `reconcileConsumableObligations` in `backend/src/consumable-life-obligations.mjs`, the strict `consumableObligations`
+  room-state shape in `live-schema.mjs`, the deterministic empty-array migration, and the server hook that runs the reconciler
+  only when a room's counter readings change. Add hermetic tests for every item in section 6. Use **port 3021**. Run both suites,
+  update `project-state/backend/`, commit, set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Build a read-only **Loadboards** panel in the workspace, registered like the other panels. It lists each board
+  with `boardId`, `revision`, `condition` (SERVICEABLE, UNDER_REPAIR, QUARANTINED), current cell or "In store", and approved
+  programs, and it has a search and a condition filter. Use the contract below with route stubs until codex exposes it:
+  `GET /api/control-rooms/:roomId/loadboards` → `{ roomId, asOf, boards: [{ boardId, revision, condition, cellId, approvedPrograms, heldBy }] }`,
+  where `heldBy` is a reservation ID or `null`. Include 375 px and 1280 px no-horizontal-scroll checks and states (loading, empty, error).
+  Put the E2E in `e2e/loadboards.spec.mjs`. Do not change `backend/`. Use **port 3022**. Run both suites, update
+  `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 30 (2026-10-24) — loadboard checkout slice 1 (F3).** Start with `git merge master`.
 
 - **codex.** Implement `docs/design/loadboard-checkout-slice-1.md` sections 2–5 in a pure module
@@ -1383,6 +1398,9 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `f8e8871`/`6656163` (branch `codex`, round 30) → merge: loadboard checkout slice 1 (`backend/src/loadboard-checkout.mjs`): `checkoutBoard`, `checkoutBatch`, `releaseBoard`. `npm test` 511/511.
+- 2026-10-24 — **gemini** `71f52bd`/`0414970` (branch `gemini`, rounds 29 and 30) → merge: phone and desktop audit (`e2e/phone-audit.spec.mjs`) and Station KPI E2E hardening, live endpoint rendering and keyboard filter fixes. Merged with codex in one merge commit `ffd7eb7`. E2E 105/105 on port 3024. Deployed `ffd7eb7`, healthy; `/station-kpis` returns 200 on the server.
+- 2026-10-24 — **claude** `c4e5705`: consumable life slice 2 proposal (`docs/design/consumable-life-slice-2.md`), approved for round 31.
 - 2026-10-24 — **codex** `6ba6c9b`/`2f3b834` (branch `codex`, round 28 follow-up and round 29 slice 1) → merge: station KPI rates from the device catalog (`deviceId`, `ratedUnitsPerHour` 1–10,000) and consumable life slice 1 (`backend/src/consumable-life.mjs`). Both in one merge, not separate. `npm test` 497/497; E2E 98/98 on port 3024. Deployed `5f9ce57`, healthy; `/station-kpis` smoke-tested on the server. Seed `backend/seed/investigation-lifecycle.json` regenerated with device fields.
 - 2026-10-24 — **gemini** `3bfa611` (branch `gemini`, round 28 follow-up) → merge: ATE and device labels on the station KPI panel. Round 29 audit still open. Log conflict in `project-state/log.md` resolved by keeping both entries.
 - 2026-10-24 — **claude** (docs and fixtures, round 28 spec change): station KPI rates moved from station to device. Process is ATE test; stations are ATE setups; devices are alphanumeric semiconductor chips with `ratedUnitsPerHour` 1–10,000 from the synthetic `fixtures/station-kpis/device-catalog.json`. Spec and `response-12h.json` updated (`deviceId` on each station). **codex and gemini: `git merge master` before continuing round 28.**
