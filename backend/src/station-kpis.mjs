@@ -1,4 +1,5 @@
 /** Fixed-window station plan/uptime projection. No clock writes, RNG, I/O or model calls. */
+import { deviceById } from './device-catalog.mjs';
 import { analyticHistory } from './history-retention.mjs';
 import { observedHistoryStart, unionDowntime } from './analytics-service.mjs';
 
@@ -48,12 +49,13 @@ export function buildStationKpis(rawState, { roomId = null, windowEnd, stations 
   }
   const rows = equipment.map(row => {
     const issues = byStation.get(row.id) ?? [];
-    return { stationId: row.id, name: row.name, floor: row.floor, ratedUnitsPerHour: row.ratedUnitsPerHour,
+    const { deviceId, ratedUnitsPerHour } = deviceById(row.deviceId);
+    return { stationId: row.id, name: row.name, floor: row.floor, deviceId, ratedUnitsPerHour,
       buckets: buckets.map(bucket => {
         const left = Date.parse(bucket.start), right = Date.parse(bucket.end);
         const downtime = bucket.available ? unionDowntime({ issues }, left, right, end) : 0;
-        const expectedUnits = bucket.available ? row.ratedUnitsPerHour * 3 : 0;
-        const actualUnits = bucket.available ? Math.floor(row.ratedUnitsPerHour * Math.max(0, 180 - downtime) / 60) : 0;
+        const expectedUnits = bucket.available ? ratedUnitsPerHour * 3 : 0;
+        const actualUnits = bucket.available ? Math.floor(ratedUnitsPerHour * Math.max(0, 180 - downtime) / 60) : 0;
         return { ...bucket, expectedUnits, actualUnits, attainmentPercent: expectedUnits ? Math.round(actualUnits / expectedUnits * 1000) / 10 : null,
           downtimeMinutes: Math.round(downtime), issuesRaised: bucket.available ? issues.filter(issue => Date.parse(issue.raisedAt) >= left && Date.parse(issue.raisedAt) < right).length : 0,
           source: 'DERIVED_FROM_UPTIME' };

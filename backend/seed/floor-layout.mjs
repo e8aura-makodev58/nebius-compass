@@ -1,3 +1,5 @@
+import { deviceForStation } from '../src/device-catalog.mjs';
+
 /**
  * Deterministic three-floor building layout.
  *
@@ -14,12 +16,6 @@ export const FLOOR_WIDTH = 150;
 export const FLOOR_HEIGHT = 100;
 export const BUILDING_FLOORS = 3;
 export const EQUIPMENT_PER_FLOOR = 24;
-
-/** Stable synthetic plan parameter; independent of all simulation RNG streams. */
-export function ratedUnitsPerHourFor(stationId) {
-  const hash = [...stationId].reduce((value, character) => Math.imul(value ^ character.charCodeAt(0), 16_777_619) >>> 0, 2_166_136_261);
-  return 40 + hash % 81;
-}
 
 /** Machines that predate the multi-floor building. Pinned, never regenerated. */
 const PINNED_GROUND_FLOOR = [
@@ -82,5 +78,5 @@ export function createBuildingEquipment() {
 
   // Scenario A raises ISS-104 against EQ-04, which must present as needing attention.
   equipment.find((item) => item.id === "EQ-04").status = "ATTENTION_REQUIRED";
-  return equipment.map(item => ({ ...item, ratedUnitsPerHour: ratedUnitsPerHourFor(item.id) }));
+  return equipment.map(item => ({ ...item, ...deviceForStation(item.id) }));
 }

@@ -642,3 +642,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Regenerated the small investigation lifecycle dataset; verified its only change is the new equipment plan field, with outcomes and RNG unchanged. Removed the analytics coverage helper's spread-argument limit for long event histories.
 - Hermetic coverage checks alignment, overlap/spanning/open downtime, cutoff, archives, missing coverage, selection/totals, errors, migration/RNG stability and read-only mode isolation. Written UTC boundaries take precedence over the illustrative unaligned fixture; main owns that fixture.
 - Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md.
+
+
+## [2026-10-24] feature — Device-based station KPI plan (round 28 follow-up)
+- Added an immutable twenty-device module catalog, deterministic station-to-device seeds/migration, device/rate validation, and `deviceId` in station KPI rows. Rates now come from devices; all other KPI contracts remain unchanged.
+- Regenerated the small lifecycle dataset and verified only equipment device/plan fields changed. Targeted coverage checks fixture parity, plan-cache nonauthority, device preservation and unchanged RNG.
+- Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md.

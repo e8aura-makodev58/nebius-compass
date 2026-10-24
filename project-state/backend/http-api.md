@@ -223,7 +223,8 @@ its ordinary advancing `snapshot()` method.
   open or later-resolved downtime is clipped at the end. `unionDowntime`, exported from
   analytics, unions overlapping intervals per station. Archived compact issue facts are
   read through `analyticHistory`, with no archive I/O.
-- Expected units are rated units/hour × 3. Actual units are floored from precise uptime;
+- Station rows include `deviceId`; rates come from the immutable device catalog, not a station-specific setting.
+- Expected units are device-rated units/hour × 3. Actual units are floored from precise uptime;
   displayed downtime minutes are rounded to the nearest integer to honor the API's
   integer fields. Attainment has one decimal, or null for zero expected units.
   Actual units are labelled `DERIVED_FROM_UPTIME`, not production-counter readings.

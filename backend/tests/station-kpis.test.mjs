@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { DEVICE_CATALOG, deviceById, deviceForStation } from '../src/device-catalog.mjs';
 import { Readable } from 'node:stream';
 import { buildStationKpis } from '../src/station-kpis.mjs';
 import { unionDowntime } from '../src/analytics-service.mjs';
 import { compactHistory } from '../src/history-retention.mjs';
 import { createLiveSeed } from '../seed/live-simulation.mjs';
-import { createBuildingEquipment, ratedUnitsPerHourFor } from '../seed/floor-layout.mjs';
+import { createBuildingEquipment } from '../seed/floor-layout.mjs';
 import { migrateLiveState } from '../src/live-migration.mjs';
 import { validateLiveState, assertNoResponderSkill } from '../src/live-schema.mjs';
 import { createLiveRuntime, createApplicationRuntime } from '../src/live-runtime.mjs';
@@ -16,7 +18,7 @@ import { createRequestHandler } from '../src/server.mjs';
 const time = hour => `2026-09-01T${String(hour).padStart(2, '0')}:00:00.000Z`;
 function fixture() {
   return { simulationState: { simulationTime: time(12) },
-    equipment: [{ id: 'EQ-01', name: 'Station 1', floor: 1, ratedUnitsPerHour: 60 }, { id: 'EQ-30', name: 'Station 30', floor: 2, ratedUnitsPerHour: 80 }],
+    equipment: [{ id: 'EQ-01', name: 'Station 1', floor: 1, deviceId: 'PM0096', ratedUnitsPerHour: 96 }, { id: 'EQ-30', name: 'Station 30', floor: 2, deviceId: 'SR1260', ratedUnitsPerHour: 1260 }],
     issues: [], operationalEvents: [{ id: 'event-start', eventType: 'SIMULATION_STARTED', simulationTimestamp: time(0) }],
     recommendations: [], resolutionHistory: [], assignments: [], dispatchOffers: [], resolutionAttempts: [] };
 }
@@ -32,8 +34,8 @@ test('station KPI windows align to UTC three-hour boundaries with four half-open
   assert.deepEqual(result.window, { start: time(0), end: time(12), hours: 12, bucketHours: 3 });
   assert.deepEqual(result.buckets.map(row => row.start), [0, 3, 6, 9].map(time));
   assert.deepEqual(result.stations[0].buckets.map(row => row.issuesRaised), [0, 1, 0, 0]);
-  assert.deepEqual(result.stations[0].buckets.map(row => row.expectedUnits), [180, 180, 180, 180]);
-  assert.deepEqual(result.stations[0].buckets.map(row => row.actualUnits), [180, 120, 180, 180]);
+  assert.deepEqual(result.stations[0].buckets.map(row => row.expectedUnits), [288, 288, 288, 288]);
+  assert.deepEqual(result.stations[0].buckets.map(row => row.actualUnits), [288, 192, 288, 288]);
   assert.equal(result.stations[0].buckets[1].attainmentPercent, 66.7);
   assert.equal(result.status, 'READY');
   assert.deepEqual(Object.keys(result).sort(), ['roomId', 'asOf', 'window', 'status', 'earliestAvailable', 'buckets', 'stations', 'totals'].sort());
@@ -43,7 +45,7 @@ test('station downtime reuses analytics union across buckets, overlaps and open 
   const state = fixture(); state.issues = [issue('ISS-1', 2, 5), issue('ISS-2', 4, 7), issue('ISS-3', 10, null), issue('ISS-4', 11, null, 'EQ-30')];
   const result = buildStationKpis(state);
   assert.deepEqual(result.stations[0].buckets.map(row => row.downtimeMinutes), [60, 180, 60, 120]);
-  assert.deepEqual(result.stations[0].buckets.map(row => row.actualUnits), [120, 0, 120, 60]);
+  assert.deepEqual(result.stations[0].buckets.map(row => row.actualUnits), [192, 0, 192, 96]);
   assert.equal(result.totals.reduce((sum, row) => sum + row.downtimeMinutes, 0), unionDowntime(state, Date.parse(time(0)), Date.parse(time(12)), Date.parse(time(12))));
   const earlier = buildStationKpis(state, { windowEnd: time(9) });
   assert.equal(earlier.asOf, time(9));
@@ -66,8 +68,8 @@ test('station selection preserves equipment order and totals sum only returned s
   const state = fixture();
   const selected = buildStationKpis(state, { stations: 'EQ-30,EQ-01,EQ-30' });
   assert.deepEqual(selected.stations.map(row => row.stationId), ['EQ-01', 'EQ-30']);
-  assert.equal(selected.totals[0].expectedUnits, 420);
-  assert.equal(buildStationKpis(state, { stations: 'EQ-30' }).totals[0].expectedUnits, 240);
+  assert.equal(selected.totals[0].expectedUnits, 4068);
+  assert.equal(buildStationKpis(state, { stations: 'EQ-30' }).totals[0].expectedUnits, 3780);
   const empty = buildStationKpis(state, { stations: '' });
   assert.deepEqual(empty.stations, []);
   assert.ok(empty.totals.every(row => row.expectedUnits === 0 && row.actualUnits === 0 && row.downtimeMinutes === 0 && row.issuesRaised === 0));
@@ -84,10 +86,10 @@ test('station KPI history availability never invents whole-bucket production bef
 });
 
 test('station output uses precise uptime for flooring units, with integer displayed minutes', () => {
-  const state = fixture(); state.equipment[0].ratedUnitsPerHour = 40;
+  const state = fixture();
   state.issues = [{ ...issue('ISS-1', 1, 2), resolvedAt: '2026-09-01T01:00:45.000Z' }];
   const bucket = buildStationKpis(state).stations[0].buckets[0];
-  assert.equal(bucket.downtimeMinutes, 1); assert.equal(bucket.actualUnits, 119); assert.equal(bucket.expectedUnits, 120);
+  assert.equal(bucket.downtimeMinutes, 1); assert.equal(bucket.actualUnits, 286); assert.equal(bucket.expectedUnits, 288);
 });
 
 test('compacted archived issue facts produce exactly the same station KPIs without archive I/O or state writes', () => {
@@ -118,16 +120,17 @@ test('station window and station errors are bounded, explicit and deterministic'
 
 test('rated throughput migration is deterministic/idempotent for every room and never consumes RNG', () => {
   const seed = createLiveSeed(); const streams = structuredClone(seed.simulationState.rngStreams);
-  const legacy = structuredClone(seed); legacy.equipment.forEach(row => { delete row.ratedUnitsPerHour; });
+  const legacy = structuredClone(seed); legacy.equipment.forEach(row => { delete row.ratedUnitsPerHour; delete row.deviceId; });
   const before = structuredClone(legacy), first = migrateLiveState(legacy), secondRoom = migrateLiveState(legacy);
   assert.deepEqual(legacy, before); assert.deepEqual(first.equipment, secondRoom.equipment);
   assert.deepEqual(first.equipment.map(row => row.ratedUnitsPerHour), createBuildingEquipment().map(row => row.ratedUnitsPerHour));
   assert.deepEqual(first.simulationState.rngStreams, streams);
   assert.deepEqual(migrateLiveState(first), first);
-  for (const row of first.equipment) { assert.equal(row.ratedUnitsPerHour, ratedUnitsPerHourFor(row.id)); assert.ok(row.ratedUnitsPerHour >= 40 && row.ratedUnitsPerHour <= 120); }
-  first.equipment[0].ratedUnitsPerHour = 120;
-  assert.equal(migrateLiveState(first).equipment[0].ratedUnitsPerHour, 120);
-  for (const rated of [undefined, null, 39, 121, 60.5, '60']) {
+  for (const row of first.equipment) { assert.equal(row.deviceId, deviceForStation(row.id).deviceId); assert.equal(row.ratedUnitsPerHour, deviceById(row.deviceId).ratedUnitsPerHour); assert.ok(row.ratedUnitsPerHour >= 1 && row.ratedUnitsPerHour <= 10000); }
+  first.equipment[0].deviceId = 'SR1260'; first.equipment[0].ratedUnitsPerHour = 1260;
+  assert.equal(migrateLiveState(first).equipment[0].deviceId, 'SR1260');
+  assert.equal(migrateLiveState(first).equipment[0].ratedUnitsPerHour, 1260);
+  for (const rated of [undefined, null, 0, 10001, 60.5, '60', 40]) {
     const invalid = structuredClone(seed); invalid.equipment[0].ratedUnitsPerHour = rated;
     assert.throws(() => validateLiveState(invalid), /rated throughput/);
   }
@@ -157,4 +160,18 @@ test('room KPI endpoint uses isolated raw read projections in both modes without
   const baseline = await get(); clock += 86_400_000;
   assert.equal(baseline.status, 200); assert.deepEqual(await get(), baseline);
   assert.ok(baseline.body.stations.every(row => Number.isInteger(row.ratedUnitsPerHour)));
+});
+
+
+test('device catalog matches the synthetic source, is immutable and drives station output independently of stale plan caches', () => {
+  assert.deepEqual(DEVICE_CATALOG, JSON.parse(readFileSync(new URL('../../fixtures/station-kpis/device-catalog.json', import.meta.url))).devices);
+  assert.equal(DEVICE_CATALOG.length, 20); assert.equal(new Set(DEVICE_CATALOG.map(row => row.deviceId)).size, 20);
+  assert.ok(DEVICE_CATALOG.every(row => /^[A-Z0-9]+$/.test(row.deviceId) && Number.isInteger(row.ratedUnitsPerHour) && row.ratedUnitsPerHour >= 1 && row.ratedUnitsPerHour <= 10000));
+  assert.throws(() => { DEVICE_CATALOG[0].ratedUnitsPerHour = 1; }, TypeError);
+  const state = fixture(); state.equipment[0].ratedUnitsPerHour = 10;
+  const row = buildStationKpis(state).stations[0];
+  assert.equal(row.deviceId, 'PM0096'); assert.equal(row.ratedUnitsPerHour, 96); assert.equal(row.buckets[0].expectedUnits, 288);
+  const legacy = createLiveSeed(); legacy.equipment.forEach(row => { delete row.deviceId; row.ratedUnitsPerHour = 72; });
+  const migrated = migrateLiveState(legacy); assert.ok(migrated.equipment.every(row => row.ratedUnitsPerHour === deviceById(row.deviceId).ratedUnitsPerHour));
+  const invalid = createLiveSeed(); invalid.equipment[0].deviceId = 'UNKNOWN'; assert.throws(() => validateLiveState(invalid), /device is invalid/);
 });

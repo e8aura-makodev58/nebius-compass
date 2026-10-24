@@ -162,11 +162,17 @@ Report admission's real-time window is process-local, while the open backlog cap
 checked against persisted report/investigation state. See investigation.md for limits.
 
 
-## Station throughput plan (round 28)
+## Station throughput plan (round 28 follow-up)
 
-Every equipment row has `ratedUnitsPerHour`, an integer in 40–120. It is a public
-synthetic planning parameter, independent of responder skill, outcome truth and RNG.
-`backend/seed/floor-layout.mjs` derives the default with an FNV-style station-ID hash;
-new Live and Offline seeds share it. `live-migration.mjs` fills only missing values
-when loading existing rooms (including both registered plants); configured values are
-preserved and invalid explicit values fail `validateLiveState`.
+Every equipment row carries `deviceId` and its matching `ratedUnitsPerHour` cache.
+`backend/src/device-catalog.mjs` owns the twenty immutable synthetic device records
+(rates are integer 1–10,000, placeholders pending test engineering confirmation).
+The KPI projection looks up the device's authoritative rate; validation rejects
+unknown devices or mismatched caches. Stations run one device for the entire window;
+changeovers are not modelled.
+
+New Live/Offline seeds use station-ID hash modulo twenty to assign a device, with
+no RNG use. Existing rooms without device IDs receive the same deterministic mapping,
+replacing the former station-specific 40–120 rate. Existing valid device selections
+are preserved; a missing rate cache is filled from the device. Invalid explicit
+IDs/rate mismatches fail validation. No hidden simulation truth enters this plan.

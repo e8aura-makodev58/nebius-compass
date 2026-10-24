@@ -1,3 +1,4 @@
+import { deviceById } from './device-catalog.mjs';
 import { cloneDraftValue } from './live-draft.mjs';
 import { publicInvestigationState, investigationDTO, reportDTO } from './investigation-public.mjs';
 import { CERTIFICATIONS } from './investigation-records.mjs';
@@ -145,7 +146,9 @@ export function validateLiveState(state, { previous = null } = {}) {
     assert(rec.rankedOptions.length === ids.length && rec.rankedOptions.every((r,i)=>ids.includes(r.optionId) && r.rank===i+1) && new Set(rec.rankedOptions.map((r)=>r.optionId)).size===ids.length, 'invalid staffing ranking');
   }
   for (const equipment of state.equipment) {
-    assert(Number.isInteger(equipment.ratedUnitsPerHour) && equipment.ratedUnitsPerHour >= 40 && equipment.ratedUnitsPerHour <= 120, `equipment ${equipment.id} rated throughput is invalid`);
+    const device = deviceById(equipment.deviceId);
+    assert(device, `equipment ${equipment.id} device is invalid`);
+    assert(Number.isInteger(equipment.ratedUnitsPerHour) && equipment.ratedUnitsPerHour >= 1 && equipment.ratedUnitsPerHour <= 10000 && equipment.ratedUnitsPerHour === device.ratedUnitsPerHour, `equipment ${equipment.id} rated throughput is invalid`);
     assert(["NORMAL", "ISSUE_ACTIVE"].includes(equipment.status), `equipment ${equipment.id} status is invalid`);
     assert([1, 2, 3].includes(equipment.floor), `equipment ${equipment.id} floor is invalid`);
   }
