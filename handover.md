@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 44 (short, may be left partial at the run stop): changeover readiness E2E-free API docs in project-state/backend/http-api.md | 44 |
-| gemini | Round 44 (short, may be left partial at the run stop): keyboard pass follow-ups from the round 43 audit notes | 44 |
+| codex | IDLE (round 44 documentation merged; no open assignment at the run stop) | — |
+| gemini | Round 44 (keyboard follow-ups) not yet READY; branch holds a master merge only; resume next run | 44 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1598,6 +1598,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `e390a4a`…`40bfde9` (branch `codex`, round 44, documentation only: `project-state/backend/http-api.md` changeover routes) → merge `ffd2c0f`-equivalent docs commit on master. No code changed, so no deploy and no E2E re-run; the code is unchanged since `7d0039a`, which passed E2E 186/186 and is deployed. `npm test` 619/619.
 - 2026-10-24 — **codex** `73b11e0`…`099c11c` (branch `codex`, round 43) and **gemini** `996bb65`/`37857dd` (round 43) → merge `7d0039a`: append-only changeover records (`POST /api/control-rooms/:roomId/changeovers`), the changeover readiness read route, and a keyboard-only pass across all workspace panels. `npm test` 619/619; E2E 186/186 on port 3024. Deployed `7d0039a`, healthy. GET-only smoke test: all endpoints 200; unknown changeover returns 404.
 - 2026-10-24 — **codex** `62b6cd6`…`3fe5bb3` (branch `codex`, round 42) and **gemini** `9c900ed`/`a39b472` (round 42) → merge `1b8cdf7`: pure changeover readiness check (`backend/src/changeover-readiness.mjs`; kit and crew UNKNOWN, `READY` only when all checks pass) and the Changeover readiness panel on stubs. No read route yet: slice 1 has no changeover record. `npm test` 612/612; E2E 175/175 on port 3024. Deployed `1b8cdf7`, healthy. GET-only smoke test: all endpoints 200.
 - 2026-10-24 — **codex** `09014d8`…`8fa2ea7` (branch `codex`, round 41) and **gemini** `5533f85`/`2847173` (round 41) → merge `d6587a6`: append-only handler jam inputs and `GET /api/control-rooms/:roomId/handler-episodes` (aligned to the 3-hour window), and the ATE terminology pass on the Station KPI and Handler episodes panels. `npm test` 604/604; E2E 171/171 on port 3024. Deployed `d6587a6`, healthy. GET-only smoke test: all endpoints 200; `handler-episodes` returns the suppression reasons for an empty room (`CONTEXT_MISSING`).

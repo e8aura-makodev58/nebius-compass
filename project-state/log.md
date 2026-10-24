@@ -1020,3 +1020,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-24] docs — Changeover API examples and error cases (round 44)
 - Expanded the implemented changeover POST/readiness GET contract with exact bodies, success/retry and 400/404 examples, request guards, fixed checks and explicit read-only semantics. Checked against server/service/validator code; no behavior changes or E2E work.
 - Pages updated: backend/http-api.md.
+
+## [2026-10-24] docs — Round 44 documentation merge and end-of-run status (main agent)
+- Merged codex round 44 (changeover API documentation only). No code changed since `7d0039a`, which is deployed and passed E2E 186/186. `npm test` 619/619 on master.
+- Gemini round 44 is not READY; its branch holds only a master merge. Resume next run.
+- Live state: the deployed simulation is paused. The smoke-test reservation written earlier was released.
