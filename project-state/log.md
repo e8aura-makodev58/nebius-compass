@@ -960,3 +960,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
     - Updated assertions matching visible text for totals summaries ("Totals (2 ATE setups)", "Totals (1 ATE setup)") and empty state ("No ATE setups selected").
 - Verification: `npm test` 597/597 passed; targeted E2E suites (`e2e/station-kpi.spec.mjs`, `e2e/handler-episodes.spec.mjs`, `e2e/panel-audit-r39.spec.mjs`, `e2e/phone-audit.spec.mjs`) 27/27 passed; full Chromium E2E suite 171/171 passed on port 3022. Port 3022 cleanly released.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 41 merge, deploy and round 42 assignment (main agent)
+- Merged codex round 41 (append-only handler jam inputs, handler episodes read route) and gemini round 41 (ATE terminology pass) as `d6587a6`. Verification: `npm test` 604/604; E2E 171/171 on port 3024. Deployed `d6587a6` healthy. GET-only smoke test: all endpoints 200.
+- Added `docs/design/changeover-readiness-slice-1.md` (F5 slice 1, the M precursor): a deterministic per-changeover readiness check that reuses F3 and F8, with kit and crew reported as unknown. Approved for round 42.
+- Assigned round 42: codex pure changeover readiness module; gemini changeover readiness panel, stub-first.
+- Pages updated: this log; the design spec; handover.md merge log and assignments.

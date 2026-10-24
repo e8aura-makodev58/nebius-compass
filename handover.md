@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 41: handler jam alarm and run entry, and the handler episodes read route (F4 slice 1 wiring; round 41 bullets) | 41 |
-| gemini | Round 41: ATE terminology pass on the Station KPI and Handler episodes panels (visible labels only) | 41 |
+| codex | Round 42: changeover readiness check (F5 slice 1), pure module and tests (round 42 bullets) | 42 |
+| gemini | Round 42: changeover readiness panel, stub-first against the round 42 read contract | 42 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,23 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 42 (2026-10-24) — changeover readiness check (F5 slice 1).** Start with `git merge master`.
+
+- **codex.** Implement `docs/design/changeover-readiness-slice-1.md` (approved for build). Build the pure module
+  `backend/src/changeover-readiness.mjs` exposing `checkChangeoverReadiness({ changeover, inventory, readiness, kitFacts, crewFacts })`.
+  Reuse the existing loadboard validator and the `cellReadiness` result shape. Implement section 3 (checks, `UNKNOWN` rules), section 4
+  (output shape, `status` only `READY` when every check passes) and the input errors in section 2. Add
+  `backend/tests/changeover-readiness.test.mjs` for every item in section 5. Add a read route
+  `GET /api/control-rooms/:roomId/changeovers/:changeoverId/readiness` only if a changeover record exists in room state; if none does,
+  do **not** add the route and say so in the handoff (slice 1 has no changeover entry). Use **port 3021**. Run both suites, update
+  `project-state/backend/`, commit, set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Add a **Changeover readiness** panel in the workspace, registered like the others. It shows the changeover ID, cell,
+  target program, start time and `status`, then one row per check with its result as text (PASS, FAIL, UNKNOWN), its reasons in plain
+  text and the `boardId` when PASS. Never colour alone carries a result. Stub-first against the section 4 shape, with the route
+  `GET /api/control-rooms/:roomId/changeovers/:changeoverId/readiness` (it may come later). Keyboard-reachable, loading, empty and
+  error states, 375/1280 px checks. E2E in `e2e/changeover-readiness.spec.mjs`. Do not change `backend/`. Use **port 3022**. Run both
+  suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 41 (2026-10-24) — handler jam inputs and episodes route; ATE terminology.** Start with `git merge master`.
 
 - **codex.** Implement the F4 slice 1 wiring (`docs/design/handler-jam-episodes-slice-1.md`, module already merged). (1) Append-only,
@@ -1557,6 +1574,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `09014d8`…`8fa2ea7` (branch `codex`, round 41) and **gemini** `5533f85`/`2847173` (round 41) → merge `d6587a6`: append-only handler jam inputs and `GET /api/control-rooms/:roomId/handler-episodes` (aligned to the 3-hour window), and the ATE terminology pass on the Station KPI and Handler episodes panels. `npm test` 604/604; E2E 171/171 on port 3024. Deployed `d6587a6`, healthy. GET-only smoke test: all endpoints 200; `handler-episodes` returns the suppression reasons for an empty room (`CONTEXT_MISSING`).
 - 2026-10-24 — **codex** `0f1dfd8`…`d49e07d` (branch `codex`, round 40) and **gemini** `bbc0f10`/`e67799d` (round 40) → merge `08c3b58`: `GET /api/control-rooms/:roomId/correlation-records` (read-only) and the correlation records section with an append-only form in the Calibrations panel. `npm test` 597/597; E2E 171/171 on port 3024. Deployed `08c3b58`, healthy. GET-only smoke test: all endpoints 200.
 - 2026-10-24 — **codex** `2347cf0`…`de710fd` (branch `codex`, round 39) and **gemini** `7885215`/`ecfce4b` (round 39) → merge `b2f6228`: migration refuses orphaned HELD reservations, append-only correlation records (`POST /api/control-rooms/:roomId/correlation-records`, not a calibration gate), and a 375/1280 px audit of rounds 31–38 panels. Codex confirmed the obligation reconciler is wired in `runScheduledTick` and tested. `npm test` 594/594; E2E 165/165 on port 3024. Deployed `b2f6228`, healthy. GET-only smoke test: all endpoints 200; no live writes.
 - 2026-10-24 — **codex** `0829fc7`…`eb38a84` (branch `codex`, round 38) and **gemini** `becc007`/`af7303b` (round 38) → merge `51aa694`: serialised board entry `POST /api/control-rooms/:roomId/loadboards/boards` and an idempotent board seed migration; the Add board drawer on the Loadboards panel. `npm test` 588/588; E2E 159/159 on port 3024. Deployed `51aa694`, healthy.
