@@ -1016,8 +1016,17 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Round 44 is short and may stay partial at the 23:45 UTC run stop.
 - Pages updated: this log; handover.md merge log and assignments.
 
+## [2026-10-24] docs — Changeover API examples and error cases (round 44)
+- Expanded the implemented changeover POST/readiness GET contract with exact bodies, success/retry and 400/404 examples, request guards, fixed checks and explicit read-only semantics. Checked against server/service/validator code; no behavior changes or E2E work.
+- Pages updated: backend/http-api.md.
+
 ## [2026-10-24] fix — Keyboard pass follow-ups from Round 43 audit (round 44, gemini)
 - Reviewed the keyboard-only pass and audit notes across all 13 workspace panels (Staffing, Field reports/Investigation, Map, Issues, Events, Context/Dispatch, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness).
 - Verified zero positive `tabindex` attributes, visible focus rings with `outline: 2px solid var(--accent)`, modal focus trapping, Escape dismissal, and return-to-trigger focus across all dialogs and drawers.
 - Re-verified suites against merged master (`7d0039a`): `npm test` 619/619 passed, Chromium E2E 186/186 passed on port 3022. Port 3022 cleanly released.
 - Pages updated: this log.
+
+## [2026-10-24] docs — Round 44 documentation merge and end-of-run status (main agent)
+- Merged codex round 44 (changeover API documentation only). No code changed since `7d0039a`, which is deployed and passed E2E 186/186. `npm test` 619/619 on master.
+- Gemini round 44 ready for next integration run.
+- Live state: the deployed simulation is paused. The smoke-test reservation written earlier was released.

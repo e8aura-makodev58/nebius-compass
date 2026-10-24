@@ -397,17 +397,107 @@ Round 43 adds the changeover record entry and readiness route below, using the
 round-42 pure module.
 
 
-## Changeover entry and readiness (round 43)
+## Changeover entry and readiness (rounds 43–44)
 
-POST `/api/control-rooms/:roomId/changeovers` accepts exactly changeoverId, cellId,
-targetProgramRevision and startsAt (strict UTC). Supplied start times may be before
-or after the simulation clock. New records return HTTP 200
-`{decision:"RECORDED",reasons:[]}`; identical complete retries return UNCHANGED
-without writing. Invalid fields/dates or conflicting duplicate identities return 400.
-Normal room, JSON and origin guards apply. No update/delete route is added.
+The implementation is `backend/src/changeover-service.mjs`, routed by
+`backend/src/server.mjs` and shared by Live and Offline. Records are append-only;
+checking readiness does not execute a changeover.
 
-GET `/api/control-rooms/:roomId/changeovers/:changeoverId/readiness` returns the
-round-42 pure check output, with calibration readiness evaluated at the stored
-startsAt, the room's current inventory, and kit/crew facts null. Unknown record is
-404; the read never advances time, writes or reserves anything. Records stay out of
-ordinary state polling/model payloads. No changeover-list route is introduced.
+### Record a changeover
+
+`POST /api/control-rooms/:roomId/changeovers` requires `Content-Type: application/json`
+and exactly these four body fields:
+
+```json
+{
+  "changeoverId": "CO-0031",
+  "cellId": "ATE-1",
+  "targetProgramRevision": "PM0096-P2",
+  "startsAt": "2026-10-24T14:00:00.000Z"
+}
+```
+
+Identifiers must be nonempty strings of at most 120 characters, without surrounding
+whitespace or control characters. cellId uses the calibration identifier format
+(letters, digits, underscore and hyphen). startsAt must be a valid UTC timestamp
+ending in Z, with seconds and optional three-digit milliseconds. Impossible dates
+are rejected; accepted dates are stored with milliseconds. Past and future start
+times are both allowed. A cell does not need calibration records to be recorded;
+missing calibration is a readiness failure when checked.
+
+A new record returns HTTP 200:
+
+```json
+{ "decision": "RECORDED", "reasons": [] }
+```
+
+An identical retry of the same changeoverId returns HTTP 200 with decision UNCHANGED
+and empty reasons, without incrementing revision or writing another record. Equivalent
+UTC timestamp spellings canonicalize before this comparison. Reusing the ID with a
+different cell, target program or start time is rejected; it never updates the plan.
+
+| Case | HTTP | Response |
+|------|------|----------|
+| Missing/extra fields, wrong types, invalid identifiers/dates or protected input | 400 | `{"error":"Invalid or conflicting changeover","code":"INVALID_CHANGEOVER"}` |
+| Existing ID with a different body | 400 | Same INVALID_CHANGEOVER error; existing record unchanged. |
+| Malformed JSON | 400 | Standard JSON-body error; no record appended. |
+| Unknown room | 404 | Standard unknown-control-room error. |
+| Unsupported content type / cross-origin mutation | 415 / 403 | Standard request guard error. |
+| Room unavailable | 503 | Standard ROOM_UNAVAILABLE error. |
+
+No changeover-list, update or delete endpoint is provided. Ordinary state polling
+and model payloads exclude the raw changeover history.
+
+### Read readiness
+
+`GET /api/control-rooms/:roomId/changeovers/:changeoverId/readiness` has no request
+body. For example:
+
+```http
+GET /api/control-rooms/plant-1/changeovers/CO-0031/readiness
+```
+
+HTTP 200 returns the pure check shape below. This example assumes a compatible
+in-store LB-0398 and a cell calibrated at the planned instant:
+
+```json
+{
+  "changeoverId": "CO-0031",
+  "cellId": "ATE-1",
+  "startsAt": "2026-10-24T14:00:00.000Z",
+  "status": "BLOCKED",
+  "checks": [
+    { "check": "LOADBOARD_AVAILABLE", "result": "PASS", "reasons": [], "boardId": "LB-0398" },
+    { "check": "CELL_READY", "result": "PASS", "reasons": [] },
+    { "check": "KIT_AVAILABLE", "result": "UNKNOWN", "reasons": ["KIT_FACTS_NOT_RECORDED"] },
+    { "check": "CREW_QUALIFIED", "result": "UNKNOWN", "reasons": ["CREW_FACTS_NOT_RECORDED"] }
+  ],
+  "reasons": ["CREW_FACTS_NOT_RECORDED", "KIT_FACTS_NOT_RECORDED"]
+}
+```
+
+The route calls checkChangeoverReadiness with current room inventory, cellReadiness
+for the stored cell **at startsAt**, and null kitFacts/crewFacts. It does not evaluate
+calibration at the current simulation clock. Past startsAt is supported; current
+board inventory is neither reconstructed historical custody nor a future reservation.
+
+Checks have fixed order. An unavailable board yields NO_COMPATIBLE_LOADBOARD; a cell
+that is not READY yields CELL_NOT_READY. boardId appears only when the board check
+passes, choosing the first eligible ID lexically. Kit/crew facts remain UNKNOWN in
+this slice, so overall status remains BLOCKED. Top-level reasons are the sorted
+union of failed and unknown checks, not an HTTP error. A valid blocked check is 200.
+
+An unknown changeover returns HTTP 404:
+
+```json
+{ "error": "Unknown changeover", "code": "CHANGEOVER_NOT_FOUND" }
+```
+
+An unknown room is also 404, using the standard room error instead. This GET is
+read-only: it does not append or edit records, change revision, advance the room
+clock, reserve/move boards, schedule work or call providers. It uses one room
+snapshot and returns the pure module's output without changing startsAt.
+
+Hermetic coverage: `backend/tests/changeover-routes.test.mjs` tests entry, duplicates,
+400/404 cases, exact pure-output equivalence, read immutability and Offline parity;
+`backend/tests/changeover-readiness.test.mjs` covers the requirement checks.
