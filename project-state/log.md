@@ -669,3 +669,12 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Updated synthetic fallback stubs (`DEVICE_CATALOG`, ATE equipment mapping, and UPH formatting helper).
 - Updated `e2e/station-kpi.spec.mjs` with assertions for ATE setup names, device IDs, rated throughput strings, and refreshed metric fixture values.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] quality — Phone and desktop audit of existing panels (Round 29)
+- Audited all eight existing panels (staffing, investigation, map, issues, events, context, analytics, and station KPIs) at 375px (phone) and 1280px (desktop) viewports.
+- Enforced zero horizontal scroll across page and panel containers at 375px and 1280px.
+- Upgraded interactive controls to satisfy >= 44px touch targets on phone (<= 900px) in `frontend/layout.css` across topbar tabs, simulation controls, search buttons, staffing summaries/inputs, investigation buttons/overrides, map controls, event feed buttons, context panel tabs/summaries/selects, analytics section nav/summaries, and station KPI filter checkboxes.
+- Verified all interactive controls across panels have valid accessible names (aria-label, labelledby, or text).
+- Verified all text content across panels satisfies WCAG AA contrast ratio >= 4.5:1.
+- Added comprehensive audit test suite `e2e/phone-audit.spec.mjs` (5/5 tests passing).
+- Pages updated: project-state/frontend/overview.md; this log.
