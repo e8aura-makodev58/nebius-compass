@@ -838,3 +838,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-24] feature — Enforced checkout readiness and manual calibration entry (round 36)
 - Checkout now evaluates calibration readiness inside the serialized transaction in both modes. Added strict journaled calibration entry with conflict validation and idempotent retries, read-only explicit ledger GET, and independent synthetic ATE-1/ATE-2 calibration seeds. Regenerated the deterministic investigation lifecycle fixture; only the new calibration seed field changed.
 - Pages updated: backend/domain-model.md, backend/http-api.md, backend/overview.md; entry response and existing-room policy recorded in docs/decisions.md.
+
+## [2026-10-24] docs — Round 36 merge, deploy and round 37 assignment (main agent)
+- Merged codex round 36 (server-side `CELL_NOT_READY` gate in `loadboard-service.mjs`, serialised calibration entry) and gemini round 36 (Calibrations panel) as `ab2d15f`. Verification: `npm test` 577/577; E2E 149/149 on port 3024. Deployed `ab2d15f` healthy.
+- Verified on the server: checkout to ATE-1 is rejected with `CELL_NOT_READY`. Live rooms have no calibration rows, so checkout is blocked until rows exist.
+- Assigned round 37: codex seeds calibration rows into existing live rooms by migration; gemini links a blocked checkout to the calibration form.
+- Pages updated: this log; handover.md merge log and assignments.

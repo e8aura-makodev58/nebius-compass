@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 36: wire the readiness gate into the checkout route, calibration entry route, seeded calibrations (round 36 bullets) | 36 |
-| gemini | Round 36: calibration records panel with an add form, stub-first against the round 36 contract | 36 |
+| codex | Round 37: seed calibration rows into existing live rooms (migration, round 37 bullets) | 37 |
+| gemini | Round 37: link a blocked checkout to the calibration form (reason, focus move) | 37 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,21 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 37 (2026-10-24) — calibrations for existing live rooms; blocked-checkout link.** Start with `git merge master`.
+
+- **codex.** Existing live rooms have no calibration rows, so the gate blocks every checkout on the deployed app. Add an
+  idempotent migration (`backend/src/live-migration.mjs`, like the device migration): when a room has no `calibrations`,
+  seed `ATE-1` and `ATE-2` rows with `calibratedAt` at the room's current simulation clock minus 7 days and `dueAt` at the
+  clock plus 60 days, using synthetic instrument IDs. Rooms that already have rows are left unchanged. Run the migration
+  twice in tests and assert identical output. Add tests that a migrated room checks out a ready cell and that an unmigrated
+  room with explicit rows is not altered. Use **port 3021**. Run both suites, update `project-state/backend/`, commit, set
+  `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** When a checkout is rejected with `CELL_NOT_READY`, show the readiness reason next to the row and an action
+  "Add calibration for ATE-1" that opens the Calibrations form with `cellId` filled and moves focus to its first field.
+  The action must not be a button that submits anything. Keep it keyboard-reachable and labelled. E2E in
+  `e2e/calibration-link.spec.mjs`. Do not change `backend/`. Use **port 3022**. Run both suites, update `project-state/frontend/`,
+  commit, set `READY FOR MERGE`.
+
 **Round 36 (2026-10-24) — enforce the readiness gate server-side; calibration entry.** Start with `git merge master`.
 
 - **codex.** (1) Wire the gate: `backend/src/loadboard-service.mjs` computes `cellReadiness` for the requested cell at the
@@ -1480,6 +1495,8 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `7c7e228`/`03036dc` (branch `codex`, round 36) and **gemini** `c01dd96`/`55e7190` (round 36) → merge `ab2d15f`: server-side readiness gate in `loadboard-service.mjs` (checkout rejects with `CELL_NOT_READY`), serialised calibration entry `POST /api/control-rooms/:roomId/calibrations`, and the Calibrations panel. `npm test` 577/577; E2E 149/149 on port 3024. Deployed `ab2d15f`, healthy.
+  **Verified on the server:** a checkout to `ATE-1` returns `REJECTED` with `CELL_NOT_READY` (and `BOARD_UNKNOWN` for the smoke board). **Live rooms have no calibration rows**, so every checkout is blocked until calibration rows are entered. Round 37 seeds the rows into existing rooms.
 - 2026-10-24 — **codex** `cc24a9d`…`ecc3a03` (branch `codex`, round 35) and **gemini** `f4c4ac2` (round 35) → merge `79655af`, then `59529e4` (main agent test fix): calibration readiness module (`backend/src/calibration-readiness.mjs`), `GET /api/control-rooms/:roomId/cell-readiness`, the optional readiness argument to `checkoutBoard`, and readiness chips with a client-side checkout gate in the Loadboards panel. `npm test` 571/571. E2E 142/142 on port 3024 after the main agent stubbed cell readiness in `e2e/loadboard-actions.spec.mjs` (its flows assume a ready ATE-1). Deployed `59529e4`, healthy; endpoints return 200.
   **Known gap (open):** the server does not yet enforce the readiness gate. `loadboard-service.mjs` calls `checkoutBoard` without readiness, so the API still allows checkout. The UI blocks it. Round 36 wires it in. Live rooms have no calibration rows yet, so `/cell-readiness` returns `cells: []`.
 - 2026-10-24 — **codex** `5571332`…`55ab8da` (branch `codex`, round 34) and **gemini** `49251b2`/`0f37215` (round 34) → merge `8b4fa83`: handler jam episodes pure module (`backend/src/handler-jam-episodes.mjs`) and the Handler episodes panel on stubs. `npm test` 559/559; E2E 136/136 on port 3024. Deployed `8b4fa83`, healthy; loadboards, obligations and station-KPI endpoints return 200. The episodes route is not exposed yet (a later codex round).
