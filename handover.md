@@ -1554,16 +1554,23 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** IN PROGRESS
-- **Updated:** 2026-10-24 19:21 UTC
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24 19:42 UTC
 - **Task:** Round 36: calibration records panel with an add form, stub-first against the round 36 contract
-- **Head commit:** `94b42d2`
-- **Changes:** Starting Round 36 implementation. Adding Calibrations panel with table of calibration rows (calibrationId, cellId, instrumentId, calibratedAt, dueAt, state) and add form with client-side date validation, plain text server reason display, live region announcements, keyboard reachability, responsive 375px/1280px layouts with zero horizontal scroll, and E2E in `e2e/calibrations.spec.mjs`.
-- **Files changed:** in progress
-- **Verification:** in progress
-- **project-state pages updated:** in progress
-- **Risks / follow-ups:** Stub-first against `GET /api/control-rooms/:roomId/calibrations` and `POST /api/control-rooms/:roomId/calibrations` with deterministic synthetic fallback.
-- **Questions for main:** None; actively executing Round 36. Watcher is active. Claude, once ready for merge, please review promptly per user direction to avoid idle cycles.
+- **Head commit:** `c01dd96`
+- **Changes:**
+  - Implemented Calibrations panel (`frontend/calibrations-view.js`, `frontend/calibrations.css`) displaying calibration records (`calibrationId`, `cellId`, `instrumentId`, `calibratedAt`, `dueAt`, `state`) with `CURRENT` and `EXPIRED` status badges.
+  - Added expandable Add Calibration entry form with client-side date & ID validation (rejecting submission when `dueAt < calibratedAt`), plain text server reason display on rejection, and accessible live region announcements (`#cal-live-announcer`).
+  - Added real-time search input filtering across ID, cell, and instrument with input focus retention, state filter dropdown (`ALL`, `CURRENT`, `EXPIRED`), manual refresh, and empty state with filter reset.
+  - Integrated into workspace navigation (`Cals` button in `#workspace-nav`), phone view routing in `frontend/layout.css`, and Dockview tiling registration in `frontend/tiling.js` (including backward compatibility parser and relaxed tab group constraint).
+  - Built stub-first against `GET /api/control-rooms/:roomId/calibrations` and `POST /api/control-rooms/:roomId/calibrations` with deterministic synthetic fallback and offline parity.
+  - Responsive layout: desktop table (≥901px) and phone cards (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+  - Added comprehensive Chromium E2E suite in `e2e/calibrations.spec.mjs` (7/7 tests passing).
+- **Files changed:** `frontend/calibrations-view.js`, `frontend/calibrations.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/calibrations.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Verification:** Hermetic `npm test` passed (**571/571** tests); full Chromium E2E suite verified on port 3022 with forced provider failures; targeted suites (`calibrations.spec.mjs`, `staffing.spec.mjs`, `tiling.spec.mjs`) **18/18** passed in 33.9s; investigated single test `e2e/investigation-ui.spec.mjs` **5/5** passed in 13.2s; ports 3022 and 3122 confirmed free (`ss -ltn | grep -E ':(3022|3122)'`).
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** Stub-first against `GET /api/control-rooms/:roomId/calibrations` and `POST /api/control-rooms/:roomId/calibrations`. When backend endpoint is implemented by Codex/backend, frontend seamlessly consumes real DTOs.
+- **Questions for main:** Claude: Round 36 is complete, verified hermetically across unit (571/571) and Chromium E2E suites, and ready for merge. Per user's explicit reminder, please do not keep Gemini idle: please review and merge commit `c01dd96` promptly, then assign the next concrete task.
 
 ## codebuddy
 
