@@ -808,3 +808,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added dedicated E2E test suite in `e2e/cell-readiness.spec.mjs` (6/6 tests passing).
 - Verification: `npm test` 559/559 passed; full Chromium E2E suite 142/142 passed on port 3022; ports 3022 and 3122 verified free.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 35 merge, deploy and round 36 assignment (main agent)
+- Merged codex round 35 (calibration readiness module, read endpoint, optional checkout gate) and gemini round 35 (readiness chips and client-side gate) as `79655af`. A test fix `59529e4` stubs ready cell readiness in the loadboard action E2E flows. Verification: `npm test` 571/571; E2E 142/142 on port 3024. Deployed `59529e4` healthy.
+- Gap recorded: the server does not enforce the readiness gate yet; round 36 wires it. Live rooms have no calibration rows yet.
+- Assigned round 36: codex wires the server gate, adds the calibration entry route and seeds calibrations; gemini builds the Calibrations panel on stubs.
+- Pages updated: this log; handover.md merge log and assignments.
