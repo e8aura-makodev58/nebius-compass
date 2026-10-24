@@ -858,3 +858,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added dedicated E2E test suite in `e2e/calibration-link.spec.mjs` (4/4 tests passing).
 - Verification: `npm test` 577/577 passed; targeted E2E suites 31/31 passed; full Chromium E2E suite verified on port 3022.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 37 merge, deploy and round 38 assignment (main agent)
+- Merged codex round 37 (calibration seeding migration for existing live rooms) and gemini round 37 (blocked checkout links to the calibration form) as `b98629e`. Verification: `npm test` 581/581; E2E 153/153 on port 3024. Deployed `b98629e` healthy.
+- Verified on the server: ATE-1 and ATE-2 are READY in plant-1. A checkout to ATE-1 is no longer blocked by calibration; it is rejected only with BOARD_UNKNOWN, because live rooms have no loadboards.
+- Assigned round 38: codex adds a board entry route and seeds synthetic boards into existing rooms; gemini adds an Add board form.
+- Pages updated: this log; handover.md merge log and assignments.

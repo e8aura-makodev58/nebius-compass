@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 37: seed calibration rows into existing live rooms (migration, round 37 bullets) | 37 |
-| gemini | Round 37: link a blocked checkout to the calibration form (reason, focus move) | 37 |
+| codex | Round 38: board entry route and synthetic board seeding for existing rooms (round 38 bullets) | 38 |
+| gemini | Round 38: board entry form on the Loadboards panel, stub-first against the round 38 contract | 38 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,22 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 38 (2026-10-24) — loadboard entry and seeding for existing live rooms.** Start with `git merge master`.
+
+- **codex.** (1) Add `POST /api/control-rooms/:roomId/loadboards/boards` with body `{ boardId, revision, condition, cellId, approvedPrograms }`.
+  Validate with `validateLoadboardInventory`. Write through the serialised store path. A new board starts with `cellId: null`
+  unless the body sets it to a cell that exists. Reject duplicate `boardId` with a 400. Malformed body is 400. (2) Add an
+  idempotent migration in `backend/src/live-migration.mjs`, like the calibration seeding: when `loadboardInventory` is undefined
+  or has no boards, seed `LB-0412` (ATE-1 held by a seeded reservation is NOT allowed: seed it in store with `cellId: null`), `LB-0398`,
+  and `LB-0204` (UNDER_REPAIR) with synthetic approved programs. Never change existing rows. Run it twice in tests and assert identical
+  output. Tests: a seeded room checks out `LB-0398` to a READY cell; the entry route rejects a duplicate ID. Use **port 3021**. Run
+  both suites, update `project-state/backend/`, commit, set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Add an **Add board** form to the Loadboards panel: `boardId`, `revision`, `condition` (select), `cellId` (optional),
+  `approvedPrograms` (comma list, validated client-side). Show server reasons as plain text. Stub-first against the POST above
+  returning `{ decision, reasons }` (`decision` is `ADDED` or `REJECTED`). Keyboard-reachable, labelled, live region for the result,
+  375 px and 1280 px no-horizontal-scroll checks. E2E in `e2e/board-entry.spec.mjs`. Do not change `backend/`. Use **port 3022**.
+  Run both suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 37 (2026-10-24) — calibrations for existing live rooms; blocked-checkout link.** Start with `git merge master`.
 
 - **codex.** Existing live rooms have no calibration rows, so the gate blocks every checkout on the deployed app. Add an
@@ -1495,6 +1511,8 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `47ffed1`…`1c6c47c` (branch `codex`, round 37) and **gemini** `2365c3f`/`a5bd2a1` (round 37) → merge `b98629e`: calibration rows seeded into existing live rooms by an idempotent migration (never extends existing history), and a blocked checkout links to the calibration form. `npm test` 581/581; E2E 153/153 on port 3024. Deployed `b98629e`, healthy.
+  **Verified on the server:** `ATE-1` and `ATE-2` are `READY` in `plant-1` (calibrations due 2026-12-05). A checkout of `LB-0398` to `ATE-1` now returns `REJECTED` with `BOARD_UNKNOWN` only, so the calibration gate no longer blocks it. **Live rooms have no loadboards** (`boards: []`), so no checkout can allocate until boards are entered. Round 38 handles it. I did not allocate a board in the live room during the smoke test.
 - 2026-10-24 — **codex** `7c7e228`/`03036dc` (branch `codex`, round 36) and **gemini** `c01dd96`/`55e7190` (round 36) → merge `ab2d15f`: server-side readiness gate in `loadboard-service.mjs` (checkout rejects with `CELL_NOT_READY`), serialised calibration entry `POST /api/control-rooms/:roomId/calibrations`, and the Calibrations panel. `npm test` 577/577; E2E 149/149 on port 3024. Deployed `ab2d15f`, healthy.
   **Verified on the server:** a checkout to `ATE-1` returns `REJECTED` with `CELL_NOT_READY` (and `BOARD_UNKNOWN` for the smoke board). **Live rooms have no calibration rows**, so every checkout is blocked until calibration rows are entered. Round 37 seeds the rows into existing rooms.
 - 2026-10-24 — **codex** `cc24a9d`…`ecc3a03` (branch `codex`, round 35) and **gemini** `f4c4ac2` (round 35) → merge `79655af`, then `59529e4` (main agent test fix): calibration readiness module (`backend/src/calibration-readiness.mjs`), `GET /api/control-rooms/:roomId/cell-readiness`, the optional readiness argument to `checkoutBoard`, and readiness chips with a client-side checkout gate in the Loadboards panel. `npm test` 571/571. E2E 142/142 on port 3024 after the main agent stubbed cell readiness in `e2e/loadboard-actions.spec.mjs` (its flows assume a ready ATE-1). Deployed `59529e4`, healthy; endpoints return 200.
