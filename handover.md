@@ -1592,7 +1592,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 - **Status:** READY FOR MERGE
 - **Updated:** 2026-10-24 20:49 UTC
 - **Task:** Round 38: board entry form on the Loadboards panel, stub-first against the round 38 contract
-- **Head commit:** `becc007`
+- **Head commit:** `af7303b`
 - **Changes:**
   - Added expandable Add Board drawer (`.lb-add-drawer`) on the Loadboards panel toggled by `.lb-toggle-add-btn` with accessible `aria-expanded` and focus management.
   - Implemented form fields: `boardId` (required text), `revision` (required text), `condition` (select: `SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`), optional `cellId` (text input with datalist station autocomplete suggestions), and `approvedPrograms` (comma-separated list).
