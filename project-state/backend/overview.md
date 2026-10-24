@@ -52,6 +52,8 @@ one TypeScript type file; there is no build step.
 | `calibration-service.mjs` | Shared serialized calibration entry, idempotent identity retries and explicit historical GET projection. See [http-api.md](http-api.md). |
 | `calibration-readiness.mjs` | Pure `cellReadiness(calibrations,cellId,at)`, effective calibration selection, strict source validation and conservative expiry. No imports. See [domain-model.md](domain-model.md). |
 | `cell-readiness.mjs` | Explicit Live/Offline room readiness GET projection at the room clock. |
+| `changeover-records.mjs` | Strict private append-only planned-changeover records, reusing pure record validation. |
+| `changeover-service.mjs` | Shared serialized entry and read-only record readiness at its planned instant. See [http-api.md](http-api.md). |
 | `changeover-readiness.mjs` | Pure single-changeover requirement check; reuses inventory validation, checks cell readiness, keeps kit/crew UNKNOWN and does not schedule/reserve. See [domain-model.md](domain-model.md). |
 | `handler-jam-records.mjs` | Strict private append-only handler inputs, UTC validation and aligned-run count boundaries. |
 | `handler-jam-service.mjs` | Shared serialized alarm/run/planned-stop entry and read-only aligned episode projection through the pure calculator. |

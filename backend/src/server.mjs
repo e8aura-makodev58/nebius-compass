@@ -184,6 +184,9 @@ async function handleRoomScopedRoute({ request, response, path, runtime, logger,
     const key = path === "/issues" ? "issues" : path === "/responders" ? "responders" : "operationalEvents";
     return sendJson(response, 200, { mode: state.mode, simulationTime: state.simulationState?.simulationTime ?? null, [key]: state[key] ?? [] });
   }
+  if (request.method === 'POST' && path === '/changeovers') return sendJson(response, 200, await runtime.enterChangeover(await readJsonBody(request)));
+  const changeoverReadinessMatch = path.match(/^\/changeovers\/([^/]+)\/readiness$/);
+  if (request.method === 'GET' && changeoverReadinessMatch) return sendJson(response, 200, await runtime.changeoverReadiness(decodeURIComponent(changeoverReadinessMatch[1])));
   if (request.method === 'GET' && path === '/handler-episodes') return sendJson(response, 200, await runtime.handlerEpisodes());
   if (request.method === 'POST' && ['/handler-alarms', '/handler-runs', '/handler-planned-stops'].includes(path)) return sendJson(response, 200, await runtime.enterHandlerInput({ '/handler-alarms': 'alarms', '/handler-runs': 'runs', '/handler-planned-stops': 'plannedStops' }[path], await readJsonBody(request)));
   if (request.method === 'GET' && path === '/correlation-records') return sendJson(response, 200, await runtime.correlationRecords({ roomId }));

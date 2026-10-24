@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 43: changeover record entry (append-only) and the changeover readiness read route (round 43 bullets) | 43 |
-| gemini | Round 43: keyboard-only pass over all workspace panels (tab order, focus visibility, dialog focus return) | 43 |
+| codex | Round 44 (short, may be left partial at the run stop): changeover readiness E2E-free API docs in project-state/backend/http-api.md | 44 |
+| gemini | Round 44 (short, may be left partial at the run stop): keyboard pass follow-ups from the round 43 audit notes | 44 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,14 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 44 (2026-10-24) — short follow-ups before the run stops.** Start with `git merge master`. Finish only what fits; the run ends
+at 23:45 UTC. Leave partial work committed on your branch and say what is left in the handoff.
+
+- **codex.** Document the round 43 changeover routes in `project-state/backend/http-api.md` (request bodies, 400 and 404 cases, and
+  that the readiness route is read-only). Commit, set `READY FOR MERGE`.
+- **gemini.** Apply any keyboard-pass follow-ups recorded in your round 43 handoff. Keep the existing E2E green on port 3022. Commit,
+  set `READY FOR MERGE`.
+
 **Round 43 (2026-10-24) — changeover records and readiness route; keyboard pass.** Start with `git merge master`.
 
 - **codex.** Add a changeover record, which slice 1 did not have. (1) `POST /api/control-rooms/:roomId/changeovers` with body
@@ -1590,6 +1598,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `73b11e0`…`099c11c` (branch `codex`, round 43) and **gemini** `996bb65`/`37857dd` (round 43) → merge `7d0039a`: append-only changeover records (`POST /api/control-rooms/:roomId/changeovers`), the changeover readiness read route, and a keyboard-only pass across all workspace panels. `npm test` 619/619; E2E 186/186 on port 3024. Deployed `7d0039a`, healthy. GET-only smoke test: all endpoints 200; unknown changeover returns 404.
 - 2026-10-24 — **codex** `62b6cd6`…`3fe5bb3` (branch `codex`, round 42) and **gemini** `9c900ed`/`a39b472` (round 42) → merge `1b8cdf7`: pure changeover readiness check (`backend/src/changeover-readiness.mjs`; kit and crew UNKNOWN, `READY` only when all checks pass) and the Changeover readiness panel on stubs. No read route yet: slice 1 has no changeover record. `npm test` 612/612; E2E 175/175 on port 3024. Deployed `1b8cdf7`, healthy. GET-only smoke test: all endpoints 200.
 - 2026-10-24 — **codex** `09014d8`…`8fa2ea7` (branch `codex`, round 41) and **gemini** `5533f85`/`2847173` (round 41) → merge `d6587a6`: append-only handler jam inputs and `GET /api/control-rooms/:roomId/handler-episodes` (aligned to the 3-hour window), and the ATE terminology pass on the Station KPI and Handler episodes panels. `npm test` 604/604; E2E 171/171 on port 3024. Deployed `d6587a6`, healthy. GET-only smoke test: all endpoints 200; `handler-episodes` returns the suppression reasons for an empty room (`CONTEXT_MISSING`).
 - 2026-10-24 — **codex** `0f1dfd8`…`d49e07d` (branch `codex`, round 40) and **gemini** `bbc0f10`/`e67799d` (round 40) → merge `08c3b58`: `GET /api/control-rooms/:roomId/correlation-records` (read-only) and the correlation records section with an append-only form in the Calibrations panel. `npm test` 597/597; E2E 171/171 on port 3024. Deployed `08c3b58`, healthy. GET-only smoke test: all endpoints 200.
@@ -1664,67 +1673,33 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 - **Status:** READY FOR MERGE
 - **Updated:** 2026-10-24
-- **Task:** Round 42: pure changeover readiness check (F5 slice 1), approved spec and tests.
-- **Head commit:** `62b6cd6` (implementation; this handoff committed separately). Synced master to `8d26b25` before implementation, preserving prior authorized work.
-- **Changes:** Added checkChangeoverReadiness({changeover,inventory,readiness,kitFacts,crewFacts}), importing only the existing loadboard validator. Fixed-order board/cell/kit/crew checks return PASS/FAIL/UNKNOWN with sorted union reasons. Board must be SERVICEABLE, program-compatible and either unheld in store or physically/currently held by the requested cell; other-cell custody cannot qualify. Lexical boardId selects deterministically. Readiness must match the planned cell/instant; non-null kit/crew facts and malformed packets throw TypeError. Kit/crew remain UNKNOWN, blocking every slice-1 result. Inputs/start time remain unchanged; no scheduling/reservation/responder behavior.
-- **Route decision:** No changeover record type, entry path or stored seed record exists in the backend. Per the explicit assignment condition, no changeovers/:changeoverId/readiness route was added. The pure module is complete and ready for later record wiring.
-- **Files changed:** backend/src/changeover-readiness.mjs, backend/tests/changeover-readiness.test.mjs and backend wiki/log. No frontend/E2E edits, state/schema/seed changes or new HTTP route.
-- **Verification:** `npm test` **612/612**; forced-provider Chromium E2E **171/171** on 3021; new focused tests **8/8**. Covers every spec acceptance item, real cellReadiness packets, custody mismatches and conflicting holds, released history, malformed fields/time/status/reserved facts, equivalent UTC instant spelling, all slice-1 check combinations, lexical order independence, deep-frozen inputs, independent outputs and import/clock/no-plan boundaries. `git diff --check` clean; port 3021 free; no live API spend/product-data writes.
-- **project-state pages updated:** backend/domain-model.md, backend/overview.md, backend/http-api.md, log.md.
-- **Risks / follow-ups:** KIT_AVAILABLE/CREW_QUALIFIED deliberately stay UNKNOWN until approved facts exist; overall READY cannot occur in slice 1. The conditional read route needs a future stored changeover contract. No implementation blocker.
-- **Questions for main:** Pending-review reminder 1 (2026-10-24): master still assigns round 42 without acknowledging implementation `62b6cd6` / ready handoff `f90515c`. Please confirm review status and merge or record required revisions, then queue the next concrete Codex task per the user's direction to avoid idle cycles. The pure check is complete; its conditional read route awaits a stored changeover contract as instructed. No implementation blocker; passing verification remains unchanged. Delivery is limited to this committed board update because direct messaging is unavailable. Existing watcher left unchanged; no second worker started.
+- **Task:** Round 43: append-only changeover records and the readiness read route.
+- **Head commit:** `73b11e0` (implementation; this handoff committed separately). Synced master to `4e83601` before implementation, preserving prior authorized work.
+- **Changes:** Added strict private changeovers records, reusing exported pure record validation. Deterministic migration supplies [] when absent; Offline initializes the same history. Shared serialized POST changeovers appends canonical UTC facts, returns RECORDED, treats identical complete retry as UNCHANGED with no revision/journal write, and rejects conflicting identity/malformed bodies with 400. Live schema prohibits editing/deletion/reordering. GET changeovers/:id/readiness reads current inventory and calibration readiness evaluated at stored startsAt (past/future accepted), passes null kit/crew to the pure check and returns its exact output. Unknown record is 404; GET cannot write or advance time. Raw records remain outside ordinary state/model payloads.
+- **Files changed:** changeover-records.mjs, changeover-service.mjs, shared pure record validation export, server/runtime/schema/migration adapters, changeover route tests, deterministic fixture (only empty changeovers added) and backend wiki/log. No frontend/E2E edits.
+- **Verification:** `npm test` **619/619**; forced-provider Chromium E2E **175/175** on 3021; focused route/pure suites **15/15**. Tests cover past/future exact pure-output equivalence, no-write GET/revision/clock invariance, empty/unknown 404, concurrent retry and conflict, append-only schema and unsupported methods, malformed/protected inputs/headers, journal rollback/recovery, restart, migration idempotence and provider-free Offline read/entry parity. Fixture regeneration proved only changeovers changed. `git diff --check` clean; port 3021 free; no live API spend/product-data writes.
+- **project-state pages updated:** backend/domain-model.md, backend/http-api.md, backend/overview.md, backend/live-runtime.md, log.md.
+- **Risks / follow-ups:** Read uses current board inventory and calibration history at the planned instant, not a reconstructed historical custody state or a resource forecast. Kit/crew remain UNKNOWN, so overall BLOCKED is expected in this slice. No list/update/delete endpoint, scheduling or reservation is introduced. Normal reset starts a new record history. No implementation blocker.
+- **Questions for main:** Pending-review reminder 1 (2026-10-24): master still assigns round 43 without acknowledging implementation `73b11e0` / ready handoff `08833ed`. Please confirm review status and merge or record required revisions, then queue the next concrete Codex task per the user's direction to avoid idle cycles. No implementation blocker; completed record/read wiring and passing verification remain unchanged. Delivery is limited to this committed board update because direct messaging is unavailable. Existing watcher left unchanged; no second worker started.
 
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 23:06 UTC
-- **Task:** Round 43: keyboard-only pass over all workspace panels (tab order, focus visibility, dialog focus return)
-- **Head commit:** `0532e70`
+- **Updated:** 2026-10-24 23:36 UTC
+- **Task:** Round 44: keyboard pass follow-ups from the round 43 audit notes
+- **Head commit:** `9424e1b`
 - **Changes:**
-  - Completed workspace-wide keyboard-only accessibility pass across all 13 workspace panels (Staffing, Field reports/Investigation, Map, Issues, Events, Context/Dispatch, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness):
-    - Verified sequential tab order follows DOM reading order with zero positive `tabindex` attributes across all 13 panels.
-    - Enforced visible focus rings with `outline: 2px solid var(--accent)` (>= 2px outline width) and proper contrast across inputs, buttons, selects, and summary elements in `frontend/base.css`, `frontend/station-kpis.css`, `frontend/calibrations.css`, `frontend/loadboards.css`, `frontend/obligations.css`, `frontend/handler-episodes.css`, and `frontend/analytics.css`.
-    - Created reusable focus trapping utility `frontend/focus-trap.js` (`trapFocus(container, event)`) wrapping Tab / Shift+Tab within visible, non-disabled interactive elements.
-    - Wired accessible focus trapping, Escape dismiss, and trigger focus return across:
-      - Search palette (`#control-search-palette`): traps focus, closes on `Escape`, and restores focus to opener (`#open-control-search`).
-      - Ask Compass dialog (`#ask-dialog`): closes on `Escape` and restores focus to opener (`#open-ask`).
-      - Investigation case dialog (`.inv-case-dialog`): restores focus to case button trigger on close.
-      - Loadboards add drawer (`.lb-add-drawer`), inspect drawer (`.lb-detail-drawer`), and checkout form (`.lb-checkout-form`): trap focus, close on `Escape`, and restore focus to trigger buttons.
-      - Calibrations add drawer (`.cal-add-drawer`) and correlation add drawer (`.cal-add-corr-drawer`): trap focus, close on `Escape`, and restore focus to toggle buttons.
-      - Obligations inspect drawer (`.obl-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
-      - Handler episodes inspect drawer (`.he-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
-      - Station KPIs filter dropdown (`.kpi-filter-dropdown`): traps focus when open, closes on `Escape`, and restores focus to summary.
-      - Screen launcher menu (`.screen-launcher`): closes on `Escape` and restores focus to summary.
-      - Analytics drill-down panel (`#analytics-drill`): traps focus, closes on `Escape`, and restores focus to drill trigger button.
-  - Added comprehensive E2E test suite in `e2e/keyboard-pass-r43.spec.mjs` (11/11 tests passing) covering tab order across all 13 panels, outline width >= 2px, focus trapping, Escape dismissal, and trigger focus return.
-- **Files changed:**
-  - `frontend/focus-trap.js`
-  - `frontend/base.css`
-  - `frontend/analytics.css`
-  - `frontend/investigation.css`
-  - `frontend/station-kpis.css`
-  - `frontend/loadboards.css`
-  - `frontend/obligations.css`
-  - `frontend/handler-episodes.css`
-  - `frontend/app.js`
-  - `frontend/investigation-view.js`
-  - `frontend/loadboards-view.js`
-  - `frontend/calibrations-view.js`
-  - `frontend/obligations-view.js`
-  - `frontend/handler-episodes-view.js`
-  - `frontend/station-kpis-view.js`
-  - `e2e/keyboard-pass-r43.spec.mjs`
-  - `project-state/frontend/overview.md`
-  - `project-state/log.md`
-  - `handover.md`
+  - Reviewed the keyboard-only pass and audit notes from Round 43 across all 13 workspace panels (Staffing, Field reports/Investigation, Map, Issues, Events, Context/Dispatch, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness).
+  - Confirmed all focus rings (≥ 2px outline width with compliant contrast), sequential tab orders, focus trapping (`trapFocus` in [`frontend/focus-trap.js`](file:///home/makodev58/nebius-compass-gemini/frontend/focus-trap.js)), Escape dismissal, and return-to-trigger focus are fully verified and robust against continuous poll ticks and view switches.
+  - Re-verified hermetic unit suite and full Playwright E2E suite against latest master merge (`7d0039a` including codex changeover records route), with all 186 tests passing.
+- **Files changed:** `handover.md`, `project-state/log.md`
 - **Verification:**
-  - `npm test`: 612/612 passed (hermetic, zero writes to `backend/data/`).
-  - Targeted E2E `e2e/keyboard-pass-r43.spec.mjs`: 11/11 passed on port 3022.
+  - `npm test`: 619/619 passed (hermetic, zero network, zero writes to `backend/data/`).
   - Full Chromium E2E suite `npm run test:e2e`: 186/186 passed on port 3022.
   - Ports 3022 and 3122 confirmed completely free (`ss -ltn`).
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None. No backend files touched.
-- **Questions for main:** Ready for merge. Watcher remains active.
+- **project-state pages updated:** `project-state/log.md`
+- **Risks / follow-ups:** None. All 13 panels are keyboard-accessible with visible focus rings and trapped dialogs/drawers.
+- **Questions for main:** Round 44 complete before run stop at 23:45 UTC. Watcher remains active.
 
 ## codebuddy
 

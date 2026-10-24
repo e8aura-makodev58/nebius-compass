@@ -48,6 +48,8 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | POST | `/loadboards/release` | `{reservationId,cellId}` → the same response envelope. Host supplies the simulation timestamp. |
 | GET | `/consumable-obligations` | `{roomId,asOf,obligations}`: explicit persisted slice-2 rows, with no reconciliation on GET. |
 | POST | `/handler-alarms`, `/handler-runs`, `/handler-planned-stops` | Append validated handler facts, optional handlerContext; RECORDED or unchanged retry, conflicts/malformed/overlapping runs 400. |
+| POST | `/changeovers` | Append strict planned-changeover record; RECORDED or exact UNCHANGED retry, conflicts/malformed 400. |
+| GET | `/changeovers/:changeoverId/readiness` | Pure readiness over the record, current inventory and calibration facts at startsAt; unknown record 404; read-only. |
 | GET | `/handler-episodes` | Existing pure HANDLER-A episode output for the latest completed aligned three-hour window; read-only. |
 | GET | `/correlation-records` | `{roomId,asOf,records}` in append arrival order; shared read-only Live/Offline projection, readiness unaffected. |
 | POST | `/correlation-records` | Append explicit correlation facts; returns `{decision:"RECORDED",reasons:[]}`. Invalid/duplicate identities are 400; readiness is unaffected. |
@@ -391,6 +393,21 @@ and minutes remain visible. GET does not mutate state or advance the simulation.
 No station/window selector is introduced in this single-handler slice.
 
 
-Round 42 changeover readiness remains a pure module: no changeover room records or
-entry path exist. Per the assignment, no changeovers/:changeoverId/readiness endpoint
-is added until there is an actual stored changeover to read.
+Round 43 adds the changeover record entry and readiness route below, using the
+round-42 pure module.
+
+
+## Changeover entry and readiness (round 43)
+
+POST `/api/control-rooms/:roomId/changeovers` accepts exactly changeoverId, cellId,
+targetProgramRevision and startsAt (strict UTC). Supplied start times may be before
+or after the simulation clock. New records return HTTP 200
+`{decision:"RECORDED",reasons:[]}`; identical complete retries return UNCHANGED
+without writing. Invalid fields/dates or conflicting duplicate identities return 400.
+Normal room, JSON and origin guards apply. No update/delete route is added.
+
+GET `/api/control-rooms/:roomId/changeovers/:changeoverId/readiness` returns the
+round-42 pure check output, with calibration readiness evaluated at the stored
+startsAt, the room's current inventory, and kit/crew facts null. Unknown record is
+404; the read never advances time, writes or reserves anything. Records stay out of
+ordinary state polling/model payloads. No changeover-list route is introduced.

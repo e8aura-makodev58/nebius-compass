@@ -24,12 +24,16 @@ function validateReadiness(readiness, changeover) {
     requireValue(['CURRENT', 'EXPIRED'].includes(row.state) && !ids.has(row.instrumentId), 'instrument state/identity'); ids.add(row.instrumentId);
   }
 }
+export function validateChangeoverRecord(changeover) {
+  fields(changeover, ['changeoverId', 'cellId', 'targetProgramRevision', 'startsAt']);
+  for (const key of ['changeoverId', 'cellId', 'targetProgramRevision']) text(changeover[key]);
+  time(changeover.startsAt);
+}
 export function checkChangeoverReadiness(input) {
   fields(input, ['changeover', 'inventory', 'readiness', 'kitFacts', 'crewFacts']);
   const { changeover, inventory, readiness, kitFacts, crewFacts } = input;
-  fields(changeover, ['changeoverId', 'cellId', 'targetProgramRevision', 'startsAt']);
-  for (const key of ['changeoverId', 'cellId', 'targetProgramRevision']) text(changeover[key]);
-  time(changeover.startsAt); validateLoadboardInventory(inventory); validateReadiness(readiness, changeover);
+  validateChangeoverRecord(changeover);
+  validateLoadboardInventory(inventory); validateReadiness(readiness, changeover);
   requireValue(kitFacts === null && crewFacts === null, 'kitFacts/crewFacts must be null in slice 1');
   const heldByBoard = new Map();
   for (const reservation of inventory.reservations) if (reservation.status === 'HELD') {

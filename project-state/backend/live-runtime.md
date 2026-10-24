@@ -239,3 +239,10 @@ aborting before revision/journal publication. handlerJam is private append-only
 history; migration supplies empty arrays and unchanged facts stay unchanged on
 restart. The handler episode GET uses a store projection at the room clock and
 cannot trigger a simulation tick, source reconciliation or model call.
+
+
+Round 43 changeover records use the shared serialized store with exact retries
+aborting before revision/journal publication. Missing history migrates to empty;
+Live schema enforces append-only transitions. Readiness reads one room snapshot and
+evaluates calibration at the stored planned instant with current inventory, without
+advancing clock, writing, reserving a board or scheduling work.

@@ -547,6 +547,29 @@ reasons, so every slice-1 result is BLOCKED. Overall reasons are a sorted union.
 
 This pure module imports only the loadboard validator. It does not mutate inventory,
 reserve/move boards, advance time, schedule/replan, rank or select responders, or
-call models. Output preserves the supplied startsAt and contains no plan. There is
-no existing changeover room record or entry path, so the assignment's conditional
-read endpoint is intentionally not added; no storage/seed/schema is manufactured.
+call models. Output preserves the supplied startsAt and contains no plan. Round 43 adds the private records and read wiring described below; the pure
+check still performs no mutation or scheduling.
+
+
+## Planned changeover records and read wiring (round 43)
+
+`changeover-records.mjs` validates private changeovers with exactly changeoverId,
+cellId, targetProgramRevision and startsAt, reusing validateChangeoverRecord from
+the pure check. IDs are unique; existing sequence and fields are immutable. Missing
+persisted history migrates deterministically to [], and Offline initializes the same
+shape. No synthetic changeovers are manufactured. Ordinary state/model payloads
+exclude these records; normal reset starts a new history.
+
+`changeover-service.mjs` shares the serialized room mutation adapter across modes.
+POST canonicalizes UTC startsAt and appends one record. Identical complete retries
+return UNCHANGED without revision/journal writes; conflicting identity or malformed
+input is 400. Past/future startsAt are permitted; this records a plan's supplied
+instant without scheduling, moving time or reserving resources. Live schema rejects
+edits, deletion and reordering, and no update/delete endpoint exists.
+
+The dedicated readiness GET reads one snapshot, finds the record (404 if absent),
+computes cellReadiness from its calibration history at startsAt and passes that with
+current inventory and null kitFacts/crewFacts to checkChangeoverReadiness. Output
+exactly matches the pure module. No clock advancement or write occurs, including
+for past start times. Current board facts are not historical custody reconstruction
+or a forecast; no resource claim is made. Kit/crew remain UNKNOWN and overall BLOCKED.

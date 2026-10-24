@@ -1,3 +1,4 @@
+import { createChangeoverService, buildChangeoverReadiness } from './changeover-service.mjs';
 import { createHandlerJamService, buildRoomHandlerEpisodes } from './handler-jam-service.mjs';
 import { createCorrelationService, buildCorrelationRecords } from './correlation-service.mjs';
 import { createCalibrationService, buildCalibrations } from './calibration-service.mjs';
@@ -46,6 +47,7 @@ export function createLiveRuntime({
   const staffingService = createStaffingService(store, { agentOptions, ...(requestStaffingRecommendation ? { requestRanking: requestStaffingRecommendation } : {}) });
   const investigations = createInvestigationService(store, { investigatorOptions, rankingOptions: agentOptions, narratorOptions });
   const assistant = createAskService(store,{assistantOptions});
+  const changeoverService = createChangeoverService(store);
   const handlerJamService = createHandlerJamService(store);
   const correlationService = createCorrelationService(store);
   const calibrationService = createCalibrationService(store);
@@ -357,6 +359,8 @@ export function createLiveRuntime({
     async analytics() { return { mode: "LIVE", ...(store.project ? await store.project(buildAnalytics) : buildAnalytics(await store.snapshot())) }; },
     async analyticsPeriod(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildPeriodAnalytics(state, query)) : buildPeriodAnalytics(await store.snapshot(), query)) }; },
     async correlationRecords(query) { return store.project ? store.project(state => buildCorrelationRecords(state, query)) : buildCorrelationRecords(await store.snapshot(), query); },
+    enterChangeover: input => changeoverService.enter(input),
+    async changeoverReadiness(id) { return store.project ? store.project(state => buildChangeoverReadiness(state, id)) : buildChangeoverReadiness(await store.snapshot(), id); },
     enterHandlerInput: (kind, input) => handlerJamService.enter(kind, input),
     async handlerEpisodes() { return store.project ? store.project(buildRoomHandlerEpisodes) : buildRoomHandlerEpisodes(await store.snapshot()); },
     enterCorrelationRecord: input => correlationService.enter(input),
@@ -508,6 +512,8 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
     async analyticsPeriod(query) { return mode === "LIVE" ? liveRuntime.analyticsPeriod(query) : { mode: "OFFLINE", available: false }; },
     async correlationRecords(query) { return active().correlationRecords(query); },
     async handlerEpisodes() { return active().handlerEpisodes(); },
+    async enterChangeover(input) { return active().enterChangeover(input); },
+    async changeoverReadiness(id) { return active().changeoverReadiness(id); },
     async enterHandlerInput(kind, input) { return active().enterHandlerInput(kind, input); },
     async enterCorrelationRecord(input) { return active().enterCorrelationRecord(input); },
     async enterCalibration(input) { return active().enterCalibration(input); },
