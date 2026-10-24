@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 31: consumable life slice 2 (in progress, uncommitted in worktree); then round 32: loadboards read endpoint (section 2 of round 32 bullets) | 31, 32 |
-| gemini | Round 32: consumable obligations panel (stub-first against slice 2 rows); then harden the loadboards panel accessibility | 32 |
+| codex | Round 33: loadboard checkout write routes (F3 slice 2) with serial store writes and concurrency tests (section 2 of round 33 bullets) | 33 |
+| gemini | Round 33: loadboard check-out and release actions in the Loadboards panel, against the round 33 write contract, stub-first | 33 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,25 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 33 (2026-10-24) — loadboard checkout routes (F3 slice 2) and check-out UI.** Start with `git merge master`.
+
+- **codex.** Add two routes to `backend/src/server.mjs` that call the pure module (`loadboard-checkout.mjs`) through the store's
+  serialised write path (the same path existing mutations use; no direct file writes):
+  `POST /api/control-rooms/:roomId/loadboards/checkout` with body `{ requestId, boardId, cellId, programRevision }`, and
+  `POST /api/control-rooms/:roomId/loadboards/release` with body `{ reservationId, cellId }`. `requestedAt` and `releasedAt` come from
+  the simulation clock, never the client. Responses: `{ decision, reasons, reservation }`; a `REJECTED` decision is HTTP 200
+  with the reasons, and a malformed body is 400. Tests: two concurrent checkouts of one board yield one `ALLOCATED`; a retried
+  `requestId` does not create a second reservation; release with the wrong cell is rejected; the endpoint works in Offline mode
+  with the same rules (`AGENTS.md` rule 6). Also add the consumable-obligations read endpoint
+  `GET /api/control-rooms/:roomId/consumable-obligations` → `{ roomId, asOf, obligations: [...] }` (rows from slice 2 section 5),
+  which gemini's Obligations panel already stubs. Use **port 3021**. Run both suites, update `project-state/backend/`, commit,
+  set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Add **Check out** (per available board, with a station picker and program picker from its approved programs) and
+  **Release** (per held board) actions to the Loadboards panel. Show the returned `reasons` as plain text next to the row, and
+  refresh the list after each action. Use stubs for the POST responses that match `{ decision, reasons, reservation }`. Keep the
+  actions keyboard-reachable and announce the result in a live region. E2E in `e2e/loadboard-actions.spec.mjs`. Do not change
+  `backend/`. Use **port 3022**. Run both suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 32 (2026-10-24) — loadboards endpoint and obligations panel.** Start with `git merge master`.
 
 - **codex (after round 31 is READY).** Expose the read-only `GET /api/control-rooms/:roomId/loadboards` in
@@ -1413,6 +1432,8 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `4699195`/`5837170` (branch `codex`, rounds 31–32) → merge: consumable obligations reconciler and room-state rows (`backend/src/consumable-life-obligations.mjs`, `consumable-life-service.mjs`), and the read-only loadboards endpoint `GET /api/control-rooms/:roomId/loadboards` (`backend/src/loadboards.mjs`). `npm test` 535/535.
+- 2026-10-24 — **gemini** `0e8cbf7`/`0542bb5` (branch `gemini`, round 32) → merge: Obligations panel (`frontend/obligations-view.js`) on stubs, Loadboards keyboard and focus tightening. Merged with codex as `192b682`. E2E 121/121 on port 3024. Deployed `192b682`, healthy; `/loadboards` and `/station-kpis` return 200 on the server.
 - 2026-10-24 — **gemini** `73ce39f` (branch `gemini`, round 31) → merge: read-only Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`, `e2e/loadboards.spec.mjs`) on route stubs until the backend endpoint lands. `npm test` 511/511; E2E 112/112 on port 3024. Deployed `73ce39f`, healthy. Note: on the server the panel shows its error state until the endpoint exists.
 - 2026-10-24 — **codex** `f8e8871`/`6656163` (branch `codex`, round 30) → merge: loadboard checkout slice 1 (`backend/src/loadboard-checkout.mjs`): `checkoutBoard`, `checkoutBatch`, `releaseBoard`. `npm test` 511/511.
 - 2026-10-24 — **gemini** `71f52bd`/`0414970` (branch `gemini`, rounds 29 and 30) → merge: phone and desktop audit (`e2e/phone-audit.spec.mjs`) and Station KPI E2E hardening, live endpoint rendering and keyboard filter fixes. Merged with codex in one merge commit `ffd7eb7`. E2E 105/105 on port 3024. Deployed `ffd7eb7`, healthy; `/station-kpis` returns 200 on the server.

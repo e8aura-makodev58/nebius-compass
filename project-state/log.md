@@ -737,3 +737,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Tightened **Loadboards** panel: added keyboard-reachable inspect action buttons, expandable drawer (`.lb-detail-drawer`), and focus preservation across typing and condition dropdown changes (`e2e/loadboards.spec.mjs`).
 - Added full E2E test suite in `e2e/obligations.spec.mjs` (8/8 tests passing). Verified against `npm test` (511/511) and full E2E suite (121/121 passing).
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 31–32 merge, deploy and round 33 assignment (main agent)
+- Merged codex rounds 31–32 (`4699195`, `5837170`: consumable obligations reconciler and loadboards read endpoint) and gemini round 32 (`0e8cbf7`: Obligations panel on stubs) as `192b682`. Verification: `npm test` 535/535; E2E 121/121 on port 3024. Deployed `192b682` healthy; `/api/control-rooms/:id/loadboards` and `/station-kpis` return 200 on the deploy server.
+- Round 33 assigned: codex loadboard checkout write routes (serialised writes, concurrency tests) and the consumable-obligations read endpoint; gemini check-out and release actions on stubs.
+- Pages updated: this log; handover.md merge log and assignments.
