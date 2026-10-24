@@ -684,3 +684,10 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Verified all text content across panels satisfies WCAG AA contrast ratio >= 4.5:1.
 - Added comprehensive audit test suite `e2e/phone-audit.spec.mjs` (5/5 tests passing).
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] test — Station KPI panel E2E hardening (Round 30)
+- Hardened `e2e/station-kpi.spec.mjs` against spec section 5 of `docs/design/station-kpi-panel.md`.
+- Added test verifying live Station KPIs rendering directly from real backend endpoint `GET /api/control-rooms/:roomId/station-kpis` without route mocking.
+- Added test verifying keyboard-only filter interaction (`Enter` to open, `Tab` traversal, search input, `Space` toggle, `Escape` dismissal to summary).
+- Fixed grammatical pluralization in totals row and cards (`1 station` vs `N stations`) in `frontend/station-kpis-view.js`.
+- Pages updated: project-state/frontend/overview.md; this log.
