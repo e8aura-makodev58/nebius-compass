@@ -6,6 +6,7 @@ const SIZE_CAP = 200_000;
 const PANELS = {
   staffing: { selector: "#staffing-tile", title: "Staffing", screen: "staffing", minimumWidth: 260, minimumHeight: 180 },
   investigation: { selector: "#investigation-tile", title: "Field reports", screen: "investigation", minimumWidth: 260, minimumHeight: 180 },
+  stationKpis: { selector: "#station-kpi-tile", title: "Station KPIs", screen: "stationKpis", minimumWidth: 280, minimumHeight: 180 },
   map: { selector: ".floor-section", title: "Floor map", screen: "map", minimumWidth: 300, minimumHeight: 220 },
   issues: { selector: "#issue-list", title: "Issues", screen: "issues", minimumWidth: 180, minimumHeight: 130 },
   events: { selector: "#event-feed", title: "Event feed", screen: "events", minimumWidth: 180, minimumHeight: 130 },
@@ -21,8 +22,11 @@ export function parseStoredLayout(raw) {
     const ids = Object.keys(PANELS);
     if (record.version !== VERSION || !layout || !layout.grid || !layout.panels) return null;
     if (["floatingGroups", "popoutGroups"].some((key) => key in layout && (!Array.isArray(layout[key]) || layout[key].length)) || layout.edgeGroups) return null;
-    if (Object.keys(layout.panels).length !== ids.length) return null;
-    for (const id of ids) {
+    const panelKeys = Object.keys(layout.panels);
+    const isLegacy6 = panelKeys.length === 6 && !layout.panels.stationKpis && ids.filter((id) => id !== "stationKpis").every((id) => layout.panels[id]);
+    if (panelKeys.length !== ids.length && !isLegacy6) return null;
+    const activeIds = isLegacy6 ? ids.filter((id) => id !== "stationKpis") : ids;
+    for (const id of activeIds) {
       const panel = layout.panels[id];
       if (!panel || panel.id !== id || panel.contentComponent !== id || panel.tabComponent !== "tile") return null;
       // Ignore persisted constraints and parameters; these belong to application code.
@@ -39,13 +43,13 @@ export function parseStoredLayout(raw) {
         node.data.forEach((child) => visit(child, depth + 1));
       } else if (node.type === "leaf") {
         const group = node.data;
-        if (!group || typeof group.id !== "string" || groups.has(group.id) || !Array.isArray(group.views) || group.views.length !== 1 || !ids.includes(group.views[0]) || seen.has(group.views[0])) throw new Error("Invalid tile");
-        seen.add(group.views[0]); groups.add(group.id);
+        if (!group || typeof group.id !== "string" || groups.has(group.id) || !Array.isArray(group.views) || group.views.length < 1 || group.views.length > 2 || !group.views.every((v) => activeIds.includes(v)) || group.views.some((v) => seen.has(v))) throw new Error("Invalid tile");
+        group.views.forEach((v) => seen.add(v)); groups.add(group.id);
         node.data = { id: group.id, views: group.views, activeView: group.views[0], locked: true };
       } else throw new Error("Invalid node type");
     }
     visit(layout.grid.root);
-    if (seen.size !== ids.length) return null;
+    if (seen.size !== activeIds.length) return null;
     return { grid: { root: layout.grid.root, width: layout.grid.width, height: layout.grid.height, orientation: layout.grid.orientation }, panels: layout.panels, activeGroup: groups.has(layout.activeGroup) ? layout.activeGroup : undefined };
   } catch { return null; }
 }
@@ -118,9 +122,11 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
     api.addPanel({ id: "events", component: "events", tabComponent: "tile", title: PANELS.events.title, position: { referencePanel: "issues", direction: "right" }, ...constraints("events") });
     api.addPanel({ id: "investigation", component: "investigation", tabComponent: "tile", title: PANELS.investigation.title, position: { referencePanel: "context", direction: "below" }, initialHeight: Math.max(220, height * .4), ...constraints("investigation") });
     api.addPanel({ id: "staffing", component: "staffing", tabComponent: "tile", title: PANELS.staffing.title, position: { referencePanel: "investigation", direction: "below" }, initialHeight: Math.max(180, height * .25), ...constraints("staffing") });
+    api.addPanel({ id: "stationKpis", component: "stationKpis", tabComponent: "tile", title: PANELS.stationKpis.title, position: { referencePanel: "staffing", direction: "within" }, ...constraints("stationKpis") });
     api.getPanel("context").api.setSize({ width: Math.min(440, width * .36) });
     api.getPanel("issues").api.setSize({ height: Math.max(160, height * .28) });
     api.getPanel("investigation").api.setSize({ height: Math.max(240, height * .42) });
+    api.getPanel("staffing").api.setActive();
     api.getPanel("map").api.setActive();
   }
   function prepareDividers() {

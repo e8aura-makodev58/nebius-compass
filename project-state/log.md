@@ -635,3 +635,13 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added `docs/design/investigation-history-at-scale.md`: how the investigator retrieves and grades history, what breaks at hundreds of testers over years, and the storage and retrieval design to settle before integrating with a live maintenance record.
 - Recommendation: a relational case store with indexed structured retrieval and full-text search on narratives first; vector search only if a measured narrative-recall benchmark shows the gap. Docs only; no code changed.
 - Pages updated: docs/design/investigation-history-at-scale.md; this log.
+
+## [2026-10-24] feature — Station KPI panel frontend (Round 28)
+- Implemented the Station KPI panel (`frontend/station-kpis-view.js`, `frontend/station-kpis.css`) according to `docs/design/station-kpi-panel.md`.
+- Displays 3-hour bucket metrics in a 12-hour window (actual output, planned expected units, attainment percentage, downtime minutes, issues raised) and totals row/card across selected stations.
+- Registered workspace panel in Dockview (`frontend/tiling.js`) and phone workspace navigation (`frontend/workspace-nav.js`).
+- Added per-viewer in-memory station filter (search, All, None, checkbox selection) and window navigation (Latest, Previous 12 h, Next 12 h disabled at Latest, recent windows select).
+- Displayed explicit "DERIVED_FROM_UPTIME" source label and provided loading, empty, and forced-failure error states with retry affordance.
+- Responsive views: desktop table (≥901px / 1280px) and phone cards (≤900px / 375px with 4 stacked buckets per card) with zero horizontal scroll and touch targets ≥ 44px.
+- Verified in dedicated test suite `e2e/station-kpi.spec.mjs` against synthetic fixture `fixtures/station-kpis/response-12h.json`.
+- Pages updated: project-state/frontend/overview.md; this log.

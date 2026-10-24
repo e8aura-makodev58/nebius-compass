@@ -1406,16 +1406,25 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** IDLE
-- **Updated:** —
-- **Task:** —
-- **Head commit:** —
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
-- **Questions for main:** —
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24
+- **Task:** Station KPI panel, frontend: panel, filter, window controls, phone layout, states (`docs/design/station-kpi-panel.md`)
+- **Head commit:** <PENDING_COMMIT>
+- **Changes:**
+  - Implemented Station KPI panel (`frontend/station-kpis-view.js`, `frontend/station-kpis.css`) showing 3-hourly bucket metrics across 12-hour windows (actual output, planned expected units, attainment percentage, downtime minutes, issues raised) and totals summary across selected stations.
+  - Registered workspace panel in Dockview (`frontend/tiling.js`) docked within the staffing group with backward compatibility for legacy 6-panel layouts and active-tab accessibility.
+  - Registered mobile workspace navigation (`frontend/workspace-nav.js`, `frontend/layout.css`, `frontend/index.html`) with 5-column navigation, direct task visibility, and responsive styling.
+  - Implemented per-viewer multi-select station filter with real-time search, All, and None controls; dynamically recalculates bucket totals across selected stations.
+  - Implemented 12-hour window selector aligned to UTC 3-hour boundaries with Latest, Previous 12 h, Next 12 h (disabled at Latest), and recent windows dropdown.
+  - Displayed explicit "DERIVED_FROM_UPTIME" source label per spec §2 & §3.
+  - Implemented loading, empty, and forced-failure error states with retry affordance, plus deterministic synthetic fallback when backend route is unmounted or in offline mode.
+  - Enforced zero horizontal scroll at 1280px table view and 375px stacked card view with minimum touch targets >= 44px.
+  - Added dedicated Playwright test suite `e2e/station-kpi.spec.mjs` verifying desktop table, filter interactions, window navigation, forced failure recovery, and phone card layout against `fixtures/station-kpis/response-12h.json`.
+- **Files changed:** `frontend/station-kpis-view.js`, `frontend/station-kpis.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/station-kpi.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
+- **Verification:** `npm test` 472/472 passed · Chromium forced-provider E2E 98/98 passed (`COMPASS_E2E_PORT=3022`). Free ports confirmed.
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** Disjoint split respected (no backend edits; only `e2e/station-kpi.spec.mjs` added/modified in `e2e/`). Backend route `GET /api/control-rooms/:roomId/station-kpis` is built by Codex on branch `codex`; frontend seamlessly consumes Codex's route when mounted or falls back to synthetic response.
+- **Questions for main:** None.
 
 ## codebuddy
 
