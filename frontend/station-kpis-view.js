@@ -278,7 +278,7 @@ export function stationKpisMarkup({ state, escape, panelState }) {
   const headerHtml = `
     <div class="kpi-panel-header">
       <div>
-        <p class="eyebrow">Station throughput</p>
+        <p class="eyebrow">ATE setup throughput</p>
         <h3 id="station-kpi-heading">Station KPIs</h3>
       </div>
       <div class="kpi-header-badges">
@@ -288,7 +288,7 @@ export function stationKpisMarkup({ state, escape, panelState }) {
   `;
 
   // Filter & window controls toolbar
-  const filterSummary = `Stations (${selectedSet.size} of ${allStations.length})`;
+  const filterSummary = `ATE setups (${selectedSet.size} of ${allStations.length})`;
   const stationOptionsHtml = visibleOptions
     .map((s) => {
       const checked = selectedSet.has(s.id) ? "checked" : "";
@@ -311,17 +311,17 @@ export function stationKpisMarkup({ state, escape, panelState }) {
   const toolbarHtml = `
     <div class="kpi-toolbar" role="toolbar" aria-label="Station KPI controls">
       <details class="kpi-filter-dropdown" ${filterOpen ? "open" : ""}>
-        <summary class="secondary-button" aria-label="Filter stations">${escape(filterSummary)}</summary>
+        <summary class="secondary-button" aria-label="Filter ATE setups">${escape(filterSummary)}</summary>
         <div class="kpi-filter-body">
           <div class="kpi-filter-search">
-            <input type="search" class="kpi-station-search-input" placeholder="Search stations…" aria-label="Search stations" value="${escape(stationSearch)}" />
+            <input type="search" class="kpi-station-search-input" placeholder="Search ATE setups…" aria-label="Search ATE setups" value="${escape(stationSearch)}" />
           </div>
           <div class="kpi-filter-actions">
             <button type="button" class="secondary-button kpi-action-all">All</button>
             <button type="button" class="secondary-button kpi-action-none">None</button>
           </div>
-          <div class="kpi-station-options-list" role="group" aria-label="Station list">
-            ${stationOptionsHtml || '<p class="kpi-empty-search">No matching stations</p>'}
+          <div class="kpi-station-options-list" role="group" aria-label="ATE setup list">
+            ${stationOptionsHtml || '<p class="kpi-empty-search">No matching ATE setups</p>'}
           </div>
         </div>
       </details>
@@ -373,8 +373,8 @@ export function stationKpisMarkup({ state, escape, panelState }) {
         ${headerHtml}
         ${toolbarHtml}
         <div class="kpi-empty" role="status">
-          <strong>No stations selected</strong>
-          <p>Select at least one station using the filter above to view 3-hour throughput and downtime KPIs.</p>
+          <strong>No ATE setups selected</strong>
+          <p>Select at least one ATE setup using the filter above to view 3-hour throughput and downtime KPIs.</p>
         </div>
       </section>
     `;
@@ -489,7 +489,7 @@ export function stationKpisMarkup({ state, escape, panelState }) {
       <table class="kpi-table" aria-label="Station KPI metrics by 3-hour bucket">
         <thead>
           <tr>
-            <th scope="col" class="kpi-station-col">Station</th>
+            <th scope="col" class="kpi-station-col">ATE setup</th>
             ${tableHeadersHtml}
           </tr>
         </thead>
@@ -498,7 +498,7 @@ export function stationKpisMarkup({ state, escape, panelState }) {
         </tbody>
         <tfoot>
           <tr class="kpi-totals-row">
-            <th scope="row">Totals (${stationsData.length} station${stationsData.length === 1 ? "" : "s"})</th>
+            <th scope="row">Totals (${stationsData.length} ATE setup${stationsData.length === 1 ? "" : "s"})</th>
             ${tableTotalsHtml}
           </tr>
         </tfoot>
@@ -580,7 +580,7 @@ export function stationKpisMarkup({ state, escape, panelState }) {
   const totalsCardHtml = `
     <article class="kpi-card kpi-card-totals">
       <div class="kpi-card-header">
-        <h4>Totals <small>(${stationsData.length} station${stationsData.length === 1 ? "" : "s"})</small></h4>
+        <h4>Totals <small>(${stationsData.length} ATE setup${stationsData.length === 1 ? "" : "s"})</small></h4>
       </div>
       <div class="kpi-card-buckets-list">
         ${totalsCardBuckets}
