@@ -677,10 +677,341 @@
   .lb-checkout-btn,
   .lb-release-btn,
   .lb-submit-checkout-btn,
-  .lb-cancel-checkout-btn {
+  .lb-cancel-checkout-btn,
+  .lb-readiness-chip {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+}
+
+/* ========================================================
+   Calibration Readiness Gate (F8 slice 1 UI)
+   ======================================================== */
+.lb-readiness-summary-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent-wash);
+  border: 1px solid var(--accent);
+}
+
+.lb-readiness-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+}
+
+.lb-readiness-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lb-readiness-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.lb-readiness-help {
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.lb-readiness-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lb-readiness-chip-item {
+  display: flex;
+}
+
+/* Common Chip Button */
+.lb-readiness-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.3;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  min-height: 32px;
+  box-sizing: border-box;
+}
+
+.lb-readiness-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.lb-chip-cell {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.lb-chip-status {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.lb-chip-reason {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* 1. READY (plain style) */
+.lb-chip-ready {
+  background: var(--paper-raised);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+}
+
+.lb-chip-ready .lb-chip-cell {
+  color: var(--ink);
+}
+
+.lb-chip-ready .lb-chip-status {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+}
+
+.lb-chip-ready:hover {
+  background: var(--paper-sunk);
+  border-color: var(--ink-3);
+}
+
+/* 2. EXPIRED (highlighted style) */
+.lb-chip-expired {
+  background: #ffedd5;
+  color: #7c2d12;
+  border: 1px solid #ea580c;
+}
+
+.lb-chip-expired .lb-chip-cell {
+  color: #7c2d12;
+}
+
+.lb-chip-expired .lb-chip-status {
+  background: #c2410c;
+  color: #ffffff;
+}
+
+.lb-chip-expired .lb-chip-reason {
+  color: #7c2d12;
+}
+
+.lb-chip-expired:hover {
+  background: #fed7aa;
+}
+
+:root[data-theme="dark"] .lb-chip-expired {
+  background: rgba(234, 88, 12, 0.15);
+  color: #fdba74;
+  border-color: rgba(234, 88, 12, 0.5);
+}
+:root[data-theme="dark"] .lb-chip-expired .lb-chip-cell,
+:root[data-theme="dark"] .lb-chip-expired .lb-chip-reason {
+  color: #fdba74;
+}
+
+/* 3. NO_CALIBRATION (highlighted style) */
+.lb-chip-no-cal {
+  background: #fee2e2;
+  color: #7f1d1d;
+  border: 1px solid #dc2626;
+}
+
+.lb-chip-no-cal .lb-chip-cell {
+  color: #7f1d1d;
+}
+
+.lb-chip-no-cal .lb-chip-status {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.lb-chip-no-cal .lb-chip-reason {
+  color: #7f1d1d;
+}
+
+.lb-chip-no-cal:hover {
+  background: #fecaca;
+}
+
+:root[data-theme="dark"] .lb-chip-no-cal {
+  background: rgba(220, 38, 38, 0.15);
+  color: #fca5a5;
+  border-color: rgba(220, 38, 38, 0.5);
+}
+:root[data-theme="dark"] .lb-chip-no-cal .lb-chip-cell,
+:root[data-theme="dark"] .lb-chip-no-cal .lb-chip-reason {
+  color: #fca5a5;
+}
+
+/* Selected chip state */
+.lb-chip-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Readiness Detail Drawer */
+.lb-readiness-detail-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+}
+
+.lb-readiness-drawer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lb-readiness-reasons-line {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.lb-instruments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lb-instrument-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+}
+
+.lb-inst-id code {
+  font-weight: 700;
+}
+
+.lb-inst-due {
+  color: var(--ink-2);
+}
+
+.lb-inst-state {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.lb-inst-state-current {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.lb-inst-state-expired {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+/* Location Column Mini Readiness Chip */
+.lb-location-with-readiness {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lb-cell-chip-mini {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Checkout Form Station Warning & Disabled State */
+.lb-btn-disabled,
+.lb-checkout-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background: var(--paper-sunk) !important;
+  color: var(--ink-3) !important;
+  border-color: var(--rule-strong) !important;
+  box-shadow: none !important;
+}
+
+.lb-checkout-station-warning {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: #fff7ed;
+  border: 1px solid #ea580c;
+  color: #7c2d12;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+:root[data-theme="dark"] .lb-checkout-station-warning {
+  background: rgba(234, 88, 12, 0.15);
+  color: #fdba74;
+  border-color: rgba(234, 88, 12, 0.5);
+}
+
+.lb-reason-warning {
+  color: #7c2d12 !important;
+  font-weight: 600;
+}
+:root[data-theme="dark"] .lb-reason-warning {
+  color: #fdba74 !important;
+}
+
+@media (max-width: 900px) {
+  .lb-readiness-chip {
+    min-height: 44px;
+    padding: 8px 12px;
   }
 }

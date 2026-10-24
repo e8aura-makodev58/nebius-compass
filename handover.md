@@ -1536,15 +1536,22 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 18:33 UTC
-- **Task:** Round 34: handler jam episodes panel (F4 UI), stub-first against the round 34 contract (docs/design/handler-jam-episodes-slice-1.md)
-- **Head commit:** 49251b2
-- **Changes:** Built the **Handler episodes** panel (`frontend/handler-episodes-view.js`, `frontend/handler-episodes.css`) registered across Dockview tiling (`frontend/tiling.js`), phone workspace navigation (`frontend/workspace-nav.js`, `frontend/layout.css`), and SPA controller (`frontend/app.js`). Lists each episode with `episodeId`, `reasonCode`, `jamCount`, `unplannedStoppedMinutes`, `classification` (`PATTERN` or `SINGLE_EVENT`), and alarm IDs trail chips (`alarmIds`). Displays deficit reading "Estimate: N units" with basis (`referenceUnitsPerHour`, `windowMinutes`, `denominator`) when `deficitStatus === "ESTIMATE"`, and "Suppressed:" with suppression reasons when `deficitStatus === "SUPPRESSED"` (strictly never called "measured" or claiming causal attribution). Features window throughput summary (unplanned stopped, planned, running minutes, accepted units/min), classification select filter (`ALL`, `PATTERN`, `SINGLE_EVENT`), real-time search input with focus retention across keystrokes, expandable inspection drawer (`.he-detail-drawer`), and deterministic synthetic fallback for offline/404 states. Responsive design supports desktop table (≥901px) and phone cards (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px. Built comprehensive E2E test suite in `e2e/handler-episodes.spec.mjs`.
-- **Files changed:** `frontend/handler-episodes-view.js`, `frontend/handler-episodes.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/handler-episodes.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
-- **Verification:** Hermetic `npm test` passed (**546/546** tests passing); full forced-provider Chromium E2E suite `LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu COMPASS_E2E_PORT=3022 npm run test:e2e` passed (**136/136** tests passing including all 9 handler episode tests); ports 3022 and 3122 verified free; backend was not modified (`AGENTS.md` rule 10).
+- **Updated:** 2026-10-24 19:08 UTC
+- **Task:** Round 35: cell readiness chips on the Loadboards panel, stub-first against the round 35 readiness contract
+- **Head commit:** `f4c4ac2`
+- **Changes:**
+  - Added setup calibration readiness strip (`.lb-readiness-bar`) displaying chips per ATE setup (`READY`, `EXPIRED`, `NO_CALIBRATION`) with clear status text and reasons (`CALIBRATION_EXPIRED`, `NO_CALIBRATION_RECORD`).
+  - Implemented expandable instrument calibration drawer (`.lb-readiness-detail-drawer`) displaying instrument ID, calibration ID, due date, and state (`CURRENT`, `EXPIRED`) with keyboard toggle and focus retention.
+  - Added mini readiness chip (`.lb-cell-chip-mini`) in Location column next to cell ID for boards stationed at an ATE cell.
+  - Gated checkout action on board's cell readiness: boards stationed at a non-ready cell display disabled check-out action (`aria-disabled="true"`) with plain text unavailable reason (`Check-out unavailable: <cellId> is <readiness> (<reasons>)`).
+  - Checkout form dynamic validation: selecting an expired or non-calibrated station dynamically surfaces warning `.lb-checkout-station-warning` and disables checkout confirmation button.
+  - Decoupled `fetchCellReadiness` and `fetchLoadboards` with deterministic synthetic fallback so missing endpoints never hang UI or block rendering.
+  - WCAG AA contrast ≥ 4.5:1 across all chips (no color-only meaning) and touch targets ≥ 44px on mobile.
+- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `e2e/cell-readiness.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Verification:** Hermetic `npm test` passed (**559/559** tests); full Chromium E2E suite passed (**142/142** tests, including all 6 new cell-readiness tests in `e2e/cell-readiness.spec.mjs`); ports 3022 and 3122 confirmed free (`ss -ltn | grep -E ':(3022|3122)'`).
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None. When Codex mounts the backend route `GET /api/control-rooms/:roomId/handler-episodes` in a subsequent slice, the frontend will connect to real backend data automatically.
-- **Questions for main:** Claude: Round 34 for Gemini is complete, tested, and READY FOR MERGE. Please review/merge branch `gemini` and assign the next task to Gemini without delay so Gemini is not kept idle. Gemini's 5-minute handover watcher is running and actively polling master.
+- **Risks / follow-ups:** Stub-first contract against `GET /api/control-rooms/:roomId/cell-readiness`. When backend endpoint is implemented by Codex/backend, frontend seamlessly consumes real DTOs.
+- **Questions for main:** Claude: Round 35 is complete, verified hermetically across unit (559/559) and full E2E (142/142) suites, and ready for merge. Per user's explicit reminder, please do not keep Gemini idle: please review and merge promptly, then assign the next concrete task.
 
 ## codebuddy
 
