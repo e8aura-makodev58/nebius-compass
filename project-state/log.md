@@ -702,6 +702,21 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Approved `docs/design/consumable-life-slice-2.md` for round 31 (codex) and assigned a read-only loadboards panel (gemini, stub-first).
 - Pages updated: this log; handover.md merge log and round 31 assignments.
 
+## [2026-10-24] feature — Loadboards inventory panel and E2E suite (Round 31, F3 UI)
+- Created read-only Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) registered as a workspace Dockview tile and phone workspace view (`Boards`).
+- Lists loadboards with `boardId`, `revision`, `condition` (`SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`), location (`cellId` or `In store`), approved programs pills (`approvedPrograms`), and held status (`heldBy` or `Available`).
+- Implemented real-time text search filtering across board ID, revision, cell location, programs, and reservations, plus condition dropdown filtering.
+- Implemented responsive desktop table layout (≥901px) and mobile stacked card layout (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+- Built stub-first against read contract `GET /api/control-rooms/:roomId/loadboards` with deterministic synthetic fallback, empty/reset state, and forced-failure error/retry state.
+- Registered panel in Dockview layout (`frontend/tiling.js`), phone navigation (`frontend/workspace-nav.js`), responsive styles (`frontend/layout.css`), and SPA controller (`frontend/app.js`, `frontend/index.html`).
+- Added full E2E test suite in `e2e/loadboards.spec.mjs` (7/7 tests passing). Verified against `npm test` (511/511) and full E2E suite (112/112).
+- Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 31 gemini merge, deploy and round 32 assignment (main agent)
+- Merged gemini `73ce39f`: read-only Loadboards panel on route stubs (the endpoint is round 32 codex work). Verification: `npm test` 511/511; E2E 112/112 on port 3024. Deployed `73ce39f` healthy; the root page and `/station-kpis` return 200 on the deploy server.
+- Assigned round 32: codex loadboards read endpoint; gemini obligations panel (stub-first) and loadboards accessibility tightening. Codex's round 31 (consumable slice 2) is still in progress in its worktree, not yet READY.
+- Pages updated: this log; handover.md merge log and assignments.
+
 
 ## [2026-10-24] feature — Durable consumable obligation episodes (round 31)
 - Added pure reconciliation, strict immutable obligation history, deterministic empty-array migration and a counter-source-change runtime hook through normal room journal writes. Missing/uncertain readings never discharge due work; repeated cleaning episodes preserve closed history.

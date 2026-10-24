@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 31: consumable life slice 2 (F1), obligations as issues: reconciler, room-state rows, migration | 31 |
-| gemini | Round 31: loadboard checkout panel (F3), stub-first against the read endpoint in section 2 of the round 31 bullets | 31 |
+| codex | Round 31: consumable life slice 2 (in progress, uncommitted in worktree); then round 32: loadboards read endpoint (section 2 of round 32 bullets) | 31, 32 |
+| gemini | Round 32: consumable obligations panel (stub-first against slice 2 rows); then harden the loadboards panel accessibility | 32 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,21 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 32 (2026-10-24) — loadboards endpoint and obligations panel.** Start with `git merge master`.
+
+- **codex (after round 31 is READY).** Expose the read-only `GET /api/control-rooms/:roomId/loadboards` in
+  `backend/src/server.mjs` through a pure builder `backend/src/loadboards.mjs`. Response:
+  `{ roomId, asOf, boards: [{ boardId, revision, condition, cellId, approvedPrograms, heldBy }] }`. `heldBy` is the
+  reservation ID of the `HELD` row or `null`. Reads only; no store writes. Include hermetic tests (empty room, held board,
+  unknown room → existing error shape). Use **port 3021**. Run both suites, update `project-state/backend/`, commit,
+  set `READY FOR MERGE`.
+- **gemini.** Build an **Obligations** panel for the consumable obligations rows from slice 2 (`docs/design/consumable-life-slice-2.md`
+  section 5): each row shows `obligationId`, `kind`, `status` (OPEN or CLOSED), `lifecycleId`, `policyId@version`, `openedAt`,
+  and `closeReason` when closed. Filter by status. Route stubs use the same shape until codex exposes the endpoint; the
+  stub endpoint is `GET /api/control-rooms/:roomId/consumable-obligations`. Also tighten the Loadboards panel: check that
+  row actions are keyboard-reachable and that focus is not lost after a filter change. E2E in `e2e/obligations.spec.mjs`.
+  Do not change `backend/`. Use **port 3022**. Run both suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 31 (2026-10-24) — consumable obligations (F1 slice 2) and loadboard panel (F3 UI).** Start with `git merge master`.
 
 - **codex.** Implement `docs/design/consumable-life-slice-2.md` (approved for build): the pure reconciler
@@ -1398,6 +1413,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **gemini** `73ce39f` (branch `gemini`, round 31) → merge: read-only Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`, `e2e/loadboards.spec.mjs`) on route stubs until the backend endpoint lands. `npm test` 511/511; E2E 112/112 on port 3024. Deployed `73ce39f`, healthy. Note: on the server the panel shows its error state until the endpoint exists.
 - 2026-10-24 — **codex** `f8e8871`/`6656163` (branch `codex`, round 30) → merge: loadboard checkout slice 1 (`backend/src/loadboard-checkout.mjs`): `checkoutBoard`, `checkoutBatch`, `releaseBoard`. `npm test` 511/511.
 - 2026-10-24 — **gemini** `71f52bd`/`0414970` (branch `gemini`, rounds 29 and 30) → merge: phone and desktop audit (`e2e/phone-audit.spec.mjs`) and Station KPI E2E hardening, live endpoint rendering and keyboard filter fixes. Merged with codex in one merge commit `ffd7eb7`. E2E 105/105 on port 3024. Deployed `ffd7eb7`, healthy; `/station-kpis` returns 200 on the server.
 - 2026-10-24 — **claude** `c4e5705`: consumable life slice 2 proposal (`docs/design/consumable-life-slice-2.md`), approved for round 31.
@@ -1466,17 +1482,22 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 16:30 UTC
-- **Task:** Round 29 & Round 30: Phone and desktop audit (`e2e/phone-audit.spec.mjs`) & Station KPI E2E hardening (`e2e/station-kpi.spec.mjs`)
-- **Head commit:** a1970d7
+- **Updated:** 2026-10-24 17:00 UTC
+- **Task:** Round 31: Loadboard checkout panel (F3 UI, `docs/design/loadboard-checkout-slice-1.md`)
+- **Head commit:** 0b79520
 - **Changes:**
-  - Round 29: Audited all eight existing panels (staffing, investigation, map, issues, events, context, analytics, station KPIs) at 375px (phone) and 1280px (desktop) viewports. Enforced zero horizontal scroll across page and panel containers. Upgraded phone interactive controls in `frontend/layout.css` to >= 44px touch targets. Verified accessible names and WCAG AA contrast >= 4.5:1. Added `e2e/phone-audit.spec.mjs` (5/5 passed).
-  - Round 30: Hardened `e2e/station-kpi.spec.mjs` against spec section 5 of `docs/design/station-kpi-panel.md`. Added test verifying live Station KPIs rendering directly from real backend endpoint without route mocking. Added keyboard-only filter interaction test (`Enter` open, `Tab` traversal, search input, `Space` toggle, `Escape` dismissal to summary). Fixed grammatical pluralization in totals row and cards (`1 station` vs `N stations`) in `frontend/station-kpis-view.js`.
-- **Files changed:** `frontend/layout.css`, `frontend/station-kpis-view.js`, `e2e/phone-audit.spec.mjs`, `e2e/station-kpi.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
-- **Verification:** `npm test` 497/497 passed · Chromium forced-provider E2E 105/105 passed (`COMPASS_E2E_PORT=3022`). Free ports confirmed.
+  - Implemented read-only Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) registered as a workspace Dockview tile and phone workspace view (`Boards`).
+  - Lists each board with `boardId`, `revision`, `condition` (`SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`), current cell or "In store", approved programs list (`approvedPrograms`), and held status (`heldBy` reservation ID or "Available").
+  - Implemented real-time search input (filtering by boardId, revision, cellId, approvedPrograms, or heldBy) and condition dropdown filter (`ALL`, `SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`).
+  - Responsive layout: desktop table layout (>= 901px) and phone stacked card layout (<= 900px) with >= 44px touch targets and zero horizontal scroll at 375px and 1280px.
+  - Built stub-first against read contract `GET /api/control-rooms/:roomId/loadboards` with deterministic synthetic fallback (`generateSyntheticLoadboards()`), loading state, empty/reset state, and forced-failure error/retry state.
+  - Registered panel in Dockview layout (`frontend/tiling.js`), phone navigation (`frontend/workspace-nav.js`), responsive styles (`frontend/layout.css`), and SPA controller (`frontend/app.js`, `frontend/index.html`).
+  - Added comprehensive E2E test suite in `e2e/loadboards.spec.mjs` (7/7 tests passed).
+- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `frontend/app.js`, `e2e/loadboards.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
+- **Verification:** `npm test` 511/511 passed · Full Chromium forced-provider E2E 112/112 passed (`COMPASS_E2E_PORT=3022`). Free ports verified (`ss -ltn | grep -E ':(3022|3122)'`). Zero live provider calls.
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** Disjoint frontend and E2E changes only. No backend modifications.
-- **Questions for main:** Ready for merge. User reminder: please do not keep Gemini idle — please merge Round 29/30 and assign Gemini's next task promptly.
+- **Risks / follow-ups:** Disjoint frontend implementation against read endpoint contract. No backend files changed.
+- **Questions for main:** Round 31 is complete and ready for merge. Per user instructions, please do not keep Gemini idle: please review, merge Round 31, and assign Gemini's next round task promptly.
 
 ## codebuddy
 
