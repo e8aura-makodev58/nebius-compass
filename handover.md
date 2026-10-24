@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 40: read endpoint for correlation records, then a review of the round 39 migration refusal (round 40 bullets) | 40 |
-| gemini | Round 40: correlation records section in the Calibrations panel, stub-first against the round 40 read contract | 40 |
+| codex | Round 41: handler jam alarm and run entry, and the handler episodes read route (F4 slice 1 wiring; round 41 bullets) | 41 |
+| gemini | Round 41: ATE terminology pass on the Station KPI and Handler episodes panels (visible labels only) | 41 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,23 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 41 (2026-10-24) — handler jam inputs and episodes route; ATE terminology.** Start with `git merge master`.
+
+- **codex.** Implement the F4 slice 1 wiring (`docs/design/handler-jam-episodes-slice-1.md`, module already merged). (1) Append-only,
+  validated entry routes: `POST /api/control-rooms/:roomId/handler-alarms` (`{ alarmId, reasonCode, occurredAt, ingestedAt }`, duplicate
+  `alarmId` with a different body is a 400, identical is a no-op), `POST /api/control-rooms/:roomId/handler-runs`
+  (`{ runId, start, end, acceptedUnits }`, overlapping runs are a 400), and `POST /api/control-rooms/:roomId/handler-planned-stops`
+  (`{ stopId, start, end, reasonCode }`). Store them in room state under `handlerJam` with a deterministic migration (empty when absent).
+  (2) `GET /api/control-rooms/:roomId/handler-episodes`: builds the episode output from `buildHandlerJamEpisodes` for station
+  `HANDLER-A`, with the window ending at the simulation clock (3-hour window, aligned like station KPIs) and the context from a
+  `handlerContext` row that the entry route also accepts. Read-only. Tests: append-only semantics, the suppression reasons appear
+  through the route, and the route never writes. Use **port 3021**. Run both suites, update `project-state/backend/`, commit, set
+  `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Terminology pass: in visible labels only, the Station KPI and Handler episodes panels say "ATE setup" where they
+  say "station" for a physical unit, matching `docs/design/station-kpi-panel.md` section 1. Do not change API field names, IDs
+  or CSS classes. Update the affected E2E assertions. Keep the existing 375/1280 px checks passing. Do not change `backend/`.
+  Use **port 3022**. Run both suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 40 (2026-10-24) — correlation read path and UI.** Start with `git merge master`.
 
 - **codex.** (1) Add `GET /api/control-rooms/:roomId/correlation-records` → `{ roomId, asOf, records }` (read-only, the rows in
@@ -1540,6 +1557,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `0f1dfd8`…`d49e07d` (branch `codex`, round 40) and **gemini** `bbc0f10`/`e67799d` (round 40) → merge `08c3b58`: `GET /api/control-rooms/:roomId/correlation-records` (read-only) and the correlation records section with an append-only form in the Calibrations panel. `npm test` 597/597; E2E 171/171 on port 3024. Deployed `08c3b58`, healthy. GET-only smoke test: all endpoints 200.
 - 2026-10-24 — **codex** `2347cf0`…`de710fd` (branch `codex`, round 39) and **gemini** `7885215`/`ecfce4b` (round 39) → merge `b2f6228`: migration refuses orphaned HELD reservations, append-only correlation records (`POST /api/control-rooms/:roomId/correlation-records`, not a calibration gate), and a 375/1280 px audit of rounds 31–38 panels. Codex confirmed the obligation reconciler is wired in `runScheduledTick` and tested. `npm test` 594/594; E2E 165/165 on port 3024. Deployed `b2f6228`, healthy. GET-only smoke test: all endpoints 200; no live writes.
 - 2026-10-24 — **codex** `0829fc7`…`eb38a84` (branch `codex`, round 38) and **gemini** `becc007`/`af7303b` (round 38) → merge `51aa694`: serialised board entry `POST /api/control-rooms/:roomId/loadboards/boards` and an idempotent board seed migration; the Add board drawer on the Loadboards panel. `npm test` 588/588; E2E 159/159 on port 3024. Deployed `51aa694`, healthy.
   **Verified on the server:** `plant-1` lists `LB-0412`, `LB-0398` and `LB-0204` (`cellId: null`). A checkout of `LB-0398` to `ATE-1` returned `ALLOCATED` with reservation `RES-SMOKE-3`. **That was my smoke test writing to live state, not an intended action.** I released it straight away (`RELEASED`, `LB-0398` back to store, `heldBy: null`). The released row stays in history, as designed.

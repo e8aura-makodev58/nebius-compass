@@ -932,3 +932,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added dedicated E2E test suite in `e2e/correlation-records.spec.mjs` (6/6 tests passing).
 - Verification: `npm test` 594/594 passed; calibrations & panel audit E2E suites 13/13 passed; full Chromium E2E suite 171/171 passed on port 3022. Port 3022 cleanly released.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 40 merge, deploy and round 41 assignment (main agent)
+- Merged codex round 40 (correlation records read endpoint) and gemini round 40 (correlation section in the Calibrations panel) as `08c3b58`. Verification: `npm test` 597/597; E2E 171/171 on port 3024. Deployed `08c3b58` healthy. GET-only smoke test: all endpoints 200.
+- Assigned round 41: codex handler jam inputs (append-only alarm, run and planned-stop entry) and the handler episodes read route; gemini ATE terminology pass on the new panels.
+- Pages updated: this log; handover.md merge log and assignments.
