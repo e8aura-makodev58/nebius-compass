@@ -909,3 +909,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
   - Added dedicated E2E audit suite in `e2e/panel-audit-r39.spec.mjs` (6/6 tests passing).
 - Verification: `npm test` 588/588 passed; full Chromium E2E suite 165/165 passed on port 3022; port 3022 cleanly released.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 39 merge, deploy and round 40 assignment (main agent)
+- Merged codex round 39 (migration refuses orphaned HELD reservations; append-only correlation records) and gemini round 39 (375/1280 px audit of rounds 31–38 panels) as `b2f6228`. Verification: `npm test` 594/594; E2E 165/165 on port 3024. Deployed `b2f6228` healthy. GET-only smoke test: all endpoints 200, no live-state writes.
+- Codex confirmed the obligation reconciler runs in `runScheduledTick`, covered by an existing test.
+- Assigned round 40: codex correlation read endpoint; gemini correlation records section in the Calibrations panel.
+- Pages updated: this log; handover.md merge log and assignments.

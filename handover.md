@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 39: review follow-ups on rounds 31 and 38 (migration edge case, obligation hook check), then F8 correlation record (round 39 bullets) | 39 |
-| gemini | Round 39: phone and desktop audit of the rounds 31–38 panels (Obligations, Loadboards, Calibrations, Handler episodes) | 39 |
+| codex | Round 40: read endpoint for correlation records, then a review of the round 39 migration refusal (round 40 bullets) | 40 |
+| gemini | Round 40: correlation records section in the Calibrations panel, stub-first against the round 40 read contract | 40 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,18 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 40 (2026-10-24) — correlation read path and UI.** Start with `git merge master`.
+
+- **codex.** (1) Add `GET /api/control-rooms/:roomId/correlation-records` → `{ roomId, asOf, records }` (read-only, the rows in
+  arrival order). (2) Add tests for the empty room, the append-only property seen through the read, and that the read never
+  affects `cellReadiness`. (3) Confirm `POST` rejects an invalid `result` with 400. Use **port 3021**. Run both suites, update
+  `project-state/backend/`, commit, set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Add a **Correlation records** section below the calibration table in the Calibrations panel. Show each row
+  (`correlationId`, `instrumentId`, `referencePartId`, `observedAt`, `result`) and a plain-text note that it is evidence only and
+  does not affect readiness. Add an append-only form (no edit or delete controls). Stub-first against the GET above and the POST
+  from round 39. Keyboard-reachable, 375/1280 px checks. E2E in `e2e/correlation-records.spec.mjs`. Do not change `backend/`.
+  Use **port 3022**. Run both suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 39 (2026-10-24) — review follow-ups and correlation record; panel audit.** Start with `git merge master`.
 
 - **codex.** (1) Review follow-up: the round 38 migration keeps existing reservations when `loadboardInventory.boards` is empty. Check
@@ -1528,6 +1540,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `2347cf0`…`de710fd` (branch `codex`, round 39) and **gemini** `7885215`/`ecfce4b` (round 39) → merge `b2f6228`: migration refuses orphaned HELD reservations, append-only correlation records (`POST /api/control-rooms/:roomId/correlation-records`, not a calibration gate), and a 375/1280 px audit of rounds 31–38 panels. Codex confirmed the obligation reconciler is wired in `runScheduledTick` and tested. `npm test` 594/594; E2E 165/165 on port 3024. Deployed `b2f6228`, healthy. GET-only smoke test: all endpoints 200; no live writes.
 - 2026-10-24 — **codex** `0829fc7`…`eb38a84` (branch `codex`, round 38) and **gemini** `becc007`/`af7303b` (round 38) → merge `51aa694`: serialised board entry `POST /api/control-rooms/:roomId/loadboards/boards` and an idempotent board seed migration; the Add board drawer on the Loadboards panel. `npm test` 588/588; E2E 159/159 on port 3024. Deployed `51aa694`, healthy.
   **Verified on the server:** `plant-1` lists `LB-0412`, `LB-0398` and `LB-0204` (`cellId: null`). A checkout of `LB-0398` to `ATE-1` returned `ALLOCATED` with reservation `RES-SMOKE-3`. **That was my smoke test writing to live state, not an intended action.** I released it straight away (`RELEASED`, `LB-0398` back to store, `heldBy: null`). The released row stays in history, as designed.
   **Review notes for codex:** the migration keeps existing reservations when boards are empty but reservations exist. That state may be inconsistent. Round 39 checks it.
