@@ -176,3 +176,37 @@ no RNG use. Existing rooms without device IDs receive the same deterministic map
 replacing the former station-specific 40–120 rate. Existing valid device selections
 are preserved; a missing rate cache is filled from the device. Invalid explicit
 IDs/rate mismatches fail validation. No hidden simulation truth enters this plan.
+
+
+## Consumable life policy balances (round 29, F1 slice 1)
+
+`backend/src/consumable-life.mjs` exports `evaluateConsumableLife({policy, asset,
+readings, cleanings})`. This standalone domain library has no imports, clock reads,
+I/O, route, store or runtime wiring. Callers pass one installed socket/contactor
+lifecycle and its approved policy; replacement lifecycles are evaluated separately.
+
+Readings are sorted on a copy by observed time. Cumulative lifetime is separate from
+since-clean count: the last cleaning at/before the latest reading supplies its baseline,
+or zero at install if none exists. A later cleaning cannot reset an earlier reading.
+Cleaning never changes lifetime or the remaining lifetime policy balance.
+
+Status precedence is RECONCILE (unit mismatch or decreasing known readings), NO_DATA,
+UNKNOWN (latest lifetime null), REPLACE_DUE, CLEAN_DUE, WARN, then OK. Null is never zero;
+a known decrease across intervening unknown readings still requires reconciliation.
+Unknown/no-data results have null counters/balances. RECONCILE retains the latest raw
+reading count but leaves derived balances null, so uncertain values cannot imply release.
+Remaining balances can be negative when overdue; they are policy balances, not a failure
+probability or predicted remaining physical life.
+
+The explicit result includes identity, policy version, status, counts/balances, sorted
+stable reason codes and `obligationKey = lifecycleId:policyId@version:status`. Reasons
+include both exhausted thresholds when applicable, with replacement taking precedence;
+warning codes distinguish cleaning interval and lifetime thresholds.
+
+Input validation rejects extra fields (including hidden truth anywhere in the specified
+objects), unsafe/negative/fractional counts, invalid policy parameters or UTC dates,
+policy-ID mismatch, pre-install records, conflicting counters at identical timestamps,
+and a selected cleaning baseline greater than the latest known reading. Malformed inputs
+throw TypeError rather than returning OK. Identifiers are bounded alphanumeric/underscore/
+hyphen strings (replacement `#` allowed); obligation delimiters are reserved. Valid unit
+mismatches and reading decreases produce RECONCILE as required, with no unit conversion.

@@ -648,3 +648,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added an immutable twenty-device module catalog, deterministic station-to-device seeds/migration, device/rate validation, and `deviceId` in station KPI rows. Rates now come from devices; all other KPI contracts remain unchanged.
 - Regenerated the small lifecycle dataset and verified only equipment device/plan fields changed. Targeted coverage checks fixture parity, plan-cache nonauthority, device preservation and unchanged RNG.
 - Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md.
+
+
+## [2026-10-24] feature — Consumable life pure policy evaluator (round 29, F1 slice 1)
+- Added a standalone import-free evaluator with separate lifetime/since-clean balances, exact status precedence, sorted reasons and lifecycle/policy/version/status obligation keys. Unknown counts remain null; reconciliation blocks derived balances. No store, route, UI, clock or simulation integration.
+- Added hermetic tests for every acceptance item, including cleaning/replacement independence, equality boundaries, reordered data, future cleaning cutoff, unknown/decreasing counters, determinism and rejection of hidden/invalid input fields.
+- Pages updated: backend/domain-model.md, backend/overview.md.
