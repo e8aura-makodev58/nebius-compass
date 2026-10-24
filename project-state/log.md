@@ -630,3 +630,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Round 27 distinguishes descriptive public cause/stop/transfer questions from private truth and commands, explains declines, routes procedure questions to recorded catalog options, and requires code-owned cited assignment/timing/retained-event statements. Repair retains the exact two-key schema; extra-field repair is rejected.
 - Expanded hermetic Ask evaluation to 28 cases, preserving private-truth probes. No UI/provider changes or live calls.
 - Pages updated: backend/assistant.md; docs/evaluation.md.
+
+## [2026-10-24] docs — Investigator history at scale (design note)
+- Added `docs/design/investigation-history-at-scale.md`: how the investigator retrieves and grades history, what breaks at hundreds of testers over years, and the storage and retrieval design to settle before integrating with a live maintenance record.
+- Recommendation: a relational case store with indexed structured retrieval and full-text search on narratives first; vector search only if a measured narrative-recall benchmark shows the gap. Docs only; no code changed.
+- Pages updated: docs/design/investigation-history-at-scale.md; this log.
