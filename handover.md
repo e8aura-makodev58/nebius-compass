@@ -1640,16 +1640,38 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** IN PROGRESS
-- **Updated:** 2026-10-24 21:55 UTC
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24 22:08 UTC
 - **Task:** Round 41: ATE terminology pass on the Station KPI and Handler episodes panels (visible labels only)
-- **Head commit:** `d8ae229`
-- **Changes:** Starting Round 41. Terminology pass: in visible labels only, updating Station KPI and Handler episodes panels to say "ATE setup" where they say "station" for a physical unit, matching `docs/design/station-kpi-panel.md` section 1. Preserving all API field names, IDs, and CSS classes. Updating affected E2E assertions.
-- **Files changed:** in progress
-- **Verification:** in progress
-- **project-state pages updated:** in progress
-- **Risks / follow-ups:** Do not modify `backend/`. Visible labels only; no API field names, IDs, or CSS classes changed. Use port 3022.
-- **Questions for main:** None. Round 41 started. Watcher remains active.
+- **Head commit:** `5533f85`
+- **Changes:**
+  - Completed terminology pass in visible labels only across Station KPI and Handler episodes panels matching `docs/design/station-kpi-panel.md` section 1 where "station" refers to a physical unit:
+    - In `frontend/station-kpis-view.js`:
+      - Eyebrow updated from "Station throughput" to "ATE setup throughput".
+      - Filter summary updated from "Stations (N of M)" to "ATE setups (N of M)".
+      - Filter trigger aria-label updated from "Filter stations" to "Filter ATE setups".
+      - Search input placeholder updated to "Search ATE setups…" and aria-label to "Search ATE setups".
+      - Options group aria-label updated from "Station list" to "ATE setup list".
+      - Empty search text updated from "No matching stations" to "No matching ATE setups".
+      - Empty state text updated from "No stations selected" / "Select at least one station using the filter above…" to "No ATE setups selected" / "Select at least one ATE setup using the filter above…".
+      - Table column header updated from "Station" to "ATE setup".
+      - Table totals footer and mobile totals card updated from "Totals (N station[s])" to "Totals (N ATE setup[s])".
+      - Retained panel title "Station KPIs", DOM IDs (`#station-kpi-heading`), data attributes (`data-station-id`, `data-kpi-station`), and CSS classes intact.
+    - In `frontend/handler-episodes-view.js`:
+      - Header eyebrow updated from "Station Operations · F4" to "ATE Setup Operations · F4".
+      - Kept badge CSS classes (`.he-station-badge`), data attributes, and raw identifier rendering (`HANDLER-A`) unchanged.
+    - In `e2e/station-kpi.spec.mjs`:
+      - Updated visible text assertions for totals summaries ("Totals (2 ATE setups)", "Totals (1 ATE setup)") and empty state ("No ATE setups selected").
+- **Files changed:** `frontend/station-kpis-view.js`, `frontend/handler-episodes-view.js`, `e2e/station-kpi.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`
+- **Verification:**
+  - `npm test`: 597/597 passing (hermetic, no network, no backend writes).
+  - Targeted E2E on port 3022: `e2e/station-kpi.spec.mjs` (5/5), `e2e/handler-episodes.spec.mjs` (11/11), `e2e/panel-audit-r39.spec.mjs` (6/6), `e2e/phone-audit.spec.mjs` (5/5) — all 27/27 passed across 375px and 1280px viewports.
+  - Full Chromium E2E suite (`COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`): 171/171 passing.
+  - Ports 3022 and 3122 confirmed completely free (`ss -ltn | grep -E ':3022|:3122'`).
+  - No changes made to `backend/`.
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`
+- **Risks / follow-ups:** None. All API field names, DOM IDs, and CSS classes were preserved.
+- **Questions for main:** Ready for merge review. Watcher remains active.
 
 ## codebuddy
 
