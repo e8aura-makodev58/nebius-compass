@@ -937,3 +937,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 40 (correlation records read endpoint) and gemini round 40 (correlation section in the Calibrations panel) as `08c3b58`. Verification: `npm test` 597/597; E2E 171/171 on port 3024. Deployed `08c3b58` healthy. GET-only smoke test: all endpoints 200.
 - Assigned round 41: codex handler jam inputs (append-only alarm, run and planned-stop entry) and the handler episodes read route; gemini ATE terminology pass on the new panels.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Handler jam input routes and aligned episode projection (round 41)
+- Added private append-only handler facts, deterministic empty migration, shared serialized alarm/run/planned-stop entries with atomic optional context, exact no-op retries and read-only three-hour episode GET. The pure calculator remains unchanged. Regenerated the reproducible fixture; only handlerJam changed.
+- Pages updated: backend/domain-model.md, backend/http-api.md, backend/overview.md, backend/live-runtime.md; context packet and interval boundaries recorded in docs/decisions.md.

@@ -1,3 +1,4 @@
+import { validateHandlerJam, emptyHandlerJam } from './handler-jam-records.mjs';
 import { validateCorrelationRecords } from './correlation-records.mjs';
 import { validateConsumableObligationRows } from './consumable-life-obligations.mjs';
 import { evaluateConsumableLife } from './consumable-life.mjs';
@@ -57,6 +58,7 @@ export function validateLiveState(state, { previous = null } = {}) {
   const changed=(key)=>{if(!previous)return state[key]??[];if(state[key]===previous[key])return [];const old=new Set(previous[key]??[]);return (state[key]??[]).filter(row=>!old.has(row));};
   assert(state && typeof state === "object", "state must be an object");
   validateFaultTruth(state);
+  if (!previous || state.handlerJam !== previous.handlerJam) validateHandlerJam(state.handlerJam === undefined ? emptyHandlerJam() : state.handlerJam, previous?.handlerJam ?? emptyHandlerJam());
   if (!previous || state.correlationRecords !== previous.correlationRecords) validateCorrelationRecords(state.correlationRecords === undefined ? [] : state.correlationRecords, previous?.correlationRecords ?? []);
   assert(Array.isArray(state.consumableObligations), 'consumableObligations must be an array');
   if (!previous || state.consumableObligations !== previous.consumableObligations) validateConsumableObligationRows(state.consumableObligations, previous?.consumableObligations ?? []);
@@ -335,7 +337,7 @@ export function createPublicLiveSnapshot(state, { validated = false } = {}) {
   if (!validated) validateLiveState(state);
   // Select before cloning. Neither private history nor archived analytic facts
   // belong in the polled payload, even transiently.
-  const { responderSkills, resolutionHistory, historyRetention, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, calibrations, correlationRecords, ...base } = state;
+  const { responderSkills, resolutionHistory, historyRetention, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, calibrations, correlationRecords, handlerJam, ...base } = state;
   const openIssues = state.issues.filter((row) => row.status !== "RESOLVED");
   const recentIssues = state.issues.filter((row) => row.status === "RESOLVED").sort((a, b) => Date.parse(b.resolvedAt) - Date.parse(a.resolvedAt)).slice(0, 100);
   const issueIds = new Set([...openIssues, ...recentIssues].map((row) => row.id));

@@ -350,8 +350,8 @@ values to nearest integer; the running rate uses the exact denominator and round
 to two decimals (null only at zero running duration). Run counts are nonnegative
 integers on disjoint intervals fully inside or outside the query window. A run
 crossing a window edge is rejected because no count attribution/prorating contract
-exists. Planned intervals may overlap and cross boundaries. This pure slice adds no
-persisted entity, HTTP route, counter ingestion or responder/dispatch behavior.
+exists. Planned intervals may overlap and cross boundaries. Round 41 adds the persisted inputs and HTTP wiring below; the pure calculation
+remains independent of runtime, counter ingestion and responder/dispatch behavior.
 
 
 ## Calibration readiness (round 35, F8 slice 1)
@@ -491,3 +491,37 @@ load leaves original checkpoint bytes untouched (no synthetic seed or partial
 migration is published), while another room can still load/migrate independently.
 The regression covers both repeated refusal and a healthy second room. No repair
 is inferred from a seed ID; operator correction of invalid custody is required.
+
+
+## Handler input wiring (round 41)
+
+`handler-jam-records.mjs` defines private handlerJam with alarms, runs, plannedStops
+and handlerContext arrays. Missing persisted history migrates deterministically to
+four empty arrays; existing inputs remain untouched. Offline initializes the same
+shape. Strict explicit rows and prefix-history validation prohibit edits, removal
+and reordering; Live schema validates changed histories. Ordinary snapshots/model
+payloads exclude handlerJam in both modes.
+
+`handler-jam-service.mjs` shares three serialized POST paths across Live/Offline.
+Alarm facts contain alarmId/reasonCode/occurredAt/ingestedAt; occurredAt may be null
+for explicit missing occurrence. Runs contain runId/start/end/acceptedUnits;
+planned stops contain stopId/start/end/reasonCode. Valid timestamps canonicalize to
+UTC milliseconds. Duplicate IDs with identical complete facts return UNCHANGED with
+no revision/journal write; conflicts are 400. New entries return RECORDED. Runs
+cannot overlap and must fit wholly inside one UTC three-hour bucket: accepted counts
+cannot be prorated across a bucket edge. Planned stops may span edges/overlap.
+
+Each POST optionally accepts handlerContext with observedAt, programRevision,
+activeSiteCount and referenceUnitsPerHour (last three may be null). It is retained
+with its entry for exact retry checks and appended atomically to the context trail,
+keyed by observation instant; conflicting facts at one instant are 400. Context-only
+updates are not added. Nullable context never assumes a program, site count or rate.
+
+GET handler-episodes uses buildHandlerJamEpisodes for HANDLER-A, JAM-POLICY-A@2,
+ten-minute episode gap and minimum two alarms. It selects the latest completed UTC
+three-hour window by flooring the room simulation clock, like station KPIs. Initial
+context/reference comes from the latest observation at/before window start; all
+observations feed the pure program/site gate. No baseline context yields
+CONTEXT_MISSING/REFERENCE_MISSING. Output is the existing pure shape without raw
+inputs; reads do not write, advance clocks or call providers. Model roles and
+responder/dispatch behavior remain unchanged.

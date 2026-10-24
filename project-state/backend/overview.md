@@ -52,6 +52,8 @@ one TypeScript type file; there is no build step.
 | `calibration-service.mjs` | Shared serialized calibration entry, idempotent identity retries and explicit historical GET projection. See [http-api.md](http-api.md). |
 | `calibration-readiness.mjs` | Pure `cellReadiness(calibrations,cellId,at)`, effective calibration selection, strict source validation and conservative expiry. No imports. See [domain-model.md](domain-model.md). |
 | `cell-readiness.mjs` | Explicit Live/Offline room readiness GET projection at the room clock. |
+| `handler-jam-records.mjs` | Strict private append-only handler inputs, UTC validation and aligned-run count boundaries. |
+| `handler-jam-service.mjs` | Shared serialized alarm/run/planned-stop entry and read-only aligned episode projection through the pure calculator. |
 | `handler-jam-episodes.mjs` | Standalone pure alarm grouping, interval-union stopped time and gated reference-rate deficit estimates. No imports or runtime wiring. See [domain-model.md](domain-model.md). |
 | `loadboard-service.mjs` | Shared command adapter: strict client bodies, serialized manual board entry, host simulation timestamps, pure checkout/release and public responses. See [http-api.md](http-api.md). |
 | `consumable-obligations.mjs` | Pure explicit public ledger projection for the dedicated room GET, without evaluation or writes. |

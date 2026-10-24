@@ -47,6 +47,8 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | POST | `/loadboards/checkout` | `{requestId,boardId,cellId,programRevision}` → `{decision,reasons,reservation}` through the normal serialized room write path. |
 | POST | `/loadboards/release` | `{reservationId,cellId}` → the same response envelope. Host supplies the simulation timestamp. |
 | GET | `/consumable-obligations` | `{roomId,asOf,obligations}`: explicit persisted slice-2 rows, with no reconciliation on GET. |
+| POST | `/handler-alarms`, `/handler-runs`, `/handler-planned-stops` | Append validated handler facts, optional handlerContext; RECORDED or unchanged retry, conflicts/malformed/overlapping runs 400. |
+| GET | `/handler-episodes` | Existing pure HANDLER-A episode output for the latest completed aligned three-hour window; read-only. |
 | GET | `/correlation-records` | `{roomId,asOf,records}` in append arrival order; shared read-only Live/Offline projection, readiness unaffected. |
 | POST | `/correlation-records` | Append explicit correlation facts; returns `{decision:"RECORDED",reasons:[]}`. Invalid/duplicate identities are 400; readiness is unaffected. |
 | POST | `/calibrations` | Strict five-field manual entry through the serialized store; returns `{decision:RECORDED\|UNCHANGED,reasons:[]}`. Conflicts/malformed requests return 400. |
@@ -365,3 +367,25 @@ observedAt timestamps arrive out of order. Absent history returns records: [].
 Reads preserve room revision, clock and readiness; no provider call or write occurs.
 Unknown rooms retain the standard 404. Invalid POST result values remain 400 and
 do not change subsequent reads. There is no update or delete endpoint.
+
+
+## Handler inputs and episodes (round 41)
+
+POST handler-alarms accepts alarmId, reasonCode, occurredAt and ingestedAt; explicit
+null occurredAt records excluded occurrence evidence. POST handler-runs accepts runId,
+start, end and acceptedUnits. POST handler-planned-stops accepts stopId, start, end
+and reasonCode. Each body optionally includes handlerContext with observedAt,
+programRevision, activeSiteCount and referenceUnitsPerHour; context is atomic with
+the entry. No extra fields are allowed. Dates are strict UTC, reasons uppercase,
+counts nonnegative integers, and non-null site count positive integer. Runs must
+be disjoint and contained in a single aligned UTC three-hour bucket. Planned stops
+may overlap and span windows. Conflicting identity/context or malformed input is 400.
+Success returns HTTP 200 `{decision:"RECORDED",reasons:[]}`; identical complete retry
+returns UNCHANGED without writing. No update/delete endpoint is added.
+
+GET handler-episodes returns the pure episode contract with stationId HANDLER-A and
+window ending at floor(simulationTime / three hours), beginning three hours earlier.
+It uses the window-start reference/context baseline and complete context trail for
+suppression. Missing baseline context/reference suppresses estimates; raw episodes
+and minutes remain visible. GET does not mutate state or advance the simulation.
+No station/window selector is introduced in this single-handler slice.

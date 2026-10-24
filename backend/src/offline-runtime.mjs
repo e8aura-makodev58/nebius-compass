@@ -1,3 +1,5 @@
+import { emptyHandlerJam } from './handler-jam-records.mjs';
+import { createHandlerJamService, buildRoomHandlerEpisodes } from './handler-jam-service.mjs';
 import { createCorrelationService, buildCorrelationRecords } from './correlation-service.mjs';
 import { createCalibrationService, buildCalibrations } from './calibration-service.mjs';
 import { buildCellReadiness } from './cell-readiness.mjs';
@@ -42,6 +44,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
   function initializeOfflineState() {
     const state = structuredClone((runtimeOptions.seedFactory ?? createInitialDemoState)());
     state.consumableObligations ??= [];
+    state.handlerJam ??= emptyHandlerJam();
     state.issues.forEach((issue) => { issue.complexity = issue.id === "ISS-104" ? "COMPLEX" : "STANDARD"; });
     const startedAt = state.issues.map((row) => row.raisedAt).sort().at(-1);
     state.simulationState = { status: "RUNNING", simulationTime: startedAt, rngStreams: { attempt: runtimeOptions.attemptSeed ?? 9_973 } };
@@ -70,6 +73,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     },
   };
   const assistant = createAskService(investigationStore,{mode:'fixture'});
+  const handlerJamService = createHandlerJamService(investigationStore);
   const correlationService = createCorrelationService(investigationStore);
   const calibrationService = createCalibrationService(investigationStore);
   const loadboardService = createLoadboardService(investigationStore);
@@ -201,7 +205,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
       supportOfferDueAtRealTime = null;
       offlineRematchPromise = null;
     }
-    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, calibrations, correlationRecords, ...publicState } = structuredClone(demoState);
+    const { responderSkills, faultTruth, fieldReports, investigations, investigationSequences, consumableInputs, consumableReconciliation, consumableObligations, loadboardInventory, calibrations, correlationRecords, handlerJam, ...publicState } = structuredClone(demoState);
     const { rngStreams, ...publicSimulationState } = publicState.simulationState;
     publicState.simulationState = publicSimulationState;
     publicState.resolutionAttempts = publicState.resolutionAttempts.map(redactAttempt);
@@ -259,6 +263,8 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
     snapshot,
     reconcileConsumables: () => reconcileRoomConsumables(investigationStore),
     correlationRecords: query => buildCorrelationRecords(demoState, query),
+    enterHandlerInput: (kind, input) => handlerJamService.enter(kind, input),
+    handlerEpisodes: () => buildRoomHandlerEpisodes(demoState),
     enterCorrelationRecord: input => correlationService.enter(input),
     enterCalibration: input => calibrationService.enter(input),
     calibrations: query => buildCalibrations(demoState, query),

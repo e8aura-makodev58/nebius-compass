@@ -1364,3 +1364,24 @@ invented, and no result can affect readiness. Duplicate IDs are rejected (400),
 not upserted; new entries return RECORDED. Prior sequence and every prior field are
 immutable under Live schema validation. No update/delete/list route is introduced;
 normal reset remains the history boundary. Both modes use the same append service.
+
+
+## 2026-10-24 — Handler wiring context and window contracts (round 41)
+
+The board authorizes input wiring despite the older pure spec's historical proposal
+header. handlerJam holds alarms/runs/plannedStops/handlerContext arrays. Each entry
+accepts optional handlerContext {observedAt,programRevision,activeSiteCount,
+referenceUnitsPerHour}, with nullable unknown program/sites/reference. The context
+row is stored atomically in its input and the observation trail; identical complete
+retries no-op, different context for an existing identity is a conflict. No separate
+context-only route is invented. Explicit null occurredAt records missing occurrence.
+
+“Aligned like station KPIs” means latest completed UTC three-hour bucket ending at
+floor(room simulationTime / three hours). The latest context at/before its start
+supplies program/sites/reference; the whole context trail feeds the existing gate.
+The existing pure module cannot attribute counts on partial runs, so entry rejects
+runs crossing an aligned bucket edge rather than inventing proportional unit counts
+or allowing future reads to fail. Runs in one bucket may be adjacent but not overlap;
+planned stops can span buckets. These constraints are documented at the HTTP boundary.
+The policy is the spec's JAM-POLICY-A@2, ten-minute gap and two-alarm pattern threshold.
+All projections and metrics remain deterministic and provider-free.

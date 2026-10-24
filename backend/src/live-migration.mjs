@@ -1,3 +1,4 @@
+import { emptyHandlerJam } from './handler-jam-records.mjs';
 import { createSeedLoadboards } from '../seed/loadboards.mjs';
 import { createSeedCalibrations } from '../seed/calibrations.mjs';
 import { deviceById } from './device-catalog.mjs';
@@ -106,6 +107,7 @@ export function migrateLiveState(input) {
   if (!["1.0", "2.0", "2.1"].includes(input?.schemaVersion)) throw new Error(`Unsupported live schema version ${input?.schemaVersion ?? "missing"}`);
   // Accept snapshots saved with the former suggestion field name.
   input = structuredClone(input);
+  if (input.handlerJam === undefined) input.handlerJam = emptyHandlerJam();
   // One-time synthetic upgrade for rooms predating calibration provisioning.
   // Never extend or renew any existing calibration history, including expired rows.
   if (input.calibrations === undefined || (Array.isArray(input.calibrations) && input.calibrations.length === 0)) {

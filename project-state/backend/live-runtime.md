@@ -232,3 +232,10 @@ Round 40 exposes correlation history through a read-only store projection in arr
 order, without touching the room clock or readiness. Review regression confirms
 repeated round-39 orphan-custody migration refusal leaves checkpoint bytes unchanged
 and does not prevent another room's store from loading.
+
+
+Round 41 handler input entries share the normal serialized store, with no-op retries
+aborting before revision/journal publication. handlerJam is private append-only
+history; migration supplies empty arrays and unchanged facts stay unchanged on
+restart. The handler episode GET uses a store projection at the room clock and
+cannot trigger a simulation tick, source reconciliation or model call.
