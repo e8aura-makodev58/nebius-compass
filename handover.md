@@ -1265,8 +1265,8 @@ your watcher.
   Validate with `validateLoadboardInventory`. Write through the serialised store path. A new board starts with `cellId: null`
   unless the body sets it to a cell that exists. Reject duplicate `boardId` with a 400. Malformed body is 400. (2) Add an
   idempotent migration in `backend/src/live-migration.mjs`, like the calibration seeding: when `loadboardInventory` is undefined
-  or has no boards, seed `LB-0412` (ATE-1 held by a seeded reservation is NOT allowed: seed it in store with `cellId: null`), `LB-0398`,
-  and `LB-0204` (UNDER_REPAIR) with synthetic approved programs. Never change existing rows. Run it twice in tests and assert identical
+  or has no boards, seed `LB-0412` (SERVICEABLE, `cellId: null`, no reservation), `LB-0398` (SERVICEABLE, `cellId: null`),
+  and `LB-0204` (UNDER_REPAIR, `cellId: null`), with synthetic approved programs. Seed no reservations. Never change existing rows. Run it twice in tests and assert identical
   output. Tests: a seeded room checks out `LB-0398` to a READY cell; the entry route rejects a duplicate ID. Use **port 3021**. Run
   both suites, update `project-state/backend/`, commit, set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
 - **gemini.** Add an **Add board** form to the Loadboards panel: `boardId`, `revision`, `condition` (select), `cellId` (optional),
