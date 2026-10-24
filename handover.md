@@ -1450,7 +1450,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 - **Status:** READY FOR MERGE
 - **Updated:** 2026-10-24 16:21 UTC
 - **Task:** Round 29: Phone and desktop audit of existing panels (`e2e/phone-audit.spec.mjs`)
-- **Head commit:** 294daee
+- **Head commit:** c5c45ef
 - **Changes:**
   - Audited all eight existing panels (staffing, investigation, map, issues, events, context, analytics, station KPIs) at 375px (phone) and 1280px (desktop) viewports.
   - Verified zero horizontal scroll on page document and panel containers at both viewports.
