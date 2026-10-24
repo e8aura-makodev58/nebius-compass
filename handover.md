@@ -1434,16 +1434,22 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** IN PROGRESS
-- **Updated:** 2026-10-24 16:11 UTC
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24 16:21 UTC
 - **Task:** Round 29: Phone and desktop audit of existing panels (`e2e/phone-audit.spec.mjs`)
-- **Head commit:** 5f9ce57
-- **Changes:** In progress: writing `e2e/phone-audit.spec.mjs` checking 375px and 1280px viewports across existing panels (staffing, investigation, map, issues, events, context, analytics, station KPIs) for horizontal scroll, touch targets < 44px, missing accessible names, and text contrast < 4.5:1; fixing detected issues in `frontend/`.
-- **Files changed:** In progress.
-- **Verification:** Both suites pending.
-- **project-state pages updated:** Pending.
-- **Risks / follow-ups:** Disjoint frontend-only audit. No backend changes.
-- **Questions for main:** None.
+- **Head commit:** 294daee
+- **Changes:**
+  - Audited all eight existing panels (staffing, investigation, map, issues, events, context, analytics, station KPIs) at 375px (phone) and 1280px (desktop) viewports.
+  - Verified zero horizontal scroll on page document and panel containers at both viewports.
+  - Enhanced phone touch targets (>= 44px min-height/min-width) in `frontend/layout.css` across topbar tabs, simulation controls, search buttons, staffing summaries/inputs, investigation buttons/overrides, map controls, event feed buttons, context panel tabs/summaries/selects, analytics section nav/summaries/inputs, and station KPI filter checkboxes.
+  - Verified all interactive controls across panels have valid accessible names (aria-label, labelledby, or text).
+  - Verified text content across all panels meets WCAG AA contrast ratio >= 4.5:1.
+  - Added test suite `e2e/phone-audit.spec.mjs` with 5 targeted audit tests covering horizontal scroll, touch targets, accessible names, and contrast.
+- **Files changed:** `frontend/layout.css`, `e2e/phone-audit.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
+- **Verification:** `npm test` 497/497 passed · Chromium forced-provider E2E 103/103 passed (`COMPASS_E2E_PORT=3022`). Free ports confirmed.
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** Disjoint frontend changes only. No backend modifications.
+- **Questions for main:** Ready for merge. User reminder: please do not keep Gemini idle — please merge Round 29 and assign the next task promptly.
 
 ## codebuddy
 
