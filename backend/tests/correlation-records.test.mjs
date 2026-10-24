@@ -75,3 +75,33 @@ test('correlation PASS cannot make expired or unconfigured cells READY; Offline 
     assert.equal((await request(application, row({ cellId: 'UNCONFIGURED' }))).status, 400);
   } finally { globalThis.fetch = original; }
 });
+
+test('GET empty and appended history is read-only, preserves arrival order, and invalid results are 400', async t => {
+  const { store, runtime } = await live(t), initial = await store.snapshot(), ready = await runtime.cellReadiness();
+  const empty = await request(runtime, undefined, { method: 'GET' });
+  assert.deepEqual(empty, { status: 200, body: { roomId: 'plant-1', asOf: initial.simulationState.simulationTime, records: [] } });
+  assert.deepEqual(await store.snapshot(), initial);
+  await request(runtime, row({ correlationId: 'Z-FIRST', observedAt: '2026-09-01T07:30:00Z' }));
+  const first = await request(runtime, undefined, { method: 'GET' });
+  await request(runtime, row({ correlationId: 'A-SECOND', observedAt: '2026-09-01T06:30:00Z', result: 'FAIL' }));
+  const before = await store.snapshot(), second = await request(runtime, undefined, { method: 'GET' });
+  assert.deepEqual(second.body.records.map(x => x.correlationId), ['Z-FIRST', 'A-SECOND']);
+  assert.deepEqual(second.body.records.slice(0, 1), first.body.records);
+  assert.deepEqual(Object.keys(second.body.records[0]).sort(), ['correlationId', 'cellId', 'instrumentId', 'referencePartId', 'observedAt', 'result'].sort());
+  assert.equal((await request(runtime, row({ correlationId: 'INVALID', result: 'READY' }))).status, 400);
+  assert.deepEqual(await request(runtime, undefined, { method: 'GET' }), second);
+  assert.deepEqual(await store.snapshot(), before); assert.deepEqual(await runtime.cellReadiness(), ready);
+  assert.equal((await request(runtime, undefined, { method: 'GET', room: 'missing' })).status, 404);
+});
+test('Offline GET shares arrival projection and never advances clock or changes readiness', async () => {
+  let now = 0; const offline = createDemoRuntime({ mode: 'fixture' }, createTempAuditStore(), null, { now: () => now });
+  const application = createApplicationRuntime({ liveRuntime: {}, offlineRuntime: offline, initialMode: 'OFFLINE' });
+  const original = globalThis.fetch; globalThis.fetch = () => { throw Error('network forbidden'); };
+  try {
+    assert.deepEqual((await request(application, undefined, { method: 'GET' })).body.records, []);
+    await request(application, row()); const before = await request(application, undefined, { method: 'GET' }), ready = offline.cellReadiness();
+    now += 86_400_000;
+    assert.deepEqual(await request(application, undefined, { method: 'GET' }), before); assert.deepEqual(offline.cellReadiness(), ready);
+    before.body.records[0].result = 'FAIL'; assert.equal((await request(application, undefined, { method: 'GET' })).body.records[0].result, 'PASS');
+  } finally { globalThis.fetch = original; }
+});

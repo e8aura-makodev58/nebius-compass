@@ -1,4 +1,4 @@
-import { createCorrelationService } from './correlation-service.mjs';
+import { createCorrelationService, buildCorrelationRecords } from './correlation-service.mjs';
 import { createCalibrationService, buildCalibrations } from './calibration-service.mjs';
 import { buildCellReadiness } from './cell-readiness.mjs';
 import { createLoadboardService } from './loadboard-service.mjs';
@@ -354,6 +354,7 @@ export function createLiveRuntime({
     decideInvestigation: (id,input,action) => investigations.decide(id,input,action),
     async analytics() { return { mode: "LIVE", ...(store.project ? await store.project(buildAnalytics) : buildAnalytics(await store.snapshot())) }; },
     async analyticsPeriod(query) { return { mode: "LIVE", ...(store.project ? await store.project((state) => buildPeriodAnalytics(state, query)) : buildPeriodAnalytics(await store.snapshot(), query)) }; },
+    async correlationRecords(query) { return store.project ? store.project(state => buildCorrelationRecords(state, query)) : buildCorrelationRecords(await store.snapshot(), query); },
     enterCorrelationRecord: input => correlationService.enter(input),
     enterCalibration: input => calibrationService.enter(input),
     async calibrations(query) { return store.project ? store.project(state => buildCalibrations(state, query)) : buildCalibrations(await store.snapshot(), query); },
@@ -501,6 +502,7 @@ export function createApplicationRuntime({ liveRuntime, offlineRuntime, initialM
     async reset() { return mode === "LIVE" ? liveRuntime.reset() : { mode: "OFFLINE", ...offlineRuntime.reset() }; },
     async analytics() { return mode === "LIVE" ? liveRuntime.analytics() : { mode: "OFFLINE", available: false }; },
     async analyticsPeriod(query) { return mode === "LIVE" ? liveRuntime.analyticsPeriod(query) : { mode: "OFFLINE", available: false }; },
+    async correlationRecords(query) { return active().correlationRecords(query); },
     async enterCorrelationRecord(input) { return active().enterCorrelationRecord(input); },
     async enterCalibration(input) { return active().enterCalibration(input); },
     async calibrations(query) { return active().calibrations(query); },

@@ -464,7 +464,7 @@ validates before queueing, copies/canonicalizes the observation timestamp, then
 checks uniqueness against current history and appends one row. Duplicate/conflicting
 IDs return 400 rather than upserting; success is RECORDED with empty reasons.
 There are no update/delete endpoints. Records are excluded from ordinary snapshots
-and model inputs; no list route is added in this slice. Calibration readiness reads
+and model inputs; round 40 adds the dedicated GET below. Calibration readiness reads
 only calibrations, so no result can authorize, expire or renew a cell.
 
 The round-31 server obligation hook is confirmed in
@@ -475,3 +475,19 @@ checks a new obligation, then no repeat write for unchanged inputs/clock-only ti
 The control-room manager's process scheduler invokes room.liveRuntime.runScheduledTick
 per room. This remains source-change
 reconciliation, not work on GET and not an unimplemented counter-ingress route.
+
+
+## Correlation read projection and refusal review (round 40)
+
+`correlation-service.mjs:buildCorrelationRecords` returns roomId, asOf from the
+simulation clock and explicit six-field records in stored arrival order. It never
+sorts by observedAt or ID, creates records, advances time, reconciles, or changes
+readiness. Missing history is empty; both modes use the same builder, with Live
+store.project and Offline raw state. Mutating returned objects cannot edit history.
+The dedicated GET is separate from ordinary snapshots and model inputs.
+
+The round-39 orphan-custody refusal remains intentional. A repeated failed Live
+load leaves original checkpoint bytes untouched (no synthetic seed or partial
+migration is published), while another room can still load/migrate independently.
+The regression covers both repeated refusal and a healthy second room. No repair
+is inferred from a seed ID; operator correction of invalid custody is required.

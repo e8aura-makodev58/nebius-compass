@@ -226,3 +226,9 @@ GET and unchanged/clock-only ticks do not trigger a reconciliation write. Covera
 `consumable-life-obligations.test.mjs`, scheduled-hook test.
 The Live schema also validates append-only correlationRecords history on changed
 rows; normal reset starts fresh. Correlation entry never calls readiness/reconciliation.
+
+
+Round 40 exposes correlation history through a read-only store projection in arrival
+order, without touching the room clock or readiness. Review regression confirms
+repeated round-39 orphan-custody migration refusal leaves checkpoint bytes unchanged
+and does not prevent another room's store from loading.

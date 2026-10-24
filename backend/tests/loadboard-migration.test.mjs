@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { createLiveSeed } from '../seed/live-simulation.mjs';
@@ -45,4 +45,17 @@ test('migration refuses orphan HELD history before seeding even if a seed ID wou
     assert.throws(() => migrateLiveState(input), /Cannot migrate loadboard inventory: HELD reservation references absent board/);
     assert.deepEqual(input, before);
   }
+});
+
+
+test('migration refusal leaves persisted bytes untouched on repeated load and does not block another room', async t => {
+  const root = fileURLToPath(new URL('../../.cache/', import.meta.url)); await mkdir(root, { recursive: true });
+  const dir = await mkdtemp(join(root, 'board-refusal-')); t.after(() => rm(dir, { recursive: true, force: true }));
+  const input = state(); input.loadboardInventory = { boards: [], reservations: [{ reservationId: 'ORPHAN', boardId: 'LB-0398', cellId: 'ATE-1', programRevision: 'PM0096-P2', status: 'HELD', heldSince: input.simulationState.simulationTime }] };
+  const filePath = join(dir, 'invalid.json'), bytes = JSON.stringify(input); await writeFile(filePath, bytes);
+  const invalid = createLiveStore({ filePath, historyRetentionDays: 0 });
+  for (let index = 0; index < 2; index++) { await assert.rejects(invalid.snapshot(), /Cannot migrate loadboard inventory: HELD reservation references absent board/); assert.equal(await readFile(filePath, 'utf8'), bytes); }
+  const otherPath = join(dir, 'healthy.json'); await writeFile(otherPath, JSON.stringify(state()));
+  const other = createLiveStore({ filePath: otherPath, historyRetentionDays: 0 });
+  assert.equal((await other.snapshot()).loadboardInventory.boards.length, 3);
 });

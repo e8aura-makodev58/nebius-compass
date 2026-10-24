@@ -47,6 +47,7 @@ returns `404`; a non-`READY` room returns `503` before any handler body runs.
 | POST | `/loadboards/checkout` | `{requestId,boardId,cellId,programRevision}` → `{decision,reasons,reservation}` through the normal serialized room write path. |
 | POST | `/loadboards/release` | `{reservationId,cellId}` → the same response envelope. Host supplies the simulation timestamp. |
 | GET | `/consumable-obligations` | `{roomId,asOf,obligations}`: explicit persisted slice-2 rows, with no reconciliation on GET. |
+| GET | `/correlation-records` | `{roomId,asOf,records}` in append arrival order; shared read-only Live/Offline projection, readiness unaffected. |
 | POST | `/correlation-records` | Append explicit correlation facts; returns `{decision:"RECORDED",reasons:[]}`. Invalid/duplicate identities are 400; readiness is unaffected. |
 | POST | `/calibrations` | Strict five-field manual entry through the serialized store; returns `{decision:RECORDED\|UNCHANGED,reasons:[]}`. Conflicts/malformed requests return 400. |
 | GET | `/calibrations` | `{roomId,asOf,calibrations}`: explicit history with per-record FUTURE/CURRENT/EXPIRED validity at room time. |
@@ -352,5 +353,15 @@ identifiers. The route appends one fact through the shared serialized room mutat
 path; it never updates an existing record or changes calibration readiness.
 Success is HTTP 200 `{decision:"RECORDED",reasons:[]}`. Duplicate/conflicting IDs,
 invalid dates, unsupported/unknown/protected fields return 400. Normal JSON/origin
-and room guards apply. No correlation GET, update or delete route is added; ordinary
+and room guards apply. Round 40 adds the dedicated read GET; no update or delete route is added. Ordinary
 state polling excludes this private history in both modes.
+
+
+## Correlation read (round 40)
+
+GET `/api/control-rooms/:roomId/correlation-records` returns `{roomId,asOf,records}`.
+Records contain exactly the six source fields and retain arrival order even when
+observedAt timestamps arrive out of order. Absent history returns records: [].
+Reads preserve room revision, clock and readiness; no provider call or write occurs.
+Unknown rooms retain the standard 404. Invalid POST result values remain 400 and
+do not change subsequent reads. There is no update or delete endpoint.

@@ -1,4 +1,4 @@
-import { createCorrelationService } from './correlation-service.mjs';
+import { createCorrelationService, buildCorrelationRecords } from './correlation-service.mjs';
 import { createCalibrationService, buildCalibrations } from './calibration-service.mjs';
 import { buildCellReadiness } from './cell-readiness.mjs';
 import { createLoadboardService } from './loadboard-service.mjs';
@@ -258,6 +258,7 @@ export function createDemoRuntime(agentOptions = {}, auditStore = createAuditSto
   return {
     snapshot,
     reconcileConsumables: () => reconcileRoomConsumables(investigationStore),
+    correlationRecords: query => buildCorrelationRecords(demoState, query),
     enterCorrelationRecord: input => correlationService.enter(input),
     enterCalibration: input => calibrationService.enter(input),
     calibrations: query => buildCalibrations(demoState, query),

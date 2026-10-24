@@ -915,3 +915,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Codex confirmed the obligation reconciler runs in `runScheduledTick`, covered by an existing test.
 - Assigned round 40: codex correlation read endpoint; gemini correlation records section in the Calibrations panel.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Correlation read path and migration-refusal review (round 40)
+- Added explicit shared-mode correlation GET in append arrival order, with empty/append-prefix/read-only/readiness and invalid-result POST regressions. Added a persisted-store refusal test proving repeated migration failures leave bytes unchanged and another room can load independently.
+- Pages updated: backend/domain-model.md, backend/http-api.md, backend/overview.md, backend/live-runtime.md.

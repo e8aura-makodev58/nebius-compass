@@ -18,3 +18,15 @@ export function createCorrelationService(store) {
     return transaction.result;
   } };
 }
+
+
+/** Public read of one room snapshot in stored arrival order, never timestamp order. */
+export function buildCorrelationRecords(state, { roomId = null } = {}) {
+  const source = state.correlationRecords === undefined ? [] : state.correlationRecords;
+  validateCorrelationRecords(source);
+  const asOf = state.simulationState.simulationTime;
+  if (!Number.isFinite(Date.parse(asOf))) throw new TypeError('Invalid correlation snapshot time');
+  const records = source.map(row => ({ correlationId: row.correlationId, cellId: row.cellId,
+    instrumentId: row.instrumentId, referencePartId: row.referencePartId, observedAt: row.observedAt, result: row.result }));
+  const result = { roomId, asOf, records }; assertNoResponderSkill(result); return result;
+}
