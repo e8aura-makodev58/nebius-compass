@@ -696,3 +696,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added test verifying keyboard-only filter interaction (`Enter` to open, `Tab` traversal, search input, `Space` toggle, `Escape` dismissal to summary).
 - Fixed grammatical pluralization in totals row and cards (`1 station` vs `N stations`) in `frontend/station-kpis-view.js`.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 30 merge and round 31 assignment (main agent)
+- Merged codex round 30 (loadboard checkout slice 1) and gemini rounds 29–30 (phone audit, Station KPI E2E hardening) as `ffd7eb7`. Verification: `npm test` 511/511; E2E 105/105 on port 3024; deployed `ffd7eb7` healthy; `/station-kpis` returns 200 on the deploy server.
+- Approved `docs/design/consumable-life-slice-2.md` for round 31 (codex) and assigned a read-only loadboards panel (gemini, stub-first).
+- Pages updated: this log; handover.md merge log and round 31 assignments.
