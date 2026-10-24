@@ -56,6 +56,34 @@ function formatHourRange(startIso, endIso) {
   return `${sh}:${smin}–${eh}:${emin}`;
 }
 
+const DEVICE_CATALOG = [
+  { deviceId: "CX4820", ratedUnitsPerHour: 4820 },
+  { deviceId: "PM0096", ratedUnitsPerHour: 96 },
+  { deviceId: "GH0310", ratedUnitsPerHour: 310 },
+  { deviceId: "SC2150", ratedUnitsPerHour: 2150 },
+  { deviceId: "BR0038", ratedUnitsPerHour: 38 },
+  { deviceId: "VS0745", ratedUnitsPerHour: 745 },
+  { deviceId: "SR1260", ratedUnitsPerHour: 1260 },
+  { deviceId: "TB0540", ratedUnitsPerHour: 540 },
+  { deviceId: "DS0064", ratedUnitsPerHour: 64 },
+  { deviceId: "LS3600", ratedUnitsPerHour: 3600 },
+  { deviceId: "HP1880", ratedUnitsPerHour: 1880 },
+  { deviceId: "PI0212", ratedUnitsPerHour: 212 },
+  { deviceId: "SG2940", ratedUnitsPerHour: 2940 },
+  { deviceId: "FL0087", ratedUnitsPerHour: 87 },
+  { deviceId: "CS1015", ratedUnitsPerHour: 1015 },
+  { deviceId: "MB0475", ratedUnitsPerHour: 475 },
+  { deviceId: "CF0158", ratedUnitsPerHour: 158 },
+  { deviceId: "CW6300", ratedUnitsPerHour: 6300 },
+  { deviceId: "BC0029", ratedUnitsPerHour: 29 },
+  { deviceId: "CP0890", ratedUnitsPerHour: 890 },
+];
+
+function formatUph(uph) {
+  if (uph === null || uph === undefined) return "—";
+  return `${Number(uph).toLocaleString("en-US")} UPH`;
+}
+
 function formatWindowLabel(startIso, endIso) {
   if (!startIso || !endIso) return "—";
   return `${formatBucketTime(startIso)} to ${formatBucketTime(endIso)} UTC`;
@@ -89,12 +117,12 @@ function generateSyntheticResponse(roomId, simTime, requestedWindowEnd, requeste
   const allEquip = equipmentList && equipmentList.length > 0
     ? equipmentList
     : [
-        { id: "EQ-01", name: "Station 1", floor: 1 },
-        { id: "EQ-02", name: "Station 2", floor: 1 },
-        { id: "EQ-03", name: "Station 3", floor: 1 },
-        { id: "EQ-04", name: "Station 4", floor: 2 },
-        { id: "EQ-05", name: "Station 5", floor: 2 },
-        { id: "EQ-06", name: "Station 6", floor: 3 },
+        { id: "EQ-01", name: "ATE 1", floor: 1, deviceId: "SR1260", ratedUnitsPerHour: 1260 },
+        { id: "EQ-02", name: "ATE 2", floor: 1, deviceId: "PM0096", ratedUnitsPerHour: 96 },
+        { id: "EQ-03", name: "ATE 3", floor: 1 },
+        { id: "EQ-04", name: "ATE 4", floor: 2 },
+        { id: "EQ-05", name: "ATE 5", floor: 2 },
+        { id: "EQ-06", name: "ATE 6", floor: 3 },
       ];
 
   const targetEquip = requestedStations && requestedStations.length > 0
@@ -103,7 +131,11 @@ function generateSyntheticResponse(roomId, simTime, requestedWindowEnd, requeste
 
   const stations = targetEquip.map((eq) => {
     const hashVal = deterministicHash(eq.id);
-    const rated = eq.ratedUnitsPerHour ?? (40 + (hashVal % 81));
+    const dev = DEVICE_CATALOG[hashVal % DEVICE_CATALOG.length];
+    const deviceId = eq.deviceId ?? (eq.id === "EQ-01" ? "SR1260" : eq.id === "EQ-02" ? "PM0096" : dev.deviceId);
+    const rated = eq.ratedUnitsPerHour ?? (eq.id === "EQ-01" ? 1260 : eq.id === "EQ-02" ? 96 : dev.ratedUnitsPerHour);
+    const name = eq.id === "EQ-01" ? "ATE 1" : eq.id === "EQ-02" ? "ATE 2" : (eq.name?.replace?.("Station", "ATE") ?? eq.name);
+
     const stationBuckets = buckets.map((b, idx) => {
       const bHash = deterministicHash(eq.id + b.start);
       const downtimeMinutes = (bHash % 5 === 0) ? (15 + (bHash % 50)) : 0;
@@ -125,8 +157,9 @@ function generateSyntheticResponse(roomId, simTime, requestedWindowEnd, requeste
     });
     return {
       stationId: eq.id,
-      name: eq.name,
+      name,
       floor: eq.floor ?? 1,
+      deviceId,
       ratedUnitsPerHour: rated,
       buckets: stationBuckets,
     };
@@ -416,11 +449,14 @@ export function stationKpisMarkup({ state, escape, panelState }) {
         })
         .join("");
 
+      const uphStr = formatUph(st.ratedUnitsPerHour);
+      const deviceTag = st.deviceId ? ` · ${escape(st.deviceId)} · ${uphStr}` : ` · ${uphStr}`;
+
       return `
       <tr data-station-id="${escape(st.stationId)}">
         <th scope="row" class="kpi-station-th">
-          <strong>${escape(st.name)}</strong>
-          <small>${escape(st.stationId)} · Fl ${st.floor} · ${st.ratedUnitsPerHour}/h</small>
+          <strong>${escape(st.name)}${deviceTag}</strong>
+          <small>${escape(st.stationId)} · Floor ${st.floor}</small>
         </th>
         ${bucketCells}
       </tr>`;
@@ -506,11 +542,14 @@ export function stationKpisMarkup({ state, escape, panelState }) {
         })
         .join("");
 
+      const uphStr = formatUph(st.ratedUnitsPerHour);
+      const deviceTag = st.deviceId ? ` · ${escape(st.deviceId)} · ${uphStr}` : ` · ${uphStr}`;
+
       return `
       <article class="kpi-card" data-station-id="${escape(st.stationId)}">
         <div class="kpi-card-header">
-          <h4>${escape(st.name)} <small>(${escape(st.stationId)})</small></h4>
-          <span class="kpi-card-rating">Floor ${st.floor} · ${st.ratedUnitsPerHour} units/h</span>
+          <h4>${escape(st.name)}${deviceTag}</h4>
+          <span class="kpi-card-rating">${escape(st.stationId)} · Floor ${st.floor}</span>
         </div>
         <div class="kpi-card-buckets-list">
           ${bucketRows}

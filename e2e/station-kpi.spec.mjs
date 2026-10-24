@@ -45,13 +45,21 @@ test.describe("Station KPI panel", () => {
 
     const station1Row = panel.locator('.kpi-table tbody tr[data-station-id="EQ-01"]');
     await expect(station1Row).toBeVisible();
-    await expect(station1Row).toContainText("Station 1");
+    await expect(station1Row).toContainText("ATE 1");
+    await expect(station1Row).toContainText("SR1260");
+    await expect(station1Row).toContainText("1,260 UPH");
     await expect(station1Row).toContainText("EQ-01");
     // Actual / expected attainment in first bucket
-    await expect(station1Row).toContainText("187");
-    await expect(station1Row).toContainText("216");
-    await expect(station1Row).toContainText("86.6%");
+    await expect(station1Row).toContainText("3276");
+    await expect(station1Row).toContainText("3780");
+    await expect(station1Row).toContainText("86.7%");
     await expect(station1Row).toContainText("24m down");
+
+    const station2Row = panel.locator('.kpi-table tbody tr[data-station-id="EQ-02"]');
+    await expect(station2Row).toBeVisible();
+    await expect(station2Row).toContainText("ATE 2");
+    await expect(station2Row).toContainText("PM0096");
+    await expect(station2Row).toContainText("96 UPH");
 
     // Verify totals row
     const totalsRow = panel.locator(".kpi-totals-row");
@@ -64,8 +72,6 @@ test.describe("Station KPI panel", () => {
   });
 
   test("station filter allows search, None (empty state), All, and selective station toggling", async ({ page }) => {
-    page.on("pageerror", (e) => console.log("BROWSER ERROR:", e));
-    page.on("console", (m) => console.log("BROWSER LOG:", m.text()));
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.route("**/api/control-rooms/*/station-kpis*", async (route) => {
       await route.fulfill({
@@ -229,6 +235,8 @@ test.describe("Station KPI panel", () => {
     // Each station card has 4 stacked buckets
     const cards = panel.locator(".kpi-card:not(.kpi-card-totals)");
     await expect(cards).toHaveCount(2);
+    await expect(cards.nth(0)).toContainText("ATE 1 · SR1260 · 1,260 UPH");
+    await expect(cards.nth(1)).toContainText("ATE 2 · PM0096 · 96 UPH");
 
     const firstCardBuckets = cards.first().locator(".kpi-card-bucket");
     await expect(firstCardBuckets).toHaveCount(4);

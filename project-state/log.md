@@ -645,3 +645,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Responsive views: desktop table (≥901px / 1280px) and phone cards (≤900px / 375px with 4 stacked buckets per card) with zero horizontal scroll and touch targets ≥ 44px.
 - Verified in dedicated test suite `e2e/station-kpi.spec.mjs` against synthetic fixture `fixtures/station-kpis/response-12h.json`.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] feature — Station KPI panel ATE and device rate labels (Round 28 follow-up)
+- Updated Station KPI panel headers and cards to display ATE setup name, `deviceId`, and rated throughput (`ATE 1 · SR1260 · 1,260 UPH` and `ATE 2 · PM0096 · 96 UPH`) per spec section 2.
+- Updated synthetic fallback stubs (`DEVICE_CATALOG`, ATE equipment mapping, and UPH formatting helper).
+- Updated `e2e/station-kpi.spec.mjs` with assertions for ATE setup names, device IDs, rated throughput strings, and refreshed metric fixture values.
+- Pages updated: project-state/frontend/overview.md; this log.
