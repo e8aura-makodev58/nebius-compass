@@ -971,3 +971,15 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-24] feature — Pure changeover readiness precursor (round 42)
 - Added deterministic board/cell requirement checks using existing inventory validation and cellReadiness shape. Kit/crew remain UNKNOWN and block readiness; no scheduling, reservations or responder logic. No conditional HTTP route added because room changeover records do not exist.
 - Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md.
+## [2026-10-24] feature — Changeover readiness panel (round 42, gemini)
+- Added the **Changeover readiness** panel (`frontend/changeover-readiness-view.js`, `frontend/changeover-readiness.css`):
+  - Displays changeover metadata card (`changeoverId`, `cellId`, `targetProgramRevision`, `startsAt`, `status`) and one row/card per requirement check (`LOADBOARD_AVAILABLE`, `CELL_READY`, `KIT_AVAILABLE`, `CREW_QUALIFIED`) with explicit text results (`PASS`, `FAIL`, `UNKNOWN`), plain-text reasons, and assigned `boardId` on `PASS`.
+  - Adheres strictly to the rule that never color alone carries a result; all result and status badges render bold descriptive text meeting WCAG AA contrast (≥ 4.5:1).
+  - Displays unmet requirements panel listing reason codes and an explicit notice explaining kit and crew facts are not yet recorded in slice 1.
+  - Interactive changeover select dropdown (`CO-0031`, `CO-0032`, `CO-0033`) and manual refresh button with live announcer updates (`#co-live-announcer`).
+  - Built stub-first against read contract `GET /api/control-rooms/:roomId/changeovers/:changeoverId/readiness` with deterministic synthetic fallback, loading, empty, and forced-failure error/retry states.
+  - Registered in Dockview tiling layout (`frontend/tiling.js`), phone workspace navigation (`frontend/workspace-nav.js`), and HTML scaffold (`frontend/index.html`). Preserved legacy layout compatibility (`isLegacy6` through `isLegacy11`).
+  - Fully responsive between desktop table layout (≥901px) and mobile cards layout (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+- Added dedicated E2E test suite in `e2e/changeover-readiness.spec.mjs` (4/4 tests passing).
+- Verification: `npm test` 604/604 passed; targeted E2E suites 38/38 passed; full Chromium E2E suite 175/175 passed on port 3022. Port 3022 cleanly released.
+- Pages updated: project-state/frontend/overview.md; this log.

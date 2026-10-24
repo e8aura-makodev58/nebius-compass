@@ -150,6 +150,7 @@
 .display-mode:not([data-display="obligations"]) #obligations-tile { display: none !important; }
 .display-mode:not([data-display="episodes"]) #handler-episodes-tile { display: none !important; }
 .display-mode:not([data-display="calibrations"]) #calibrations-tile { display: none !important; }
+.display-mode:not([data-display="changeoverReadiness"]) #changeover-readiness-tile { display: none !important; }
 .display-mode[data-display="staffing"] .floor-section, .display-mode[data-display="staffing"] .context-panel { display: none !important; }
 .display-mode[data-display="staffing"] #staffing-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
 .display-mode[data-display="investigation"] .floor-section, .display-mode[data-display="investigation"] .context-panel { display: none !important; }
@@ -160,7 +161,7 @@
 .display-mode[data-display="loadboards"] #loadboards-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
 .display-mode[data-display="obligations"] .floor-section, .display-mode[data-display="obligations"] .context-panel { display: none !important; }
 .display-mode[data-display="obligations"] #obligations-tile { flex: 1; padding: 24px; font-size: 1.05rem; }
-@media (max-width: 900px) { .staffing-tile, .station-kpi-tile, .loadboards-tile, .obligations-tile, .handler-episodes-tile, .calibrations-tile { border-top: 1px solid var(--rule); } }
+@media (max-width: 900px) { .staffing-tile, .station-kpi-tile, .loadboards-tile, .obligations-tile, .handler-episodes-tile, .calibrations-tile, .changeover-readiness-tile { border-top: 1px solid var(--rule); } }
 
 /* Compact decisions keep the recommended action ahead of expandable evidence. */
 .staffing-tile { padding: 14px; font-size: .8rem; line-height: 1.45; }
@@ -209,7 +210,7 @@
   body:not(.display-mode) .dashboard { display: block; }
   body:not(.display-mode) .floor-section { padding: 12px; }
   body:not(.display-mode) .context-panel { border-top: 1px solid var(--rule); }
-  body:not(.display-mode) .context-panel, body:not(.display-mode) .staffing-tile, body:not(.display-mode) .station-kpi-tile, body:not(.display-mode) .loadboards-tile, body:not(.display-mode) .obligations-tile, body:not(.display-mode) .handler-episodes-tile, body:not(.display-mode) .calibrations-tile { scroll-margin-top: 64px; }
+  body:not(.display-mode) .context-panel, body:not(.display-mode) .staffing-tile, body:not(.display-mode) .station-kpi-tile, body:not(.display-mode) .loadboards-tile, body:not(.display-mode) .obligations-tile, body:not(.display-mode) .handler-episodes-tile, body:not(.display-mode) .calibrations-tile, body:not(.display-mode) .changeover-readiness-tile { scroll-margin-top: 64px; }
   body:not(.display-mode):not([data-workspace-view="floor"]) .floor-section > .section-heading,
   body:not(.display-mode):not([data-workspace-view="floor"]) #floor,
   body:not(.display-mode):not([data-workspace-view="issues"]) .context-panel,
@@ -220,6 +221,7 @@
   body:not(.display-mode):not([data-workspace-view="obligations"]) #obligations-tile,
   body:not(.display-mode):not([data-workspace-view="episodes"]) #handler-episodes-tile,
   body:not(.display-mode):not([data-workspace-view="calibrations"]) #calibrations-tile,
+  body:not(.display-mode):not([data-workspace-view="changeovers"]) #changeover-readiness-tile,
   body:not(.display-mode):not([data-workspace-view="issues"]) .lower-grid > section:has(#issue-list),
   body:not(.display-mode):not([data-workspace-view="events"]) .lower-grid > section:has(#event-feed),
   body:not(.display-mode)[data-workspace-view="staffing"] .floor-section,
@@ -227,7 +229,8 @@
   body:not(.display-mode)[data-workspace-view="loadboards"] .floor-section,
   body:not(.display-mode)[data-workspace-view="obligations"] .floor-section,
   body:not(.display-mode)[data-workspace-view="episodes"] .floor-section,
-  body:not(.display-mode)[data-workspace-view="calibrations"] .floor-section { display: none; }
+  body:not(.display-mode)[data-workspace-view="calibrations"] .floor-section,
+  body:not(.display-mode)[data-workspace-view="changeovers"] .floor-section { display: none; }
   body:not(.display-mode)[data-workspace-view="floor"] .lower-grid { display: none; }
   body:not(.display-mode) .lower-grid { display: block; margin-top: 0; }
   body:not(.display-mode) .issue-list { max-height: 260px; overflow-y: auto; }

@@ -12,7 +12,7 @@ export function initWorkspaceNav({ onReveal = () => {} } = {}) {
     if (phone.matches) requestAnimationFrame(() => {
       onReveal();
       if (focus) {
-        const target = document.querySelector(view === 'issues' ? '.context-panel' : view === 'floor' ? '#floor' : view === 'staffing' ? (document.querySelector('#investigation-tile [data-report-id], #investigation-tile [data-investigation-id]') ? '#investigation-tile' : '#staffing-tile') : view === 'kpis' ? '#station-kpi-tile' : view === 'loadboards' ? '#loadboards-tile' : view === 'obligations' ? '#obligations-tile' : view === 'episodes' ? '#handler-episodes-tile' : view === 'calibrations' ? '#calibrations-tile' : '#event-feed');
+        const target = document.querySelector(view === 'issues' ? '.context-panel' : view === 'floor' ? '#floor' : view === 'staffing' ? (document.querySelector('#investigation-tile [data-report-id], #investigation-tile [data-investigation-id]') ? '#investigation-tile' : '#staffing-tile') : view === 'kpis' ? '#station-kpi-tile' : view === 'loadboards' ? '#loadboards-tile' : view === 'obligations' ? '#obligations-tile' : view === 'episodes' ? '#handler-episodes-tile' : view === 'calibrations' ? '#calibrations-tile' : view === 'changeovers' ? '#changeover-readiness-tile' : '#event-feed');
         target?.scrollIntoView({block:'start', behavior:'instant'});
         if(target) { target.setAttribute('tabindex','-1'); target.focus({preventScroll:true}); }
       }

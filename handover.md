@@ -1660,36 +1660,28 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 22:08 UTC
-- **Task:** Round 41: ATE terminology pass on the Station KPI and Handler episodes panels (visible labels only)
-- **Head commit:** `5533f85`
+- **Updated:** 2026-10-24 22:37 UTC
+- **Task:** Round 42: changeover readiness panel, stub-first against the round 42 read contract
+- **Head commit:** `9c900ed`
 - **Changes:**
-  - Completed terminology pass in visible labels only across Station KPI and Handler episodes panels matching `docs/design/station-kpi-panel.md` section 1 where "station" refers to a physical unit:
-    - In `frontend/station-kpis-view.js`:
-      - Eyebrow updated from "Station throughput" to "ATE setup throughput".
-      - Filter summary updated from "Stations (N of M)" to "ATE setups (N of M)".
-      - Filter trigger aria-label updated from "Filter stations" to "Filter ATE setups".
-      - Search input placeholder updated to "Search ATE setups…" and aria-label to "Search ATE setups".
-      - Options group aria-label updated from "Station list" to "ATE setup list".
-      - Empty search text updated from "No matching stations" to "No matching ATE setups".
-      - Empty state text updated from "No stations selected" / "Select at least one station using the filter above…" to "No ATE setups selected" / "Select at least one ATE setup using the filter above…".
-      - Table column header updated from "Station" to "ATE setup".
-      - Table totals footer and mobile totals card updated from "Totals (N station[s])" to "Totals (N ATE setup[s])".
-      - Retained panel title "Station KPIs", DOM IDs (`#station-kpi-heading`), data attributes (`data-station-id`, `data-kpi-station`), and CSS classes intact.
-    - In `frontend/handler-episodes-view.js`:
-      - Header eyebrow updated from "Station Operations · F4" to "ATE Setup Operations · F4".
-      - Kept badge CSS classes (`.he-station-badge`), data attributes, and raw identifier rendering (`HANDLER-A`) unchanged.
-    - In `e2e/station-kpi.spec.mjs`:
-      - Updated visible text assertions for totals summaries ("Totals (2 ATE setups)", "Totals (1 ATE setup)") and empty state ("No ATE setups selected").
-- **Files changed:** `frontend/station-kpis-view.js`, `frontend/handler-episodes-view.js`, `e2e/station-kpi.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`
+  - Added the **Changeover readiness** panel (`frontend/changeover-readiness-view.js`, `frontend/changeover-readiness.css`):
+    - Displays changeover metadata card (`changeoverId`, `cellId`, `targetProgramRevision`, `startsAt`, `status`) and one row/card per requirement check (`LOADBOARD_AVAILABLE`, `CELL_READY`, `KIT_AVAILABLE`, `CREW_QUALIFIED`) with explicit text results (`PASS`, `FAIL`, `UNKNOWN`), plain-text reasons, and assigned `boardId` on `PASS`.
+    - Adheres strictly to the rule that never color alone carries a result; all result and status badges render bold descriptive text meeting WCAG AA contrast (≥ 4.5:1).
+    - Displays unmet requirements panel listing reason codes and an explicit notice explaining kit and crew facts are not yet recorded in slice 1.
+    - Interactive changeover select dropdown (`CO-0031`, `CO-0032`, `CO-0033`) and manual refresh button with live announcer updates (`#co-live-announcer`).
+    - Built stub-first against read contract `GET /api/control-rooms/:roomId/changeovers/:changeoverId/readiness` with deterministic synthetic fallback, loading, empty, and forced-failure error/retry states.
+    - Registered in Dockview tiling layout (`frontend/tiling.js`), phone workspace navigation (`frontend/workspace-nav.js`), and HTML scaffold (`frontend/index.html`). Preserved legacy layout compatibility (`isLegacy6` through `isLegacy11`).
+    - Fully responsive between desktop table layout (≥901px) and mobile cards layout (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+  - Added dedicated E2E test suite in `e2e/changeover-readiness.spec.mjs` (4/4 tests passing).
+- **Files changed:** `frontend/changeover-readiness-view.js`, `frontend/changeover-readiness.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/changeover-readiness.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`
 - **Verification:**
-  - `npm test`: 597/597 passing (hermetic, no network, no backend writes).
-  - Targeted E2E on port 3022: `e2e/station-kpi.spec.mjs` (5/5), `e2e/handler-episodes.spec.mjs` (11/11), `e2e/panel-audit-r39.spec.mjs` (6/6), `e2e/phone-audit.spec.mjs` (5/5) — all 27/27 passed across 375px and 1280px viewports.
-  - Full Chromium E2E suite (`COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`): 171/171 passing.
+  - `npm test`: 604/604 passing (hermetic, no network, no backend writes).
+  - Targeted unit/E2E: `tiling-layout.test.mjs` (4/4), `e2e/changeover-readiness.spec.mjs` (4/4), `e2e/station-kpi.spec.mjs` (5/5), `e2e/calibrations.spec.mjs` (7/7), `e2e/handler-episodes.spec.mjs` (11/11), `e2e/panel-audit-r39.spec.mjs` (6/6), `e2e/phone-audit.spec.mjs` (5/5) — all passing on port 3022.
+  - Full Chromium E2E suite (`COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`): 175/175 passing.
   - Ports 3022 and 3122 confirmed completely free (`ss -ltn | grep -E ':3022|:3122'`).
-  - No changes made to `backend/`.
+  - Strictly zero changes to `backend/`.
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`
-- **Risks / follow-ups:** None. All API field names, DOM IDs, and CSS classes were preserved.
+- **Risks / follow-ups:** None. Backend route for changeovers does not exist yet (as expected for slice 1), and stub-first synthetic fallback handles 404 gracefully.
 - **Questions for main:** Ready for merge review. Watcher remains active.
 
 ## codebuddy
