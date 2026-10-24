@@ -15,6 +15,7 @@ export function getPanelState(roomId) {
     stateByRoom.set(roomId, {
       searchQuery: "",
       conditionFilter: "ALL", // ALL | SERVICEABLE | UNDER_REPAIR | QUARANTINED
+      selectedBoardId: null, // inspected board
       data: null,
       loading: false,
       error: null,
@@ -128,7 +129,7 @@ function conditionBadgeClass(cond) {
  * Render the Loadboards markup given current state.
  */
 export function loadboardsMarkup({ escape, panelState }) {
-  const { data, loading, error, searchQuery, conditionFilter } = panelState;
+  const { data, loading, error, searchQuery, conditionFilter, selectedBoardId } = panelState;
   const allBoards = data?.boards ?? [];
 
   // Filter boards
@@ -226,6 +227,7 @@ export function loadboardsMarkup({ escape, panelState }) {
                   <th scope="col">Location</th>
                   <th scope="col">Approved Programs</th>
                   <th scope="col">Held / Reservation</th>
+                  <th scope="col">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -244,9 +246,10 @@ export function loadboardsMarkup({ escape, panelState }) {
                     const heldHtml = b.heldBy
                       ? `<span class="lb-held-badge" title="Reservation: ${escape(b.heldBy)}">Held (${escape(b.heldBy)})</span>`
                       : `<span class="lb-available-badge">Available</span>`;
+                    const isInspected = selectedBoardId === b.boardId;
 
                     return `
-                      <tr data-board-id="${escape(b.boardId)}">
+                      <tr data-board-id="${escape(b.boardId)}" class="${isInspected ? "lb-row-inspected" : ""}">
                         <td class="lb-cell-id"><strong>${escape(b.boardId)}</strong></td>
                         <td class="lb-cell-rev">${escape(b.revision)}</td>
                         <td class="lb-cell-condition">
@@ -255,7 +258,32 @@ export function loadboardsMarkup({ escape, panelState }) {
                         <td class="lb-cell-location">${locationHtml}</td>
                         <td class="lb-cell-programs">${programsHtml}</td>
                         <td class="lb-cell-held">${heldHtml}</td>
+                        <td class="lb-cell-actions">
+                          <button
+                            type="button"
+                            class="lb-action-btn secondary-button"
+                            data-board-id="${escape(b.boardId)}"
+                            aria-expanded="${isInspected ? "true" : "false"}"
+                            aria-label="Inspect loadboard ${escape(b.boardId)}"
+                          >
+                            ${isInspected ? "Close" : "Inspect"}
+                          </button>
+                        </td>
                       </tr>
+                      ${
+                        isInspected
+                          ? `
+                      <tr class="lb-row-detail-wrap" data-detail-for="${escape(b.boardId)}">
+                        <td colspan="7">
+                          <div class="lb-detail-drawer" role="region" aria-label="Inspection details for ${escape(b.boardId)}">
+                            <strong>Inspection · ${escape(b.boardId)} (Rev ${escape(b.revision)})</strong>
+                            <p>Condition: <em>${escape(condText)}</em> · Location: <em>${escape(b.cellId ? b.cellId : "In store")}</em> · Status: <em>${escape(b.heldBy ? `Held (${b.heldBy})` : "Available")}</em></p>
+                            <p>Approved programs: ${(b.approvedPrograms || []).map((p) => `<code>${escape(p)}</code>`).join(", ") || "None"}</p>
+                          </div>
+                        </td>
+                      </tr>`
+                          : ""
+                      }
                     `;
                   })
                   .join("")}
@@ -280,6 +308,7 @@ export function loadboardsMarkup({ escape, panelState }) {
                       .map((p) => `<span class="lb-program-pill">${escape(p)}</span>`)
                       .join("")}</div>`
                   : `<span class="lb-none">—</span>`;
+                const isInspected = selectedBoardId === b.boardId;
 
                 return `
                   <article class="lb-card" role="listitem" data-board-id="${escape(b.boardId)}">
@@ -306,6 +335,30 @@ export function loadboardsMarkup({ escape, panelState }) {
                       <span class="lb-card-key">Approved programs:</span>
                       ${programsHtml}
                     </div>
+
+                    <div class="lb-card-actions">
+                      <button
+                        type="button"
+                        class="lb-action-btn secondary-button"
+                        data-board-id="${escape(b.boardId)}"
+                        aria-expanded="${isInspected ? "true" : "false"}"
+                        aria-label="Inspect loadboard ${escape(b.boardId)}"
+                      >
+                        ${isInspected ? "Close inspection" : "Inspect"}
+                      </button>
+                    </div>
+
+                    ${
+                      isInspected
+                        ? `
+                    <div class="lb-detail-drawer" role="region" aria-label="Inspection details for ${escape(b.boardId)}">
+                      <strong>Inspection · ${escape(b.boardId)} (Rev ${escape(b.revision)})</strong>
+                      <p>Condition: <em>${escape(condText)}</em> · Location: <em>${escape(b.cellId ? b.cellId : "In store")}</em></p>
+                      <p>Status: <em>${escape(b.heldBy ? `Held (${b.heldBy})` : "Available")}</em></p>
+                      <p>Programs: ${(b.approvedPrograms || []).map((p) => `<code>${escape(p)}</code>`).join(", ") || "None"}</p>
+                    </div>`
+                        : ""
+                    }
                   </article>
                 `;
               })
@@ -347,21 +400,34 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
   }
 
   function bindEvents() {
-    // Search input
+    // Search input: preserve focus and selection cursor across keystrokes
     const searchInput = element.querySelector("#lb-search-input");
     if (searchInput) {
       searchInput.addEventListener("input", (e) => {
+        const start = e.target.selectionStart;
+        const end = e.target.selectionEnd;
         panelState.searchQuery = e.target.value;
         updateUI();
+        const nextInput = element.querySelector("#lb-search-input");
+        if (nextInput) {
+          nextInput.focus();
+          try {
+            nextInput.setSelectionRange(start, end);
+          } catch {}
+        }
       });
     }
 
-    // Condition select
+    // Condition select: preserve focus on the dropdown after filter changes
     const conditionSelect = element.querySelector("#lb-condition-select");
     if (conditionSelect) {
       conditionSelect.addEventListener("change", (e) => {
         panelState.conditionFilter = e.target.value;
         updateUI();
+        const nextSelect = element.querySelector("#lb-condition-select");
+        if (nextSelect) {
+          nextSelect.focus();
+        }
       });
     }
 
@@ -388,8 +454,20 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
         panelState.searchQuery = "";
         panelState.conditionFilter = "ALL";
         updateUI();
+        element.querySelector("#lb-search-input")?.focus();
       });
     }
+
+    // Row action buttons: toggle inspect
+    element.querySelectorAll(".lb-action-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const boardId = e.currentTarget.dataset.boardId;
+        panelState.selectedBoardId = panelState.selectedBoardId === boardId ? null : boardId;
+        updateUI();
+        // Restore focus to the clicked board's action button
+        element.querySelector(`.lb-action-btn[data-board-id="${boardId}"]`)?.focus();
+      });
+    });
   }
 
   // Initial load

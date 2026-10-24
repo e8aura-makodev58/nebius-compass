@@ -1482,22 +1482,15 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 17:00 UTC
-- **Task:** Round 31: Loadboard checkout panel (F3 UI, `docs/design/loadboard-checkout-slice-1.md`)
-- **Head commit:** 0b79520
-- **Changes:**
-  - Implemented read-only Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) registered as a workspace Dockview tile and phone workspace view (`Boards`).
-  - Lists each board with `boardId`, `revision`, `condition` (`SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`), current cell or "In store", approved programs list (`approvedPrograms`), and held status (`heldBy` reservation ID or "Available").
-  - Implemented real-time search input (filtering by boardId, revision, cellId, approvedPrograms, or heldBy) and condition dropdown filter (`ALL`, `SERVICEABLE`, `UNDER_REPAIR`, `QUARANTINED`).
-  - Responsive layout: desktop table layout (>= 901px) and phone stacked card layout (<= 900px) with >= 44px touch targets and zero horizontal scroll at 375px and 1280px.
-  - Built stub-first against read contract `GET /api/control-rooms/:roomId/loadboards` with deterministic synthetic fallback (`generateSyntheticLoadboards()`), loading state, empty/reset state, and forced-failure error/retry state.
-  - Registered panel in Dockview layout (`frontend/tiling.js`), phone navigation (`frontend/workspace-nav.js`), responsive styles (`frontend/layout.css`), and SPA controller (`frontend/app.js`, `frontend/index.html`).
-  - Added comprehensive E2E test suite in `e2e/loadboards.spec.mjs` (7/7 tests passed).
-- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `frontend/app.js`, `e2e/loadboards.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
-- **Verification:** `npm test` 511/511 passed · Full Chromium forced-provider E2E 112/112 passed (`COMPASS_E2E_PORT=3022`). Free ports verified (`ss -ltn | grep -E ':(3022|3122)'`). Zero live provider calls.
+- **Updated:** 2026-10-24 17:26 UTC
+- **Task:** Round 32: Consumable obligations panel (`docs/design/consumable-life-slice-2.md` §5) and Loadboards accessibility tightening
+- **Head commit:** 39d10de
+- **Changes:** Built Obligations panel (`frontend/obligations-view.js`, `frontend/obligations.css`) with status filter (`ALL`, `OPEN`, `CLOSED`), search input with focus retention, expandable inspection drawers (`.obl-detail-drawer`), synthetic fallback against `GET /api/control-rooms/:roomId/consumable-obligations`, and zero horizontal scroll at 375px and 1280px; registered Dockview tile and mobile nav button (`Life`); tightened Loadboards panel with keyboard-reachable row action drawer and active focus retention across text typing and condition dropdown changes; added full E2E test suite (`e2e/obligations.spec.mjs`).
+- **Files changed:** `frontend/obligations-view.js`, `frontend/obligations.css`, `e2e/obligations.spec.mjs`, `frontend/index.html`, `frontend/app.js`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `frontend/layout.css`, `frontend/loadboards-view.js`, `frontend/loadboards.css`, `e2e/loadboards.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
+- **Verification:** `npm test` passed (511/511 hermetic unit tests passing); full E2E suite `COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e` passed (121/121 tests passing including all 8 obligations tests and all 8 loadboards tests); ports 3022/3122 verified free.
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** Disjoint frontend implementation against read endpoint contract. No backend files changed.
-- **Questions for main:** Round 31 is complete and ready for merge. Per user instructions, please do not keep Gemini idle: please review, merge Round 31, and assign Gemini's next round task promptly.
+- **Risks / follow-ups:** None; backend was not modified (`AGENTS.md` rule 10). When codex mounts the real obligations backend route in slice 2, the panel will seamlessly switch from synthetic fallback to live backend DTOs.
+- **Questions for main:** Claude: Round 32 is complete and verified READY FOR MERGE. Please review/merge branch `gemini` and assign the next round/task to Gemini to keep Gemini active without idle periods. Gemini's 5-minute handover watcher is running and actively polling master.
 
 ## codebuddy
 

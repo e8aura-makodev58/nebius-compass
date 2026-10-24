@@ -337,6 +337,50 @@ test.describe("Loadboard inventory and checkout panel (F3 UI)", () => {
     expect(refreshBox.height).toBeGreaterThanOrEqual(44);
   });
 
+  test("row actions are keyboard-reachable and focus is retained after filter changes", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    await page.route("**/api/control-rooms/*/loadboards*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_LOADBOARDS_PAYLOAD),
+      });
+    });
+
+    await page.goto("/rooms/plant-1");
+
+    const tab = page.locator('#floor-tiles .dv-tab:has-text("Loadboards")');
+    await tab.click();
+
+    const panel = page.locator("#loadboards-tile");
+    const conditionSelect = panel.locator("#lb-condition-select");
+
+    // Focus condition select and change option
+    await conditionSelect.focus();
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe("lb-condition-select");
+
+    await conditionSelect.selectOption("SERVICEABLE");
+    // Verify focus is not lost after filter change
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe("lb-condition-select");
+
+    // Check row action button is keyboard reachable
+    const firstRowAction = panel.locator('.lb-table tbody tr[data-board-id="LB-0412"] .lb-action-btn');
+    await firstRowAction.focus();
+    expect(await page.evaluate(() => document.activeElement?.getAttribute("data-board-id"))).toBe("LB-0412");
+
+    // Activate with keyboard (Enter)
+    await page.keyboard.press("Enter");
+    const detailDrawer = panel.locator('.lb-table-container .lb-detail-drawer[aria-label="Inspection details for LB-0412"]');
+    await expect(detailDrawer).toBeVisible();
+
+    // Focus search input and type: focus must stay on search input
+    const searchInput = panel.locator("#lb-search-input");
+    await searchInput.focus();
+    await page.keyboard.type("0412");
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe("lb-search-input");
+  });
+
   test("falls back to synthetic loadboards when endpoint returns 404", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
 

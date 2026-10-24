@@ -728,3 +728,12 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added a pure public inventory builder and GET /api/control-rooms/:roomId/loadboards, shared across Live/Offline without advancing clocks or writing state. Missing private inventory returns an empty list; only current HELD reservation IDs are linked, with unrelated metadata excluded.
 - Reused the pure checkout inventory validator and added hermetic empty/held/room-error, projection privacy, immutable read and Offline API-free checks. No frontend/E2E files or mutation routes changed.
 - Pages updated: backend/http-api.md, backend/domain-model.md, backend/overview.md.
+## [2026-10-24] feature — Consumable obligations panel and loadboards tightening (Round 32, F1 slice 2 UI)
+- Created read-only **Obligations** panel (`frontend/obligations-view.js`, `frontend/obligations.css`) registered as a Dockview tile docked alongside staffing, station KPIs, and loadboards, plus phone workspace view (`Life`).
+- Displays consumable obligations rows (`docs/design/consumable-life-slice-2.md` §5) with `obligationId`, `kind` (`CLEANING`, `REPLACEMENT`, `RECONCILIATION`), `status` (`OPEN`, `CLOSED`), `lifecycleId`, `policyId@version` (e.g. `probe-card-clean@v1`), `openedAt` timestamp, and `closeReason` (`CLEANED`, `REPLACED`, `SUPERSEDED`, `RESOLVED_BY_READING`).
+- Implemented real-time search filtering across obligation ID, kind, lifecycle, policy, and reason with input focus retention, status dropdown filtering (`ALL`, `OPEN`, `CLOSED`), expandable inspection details drawer (`.obl-detail-drawer`), and manual refresh.
+- Built stub-first against read contract `GET /api/control-rooms/:roomId/consumable-obligations` with room state sync (`state.consumableObligations`), deterministic synthetic fallback, and robust loading, empty, and forced-failure error/retry states.
+- Implemented responsive desktop table layout (≥901px) and mobile stacked card layout (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
+- Tightened **Loadboards** panel: added keyboard-reachable inspect action buttons, expandable drawer (`.lb-detail-drawer`), and focus preservation across typing and condition dropdown changes (`e2e/loadboards.spec.mjs`).
+- Added full E2E test suite in `e2e/obligations.spec.mjs` (8/8 tests passing). Verified against `npm test` (511/511) and full E2E suite (121/121 passing).
+- Pages updated: project-state/frontend/overview.md; this log.
