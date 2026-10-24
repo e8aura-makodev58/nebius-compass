@@ -1541,16 +1541,12 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IN PROGRESS
 - **Updated:** 2026-10-24
-- **Task:** Round 35: calibration readiness (F8 slice 1), optional pure checkout gate and room read endpoint.
-- **Head commit:** `cc24a9d` (implementation; this handoff committed separately). Synced master to `dc17fd8` before implementation, preserving prior authorized work.
-- **Changes:** Import-free `cellReadiness(calibrations,cellId,at)` selects latest effective calibration per instrument; future rows never act early, expiry equality is EXPIRED, missing is NO_CALIBRATION. Results list sorted explicit instrument facts and reasons. Optional third checkoutBoard argument rejects non-READY with CELL_NOT_READY alongside all other failing rules, checks matching cell/query instant and preserves inventory. Omitted argument and batch behavior are unchanged. Shared Live/Offline GET cell-readiness reads private calibration rows at the room simulation clock without writes or clock advancement; raw history is excluded from ordinary snapshots.
-- **Files changed:** calibration-readiness.mjs, cell-readiness.mjs, loadboard-checkout.mjs, server/runtime/public snapshot adapters, calibration-readiness.test.mjs, docs/decisions.md and backend wiki/log. No frontend/E2E edits.
-- **Verification:** Final `npm test` **571/571**; forced-provider Chromium E2E **136/136** on 3021; targeted readiness/checkout/command suites **37/37**. Covers every spec acceptance item, duplicate/conflicting facts, canonical UTC formatting, immutable inputs/outputs, malformed dates, stale/cross-cell gate packets, sorted/future-only cells, durable Live read immutability, Offline parity/no network and unknown-room 404. `git diff --check` clean; port 3021 free; no live API spend/product-data writes.
-- **project-state pages updated:** backend/domain-model.md, backend/overview.md, backend/http-api.md, log.md.
-- **Risks / follow-ups:** Approved spec section 4 explicitly defers checkout POST wiring; this round adds the optional pure gate and requested GET only. Existing HTTP checkout adapter still omits readiness. Optional private room source is calibrations; no default data, provisioning, schema migration or ingestion route is invented. Duplicate identical facts count once; conflicting IDs/same-instant competing records fail. Required-instrument configuration and correlation evidence gates remain later work. Decisions documented in docs/decisions.md. No implementation blocker.
-- **Questions for main:** Pending-review reminder 1 (2026-10-24): master still assigns round 35 without acknowledging implementation `cc24a9d` / ready handoff `80d9bb1`. Please confirm review status and merge or record required revisions, including whether to schedule the explicitly deferred checkout POST wiring; queue the next concrete Codex task per the user's direction to avoid idle cycles. No implementation blocker; completed work and passing verification remain unchanged. Delivery is limited to this committed board update because direct messaging is unavailable. Existing watcher left unchanged; no second worker started.
+- **Task:** Round 36: enforce checkout readiness, manual calibration entry and seeded READY cells in both modes.
+- **Changes:** Work preserved uncommitted: readiness is evaluated in the checkout transaction; serialized calibration POST, explicit GET ledger and shared seeds are implemented. Route tests cover readiness, entry/retry/conflicts, journal rollback and mode parity.
+- **Verification:** Completing targeted tests and backend documentation, then both full suites before READY. One new malformed-body assertion is under investigation; no external blocker.
+- **Questions for main:** Follow-up reminders 1–2 acknowledged: round 36 is active, not pending merge yet. Please allow completion/review of this implementation and queue the next concrete task afterward per the user's direction. This committed board status is the available delivery channel; direct messaging is unavailable. No master merge, second worker or watcher restart for these reminders.
 
 ## gemini
 
