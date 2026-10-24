@@ -654,3 +654,18 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added a standalone import-free evaluator with separate lifetime/since-clean balances, exact status precedence, sorted reasons and lifecycle/policy/version/status obligation keys. Unknown counts remain null; reconciliation blocks derived balances. No store, route, UI, clock or simulation integration.
 - Added hermetic tests for every acceptance item, including cleaning/replacement independence, equality boundaries, reordered data, future cleaning cutoff, unknown/decreasing counters, determinism and rejection of hidden/invalid input fields.
 - Pages updated: backend/domain-model.md, backend/overview.md.
+## [2026-10-24] feature — Station KPI panel frontend (Round 28)
+- Implemented the Station KPI panel (`frontend/station-kpis-view.js`, `frontend/station-kpis.css`) according to `docs/design/station-kpi-panel.md`.
+- Displays 3-hour bucket metrics in a 12-hour window (actual output, planned expected units, attainment percentage, downtime minutes, issues raised) and totals row/card across selected stations.
+- Registered workspace panel in Dockview (`frontend/tiling.js`) and phone workspace navigation (`frontend/workspace-nav.js`).
+- Added per-viewer in-memory station filter (search, All, None, checkbox selection) and window navigation (Latest, Previous 12 h, Next 12 h disabled at Latest, recent windows select).
+- Displayed explicit "DERIVED_FROM_UPTIME" source label and provided loading, empty, and forced-failure error states with retry affordance.
+- Responsive views: desktop table (≥901px / 1280px) and phone cards (≤900px / 375px with 4 stacked buckets per card) with zero horizontal scroll and touch targets ≥ 44px.
+- Verified in dedicated test suite `e2e/station-kpi.spec.mjs` against synthetic fixture `fixtures/station-kpis/response-12h.json`.
+- Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] feature — Station KPI panel ATE and device rate labels (Round 28 follow-up)
+- Updated Station KPI panel headers and cards to display ATE setup name, `deviceId`, and rated throughput (`ATE 1 · SR1260 · 1,260 UPH` and `ATE 2 · PM0096 · 96 UPH`) per spec section 2.
+- Updated synthetic fallback stubs (`DEVICE_CATALOG`, ATE equipment mapping, and UPH formatting helper).
+- Updated `e2e/station-kpi.spec.mjs` with assertions for ATE setup names, device IDs, rated throughput strings, and refreshed metric fixture values.
+- Pages updated: project-state/frontend/overview.md; this log.
