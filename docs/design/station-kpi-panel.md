@@ -95,10 +95,10 @@ Rules:
 |---|---|
 | codex | Backend: `ratedUnitsPerHour` in the schema, validation, and migration; `backend/src/station-kpis.mjs` (pure, no I/O); the route; hermetic tests; project-state backend page. |
 | gemini | Frontend: the panel, its registration in the workspace, the filter and window controls, the phone layout, and the loading, empty and error states. Uses the API contract above with route stubs until the backend lands. Its own E2E file. |
-| claude (main) | This spec, the contract, the E2E spec for the panel (`e2e/station-kpi.spec.mjs`), review, merge, deploy, and the final `project-state` pages. |
+| claude (main) | This spec, the contract and the shared synthetic response fixture (`fixtures/station-kpis/`), review, merge, deploy, and the final `project-state` pages. |
 
 Files are disjoint: codex owns `backend/`, gemini owns `frontend/` and `e2e/station-kpi*.spec.mjs`, and main owns
-`docs/` and the E2E spec. Shared files (`handover.md`, `project-state/log.md`) are edited only per the protocol.
+`docs/` and `fixtures/station-kpis/`. Shared files (`handover.md`, `project-state/log.md`) are edited only per the protocol.
 
 ## 5. Acceptance
 
