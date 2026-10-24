@@ -3,6 +3,10 @@
 Status: **approved for build, round 28.** Synthetic, domain-neutral data only. Shared Live and Offline path
 (`AGENTS.md` rule 6). The panel reads only application-owned facts; no model is involved.
 
+Process context: the units are **semiconductor devices** (alphanumeric device names, for example `SR1260`), and the
+process is **ATE test** (automatic test equipment). Each **station** is an **ATE setup** (for example `ATE 1`). All
+device names and rates are synthetic.
+
 ## 1. What the user sees
 
 A workspace panel, **Station KPIs**, that shows for each selected station the KPIs of each **3-hour bucket** in a
@@ -13,6 +17,7 @@ selected **12-hour window** (four buckets per window).
 - **Window selector:** the window is 12 hours, aligned to 3-hour boundaries (00, 03, 06, … UTC). Controls: *Latest*,
   *Previous 12 h*, *Next 12 h* (disabled at *Latest*), and a select of recent windows. The default is the latest
   complete 12-hour window ending at or before the simulation clock.
+- **Per station:** the ATE setup name, the device it runs (`deviceId`) and that device's rated units per hour.
 - **Per bucket, per station:**
   - **Quantity processed** (units), the actual output.
   - **Expected output** (units), the plan for the bucket.
@@ -23,9 +28,15 @@ selected **12-hour window** (four buckets per window).
 
 ## 2. Definitions (the contract)
 
-- **Rated throughput:** each station has `ratedUnitsPerHour` (integer, 40–120). It is a plan parameter, not a
-  simulation outcome. Existing rooms are migrated with a deterministic value derived from the station ID (a hash,
-  not an RNG stream), so existing seeds and tests keep their behaviour.
+- **Device catalog:** a fixed list of devices, each with `deviceId` (alphanumeric, for example `SR1260`) and
+  `ratedUnitsPerHour` (integer, 1–10,000; the catalog spans dozens to thousands). The synthetic catalog is
+  `fixtures/station-kpis/device-catalog.json`. Rates are placeholders until test engineering confirms them.
+- **Rated throughput:** the rate belongs to the device, not the station. Each station runs one device, `deviceId`,
+  and the response's station `ratedUnitsPerHour` is that device's rate. It is a plan parameter, not a simulation outcome.
+- **Migration:** existing rooms get a `deviceId` from the catalog by a deterministic hash of the station ID
+  (index = hash mod catalog length, not an RNG stream), so existing seeds and tests keep their behaviour.
+- **Changeover:** a station runs one device for the whole window in this version. Program changes and their setup
+  time are a later addition.
 - **Bucket:** `[start, end)` of 180 minutes, aligned to UTC 3-hour boundaries.
 - **Expected output** = `ratedUnitsPerHour × bucketMinutes / 60`. There are no planned stops in this version.
 - **Downtime minutes** = the union of each issue's downtime interval (`downtimeStartedAt ?? raisedAt` until
@@ -67,13 +78,14 @@ Response (200):
   "stations": [
     {
       "stationId": "EQ-01",
-      "name": "Station 1",
+      "name": "ATE 1",
       "floor": 1,
-      "ratedUnitsPerHour": 72,
+      "deviceId": "SR1260",
+      "ratedUnitsPerHour": 1260,
       "buckets": [
         {
           "start": "...", "end": "...", "available": true,
-          "expectedUnits": 216, "actualUnits": 180, "attainmentPercent": 83.3,
+          "expectedUnits": 3780, "actualUnits": 3276, "attainmentPercent": 86.7,
           "downtimeMinutes": 24, "issuesRaised": 1, "source": "DERIVED_FROM_UPTIME"
         }
       ]
@@ -93,7 +105,7 @@ Rules:
 
 | Agent | Scope |
 |---|---|
-| codex | Backend: `ratedUnitsPerHour` in the schema, validation, and migration; `backend/src/station-kpis.mjs` (pure, no I/O); the route; hermetic tests; project-state backend page. |
+| codex | Backend: `deviceId` and the device catalog, `ratedUnitsPerHour` on the device, validation, and migration; `backend/src/station-kpis.mjs` (pure, no I/O); the route; hermetic tests; project-state backend page. |
 | gemini | Frontend: the panel, its registration in the workspace, the filter and window controls, the phone layout, and the loading, empty and error states. Uses the API contract above with route stubs until the backend lands. Its own E2E file. |
 | claude (main) | This spec, the contract and the shared synthetic response fixture (`fixtures/station-kpis/`), review, merge, deploy, and the final `project-state` pages. |
 
@@ -113,5 +125,7 @@ Files are disjoint: codex owns `backend/`, gemini owns `frontend/` and `e2e/stat
 ## 6. Open items, decided here
 
 - Actual output is derived until a production counter source exists. The label is part of the contract.
+- Rates are synthetic. Real device UPH and the station-to-device map need confirming with test engineering.
+- Device changeover is not modelled (section 2).
 - No planned stops or shift calendar in this version. Planned stops are a later addition and would reduce expected output.
 - Windows are UTC. Local time display is a later change once the plant's time zone is confirmed.
