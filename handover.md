@@ -1609,16 +1609,22 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** IN PROGRESS
-- **Updated:** 2026-10-24 21:01 UTC
-- **Task:** Round 39: phone and desktop audit of the rounds 31–38 panels (Obligations, Loadboards, Calibrations, Handler episodes, Station KPIs)
-- **Head commit:** `a989a04`
-- **Changes:** Starting Round 39. Auditing panels added in rounds 31–38 (Obligations, Loadboards with Add board drawer, Calibrations, Handler episodes, Station KPIs) at 375px and 1280px. Checking zero horizontal scroll, touch targets >= 44px, accessible names, contrast >= 4.5:1, and that every drawer/form returns focus to its trigger on close. Adding new E2E checks in `e2e/panel-audit-r39.spec.mjs`. Fixing any issues found in `frontend/`.
-- **Files changed:** in progress
-- **Verification:** in progress
-- **project-state pages updated:** in progress
-- **Risks / follow-ups:** Focused on frontend styling, keyboard focus, and accessibility. Do not change `backend/`. Use port 3022.
-- **Questions for main:** None. Round 39 started. Watcher remains active.
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24 21:15 UTC
+- **Task:** Round 39: phone and desktop audit of the rounds 31–38 panels (Obligations, Loadboards with Add board drawer, Calibrations, Handler episodes, Station KPIs)
+- **Head commit:** `7885215`
+- **Changes:** Audited all five panels added in rounds 31–38 (Obligations, Loadboards with Add board drawer, Calibrations, Handler episodes, Station KPIs) at 375px mobile and 1280px desktop viewports:
+  - Zero horizontal scroll: verified across all 5 panels at 375px and 1280px (`scrollWidth <= clientWidth`).
+  - Touch targets: verified all interactive elements meet or exceed 44px min-height/width on 375px mobile (including resolving `<label class="kpi-station-item">` wrappers for station KPI checkboxes).
+  - Accessible names: verified every interactive control (`button`, `a`, `input`, `select`, `textarea`) has an accessible name via text content, `aria-label`, or associated `<label>`.
+  - Contrast: identified and fixed low-contrast `.he-deficit-tag` in `handler-episodes.css` by darkening background from `#22c55e` (2.28:1 contrast) to `#166534` (8.01:1 contrast against white text, WCAG AA compliant). Verified text contrast >= 4.5:1 across all visible text in all 5 panels.
+  - Focus restoration on close: added Escape key dismiss and focus return on `.lb-checkout-form` (to `.lb-checkout-btn`), `.lb-readiness-detail-drawer` (to `.lb-readiness-chip`), `.lb-detail-drawer` (to `.lb-action-btn`), `.cal-add-form` (to `.cal-toggle-add-btn`), `.obl-detail-drawer` (to `.obl-action-btn`), and `.he-detail-drawer` (to `.he-action-btn`). Verified station KPIs `<details>` closes on Escape with focus return to `<summary>`.
+  - Created dedicated E2E audit suite in `e2e/panel-audit-r39.spec.mjs` (6/6 passing).
+- **Files changed:** `frontend/loadboards-view.js`, `frontend/calibrations-view.js`, `frontend/obligations-view.js`, `frontend/handler-episodes-view.js`, `frontend/handler-episodes.css`, `e2e/panel-audit-r39.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`. No `backend/` files modified.
+- **Verification:** `npm test` **588/588** passed; targeted E2E suite `e2e/panel-audit-r39.spec.mjs` **6/6** passed; full Chromium E2E suite `npm run test:e2e` **165/165** passed on port 3022. Checked port 3022 and 3122 are clean and free.
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** None. All audit requirements satisfied with zero horizontal scroll, >= 44px touch targets, accessible names, WCAG AA contrast, and trigger focus returns.
+- **Questions for main:** None. Round 39 audit and fixes complete, verified, and ready for merge. Watcher remains active.
 
 ## codebuddy
 
