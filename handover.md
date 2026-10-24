@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 43: changeover record entry (append-only) and the changeover readiness read route (round 43 bullets) | 43 |
-| gemini | Round 43: keyboard-only pass over all workspace panels (tab order, focus visibility, dialog focus return) | 43 |
+| codex | Round 44 (short, may be left partial at the run stop): changeover readiness E2E-free API docs in project-state/backend/http-api.md | 44 |
+| gemini | Round 44 (short, may be left partial at the run stop): keyboard pass follow-ups from the round 43 audit notes | 44 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,14 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 44 (2026-10-24) — short follow-ups before the run stops.** Start with `git merge master`. Finish only what fits; the run ends
+at 23:45 UTC. Leave partial work committed on your branch and say what is left in the handoff.
+
+- **codex.** Document the round 43 changeover routes in `project-state/backend/http-api.md` (request bodies, 400 and 404 cases, and
+  that the readiness route is read-only). Commit, set `READY FOR MERGE`.
+- **gemini.** Apply any keyboard-pass follow-ups recorded in your round 43 handoff. Keep the existing E2E green on port 3022. Commit,
+  set `READY FOR MERGE`.
+
 **Round 43 (2026-10-24) — changeover records and readiness route; keyboard pass.** Start with `git merge master`.
 
 - **codex.** Add a changeover record, which slice 1 did not have. (1) `POST /api/control-rooms/:roomId/changeovers` with body
@@ -1590,6 +1598,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `73b11e0`…`099c11c` (branch `codex`, round 43) and **gemini** `996bb65`/`37857dd` (round 43) → merge `7d0039a`: append-only changeover records (`POST /api/control-rooms/:roomId/changeovers`), the changeover readiness read route, and a keyboard-only pass across all workspace panels. `npm test` 619/619; E2E 186/186 on port 3024. Deployed `7d0039a`, healthy. GET-only smoke test: all endpoints 200; unknown changeover returns 404.
 - 2026-10-24 — **codex** `62b6cd6`…`3fe5bb3` (branch `codex`, round 42) and **gemini** `9c900ed`/`a39b472` (round 42) → merge `1b8cdf7`: pure changeover readiness check (`backend/src/changeover-readiness.mjs`; kit and crew UNKNOWN, `READY` only when all checks pass) and the Changeover readiness panel on stubs. No read route yet: slice 1 has no changeover record. `npm test` 612/612; E2E 175/175 on port 3024. Deployed `1b8cdf7`, healthy. GET-only smoke test: all endpoints 200.
 - 2026-10-24 — **codex** `09014d8`…`8fa2ea7` (branch `codex`, round 41) and **gemini** `5533f85`/`2847173` (round 41) → merge `d6587a6`: append-only handler jam inputs and `GET /api/control-rooms/:roomId/handler-episodes` (aligned to the 3-hour window), and the ATE terminology pass on the Station KPI and Handler episodes panels. `npm test` 604/604; E2E 171/171 on port 3024. Deployed `d6587a6`, healthy. GET-only smoke test: all endpoints 200; `handler-episodes` returns the suppression reasons for an empty room (`CONTEXT_MISSING`).
 - 2026-10-24 — **codex** `0f1dfd8`…`d49e07d` (branch `codex`, round 40) and **gemini** `bbc0f10`/`e67799d` (round 40) → merge `08c3b58`: `GET /api/control-rooms/:roomId/correlation-records` (read-only) and the correlation records section with an append-only form in the Calibrations panel. `npm test` 597/597; E2E 171/171 on port 3024. Deployed `08c3b58`, healthy. GET-only smoke test: all endpoints 200.
