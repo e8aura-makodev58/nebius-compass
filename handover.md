@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 34: handler jam episodes slice 1 (F4), pure module and tests (spec approved in round 34 bullets) | 34 |
-| gemini | Round 34: handler jam episodes panel (F4 UI), stub-first against the round 34 contract | 34 |
+| codex | Round 35: calibration readiness gate (F8 slice 1) in the pure readiness module and the checkout gate (section 4 of round 35 bullets) | 35 |
+| gemini | Round 35: cell readiness chips on the Loadboards panel, stub-first against the round 35 readiness contract | 35 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,21 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 35 (2026-10-24) — calibration readiness gate (F8 slice 1).** Start with `git merge master`.
+
+- **codex.** Implement `docs/design/calibration-readiness-slice-1.md` (approved for build). Add the pure function
+  `cellReadiness(calibrations, cellId, at)` in `backend/src/calibration-readiness.mjs` (sections 2–3), and the optional
+  `readiness` argument to `checkoutBoard` in `backend/src/loadboard-checkout.mjs` that adds `CELL_NOT_READY` (section 4). Keep
+  the no-argument behaviour identical. Add `backend/tests/calibration-readiness.test.mjs` for section 5. Expose
+  `GET /api/control-rooms/:roomId/cell-readiness` → `{ roomId, asOf, cells: [{ cellId, readiness, reasons, instruments }] }`
+  for the cells in the room's calibration rows (read-only, using the room's simulation clock as `at`). Use **port 3021**. Run both
+  suites, update `project-state/backend/`, commit, set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Add a readiness chip per ATE setup on the Loadboards panel: `READY` (plain), `EXPIRED` and `NO_CALIBRATION`
+  (highlighted, with the reason text). A board whose cell is not READY shows its check-out action as unavailable with the
+  reason. Stub-first against the response shape above. Keep text contrast at least 4.5:1 and all chips keyboard-reachable
+  (no colour-only meaning). E2E in `e2e/cell-readiness.spec.mjs`. Do not change `backend/`. Use **port 3022**. Run both
+  suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 34 (2026-10-24) — handler jam episodes (F4 slice 1).** Start with `git merge master`.
 
 - **codex.** Implement `docs/design/handler-jam-episodes-slice-1.md` (approved for build). Build a pure module
@@ -1448,6 +1463,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `5571332`…`55ab8da` (branch `codex`, round 34) and **gemini** `49251b2`/`0f37215` (round 34) → merge `8b4fa83`: handler jam episodes pure module (`backend/src/handler-jam-episodes.mjs`) and the Handler episodes panel on stubs. `npm test` 559/559; E2E 136/136 on port 3024. Deployed `8b4fa83`, healthy; loadboards, obligations and station-KPI endpoints return 200. The episodes route is not exposed yet (a later codex round).
 - 2026-10-24 — **codex** `e4657c4`…`b30da05` (branch `codex`, round 33) and **gemini** `60b8bbd`/`1a43d02` (round 33) → merge `5d8054d`: loadboard checkout and release routes through the serialised store path (`backend/src/loadboard-service.mjs`), the consumable obligations read endpoint, and the check-out and release UI with live-region results. `npm test` 546/546; E2E 127/127 on port 3024. Deployed `5d8054d`, healthy; `/loadboards`, `/consumable-obligations`, `/station-kpis` return 200; an empty checkout body returns 400. Note: the checkout route follows the existing mutation pattern and has no per-user auth (same as `/ask`, `/reports`); see the open auth question in the round 33 notes.
 - 2026-10-24 — **codex** `4699195`/`5837170` (branch `codex`, rounds 31–32) → merge: consumable obligations reconciler and room-state rows (`backend/src/consumable-life-obligations.mjs`, `consumable-life-service.mjs`), and the read-only loadboards endpoint `GET /api/control-rooms/:roomId/loadboards` (`backend/src/loadboards.mjs`). `npm test` 535/535.
 - 2026-10-24 — **gemini** `0e8cbf7`/`0542bb5` (branch `gemini`, round 32) → merge: Obligations panel (`frontend/obligations-view.js`) on stubs, Loadboards keyboard and focus tightening. Merged with codex as `192b682`. E2E 121/121 on port 3024. Deployed `192b682`, healthy; `/loadboards` and `/station-kpis` return 200 on the server.

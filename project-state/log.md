@@ -786,3 +786,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added comprehensive E2E test suite in `e2e/handler-episodes.spec.mjs` (9/9 tests passing).
 - Verification: `npm test` 546/546 passed; full Chromium E2E suite 136/136 passed on port 3022; ports 3022 and 3122 verified free.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 34 merge, deploy and round 35 assignment (main agent)
+- Merged codex round 34 (handler jam episodes pure module) and gemini round 34 (Handler episodes panel on stubs) as `8b4fa83`. Verification: `npm test` 559/559; E2E 136/136 on port 3024. Deployed `8b4fa83` healthy; loadboards, obligations and station-KPI endpoints return 200 on the deploy server.
+- Added `docs/design/calibration-readiness-slice-1.md` (F8 slice 1), approved for round 35: a deterministic cell readiness function and a checkout gate. Correlation evidence stays a separate record.
+- Pages updated: this log; the design spec; handover.md merge log and assignments.
