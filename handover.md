@@ -1554,23 +1554,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 19:08 UTC
-- **Task:** Round 35: cell readiness chips on the Loadboards panel, stub-first against the round 35 readiness contract
-- **Head commit:** `bbe06af`
-- **Changes:**
-  - Added setup calibration readiness strip (`.lb-readiness-bar`) displaying chips per ATE setup (`READY`, `EXPIRED`, `NO_CALIBRATION`) with clear status text and reasons (`CALIBRATION_EXPIRED`, `NO_CALIBRATION_RECORD`).
-  - Implemented expandable instrument calibration drawer (`.lb-readiness-detail-drawer`) displaying instrument ID, calibration ID, due date, and state (`CURRENT`, `EXPIRED`) with keyboard toggle and focus retention.
-  - Added mini readiness chip (`.lb-cell-chip-mini`) in Location column next to cell ID for boards stationed at an ATE cell.
-  - Gated checkout action on board's cell readiness: boards stationed at a non-ready cell display disabled check-out action (`aria-disabled="true"`) with plain text unavailable reason (`Check-out unavailable: <cellId> is <readiness> (<reasons>)`).
-  - Checkout form dynamic validation: selecting an expired or non-calibrated station dynamically surfaces warning `.lb-checkout-station-warning` and disables checkout confirmation button.
-  - Decoupled `fetchCellReadiness` and `fetchLoadboards` with deterministic synthetic fallback so missing endpoints never hang UI or block rendering.
-  - WCAG AA contrast ≥ 4.5:1 across all chips (no color-only meaning) and touch targets ≥ 44px on mobile.
-- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `e2e/cell-readiness.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Verification:** Hermetic `npm test` passed (**559/559** tests); full Chromium E2E suite passed (**142/142** tests, including all 6 new cell-readiness tests in `e2e/cell-readiness.spec.mjs`); ports 3022 and 3122 confirmed free (`ss -ltn | grep -E ':(3022|3122)'`).
-- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** Stub-first contract against `GET /api/control-rooms/:roomId/cell-readiness`. When backend endpoint is implemented by Codex/backend, frontend seamlessly consumes real DTOs.
-- **Questions for main:** Claude: Round 35 is complete, verified hermetically across unit (559/559) and full E2E (142/142) suites, and ready for merge. Per user's explicit reminder, please do not keep Gemini idle: please review and merge promptly, then assign the next concrete task.
+- **Status:** IN PROGRESS
+- **Updated:** 2026-10-24 19:21 UTC
+- **Task:** Round 36: calibration records panel with an add form, stub-first against the round 36 contract
+- **Head commit:** `94b42d2`
+- **Changes:** Starting Round 36 implementation. Adding Calibrations panel with table of calibration rows (calibrationId, cellId, instrumentId, calibratedAt, dueAt, state) and add form with client-side date validation, plain text server reason display, live region announcements, keyboard reachability, responsive 375px/1280px layouts with zero horizontal scroll, and E2E in `e2e/calibrations.spec.mjs`.
+- **Files changed:** in progress
+- **Verification:** in progress
+- **project-state pages updated:** in progress
+- **Risks / follow-ups:** Stub-first against `GET /api/control-rooms/:roomId/calibrations` and `POST /api/control-rooms/:roomId/calibrations` with deterministic synthetic fallback.
+- **Questions for main:** None; actively executing Round 36. Watcher is active. Claude, once ready for merge, please review promptly per user direction to avoid idle cycles.
 
 ## codebuddy
 
