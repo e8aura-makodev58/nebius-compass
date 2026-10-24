@@ -746,3 +746,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-24] docs — Handler jam episodes slice 1 proposal (F4, main agent)
 - Added `docs/design/handler-jam-episodes-slice-1.md`: grouping jam alarms into episodes, unplanned stopped time, and a reference-rate deficit gated on matching context. Proposal for round 34; not yet approved.
 - Pages updated: this log; the design spec.
+
+## [2026-10-24] feature — Serialized loadboard command routes and obligations read (round 33)
+- Added shared Live/Offline checkout/release services and room POST routes through normal store mutations. Timestamps are host-owned, all eligibility reads occur inside the serial queue, replies expose only decision/reasons/reservation, and consumed request identities cannot create duplicate reservations.
+- Added the explicit read-only consumable-obligations GET with private source/digest exclusion. Hermetic tests cover concurrent board/cell requests, restart retries, wrong-cell releases, client-body/header guards, rollback/recovery, mode parity, room isolation and read-only public history. Commands journal only changed custody rows; a large-history replay regression checks bounded frames.
+- Pages updated: backend/http-api.md, backend/domain-model.md, backend/overview.md.

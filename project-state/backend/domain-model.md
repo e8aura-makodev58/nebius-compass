@@ -238,8 +238,8 @@ ordered decision includes requestId, decision, reasons and reservation; the fina
 inventory is returned once, avoiding a full history copy per request. Transitions use
 a single private inventory copy, giving one winner for a board or cell without
 mutating caller inputs. Empty batches return an independent inventory.
-The future store layer must provide the same serialized order; this library provides
-no locking or persistent transaction boundary.
+This library provides no locking or persistent transaction boundary; consumers must
+serialize writes. The round 33 HTTP adapter below uses the normal room mutation queue.
 
 `releaseBoard(inventory,{reservationId,releasedAt,cellId})` uses the same decision
 envelope, with RELEASED or REJECTED. A matching HELD row and matching reservation
@@ -293,10 +293,29 @@ later asset-to-station/issue-class contract and is not invented here.
 ## Loadboard read projection (round 32)
 
 A room may carry private `loadboardInventory` in the existing pure checkout
-inventory shape (`boards`, `reservations`). It is not seeded or created on GET.
+inventory shape (`boards`, `reservations`). No default inventory is manufactured,
+and GET never creates it.
 `loadboards.mjs` exposes only explicit board facts and the current HELD reservation
 ID through the dedicated room read route. Released reservation detail and unrelated
 source metadata are not projected or copied into normal state/model payloads.
 The shared `validateLoadboardInventory` helper is exported from the pure checkout
-module for current-fact projection validation. Ingestion/registry persistence and
-checkout/release HTTP actions remain separate work.
+module for current-fact projection validation. Inventory provisioning remains
+separate; round 33 command APIs below operate on the existing inventory.
+
+
+## Loadboard command ownership (round 33)
+
+The pure F3 transitions are now used by `loadboard-service.mjs` through the room's
+normal mutation adapter. Eligibility, reservation identity and location changes are
+rechecked inside the serialized transaction. Successful transitions patch private
+loadboardInventory custody rows; rejections preserve its content. Client timestamps are prohibited;
+heldSince/releasedAt come from that transaction's simulation clock. Retry identity
+is durable in reservation history, so restart/release cannot permit duplicate IDs.
+No separate request cache or direct file writer is introduced.
+
+Live and Offline share the service and public response projection. Offline supports
+an internal synthetic seedFactory option, defensively copied, analogous to Live's
+seed injection; defaults and reset remain the normal scenario. No inventory import
+or production provisioning endpoint is added. The dedicated obligations read builder
+publishes only the existing strict obligation rows, without exposing counter sources
+or initiating reconciliation/ordinary Issue dispatch.
