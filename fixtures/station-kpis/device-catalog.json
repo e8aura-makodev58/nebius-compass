@@ -1,0 +1,25 @@
+{
+  "description": "Synthetic semiconductor device catalog for ATE station KPIs. Rates are placeholders until test engineering confirms them. Device names are invented.",
+  "devices": [
+    { "deviceId": "CX4820", "ratedUnitsPerHour": 4820 },
+    { "deviceId": "PM0096", "ratedUnitsPerHour": 96 },
+    { "deviceId": "GH0310", "ratedUnitsPerHour": 310 },
+    { "deviceId": "SC2150", "ratedUnitsPerHour": 2150 },
+    { "deviceId": "BR0038", "ratedUnitsPerHour": 38 },
+    { "deviceId": "VS0745", "ratedUnitsPerHour": 745 },
+    { "deviceId": "SR1260", "ratedUnitsPerHour": 1260 },
+    { "deviceId": "TB0540", "ratedUnitsPerHour": 540 },
+    { "deviceId": "DS0064", "ratedUnitsPerHour": 64 },
+    { "deviceId": "LS3600", "ratedUnitsPerHour": 3600 },
+    { "deviceId": "HP1880", "ratedUnitsPerHour": 1880 },
+    { "deviceId": "PI0212", "ratedUnitsPerHour": 212 },
+    { "deviceId": "SG2940", "ratedUnitsPerHour": 2940 },
+    { "deviceId": "FL0087", "ratedUnitsPerHour": 87 },
+    { "deviceId": "CS1015", "ratedUnitsPerHour": 1015 },
+    { "deviceId": "MB0475", "ratedUnitsPerHour": 475 },
+    { "deviceId": "CF0158", "ratedUnitsPerHour": 158 },
+    { "deviceId": "CW6300", "ratedUnitsPerHour": 6300 },
+    { "deviceId": "BC0029", "ratedUnitsPerHour": 29 },
+    { "deviceId": "CP0890", "ratedUnitsPerHour": 890 }
+  ]
+}

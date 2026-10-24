@@ -34,17 +34,18 @@
   "stations": [
     {
       "stationId": "EQ-01",
-      "name": "Station 1",
+      "name": "ATE 1",
       "floor": 1,
-      "ratedUnitsPerHour": 72,
+      "deviceId": "SR1260",
+      "ratedUnitsPerHour": 1260,
       "buckets": [
         {
           "start": "2026-08-31T20:00:00.000Z",
           "end": "2026-08-31T23:00:00.000Z",
           "available": true,
-          "expectedUnits": 216,
-          "actualUnits": 187,
-          "attainmentPercent": 86.6,
+          "expectedUnits": 3780,
+          "actualUnits": 3276,
+          "attainmentPercent": 86.7,
           "downtimeMinutes": 24,
           "issuesRaised": 1,
           "source": "DERIVED_FROM_UPTIME"
@@ -53,8 +54,8 @@
           "start": "2026-08-31T23:00:00.000Z",
           "end": "2026-09-01T02:00:00.000Z",
           "available": true,
-          "expectedUnits": 216,
-          "actualUnits": 216,
+          "expectedUnits": 3780,
+          "actualUnits": 3780,
           "attainmentPercent": 100.0,
           "downtimeMinutes": 0,
           "issuesRaised": 0,
@@ -64,8 +65,8 @@
           "start": "2026-09-01T02:00:00.000Z",
           "end": "2026-09-01T05:00:00.000Z",
           "available": true,
-          "expectedUnits": 216,
-          "actualUnits": 144,
+          "expectedUnits": 3780,
+          "actualUnits": 2520,
           "attainmentPercent": 66.7,
           "downtimeMinutes": 60,
           "issuesRaised": 1,
@@ -75,9 +76,9 @@
           "start": "2026-09-01T05:00:00.000Z",
           "end": "2026-09-01T08:00:00.000Z",
           "available": true,
-          "expectedUnits": 216,
-          "actualUnits": 201,
-          "attainmentPercent": 93.1,
+          "expectedUnits": 3780,
+          "actualUnits": 3528,
+          "attainmentPercent": 93.3,
           "downtimeMinutes": 12,
           "issuesRaised": 1,
           "source": "DERIVED_FROM_UPTIME"
@@ -86,8 +87,9 @@
     },
     {
       "stationId": "EQ-02",
-      "name": "Station 2",
+      "name": "ATE 2",
       "floor": 1,
+      "deviceId": "PM0096",
       "ratedUnitsPerHour": 96,
       "buckets": [
         {
@@ -141,32 +143,32 @@
     {
       "start": "2026-08-31T20:00:00.000Z",
       "end": "2026-08-31T23:00:00.000Z",
-      "expectedUnits": 504,
-      "actualUnits": 475,
+      "expectedUnits": 4068,
+      "actualUnits": 3564,
       "downtimeMinutes": 24,
       "issuesRaised": 1
     },
     {
       "start": "2026-08-31T23:00:00.000Z",
       "end": "2026-09-01T02:00:00.000Z",
-      "expectedUnits": 504,
-      "actualUnits": 456,
+      "expectedUnits": 4068,
+      "actualUnits": 4020,
       "downtimeMinutes": 30,
       "issuesRaised": 1
     },
     {
       "start": "2026-09-01T02:00:00.000Z",
       "end": "2026-09-01T05:00:00.000Z",
-      "expectedUnits": 504,
-      "actualUnits": 432,
+      "expectedUnits": 4068,
+      "actualUnits": 2808,
       "downtimeMinutes": 60,
       "issuesRaised": 1
     },
     {
       "start": "2026-09-01T05:00:00.000Z",
       "end": "2026-09-01T08:00:00.000Z",
-      "expectedUnits": 504,
-      "actualUnits": 337,
+      "expectedUnits": 4068,
+      "actualUnits": 3664,
       "downtimeMinutes": 107,
       "issuesRaised": 2
     }
