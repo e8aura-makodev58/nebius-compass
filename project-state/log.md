@@ -743,6 +743,10 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Round 33 assigned: codex loadboard checkout write routes (serialised writes, concurrency tests) and the consumable-obligations read endpoint; gemini check-out and release actions on stubs.
 - Pages updated: this log; handover.md merge log and assignments.
 
+## [2026-10-24] docs — Handler jam episodes slice 1 proposal (F4, main agent)
+- Added `docs/design/handler-jam-episodes-slice-1.md`: grouping jam alarms into episodes, unplanned stopped time, and a reference-rate deficit gated on matching context. Proposal for round 34; not yet approved.
+- Pages updated: this log; the design spec.
+
 ## [2026-10-24] feature — Loadboard check-out and release actions (Round 33, F3 slice 2 UI)
 - Added interactive **Check out** and **Release** actions to the Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) against write contracts `POST /api/control-rooms/:roomId/loadboards/checkout` and `POST /api/control-rooms/:roomId/loadboards/release`.
 - For available boards (`cellId === null` and `heldBy === null`), added Check out button with inline/drawer checkout form featuring Station picker (`ATE-1`, `ATE-2`, etc.) and Program picker from board's `approvedPrograms`.
