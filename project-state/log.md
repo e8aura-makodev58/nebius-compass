@@ -983,3 +983,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added dedicated E2E test suite in `e2e/changeover-readiness.spec.mjs` (4/4 tests passing).
 - Verification: `npm test` 604/604 passed; targeted E2E suites 38/38 passed; full Chromium E2E suite 175/175 passed on port 3022. Port 3022 cleanly released.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 42 merge, deploy and round 43 assignment (main agent)
+- Merged codex round 42 (pure changeover readiness check) and gemini round 42 (changeover readiness panel on stubs) as `1b8cdf7`. Verification: `npm test` 612/612; E2E 175/175 on port 3024. Deployed `1b8cdf7` healthy. GET-only smoke test: all endpoints 200.
+- Assigned round 43: codex changeover record entry and readiness read route; gemini keyboard-only pass over all workspace panels.
+- Pages updated: this log; handover.md merge log and assignments.
