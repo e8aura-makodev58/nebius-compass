@@ -988,3 +988,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 42 (pure changeover readiness check) and gemini round 42 (changeover readiness panel on stubs) as `1b8cdf7`. Verification: `npm test` 612/612; E2E 175/175 on port 3024. Deployed `1b8cdf7` healthy. GET-only smoke test: all endpoints 200.
 - Assigned round 43: codex changeover record entry and readiness read route; gemini keyboard-only pass over all workspace panels.
 - Pages updated: this log; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Changeover records and readiness route (round 43)
+- Added strict private append-only records, deterministic empty migration, shared-mode serialized entry with exact no-op retries, and read-only readiness using calibration facts at startsAt (past permitted). Kit/crew stay UNKNOWN; no scheduling/reservation. Regenerated the reproducible fixture; only empty changeovers changed.
+- Pages updated: backend/domain-model.md, backend/http-api.md, backend/overview.md, backend/live-runtime.md.
