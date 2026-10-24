@@ -1541,12 +1541,16 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## codex
 
-- **Status:** IN PROGRESS
+- **Status:** READY FOR MERGE
 - **Updated:** 2026-10-24
-- **Task:** Round 36: enforce checkout readiness, manual calibration entry and seeded READY cells in both modes.
-- **Changes:** Work preserved uncommitted: readiness is evaluated in the checkout transaction; serialized calibration POST, explicit GET ledger and shared seeds are implemented. Route tests cover readiness, entry/retry/conflicts, journal rollback and mode parity.
-- **Verification:** Completing targeted tests and backend documentation, then both full suites before READY. One new malformed-body assertion is under investigation; no external blocker.
-- **Questions for main:** Follow-up reminders 1–2 acknowledged: round 36 is active, not pending merge yet. Please allow completion/review of this implementation and queue the next concrete task afterward per the user's direction. This committed board status is the available delivery channel; direct messaging is unavailable. No master merge, second worker or watcher restart for these reminders.
+- **Task:** Round 36: enforce checkout readiness, calibration entry and seeded READY cells in both modes.
+- **Head commit:** `7c7e228` (implementation; this handoff committed separately). Synced master to `911fa18` before implementation; progress acknowledgement `a694647` preserved work during watcher reminders.
+- **Changes:** Checkout computes cellReadiness from current private rows at the simulation clock inside the serialized transaction; missing/expired cells reject at HTTP 200 with CELL_NOT_READY plus all other failures. Added strict POST calibrations through the shared mutation adapter, canonical UTC dates, append-only new entries and idempotent retries. Conflicting identity/same-instant records return 400 without modifying history. Added explicit read-only GET calibrations to support the assigned panel contract, exposing per-record FUTURE/CURRENT/EXPIRED time validity. Shared independent ATE-1/ATE-2 seed rows are READY at both mode seed clocks in both rooms. Existing persisted rooms are not silently backfilled.
+- **Files changed:** calibration-service and shared calibration seed; checkout service, server/runtime adapters and Live/Offline seed constructors; route/readiness tests; deterministic investigation lifecycle fixture (only calibrations field changed); docs/decisions.md and backend wiki/log. No frontend/E2E edits.
+- **Verification:** Final `npm test` **577/577**; forced-provider Chromium E2E **142/142** on 3021; focused readiness/route tests **29/29**. Covers real-route missing/exact-expiry gate, entry enabling checkout, concurrent conflicting entries and ordered entry/checkout, malformed bodies/protected markers/headers, identity retry across restart, failed journal rollback/recovery, immutable room-scoped ledger, Offline parity/no providers and both seeded room instances READY. Initial full unit run detected the expected reproducible fixture mismatch after seed extension; regenerated it, proved all other fields unchanged, and the full rerun passed. `git diff --check` clean; port 3021 free; no live API spend/product-data writes.
+- **project-state pages updated:** backend/domain-model.md, backend/overview.md, backend/http-api.md, log.md.
+- **Risks / follow-ups:** POST result is {decision:RECORDED|UNCHANGED,reasons:[]}; malformed/conflicting facts are 400. Future entries are allowed but do not authorize early checkout. The ledger state describes each row's temporal validity; cell-readiness remains the effective latest-per-instrument decision. Seeds expire normally as simulation time advances; existing rooms need manual entry or an authorized reset. No calibration provisioning migration, automatic renewal or required-instrument configuration is invented. No implementation blocker.
+- **Questions for main:** Please review/merge round 36 or record required revisions, then queue the next concrete Codex task per the user's direction to avoid idle cycles. This committed board handoff is the delivery channel; direct messaging is unavailable. Existing watcher left unchanged; no second worker started.
 
 ## gemini
 
