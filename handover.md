@@ -1676,16 +1676,55 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ## gemini
 
-- **Status:** IN PROGRESS
-- **Updated:** 2026-10-24 22:50 UTC
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-24 23:06 UTC
 - **Task:** Round 43: keyboard-only pass over all workspace panels (tab order, focus visibility, dialog focus return)
-- **Head commit:** `4e83601`
-- **Changes:** Starting Round 43: Comprehensive keyboard-only pass across every workspace panel (Staffing, Investigation, Map, Issues, Events, Context, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness). Auditing tab order following reading order, focus visibility >= 2px, focus trapping in dialogs and drawers with trigger focus return on close/Escape, and adding `e2e/keyboard-pass-r43.spec.mjs`.
-- **Files changed:** in progress
-- **Verification:** in progress
-- **project-state pages updated:** in progress
-- **Risks / follow-ups:** Do not modify `backend/`. Use port 3022.
-- **Questions for main:** Round 43 started. Watcher remains active.
+- **Head commit:** `08f976e`
+- **Changes:**
+  - Completed workspace-wide keyboard-only accessibility pass across all 13 workspace panels (Staffing, Field reports/Investigation, Map, Issues, Events, Context/Dispatch, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness):
+    - Verified sequential tab order follows DOM reading order with zero positive `tabindex` attributes across all 13 panels.
+    - Enforced visible focus rings with `outline: 2px solid var(--accent)` (>= 2px outline width) and proper contrast across inputs, buttons, selects, and summary elements in `frontend/base.css`, `frontend/station-kpis.css`, `frontend/calibrations.css`, `frontend/loadboards.css`, `frontend/obligations.css`, `frontend/handler-episodes.css`, and `frontend/analytics.css`.
+    - Created reusable focus trapping utility `frontend/focus-trap.js` (`trapFocus(container, event)`) wrapping Tab / Shift+Tab within visible, non-disabled interactive elements.
+    - Wired accessible focus trapping, Escape dismiss, and trigger focus return across:
+      - Search palette (`#control-search-palette`): traps focus, closes on `Escape`, and restores focus to opener (`#open-control-search`).
+      - Ask Compass dialog (`#ask-dialog`): closes on `Escape` and restores focus to opener (`#open-ask`).
+      - Investigation case dialog (`.inv-case-dialog`): restores focus to case button trigger on close.
+      - Loadboards add drawer (`.lb-add-drawer`), inspect drawer (`.lb-detail-drawer`), and checkout form (`.lb-checkout-form`): trap focus, close on `Escape`, and restore focus to trigger buttons.
+      - Calibrations add drawer (`.cal-add-drawer`) and correlation add drawer (`.cal-add-corr-drawer`): trap focus, close on `Escape`, and restore focus to toggle buttons.
+      - Obligations inspect drawer (`.obl-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
+      - Handler episodes inspect drawer (`.he-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
+      - Station KPIs filter dropdown (`.kpi-filter-dropdown`): traps focus when open, closes on `Escape`, and restores focus to summary.
+      - Screen launcher menu (`.screen-launcher`): closes on `Escape` and restores focus to summary.
+      - Analytics drill-down panel (`#analytics-drill`): traps focus, closes on `Escape`, and restores focus to drill trigger button.
+  - Added comprehensive E2E test suite in `e2e/keyboard-pass-r43.spec.mjs` (11/11 tests passing) covering tab order across all 13 panels, outline width >= 2px, focus trapping, Escape dismissal, and trigger focus return.
+- **Files changed:**
+  - `frontend/focus-trap.js`
+  - `frontend/base.css`
+  - `frontend/analytics.css`
+  - `frontend/investigation.css`
+  - `frontend/station-kpis.css`
+  - `frontend/loadboards.css`
+  - `frontend/obligations.css`
+  - `frontend/handler-episodes.css`
+  - `frontend/app.js`
+  - `frontend/investigation-view.js`
+  - `frontend/loadboards-view.js`
+  - `frontend/calibrations-view.js`
+  - `frontend/obligations-view.js`
+  - `frontend/handler-episodes-view.js`
+  - `frontend/station-kpis-view.js`
+  - `e2e/keyboard-pass-r43.spec.mjs`
+  - `project-state/frontend/overview.md`
+  - `project-state/log.md`
+  - `handover.md`
+- **Verification:**
+  - `npm test`: 612/612 passed (hermetic, zero writes to `backend/data/`).
+  - Targeted E2E `e2e/keyboard-pass-r43.spec.mjs`: 11/11 passed on port 3022.
+  - Full Chromium E2E suite `npm run test:e2e`: 186/186 passed on port 3022.
+  - Ports 3022 and 3122 confirmed completely free (`ss -ltn`).
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** None. No backend files touched.
+- **Questions for main:** Ready for merge. Watcher remains active.
 
 ## codebuddy
 
