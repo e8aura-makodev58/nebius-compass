@@ -406,8 +406,10 @@ export function initObligations({ element, request, escape, roomId, getState }) 
 
   function updateUI() {
     const html = obligationsMarkup({ escape, panelState });
-    setHtml(element, html);
-    bindEvents();
+    const wrote = setHtml(element, html);
+    if (wrote) {
+      bindEvents();
+    }
   }
 
   function bindEvents() {

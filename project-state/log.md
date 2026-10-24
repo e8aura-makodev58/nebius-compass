@@ -742,3 +742,14 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex rounds 31–32 (`4699195`, `5837170`: consumable obligations reconciler and loadboards read endpoint) and gemini round 32 (`0e8cbf7`: Obligations panel on stubs) as `192b682`. Verification: `npm test` 535/535; E2E 121/121 on port 3024. Deployed `192b682` healthy; `/api/control-rooms/:id/loadboards` and `/station-kpis` return 200 on the deploy server.
 - Round 33 assigned: codex loadboard checkout write routes (serialised writes, concurrency tests) and the consumable-obligations read endpoint; gemini check-out and release actions on stubs.
 - Pages updated: this log; handover.md merge log and assignments.
+
+## [2026-10-24] feature — Loadboard check-out and release actions (Round 33, F3 slice 2 UI)
+- Added interactive **Check out** and **Release** actions to the Loadboards panel (`frontend/loadboards-view.js`, `frontend/loadboards.css`) against write contracts `POST /api/control-rooms/:roomId/loadboards/checkout` and `POST /api/control-rooms/:roomId/loadboards/release`.
+- For available boards (`cellId === null` and `heldBy === null`), added Check out button with inline/drawer checkout form featuring Station picker (`ATE-1`, `ATE-2`, etc.) and Program picker from board's `approvedPrograms`.
+- For held boards, added Release button (`.lb-release-btn`).
+- Displays returned `reasons` as plain text next to the row (`.lb-row-reasons`), and refreshes inventory after each action.
+- Added polite live region announcement (`#lb-live-announcer`) for checkout/release allocations, rejections, and releases.
+- Hardened view event lifecycle: guarded `bindEvents()` in both `loadboards-view.js` and `obligations-view.js` with `setHtml` write status to prevent event listener pileup and toggle bouncing across poll ticks.
+- Added comprehensive E2E test suite in `e2e/loadboard-actions.spec.mjs` (6/6 tests passing, verified across 30 repeated runs).
+- Verification: `npm test` 535/535 passed; full Chromium E2E suite 127/127 passed on port 3022; ports 3022 and 3122 free.
+- Pages updated: project-state/frontend/overview.md; this log.
