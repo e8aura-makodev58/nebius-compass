@@ -498,7 +498,7 @@ export function stationKpisMarkup({ state, escape, panelState }) {
         </tbody>
         <tfoot>
           <tr class="kpi-totals-row">
-            <th scope="row">Totals (${stationsData.length} stations)</th>
+            <th scope="row">Totals (${stationsData.length} station${stationsData.length === 1 ? "" : "s"})</th>
             ${tableTotalsHtml}
           </tr>
         </tfoot>
@@ -580,7 +580,7 @@ export function stationKpisMarkup({ state, escape, panelState }) {
   const totalsCardHtml = `
     <article class="kpi-card kpi-card-totals">
       <div class="kpi-card-header">
-        <h4>Totals <small>(${stationsData.length} stations)</small></h4>
+        <h4>Totals <small>(${stationsData.length} station${stationsData.length === 1 ? "" : "s"})</small></h4>
       </div>
       <div class="kpi-card-buckets-list">
         ${totalsCardBuckets}
@@ -661,11 +661,19 @@ export function initStationKpis({ element, request, escape, roomId, getState }) 
   }
 
   function attachEvents() {
-    // Dropdown toggle
+    // Dropdown toggle and keyboard Escape
     const dropdown = element.querySelector(".kpi-filter-dropdown");
     if (dropdown) {
       dropdown.addEventListener("toggle", () => {
         panelState.filterOpen = dropdown.open;
+      });
+      dropdown.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && dropdown.open) {
+          dropdown.open = false;
+          panelState.filterOpen = false;
+          dropdown.querySelector("summary")?.focus();
+          e.stopPropagation();
+        }
       });
     }
 

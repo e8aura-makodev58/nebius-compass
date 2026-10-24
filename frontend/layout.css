@@ -219,6 +219,38 @@
   body:not(.display-mode) .building-controls { max-width: calc(100% - 16px); flex-wrap: wrap; }
   .staffing-primary-actions button { min-height: 44px; }
   #analytics-view { padding: 14px 0; }
+
+  /* Touch target compliance (>= 44px) across phone workspace */
+  body:not(.display-mode) .topbar .tab-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  body:not(.display-mode) .mode-controls button { min-height: 44px; }
+  body:not(.display-mode) .simulation-bar button,
+  body:not(.display-mode) .simulation-bar select { min-height: 44px; }
+  #open-ask, #open-control-search, .screen-launcher summary { min-height: 44px; display: inline-flex; align-items: center; }
+
+  .staffing-tile summary, #demo-staffing-outlook summary { min-height: 44px; display: flex; align-items: center; box-sizing: border-box; }
+  .staffing-tile button, .staffing-tile select, .staffing-tile input { min-height: 44px; }
+
+  .inv-tile-head button, .inv-actions button { min-height: 44px; padding: 10px 14px; }
+  .inv-override summary { min-height: 44px; display: flex; align-items: center; box-sizing: border-box; }
+  .inv-override select, .inv-override input:not([type=checkbox]) { min-height: 44px; }
+  .inv-row { min-height: 44px; align-items: center; }
+
+  .building-controls button { min-height: 44px; min-width: 44px; padding: 8px 12px; }
+
+  .feed-event { min-height: 44px; align-items: center; }
+
+  .sidebar-tabs button { min-height: 44px; }
+  .context-panel details > summary { min-height: 44px; display: flex; align-items: center; box-sizing: border-box; }
+  .context-panel button, .context-panel select { min-height: 44px; }
+  .healthy-stations summary, .off-shift-personnel summary, .station-issue-history summary { min-height: 44px; display: flex; align-items: center; box-sizing: border-box; }
+  .station-history-row { min-height: 44px; align-content: center; }
+
+  .analytics-section-nav a { min-height: 44px; display: inline-flex; align-items: center; }
+  .analytics-view summary { min-height: 44px; display: flex; align-items: center; box-sizing: border-box; }
+  .analytics-view button, .analytics-view select, .analytics-view input { min-height: 44px; }
+
+  .kpi-station-option { min-height: 44px; display: flex; align-items: center; }
+  .kpi-filter-actions button { min-height: 44px; }
 }
 .display-mode .workspace-nav { display: none !important; }
 .staffing-primary-actions [data-staffing-action="approve"] { color: var(--on-accent); border-color: var(--accent); background: var(--accent); }

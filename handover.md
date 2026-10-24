@@ -1448,19 +1448,17 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 15:55 UTC
-- **Task:** Round 28 follow-up: ATE and device labels on the station KPI panel (`docs/design/station-kpi-panel.md`)
-- **Head commit:** 3068e6f
+- **Updated:** 2026-10-24 16:30 UTC
+- **Task:** Round 29 & Round 30: Phone and desktop audit (`e2e/phone-audit.spec.mjs`) & Station KPI E2E hardening (`e2e/station-kpi.spec.mjs`)
+- **Head commit:** a1970d7
 - **Changes:**
-  - Implemented ATE setup name, `deviceId`, and rated throughput formatting (`formatUph`) across station cards and desktop table headers (e.g. `ATE 1 · SR1260 · 1,260 UPH` and `ATE 2 · PM0096 · 96 UPH`) per spec section 2.
-  - Updated `generateSyntheticResponse` route fallback in `frontend/station-kpis-view.js` with `DEVICE_CATALOG`, ATE station naming, and device-rate mapping.
-  - Updated `e2e/station-kpi.spec.mjs` asserting ATE setup names, device IDs, rated throughput strings, and refreshed metric fixture values.
-  - Verified with `npm test` and full Chromium E2E suite on port 3022.
-- **Files changed:** `frontend/station-kpis-view.js`, `frontend/station-kpis.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/station-kpi.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
-- **Verification:** `npm test` 472/472 passed · Chromium forced-provider E2E 98/98 passed (`COMPASS_E2E_PORT=3022`). Free ports confirmed.
+  - Round 29: Audited all eight existing panels (staffing, investigation, map, issues, events, context, analytics, station KPIs) at 375px (phone) and 1280px (desktop) viewports. Enforced zero horizontal scroll across page and panel containers. Upgraded phone interactive controls in `frontend/layout.css` to >= 44px touch targets. Verified accessible names and WCAG AA contrast >= 4.5:1. Added `e2e/phone-audit.spec.mjs` (5/5 passed).
+  - Round 30: Hardened `e2e/station-kpi.spec.mjs` against spec section 5 of `docs/design/station-kpi-panel.md`. Added test verifying live Station KPIs rendering directly from real backend endpoint without route mocking. Added keyboard-only filter interaction test (`Enter` open, `Tab` traversal, search input, `Space` toggle, `Escape` dismissal to summary). Fixed grammatical pluralization in totals row and cards (`1 station` vs `N stations`) in `frontend/station-kpis-view.js`.
+- **Files changed:** `frontend/layout.css`, `frontend/station-kpis-view.js`, `e2e/phone-audit.spec.mjs`, `e2e/station-kpi.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`, `handover.md`.
+- **Verification:** `npm test` 497/497 passed · Chromium forced-provider E2E 105/105 passed (`COMPASS_E2E_PORT=3022`). Free ports confirmed.
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** Ready for merge. Upon merge, Gemini will proceed immediately to Round 29 (`e2e/phone-audit.spec.mjs` and accessibility/responsive fixes across all existing panels).
-- **Questions for main:** Ready for merge. User reminder: please do not keep Gemini idle — please merge Round 28 follow-up and assign Round 29 promptly.
+- **Risks / follow-ups:** Disjoint frontend and E2E changes only. No backend modifications.
+- **Questions for main:** Ready for merge. User reminder: please do not keep Gemini idle — please merge Round 29/30 and assign Gemini's next task promptly.
 
 ## codebuddy
 

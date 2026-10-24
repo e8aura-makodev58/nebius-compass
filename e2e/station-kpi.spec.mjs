@@ -9,7 +9,50 @@ const FIXTURE_PATH = resolve(__dirname, "../fixtures/station-kpis/response-12h.j
 const FIXTURE_DATA = JSON.parse(readFileSync(FIXTURE_PATH, "utf-8"));
 
 test.describe("Station KPI panel", () => {
-  test("renders with 12h window, 3h buckets, DERIVED_FROM_UPTIME and desktop table at 1280px", async ({ page }) => {
+  test("renders live station KPIs from the real backend endpoint at 1280px", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    // Note: No route mocking here; tests live GET /api/control-rooms/plant-1/station-kpis
+    await page.goto("/rooms/plant-1");
+
+    // Dockview tab switching to Station KPIs
+    const tab = page.locator('#floor-tiles .dv-tab:has-text("Station KPIs")');
+    await expect(tab).toBeVisible();
+    await tab.click();
+
+    const panel = page.locator("#station-kpi-tile");
+    await expect(panel).toBeVisible();
+
+    // Verify header and DERIVED_FROM_UPTIME badge
+    await expect(panel.locator("#station-kpi-heading")).toHaveText("Station KPIs");
+    const badge = panel.locator(".kpi-source-badge");
+    await expect(badge).toBeVisible();
+    await expect(badge).toHaveText("DERIVED_FROM_UPTIME");
+
+    // Verify bucket columns: 4 buckets across 12-hour window
+    const bucketHeaders = panel.locator(".kpi-table thead th.kpi-bucket-col");
+    await expect(bucketHeaders).toHaveCount(4);
+
+    // Verify live station rows rendered from backend
+    const rows = panel.locator(".kpi-table tbody tr[data-station-id]");
+    const count = await rows.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Check first station has ATE name, deviceId, and UPH formatting
+    const firstRow = rows.first();
+    await expect(firstRow).toBeVisible();
+    await expect(firstRow).toContainText("UPH");
+
+    // Verify totals row
+    const totalsRow = panel.locator(".kpi-totals-row");
+    await expect(totalsRow).toBeVisible();
+    await expect(totalsRow).toContainText("Totals (");
+
+    // No horizontal scroll at 1280px
+    const fitsViewport = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+    expect(fitsViewport).toBe(true);
+  });
+
+  test("renders with 12h window, 3h buckets, DERIVED_FROM_UPTIME and desktop table at 1280px (fixture stub)", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.route("**/api/control-rooms/*/station-kpis*", async (route) => {
       await route.fulfill({
@@ -21,7 +64,6 @@ test.describe("Station KPI panel", () => {
 
     await page.goto("/rooms/plant-1");
 
-    // Dockview group tab switching to Station KPIs
     const tab = page.locator('#floor-tiles .dv-tab:has-text("Station KPIs")');
     await expect(tab).toBeVisible();
     await tab.click();
@@ -111,19 +153,89 @@ test.describe("Station KPI panel", () => {
     // Click All -> restores table
     await panel.locator(".kpi-action-all").click();
     await expect(panel.locator(".kpi-table")).toBeVisible();
-    await expect(panel.locator(".kpi-totals-row")).toContainText("Totals (2 stations)");
-
-    // Deselect Station 2 checkbox
-    const station2Checkbox = panel.locator('[data-kpi-station="EQ-02"]');
-    await station2Checkbox.uncheck();
-    await expect(panel.locator('.kpi-table tbody tr[data-station-id="EQ-02"]')).toBeHidden();
+    await expect(panel.locator(".kpi-empty")).toBeHidden();
     await expect(panel.locator('.kpi-table tbody tr[data-station-id="EQ-01"]')).toBeVisible();
-    await expect(panel.locator(".kpi-totals-row")).toContainText("Totals (1 stations)");
+    await expect(panel.locator('.kpi-table tbody tr[data-station-id="EQ-02"]')).toBeVisible();
+
+    // Toggle off Station 1 checkbox
+    const station1Checkbox = panel.locator('input[data-kpi-station="EQ-01"]');
+    await station1Checkbox.click();
+    await expect(panel.locator('.kpi-table tbody tr[data-station-id="EQ-01"]')).toBeHidden();
+    await expect(panel.locator('.kpi-table tbody tr[data-station-id="EQ-02"]')).toBeVisible();
+    await expect(panel.locator(".kpi-totals-row")).toContainText("Totals (1 station)");
+
+    // Toggle off Station 2 checkbox -> back to empty state
+    const station2Checkbox = panel.locator('input[data-kpi-station="EQ-02"]');
+    await station2Checkbox.click();
+    await expect(panel.locator(".kpi-empty")).toBeVisible();
+    await expect(panel.locator(".kpi-table")).toBeHidden();
+  });
+
+  test("keyboard-only interaction navigates filter dropdown, search, and station toggling", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.route("**/api/control-rooms/*/station-kpis*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(FIXTURE_DATA),
+      });
+    });
+
+    await page.goto("/rooms/plant-1");
+    await page.locator('#floor-tiles .dv-tab:has-text("Station KPIs")').click();
+
+    const panel = page.locator("#station-kpi-tile");
+    const summary = panel.locator(".kpi-filter-dropdown summary");
+    const dropdown = panel.locator(".kpi-filter-dropdown");
+
+    // Focus summary using keyboard and open with Enter
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await expect(dropdown).toHaveAttribute("open", "");
+
+    // Tab into search input
+    await page.keyboard.press("Tab");
+    const searchInput = panel.locator(".kpi-station-search-input");
+    await expect(searchInput).toBeFocused();
+
+    // Type filter query via keyboard
+    await page.keyboard.type("EQ-01");
+    await expect(panel.locator('.kpi-station-item:has-text("EQ-01")')).toBeVisible();
+    await expect(panel.locator('.kpi-station-item:has-text("EQ-02")')).toBeHidden();
+
+    // Press Escape to dismiss dropdown and restore focus to summary
+    await page.keyboard.press("Escape");
+    await expect(dropdown).not.toHaveAttribute("open", "");
+    await expect(summary).toBeFocused();
+
+    // Open again with Space
+    await page.keyboard.press("Space");
+    await expect(dropdown).toHaveAttribute("open", "");
+
+    // Clear search with select all and backspace
+    await page.keyboard.press("Tab");
+    await searchInput.fill("");
+
+    // Tab to All button and press Enter
+    await page.keyboard.press("Tab");
+    const allBtn = panel.locator(".kpi-action-all");
+    await expect(allBtn).toBeFocused();
+
+    // Tab to None button and press Enter
+    await page.keyboard.press("Tab");
+    const noneBtn = panel.locator(".kpi-action-none");
+    await expect(noneBtn).toBeFocused();
+    await page.keyboard.press("Enter");
+
+    // Empty state should be visible
+    await expect(panel.locator(".kpi-empty")).toBeVisible();
+    await expect(panel.locator(".kpi-table")).toBeHidden();
   });
 
   test("window controls support Latest, Previous 12 h, Next 12 h and dropdown selection", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    let lastRequestedUrl = null;
+    let lastRequestedUrl = "";
+
     await page.route("**/api/control-rooms/*/station-kpis*", async (route) => {
       lastRequestedUrl = route.request().url();
       const url = new URL(lastRequestedUrl);

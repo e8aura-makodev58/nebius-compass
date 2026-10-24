@@ -681,3 +681,18 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added import-free checkout, timestamp/request-ID-ordered batches, and release with copied inventories. All failing eligibility rules are returned; exact program compatibility and HELD board/cell conflicts are deterministic, and release preserves history.
 - Added hermetic acceptance coverage for competing requests, compatibility/condition/location gates, every failure code, release/re-checkout, determinism, input isolation and invalid/hidden field rejection. No route, store, clock, model, UI or runtime integration.
 - Pages updated: backend/domain-model.md, backend/overview.md.
+## [2026-10-24] quality — Phone and desktop audit of existing panels (Round 29)
+- Audited all eight existing panels (staffing, investigation, map, issues, events, context, analytics, and station KPIs) at 375px (phone) and 1280px (desktop) viewports.
+- Enforced zero horizontal scroll across page and panel containers at 375px and 1280px.
+- Upgraded interactive controls to satisfy >= 44px touch targets on phone (<= 900px) in `frontend/layout.css` across topbar tabs, simulation controls, search buttons, staffing summaries/inputs, investigation buttons/overrides, map controls, event feed buttons, context panel tabs/summaries/selects, analytics section nav/summaries, and station KPI filter checkboxes.
+- Verified all interactive controls across panels have valid accessible names (aria-label, labelledby, or text).
+- Verified all text content across panels satisfies WCAG AA contrast ratio >= 4.5:1.
+- Added comprehensive audit test suite `e2e/phone-audit.spec.mjs` (5/5 tests passing).
+- Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] test — Station KPI panel E2E hardening (Round 30)
+- Hardened `e2e/station-kpi.spec.mjs` against spec section 5 of `docs/design/station-kpi-panel.md`.
+- Added test verifying live Station KPIs rendering directly from real backend endpoint `GET /api/control-rooms/:roomId/station-kpis` without route mocking.
+- Added test verifying keyboard-only filter interaction (`Enter` to open, `Tab` traversal, search input, `Space` toggle, `Escape` dismissal to summary).
+- Fixed grammatical pluralization in totals row and cards (`1 station` vs `N stations`) in `frontend/station-kpis-view.js`.
+- Pages updated: project-state/frontend/overview.md; this log.
