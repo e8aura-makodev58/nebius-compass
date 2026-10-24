@@ -395,7 +395,10 @@
 }
 
 .lb-row-reasons {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
   margin-top: 4px;
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -403,6 +406,48 @@
   color: var(--warn-ink);
   letter-spacing: 0.02em;
   text-align: right;
+}
+
+.lb-add-cal-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  padding: 3px 8px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--paper);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.lb-add-cal-action:hover {
+  background: var(--accent-wash);
+}
+
+.lb-add-cal-action:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-color: var(--accent);
+}
+
+.lb-card-reasons .lb-row-reasons {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.lb-checkout-station-warning {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
 }
 
 .lb-card-reasons {
@@ -1013,5 +1058,12 @@
   .lb-readiness-chip {
     min-height: 44px;
     padding: 8px 12px;
+  }
+  .lb-add-cal-action {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    box-sizing: border-box;
   }
 }

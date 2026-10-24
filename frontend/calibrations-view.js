@@ -501,6 +501,11 @@ export function initCalibrations({ element, request, escape, roomId, getState })
       stateSelectEl.value = panelState.stateFilter;
     }
 
+    const cellInputEl = element.querySelector("#cal-input-cell");
+    if (cellInputEl && panelState.formValues.cellId) {
+      cellInputEl.value = panelState.formValues.cellId;
+    }
+
     bindEvents();
 
     if (isSearchFocused) {
@@ -716,6 +721,24 @@ export function initCalibrations({ element, request, escape, roomId, getState })
     }
   }
 
+  const onOpenAddCalibration = (e) => {
+    const targetCellId = e.detail?.cellId;
+    panelState.isAddFormOpen = true;
+    if (targetCellId) {
+      panelState.formValues.cellId = targetCellId;
+    }
+    panelState.formError = null;
+    updateUI();
+    requestAnimationFrame(() => {
+      const firstField = element.querySelector("#cal-input-id");
+      if (firstField) {
+        firstField.focus();
+      }
+    });
+  };
+
+  document.addEventListener("compass:open-add-calibration", onOpenAddCalibration);
+
   // Initial load
   loadData();
 
@@ -735,5 +758,11 @@ export function initCalibrations({ element, request, escape, roomId, getState })
       }
     },
     reload: loadData,
+    openAddForm({ cellId } = {}) {
+      onOpenAddCalibration({ detail: { cellId } });
+    },
+    destroy() {
+      document.removeEventListener("compass:open-add-calibration", onOpenAddCalibration);
+    },
   };
 }

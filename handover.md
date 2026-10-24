@@ -1572,22 +1572,23 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 19:42 UTC
-- **Task:** Round 36: calibration records panel with an add form, stub-first against the round 36 contract
-- **Head commit:** `c01dd96`
+- **Updated:** 2026-10-24 20:25 UTC
+- **Task:** Round 37: link a blocked checkout to the calibration form (reason, focus move)
+- **Head commit:** `2365c3f`
 - **Changes:**
-  - Implemented Calibrations panel (`frontend/calibrations-view.js`, `frontend/calibrations.css`) displaying calibration records (`calibrationId`, `cellId`, `instrumentId`, `calibratedAt`, `dueAt`, `state`) with `CURRENT` and `EXPIRED` status badges.
-  - Added expandable Add Calibration entry form with client-side date & ID validation (rejecting submission when `dueAt < calibratedAt`), plain text server reason display on rejection, and accessible live region announcements (`#cal-live-announcer`).
-  - Added real-time search input filtering across ID, cell, and instrument with input focus retention, state filter dropdown (`ALL`, `CURRENT`, `EXPIRED`), manual refresh, and empty state with filter reset.
-  - Integrated into workspace navigation (`Cals` button in `#workspace-nav`), phone view routing in `frontend/layout.css`, and Dockview tiling registration in `frontend/tiling.js` (including backward compatibility parser and relaxed tab group constraint).
-  - Built stub-first against `GET /api/control-rooms/:roomId/calibrations` and `POST /api/control-rooms/:roomId/calibrations` with deterministic synthetic fallback and offline parity.
-  - Responsive layout: desktop table (≥901px) and phone cards (≤900px) with ≥44px touch targets and zero horizontal scroll at 375px and 1280px.
-  - Added comprehensive Chromium E2E suite in `e2e/calibrations.spec.mjs` (7/7 tests passing).
-- **Files changed:** `frontend/calibrations-view.js`, `frontend/calibrations.css`, `frontend/app.js`, `frontend/index.html`, `frontend/layout.css`, `frontend/tiling.js`, `frontend/workspace-nav.js`, `e2e/calibrations.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Verification:** Hermetic `npm test` passed (**571/571** tests); full Chromium E2E suite verified on port 3022 with forced provider failures; targeted suites (`calibrations.spec.mjs`, `staffing.spec.mjs`, `tiling.spec.mjs`) **18/18** passed in 33.9s; investigated single test `e2e/investigation-ui.spec.mjs` **5/5** passed in 13.2s; ports 3022 and 3122 confirmed free (`ss -ltn | grep -E ':(3022|3122)'`).
+  - Linked rejected loadboard checkout (`CELL_NOT_READY`) and non-ready stationed boards to the Calibrations entry form:
+    - Display readiness reason next to the row in `.lb-row-reasons` (desktop table) and `.lb-card-reasons` (mobile cards).
+    - Added keyboard-reachable, labelled non-submitting action `<button type="button" class="lb-add-cal-action">Add calibration for <cellId></button>`.
+    - Activating the action reveals the Calibrations panel (switches workspace view on phone, activates Dockview panel via `window.CompassTiling.activatePanel` on desktop), opens the Add Calibration drawer with `cellId` pre-filled, and moves focus to `#cal-input-id` without auto-submitting.
+    - Also included the action in the `.lb-checkout-station-warning` container when selecting an unready station.
+    - Handled `compass:open-add-calibration` custom event bridge and exposed `openAddForm({ cellId })` in `calibrations-view.js`.
+  - Responsive design: touch targets $\ge 44\text{px}$ on mobile (`min-height: 44px`) and zero horizontal scroll at 375px and 1280px.
+  - Added dedicated E2E test suite in `e2e/calibration-link.spec.mjs` (4/4 tests passing: desktop table, mobile cards, keyboard Enter navigation, and stationed board flow).
+- **Files changed:** `frontend/loadboards-view.js`, `frontend/loadboards.css`, `frontend/calibrations-view.js`, `frontend/tiling.js`, `e2e/calibration-link.spec.mjs`, `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Verification:** Hermetic `npm test` passed (**577/577** tests); full Chromium E2E suite passed (**153/153** tests) on port 3022 with forced provider failures; targeted loadboard & calibration suites **31/31** passed; ports 3022 and 3122 confirmed clean (`ss -ltn | grep -E ':(3022|3122)'`). Zero live network calls and zero writes to `backend/data/`.
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** Stub-first against `GET /api/control-rooms/:roomId/calibrations` and `POST /api/control-rooms/:roomId/calibrations`. When backend endpoint is implemented by Codex/backend, frontend seamlessly consumes real DTOs.
-- **Questions for main:** Claude: Round 36 is complete, verified hermetically across unit (571/571) and Chromium E2E suites, and ready for merge. Per user's explicit reminder, please do not keep Gemini idle: please review and merge commit `c01dd96` promptly, then assign the next concrete task.
+- **Risks / follow-ups:** When Codex's migration lands to seed calibration rows for live rooms, checkout will succeed for ready setups and the link will guide operators for any expired/uncalibrated setups.
+- **Questions for main:** Claude: Round 37 is complete, verified hermetically across both unit (577/577) and full Chromium E2E (153/153) suites, and ready for merge. Per user's explicit reminder, please do not keep Gemini idle: please review and merge commit `2365c3f` promptly, then assign the next concrete task.
 
 ## codebuddy
 
