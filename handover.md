@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 28 follow-up: device catalog and `deviceId` in station KPIs; then round 29 consumable life slice 1 (F1) | 28f, 29 |
-| gemini | Round 28 follow-up: ATE and device labels on the station KPI panel; then round 29 phone and desktop audit of existing panels | 28f, 29 |
+| codex | Round 30: loadboard checkout slice 1 (F3), pure module and tests | 30 |
+| gemini | Round 29: phone and desktop audit of existing panels (in progress); then round 30 station KPI E2E hardening | 29, 30 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,17 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 30 (2026-10-24) — loadboard checkout slice 1 (F3).** Start with `git merge master`.
+
+- **codex.** Implement `docs/design/loadboard-checkout-slice-1.md` sections 2–5 in a pure module
+  `backend/src/loadboard-checkout.mjs` with `checkoutBoard`, `checkoutBatch` and `releaseBoard`. No I/O, clock, store or
+  model imports. Add `backend/tests/loadboard-checkout.test.mjs` for every item in section 6. Use **port 3021**. Run both
+  suites, add a `project-state/backend/` section and a `log.md` entry, commit, set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini (after round 29 is READY).** Harden the Station KPIs E2E in `e2e/station-kpi.spec.mjs` against spec section 5
+  of `docs/design/station-kpi-panel.md`: forced endpoint failure shows the error state; filter and window changes update the
+  table; the "DERIVED_FROM_UPTIME" label is visible; keyboard-only filter use works. Fix any frontend gap you find. Do not
+  change `backend/`. Use **port 3022**. Run both suites, update `project-state/frontend/`, commit, set `READY FOR MERGE`.
+
 **Round 29 (2026-10-24) — next work.** Start with `git merge master`. Codex does round 28 follow-up first (below),
 then round 29. Gemini does the same order. Each part ends with its own `READY FOR MERGE`; the main agent merges each part.
 
@@ -1372,6 +1383,8 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `6ba6c9b`/`2f3b834` (branch `codex`, round 28 follow-up and round 29 slice 1) → merge: station KPI rates from the device catalog (`deviceId`, `ratedUnitsPerHour` 1–10,000) and consumable life slice 1 (`backend/src/consumable-life.mjs`). Both in one merge, not separate. `npm test` 497/497; E2E 98/98 on port 3024. Deployed `5f9ce57`, healthy; `/station-kpis` smoke-tested on the server. Seed `backend/seed/investigation-lifecycle.json` regenerated with device fields.
+- 2026-10-24 — **gemini** `3bfa611` (branch `gemini`, round 28 follow-up) → merge: ATE and device labels on the station KPI panel. Round 29 audit still open. Log conflict in `project-state/log.md` resolved by keeping both entries.
 - 2026-10-24 — **claude** (docs and fixtures, round 28 spec change): station KPI rates moved from station to device. Process is ATE test; stations are ATE setups; devices are alphanumeric semiconductor chips with `ratedUnitsPerHour` 1–10,000 from the synthetic `fixtures/station-kpis/device-catalog.json`. Spec and `response-12h.json` updated (`deviceId` on each station). **codex and gemini: `git merge master` before continuing round 28.**
 - 2026-10-23 — **codex** `350c4fc` (impl `3032d36`) → merge (round 27): Ask public-question policy, code-grounded factual claims, strict two-key repair. Handoff archived.
 - 2026-10-22 — **gemini** `d37f5c1` (head `61e5514`) → merge (round 27): status bar and tile controls accessibility pass (live region, 44px touch targets, named toolbar controls). Handoff archived.
