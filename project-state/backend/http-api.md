@@ -389,3 +389,8 @@ It uses the window-start reference/context baseline and complete context trail f
 suppression. Missing baseline context/reference suppresses estimates; raw episodes
 and minutes remain visible. GET does not mutate state or advance the simulation.
 No station/window selector is introduced in this single-handler slice.
+
+
+Round 42 changeover readiness remains a pure module: no changeover room records or
+entry path exist. Per the assignment, no changeovers/:changeoverId/readiness endpoint
+is added until there is an actual stored changeover to read.

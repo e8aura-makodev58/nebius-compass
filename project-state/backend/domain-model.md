@@ -525,3 +525,28 @@ observations feed the pure program/site gate. No baseline context yields
 CONTEXT_MISSING/REFERENCE_MISSING. Output is the existing pure shape without raw
 inputs; reads do not write, advance clocks or call providers. Model roles and
 responder/dispatch behavior remain unchanged.
+
+
+## Changeover readiness precursor (round 42, F5 slice 1)
+
+`changeover-readiness.mjs` exports checkChangeoverReadiness with exactly changeover,
+inventory, readiness, kitFacts and crewFacts. Changeover identifies a cell, target
+program and supplied startsAt. Inventory reuses validateLoadboardInventory; the
+cellReadiness packet must match cell/time (equivalent valid UTC spellings compare by
+instant). Reserved kitFacts/crewFacts must both be explicitly null. Malformed fields,
+invalid dates, mismatches and non-null reserved facts throw TypeError.
+
+The fixed check order is LOADBOARD_AVAILABLE, CELL_READY, KIT_AVAILABLE and
+CREW_QUALIFIED. A SERVICEABLE compatible board qualifies in store with no HELD row,
+or physically at this cell with current holds exclusively for this cell. Released
+history does not block an in-store board. Other-cell custody, ambiguous cross-cell
+holds, non-serviceable boards or absent program compatibility cannot qualify. The
+first qualifying board in lexical boardId order is returned only on PASS. Cell
+readiness passes only on READY. Kit/crew stay UNKNOWN with their FACTS_NOT_RECORDED
+reasons, so every slice-1 result is BLOCKED. Overall reasons are a sorted union.
+
+This pure module imports only the loadboard validator. It does not mutate inventory,
+reserve/move boards, advance time, schedule/replan, rank or select responders, or
+call models. Output preserves the supplied startsAt and contains no plan. There is
+no existing changeover room record or entry path, so the assignment's conditional
+read endpoint is intentionally not added; no storage/seed/schema is manufactured.

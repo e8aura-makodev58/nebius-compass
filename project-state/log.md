@@ -966,3 +966,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added `docs/design/changeover-readiness-slice-1.md` (F5 slice 1, the M precursor): a deterministic per-changeover readiness check that reuses F3 and F8, with kit and crew reported as unknown. Approved for round 42.
 - Assigned round 42: codex pure changeover readiness module; gemini changeover readiness panel, stub-first.
 - Pages updated: this log; the design spec; handover.md merge log and assignments.
+
+
+## [2026-10-24] feature — Pure changeover readiness precursor (round 42)
+- Added deterministic board/cell requirement checks using existing inventory validation and cellReadiness shape. Kit/crew remain UNKNOWN and block readiness; no scheduling, reservations or responder logic. No conditional HTTP route added because room changeover records do not exist.
+- Pages updated: backend/domain-model.md, backend/overview.md, backend/http-api.md.
