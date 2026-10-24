@@ -711,3 +711,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Registered panel in Dockview layout (`frontend/tiling.js`), phone navigation (`frontend/workspace-nav.js`), responsive styles (`frontend/layout.css`), and SPA controller (`frontend/app.js`, `frontend/index.html`).
 - Added full E2E test suite in `e2e/loadboards.spec.mjs` (7/7 tests passing). Verified against `npm test` (511/511) and full E2E suite (112/112).
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 31 gemini merge, deploy and round 32 assignment (main agent)
+- Merged gemini `73ce39f`: read-only Loadboards panel on route stubs (the endpoint is round 32 codex work). Verification: `npm test` 511/511; E2E 112/112 on port 3024. Deployed `73ce39f` healthy; the root page and `/station-kpis` return 200 on the deploy server.
+- Assigned round 32: codex loadboards read endpoint; gemini obligations panel (stub-first) and loadboards accessibility tightening. Codex's round 31 (consumable slice 2) is still in progress in its worktree, not yet READY.
+- Pages updated: this log; handover.md merge log and assignments.
