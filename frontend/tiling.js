@@ -9,6 +9,7 @@ const PANELS = {
   stationKpis: { selector: "#station-kpi-tile", title: "Station KPIs", screen: "stationKpis", minimumWidth: 280, minimumHeight: 180 },
   loadboards: { selector: "#loadboards-tile", title: "Loadboards", screen: "loadboards", minimumWidth: 280, minimumHeight: 180 },
   obligations: { selector: "#obligations-tile", title: "Obligations", screen: "obligations", minimumWidth: 280, minimumHeight: 180 },
+  handlerEpisodes: { selector: "#handler-episodes-tile", title: "Handler episodes", screen: "handlerEpisodes", minimumWidth: 280, minimumHeight: 180 },
   map: { selector: ".floor-section", title: "Floor map", screen: "map", minimumWidth: 300, minimumHeight: 220 },
   issues: { selector: "#issue-list", title: "Issues", screen: "issues", minimumWidth: 180, minimumHeight: 130 },
   events: { selector: "#event-feed", title: "Event feed", screen: "events", minimumWidth: 180, minimumHeight: 130 },
@@ -25,11 +26,12 @@ export function parseStoredLayout(raw) {
     if (record.version !== VERSION || !layout || !layout.grid || !layout.panels) return null;
     if (["floatingGroups", "popoutGroups"].some((key) => key in layout && (!Array.isArray(layout[key]) || layout[key].length)) || layout.edgeGroups) return null;
     const panelKeys = Object.keys(layout.panels);
-    const isLegacy6 = panelKeys.length === 6 && !layout.panels.stationKpis && !layout.panels.loadboards && !layout.panels.obligations && ids.filter((id) => !["stationKpis", "loadboards", "obligations"].includes(id)).every((id) => layout.panels[id]);
-    const isLegacy7 = panelKeys.length === 7 && !layout.panels.loadboards && !layout.panels.obligations && ids.filter((id) => !["loadboards", "obligations"].includes(id)).every((id) => layout.panels[id]);
-    const isLegacy8 = panelKeys.length === 8 && !layout.panels.obligations && ids.filter((id) => id !== "obligations").every((id) => layout.panels[id]);
-    if (panelKeys.length !== ids.length && !isLegacy6 && !isLegacy7 && !isLegacy8) return null;
-    const activeIds = isLegacy6 ? ids.filter((id) => !["stationKpis", "loadboards", "obligations"].includes(id)) : isLegacy7 ? ids.filter((id) => !["loadboards", "obligations"].includes(id)) : isLegacy8 ? ids.filter((id) => id !== "obligations") : ids;
+    const isLegacy6 = panelKeys.length === 6 && !layout.panels.stationKpis && !layout.panels.loadboards && !layout.panels.obligations && !layout.panels.handlerEpisodes && ids.filter((id) => !["stationKpis", "loadboards", "obligations", "handlerEpisodes"].includes(id)).every((id) => layout.panels[id]);
+    const isLegacy7 = panelKeys.length === 7 && !layout.panels.loadboards && !layout.panels.obligations && !layout.panels.handlerEpisodes && ids.filter((id) => !["loadboards", "obligations", "handlerEpisodes"].includes(id)).every((id) => layout.panels[id]);
+    const isLegacy8 = panelKeys.length === 8 && !layout.panels.obligations && !layout.panels.handlerEpisodes && ids.filter((id) => !["obligations", "handlerEpisodes"].includes(id)).every((id) => layout.panels[id]);
+    const isLegacy9 = panelKeys.length === 9 && !layout.panels.handlerEpisodes && ids.filter((id) => id !== "handlerEpisodes").every((id) => layout.panels[id]);
+    if (panelKeys.length !== ids.length && !isLegacy6 && !isLegacy7 && !isLegacy8 && !isLegacy9) return null;
+    const activeIds = isLegacy6 ? ids.filter((id) => !["stationKpis", "loadboards", "obligations", "handlerEpisodes"].includes(id)) : isLegacy7 ? ids.filter((id) => !["loadboards", "obligations", "handlerEpisodes"].includes(id)) : isLegacy8 ? ids.filter((id) => !["obligations", "handlerEpisodes"].includes(id)) : isLegacy9 ? ids.filter((id) => id !== "handlerEpisodes") : ids;
     for (const id of activeIds) {
       const panel = layout.panels[id];
       if (!panel || panel.id !== id || panel.contentComponent !== id || panel.tabComponent !== "tile") return null;
@@ -47,7 +49,7 @@ export function parseStoredLayout(raw) {
         node.data.forEach((child) => visit(child, depth + 1));
       } else if (node.type === "leaf") {
         const group = node.data;
-        if (!group || typeof group.id !== "string" || groups.has(group.id) || !Array.isArray(group.views) || group.views.length < 1 || group.views.length > 4 || !group.views.every((v) => activeIds.includes(v)) || group.views.some((v) => seen.has(v))) throw new Error("Invalid tile");
+        if (!group || typeof group.id !== "string" || groups.has(group.id) || !Array.isArray(group.views) || group.views.length < 1 || group.views.length > 5 || !group.views.every((v) => activeIds.includes(v)) || group.views.some((v) => seen.has(v))) throw new Error("Invalid tile");
         group.views.forEach((v) => seen.add(v)); groups.add(group.id);
         node.data = { id: group.id, views: group.views, activeView: group.views[0], locked: true };
       } else throw new Error("Invalid node type");
@@ -129,6 +131,7 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
     api.addPanel({ id: "stationKpis", component: "stationKpis", tabComponent: "tile", title: PANELS.stationKpis.title, position: { referencePanel: "staffing", direction: "within" }, ...constraints("stationKpis") });
     api.addPanel({ id: "loadboards", component: "loadboards", tabComponent: "tile", title: PANELS.loadboards.title, position: { referencePanel: "staffing", direction: "within" }, ...constraints("loadboards") });
     api.addPanel({ id: "obligations", component: "obligations", tabComponent: "tile", title: PANELS.obligations.title, position: { referencePanel: "staffing", direction: "within" }, ...constraints("obligations") });
+    api.addPanel({ id: "handlerEpisodes", component: "handlerEpisodes", tabComponent: "tile", title: PANELS.handlerEpisodes.title, position: { referencePanel: "staffing", direction: "within" }, ...constraints("handlerEpisodes") });
     api.getPanel("context").api.setSize({ width: Math.min(440, width * .36) });
     api.getPanel("issues").api.setSize({ height: Math.max(160, height * .28) });
     api.getPanel("investigation").api.setSize({ height: Math.max(240, height * .42) });

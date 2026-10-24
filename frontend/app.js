@@ -4,6 +4,7 @@ import { renderInvestigations, investigationPolicyMarkup, bindInvestigationPolic
 import { initStationKpis } from './station-kpis-view.js';
 import { initLoadboards } from './loadboards-view.js';
 import { initObligations } from './obligations-view.js';
+import { initHandlerEpisodes } from './handler-episodes-view.js';
 import { initAsk } from './ask-view.js';
 import { initTiling } from "./tiling.js";
 import { initParetoPanel } from "./pareto.js";
@@ -63,6 +64,7 @@ let askView = { render() {} };
 let stationKpisView = null;
 let loadboardsView = null;
 let obligationsView = null;
+let handlerEpisodesView = null;
 let currentView = "control";
 let currentSettingsTab = "api";
 let actionInFlight = false;
@@ -1087,7 +1089,7 @@ function render(state) {
   const previousMode = currentState?.mode;
   if (previousMode && previousMode !== state.mode) { stationHistoryCache.clear(); selectedIssueId = null; selectedStationId = null; selectedResponderId = null; clearEventSelection(); }
   workspaceNav?.update(state);
-  currentState = state; renderStatusBar(state); const live = state.mode === "LIVE"; elements["simulation-controls"].hidden = !live; elements["control-room-search"].hidden = !live; if (!live && searchOpen) closeSearchPalette(); elements["offline-reset-button"].hidden = live; elements["live-mode-button"].classList.toggle("active", live); elements["offline-mode-button"].classList.toggle("active", !live); renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render}); renderInvestigations(state, {escape: escapeHtml, request: roomApi, onState: render}); askView.render(); if (stationKpisView) stationKpisView.render(state); if (loadboardsView) loadboardsView.render(state); if (obligationsView) obligationsView.render(state); renderResponders(state); renderStations(state); renderSidebarTabs(); if (currentView === "settings" && currentSettingsTab === "demo") renderDemoContinuity(state);
+  currentState = state; renderStatusBar(state); const live = state.mode === "LIVE"; elements["simulation-controls"].hidden = !live; elements["control-room-search"].hidden = !live; if (!live && searchOpen) closeSearchPalette(); elements["offline-reset-button"].hidden = live; elements["live-mode-button"].classList.toggle("active", live); elements["offline-mode-button"].classList.toggle("active", !live); renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render}); renderInvestigations(state, {escape: escapeHtml, request: roomApi, onState: render}); askView.render(); if (stationKpisView) stationKpisView.render(state); if (loadboardsView) loadboardsView.render(state); if (obligationsView) obligationsView.render(state); if (handlerEpisodesView) handlerEpisodesView.render(state); renderResponders(state); renderStations(state); renderSidebarTabs(); if (currentView === "settings" && currentSettingsTab === "demo") renderDemoContinuity(state);
   if (currentView === "settings" && currentSettingsTab === "demo") renderStaffing(state, {escape: escapeHtml, request: roomApi, onState: render});
   if (!live) { renderOffline(state); renderAgentActivity(state); return; }
   elements["simulation-time"].textContent = new Date(state.simulationState.simulationTime).toISOString().replace("T", " ").slice(0, 16); elements["simulation-status"].textContent = statusLabel(state.simulationState.status); renderSpeedOptions(state.simulationState.speedMultiplier); elements["pause-resume-button"].textContent = state.simulationState.status === "RUNNING" ? "Pause" : "Resume";
@@ -1656,6 +1658,16 @@ function bootControlRoom() {
   if (obligationsNode) {
     obligationsView = initObligations({
       element: obligationsNode,
+      request: roomApi,
+      escape: escapeHtml,
+      roomId: currentControlRoomId,
+      getState: () => currentState,
+    });
+  }
+  const handlerEpisodesNode = document.querySelector("#handler-episodes-tile");
+  if (handlerEpisodesNode) {
+    handlerEpisodesView = initHandlerEpisodes({
+      element: handlerEpisodesNode,
       request: roomApi,
       escape: escapeHtml,
       roomId: currentControlRoomId,
