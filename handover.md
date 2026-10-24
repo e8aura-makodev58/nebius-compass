@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Station KPI panel, backend: rated throughput, station-kpis module, route, tests (round 28) | 28 |
-| gemini | Station KPI panel, frontend: panel, filter, window controls, phone layout, states (round 28) | 28 |
+| codex | Round 28 follow-up: device catalog and `deviceId` in station KPIs; then round 29 consumable life slice 1 (F1) | 28f, 29 |
+| gemini | Round 28 follow-up: ATE and device labels on the station KPI panel; then round 29 phone and desktop audit of existing panels | 28f, 29 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1258,6 +1258,33 @@ your watcher.
   Nebius palette with no lime as text. At most 4 screenshots under
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
+
+**Round 29 (2026-10-24) — next work.** Start with `git merge master`. Codex does round 28 follow-up first (below),
+then round 29. Gemini does the same order. Each part ends with its own `READY FOR MERGE`; the main agent merges each part.
+
+- **codex (round 29, after round 28 follow-up is READY).** Consumable life slice 1 (F1). Spec:
+  `docs/design/consumable-life-slice-1.md`. Build a pure module `backend/src/consumable-life.mjs`: no I/O, no clock,
+  no route, no UI, no store, and no imports from simulation, responder or analytics. Implement sections 2–6 exactly,
+  including the status order in section 4 and the `obligationKey`. Add `backend/tests/consumable-life.test.mjs` for every
+  item in section 7. Use **port 3021**. Run both suites, add `project-state/backend/` coverage and a `log.md` entry, commit,
+  and set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini (round 29, after round 28 follow-up is READY).** Phone and desktop audit of the existing panels (staffing,
+  investigation, map, issues, events, context, analytics, and the new station KPIs). Check 375 px and 1280 px for
+  horizontal scroll, touch targets under 44 px, missing accessible names, and text contrast below 4.5:1. Fix what fails in
+  `frontend/`. Put the new checks in `e2e/phone-audit.spec.mjs`. Do not change `backend/`. Use **port 3022**. Run both
+  suites, update `project-state/frontend/overview.md` and `log.md`, commit, and set `READY FOR MERGE`.
+
+**Round 28 follow-up (2026-10-24) — device rates (spec section 2 changed on master).** The station rate now belongs to
+the device. Read `docs/design/station-kpi-panel.md` sections 1 and 2 again after `git merge master`.
+
+- **codex.** Add `backend/src/device-catalog.mjs` with the 20 devices in `fixtures/station-kpis/device-catalog.json`
+  as a module constant (do not read fixtures at runtime). Every equipment row gets `deviceId`; the station
+  `ratedUnitsPerHour` comes from that device. Migration: existing rooms use index = hash(stationId) mod 20, and the
+  migration stays deterministic. The response station carries `deviceId`. Update the tests and the project-state
+  pages. Make no other contract change. Use **port 3021**. Set `READY FOR MERGE`.
+- **gemini.** Show on each station card the ATE setup name, `deviceId` and the device's rated units per hour (for
+  example "ATE 1 · SR1260 · 1,260 UPH"). Make the route stubs and the panel's E2E use `fixtures/station-kpis/response-12h.json`
+  (`ATE 1`, `SR1260`, 1,260 UPH, `ATE 2`, `PM0096`, 96 UPH). Do not change `backend/`. Use **port 3022**. Set `READY FOR MERGE`.
 
 **Round 28 (2026-10-24) — station KPI panel (spec: `docs/design/station-kpi-panel.md`).** Read the spec
 first; it is the contract. Start with `git merge master` (protocol step 1).
