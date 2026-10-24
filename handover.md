@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 38: board entry route and synthetic board seeding for existing rooms (round 38 bullets) | 38 |
-| gemini | Round 38: board entry form on the Loadboards panel, stub-first against the round 38 contract | 38 |
+| codex | Round 39: review follow-ups on rounds 31 and 38 (migration edge case, obligation hook check), then F8 correlation record (round 39 bullets) | 39 |
+| gemini | Round 39: phone and desktop audit of the rounds 31–38 panels (Obligations, Loadboards, Calibrations, Handler episodes) | 39 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1259,6 +1259,23 @@ your watcher.
   `docs/design/ask-compass-review/`. Stop the server and check 3122 is free. Commit, then set
   `READY FOR MERGE`. Do not change code.
 
+**Round 39 (2026-10-24) — review follow-ups and correlation record; panel audit.** Start with `git merge master`.
+
+- **codex.** (1) Review follow-up: the round 38 migration keeps existing reservations when `loadboardInventory.boards` is empty. Check
+  whether that state can happen and whether `validateLoadboardInventory` rejects a `HELD` reservation whose board is absent. Make the
+  migration refuse (with a clear error) rather than seed over inconsistent history, and add a test. (2) Confirm that the round 31
+  obligation reconciler runs on the server when counter readings change, and say in the handoff where it is wired. Add a test if
+  there is none. (3) F8 slice 2: the tester correlation record from `docs/design/calibration-readiness-slice-1.md` section 6, as a
+  separate record type (`correlationRecords`) with a pure validator and an append-only entry route
+  `POST /api/control-rooms/:roomId/correlation-records`. It must **not** change `cellReadiness`. Tests: append-only (no update or
+  delete path), validation, and the gate is unaffected. Use **port 3021**. Run both suites, update `project-state/backend/`, commit,
+  set `READY FOR MERGE`. Do not touch `frontend/` or `e2e/`.
+- **gemini.** Audit the panels added in rounds 31–38 (Obligations, Loadboards with the Add board drawer, Calibrations, Handler episodes,
+  Station KPIs) at 375 px and 1280 px. Check horizontal scroll, touch targets of at least 44 px, accessible names, contrast of at least
+  4.5:1, and that every drawer or form returns focus to its trigger on close. Fix what fails in `frontend/`. Put the new checks in
+  `e2e/panel-audit-r39.spec.mjs`. Do not change `backend/`. Use **port 3022**. Run both suites, update `project-state/frontend/`,
+  commit, set `READY FOR MERGE`.
+
 **Round 38 (2026-10-24) — loadboard entry and seeding for existing live rooms.** Start with `git merge master`.
 
 - **codex.** (1) Add `POST /api/control-rooms/:roomId/loadboards/boards` with body `{ boardId, revision, condition, cellId, approvedPrograms }`.
@@ -1511,6 +1528,9 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 
 ### Merge log
 
+- 2026-10-24 — **codex** `0829fc7`…`eb38a84` (branch `codex`, round 38) and **gemini** `becc007`/`af7303b` (round 38) → merge `51aa694`: serialised board entry `POST /api/control-rooms/:roomId/loadboards/boards` and an idempotent board seed migration; the Add board drawer on the Loadboards panel. `npm test` 588/588; E2E 159/159 on port 3024. Deployed `51aa694`, healthy.
+  **Verified on the server:** `plant-1` lists `LB-0412`, `LB-0398` and `LB-0204` (`cellId: null`). A checkout of `LB-0398` to `ATE-1` returned `ALLOCATED` with reservation `RES-SMOKE-3`. **That was my smoke test writing to live state, not an intended action.** I released it straight away (`RELEASED`, `LB-0398` back to store, `heldBy: null`). The released row stays in history, as designed.
+  **Review notes for codex:** the migration keeps existing reservations when boards are empty but reservations exist. That state may be inconsistent. Round 39 checks it.
 - 2026-10-24 — **codex** `47ffed1`…`1c6c47c` (branch `codex`, round 37) and **gemini** `2365c3f`/`a5bd2a1` (round 37) → merge `b98629e`: calibration rows seeded into existing live rooms by an idempotent migration (never extends existing history), and a blocked checkout links to the calibration form. `npm test` 581/581; E2E 153/153 on port 3024. Deployed `b98629e`, healthy.
   **Verified on the server:** `ATE-1` and `ATE-2` are `READY` in `plant-1` (calibrations due 2026-12-05). A checkout of `LB-0398` to `ATE-1` now returns `REJECTED` with `BOARD_UNKNOWN` only, so the calibration gate no longer blocks it. **Live rooms have no loadboards** (`boards: []`), so no checkout can allocate until boards are entered. Round 38 handles it. I did not allocate a board in the live room during the smoke test.
 - 2026-10-24 — **codex** `7c7e228`/`03036dc` (branch `codex`, round 36) and **gemini** `c01dd96`/`55e7190` (round 36) → merge `ab2d15f`: server-side readiness gate in `loadboard-service.mjs` (checkout rejects with `CELL_NOT_READY`), serialised calibration entry `POST /api/control-rooms/:roomId/calibrations`, and the Calibrations panel. `npm test` 577/577; E2E 149/149 on port 3024. Deployed `ab2d15f`, healthy.

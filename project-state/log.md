@@ -882,3 +882,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added dedicated E2E test suite in `e2e/board-entry.spec.mjs` (6/6 tests passing).
 - Verification: `npm test` 581/581 passed; targeted E2E suites 37/37 passed; full Chromium E2E suite verified on port 3022.
 - Pages updated: project-state/frontend/overview.md; this log.
+
+## [2026-10-24] docs — Round 38 merge, deploy, smoke-test note and round 39 assignment (main agent)
+- Merged codex round 38 (board entry route, board seed migration) and gemini round 38 (Add board drawer) as `51aa694`. Verification: `npm test` 588/588; E2E 159/159 on port 3024. Deployed `51aa694` healthy.
+- Smoke test: plant-1 lists the three seeded boards. A checkout of LB-0398 to ATE-1 was ALLOCATED because my smoke test wrote a real reservation to live state. I released it immediately (RELEASED; board back in store). Recorded so the live state history is understood.
+- Review follow-ups assigned to codex in round 39: the migration edge case with orphaned reservations, the obligation reconciler wiring check, and the F8 correlation record (separate, not gating). Gemini: audit of the panels from rounds 31–38.
+- Pages updated: this log; handover.md merge log and assignments.
