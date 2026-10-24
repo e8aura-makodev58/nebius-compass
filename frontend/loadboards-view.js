@@ -48,6 +48,7 @@ export function getPanelState(roomId) {
       checkoutSelectedStation: {}, // boardId -> selected station in form
       selectedReadinessCellId: null, // inspected cell in readiness bar
       rowReasons: {}, // boardId -> plain text string of reasons or status
+      rowBlockedCell: {}, // boardId -> cellId that blocked checkout
       liveAnnouncement: "", // message for aria-live region
       data: null,
       cellReadinessData: generateSyntheticCellReadiness(roomId),
@@ -268,6 +269,7 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
     checkoutSelectedStation,
     selectedReadinessCellId,
     rowReasons,
+    rowBlockedCell = {},
     liveAnnouncement,
   } = panelState;
 
@@ -504,6 +506,10 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
                       : "";
 
                     const reasonText = rowReasons?.[b.boardId] || defaultUnavailableReason;
+                    const rejectedCell = rowBlockedCell?.[b.boardId];
+                    const isBlockedByCell = Boolean(rejectedCell);
+                    const blockedCellId = rejectedCell || (isCellNotReady ? b.cellId : null);
+                    const showAddCalAction = Boolean(blockedCellId && (isCellNotReady || isBlockedByCell || reasonText?.includes("CELL_NOT_READY")));
 
                     return `
                       <tr data-board-id="${escape(b.boardId)}" class="${isInspected ? "lb-row-inspected" : ""} ${isCheckoutOpen ? "lb-row-checking-out" : ""} ${isCellNotReady ? "lb-row-cell-not-ready" : ""}">
@@ -566,7 +572,23 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
                           </div>
                           ${
                             reasonText
-                              ? `<div class="lb-row-reasons ${isCellNotReady ? "lb-reason-warning" : ""}" role="status" aria-label="Reason for ${escape(b.boardId)}">${escape(reasonText)}</div>`
+                              ? `<div class="lb-row-reasons ${isCellNotReady || isBlockedByCell ? "lb-reason-warning" : ""}" role="status" aria-label="Reason for ${escape(b.boardId)}">
+                                  <span class="lb-reason-text">${escape(reasonText)}</span>
+                                  ${
+                                    showAddCalAction
+                                      ? `
+                                  <button
+                                    type="button"
+                                    class="lb-add-cal-action secondary-button"
+                                    data-board-id="${escape(b.boardId)}"
+                                    data-cell-id="${escape(blockedCellId)}"
+                                    aria-label="Add calibration for ${escape(blockedCellId)}"
+                                  >
+                                    Add calibration for ${escape(blockedCellId)}
+                                  </button>`
+                                      : ""
+                                  }
+                                </div>`
                               : ""
                           }
                         </td>
@@ -616,7 +638,16 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
                               activeStationNotReady
                                 ? `
                             <div class="lb-checkout-station-warning" role="alert">
-                              Check-out unavailable: ${escape(activeStation)} is ${escape(activeStationInfo?.readiness || "NOT_READY")} (${escape(activeStationInfo?.reasons?.join(", ") || "CELL_NOT_READY")})
+                              <span>Check-out unavailable: ${escape(activeStation)} is ${escape(activeStationInfo?.readiness || "NOT_READY")} (${escape(activeStationInfo?.reasons?.join(", ") || "CELL_NOT_READY")})</span>
+                              <button
+                                type="button"
+                                class="lb-add-cal-action secondary-button"
+                                data-board-id="${escape(b.boardId)}"
+                                data-cell-id="${escape(activeStation)}"
+                                aria-label="Add calibration for ${escape(activeStation)}"
+                              >
+                                Add calibration for ${escape(activeStation)}
+                              </button>
                             </div>`
                                 : ""
                             }
@@ -686,6 +717,10 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
                   : "";
 
                 const reasonText = rowReasons?.[b.boardId] || defaultUnavailableReason;
+                const rejectedCell = rowBlockedCell?.[b.boardId];
+                const isBlockedByCell = Boolean(rejectedCell);
+                const blockedCellId = rejectedCell || (isCellNotReady ? b.cellId : null);
+                const showAddCalAction = Boolean(blockedCellId && (isCellNotReady || isBlockedByCell || reasonText?.includes("CELL_NOT_READY")));
 
                 return `
                   <article class="lb-card" role="listitem" data-board-id="${escape(b.boardId)}">
@@ -767,7 +802,25 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
 
                     ${
                       reasonText
-                        ? `<div class="lb-card-reasons"><span class="lb-row-reasons ${isCellNotReady ? "lb-reason-warning" : ""}" role="status" aria-label="Reason for ${escape(b.boardId)}">${escape(reasonText)}</span></div>`
+                        ? `<div class="lb-card-reasons">
+                            <span class="lb-row-reasons ${isCellNotReady || isBlockedByCell ? "lb-reason-warning" : ""}" role="status" aria-label="Reason for ${escape(b.boardId)}">
+                              <span class="lb-reason-text">${escape(reasonText)}</span>
+                              ${
+                                showAddCalAction
+                                  ? `
+                              <button
+                                type="button"
+                                class="lb-add-cal-action secondary-button"
+                                data-board-id="${escape(b.boardId)}"
+                                data-cell-id="${escape(blockedCellId)}"
+                                aria-label="Add calibration for ${escape(blockedCellId)}"
+                              >
+                                Add calibration for ${escape(blockedCellId)}
+                              </button>`
+                                  : ""
+                              }
+                            </span>
+                          </div>`
                         : ""
                     }
 
@@ -814,7 +867,16 @@ export function loadboardsMarkup({ escape, panelState, roomState }) {
                         activeStationNotReady
                           ? `
                       <div class="lb-checkout-station-warning" role="alert">
-                        Check-out unavailable: ${escape(activeStation)} is ${escape(activeStationInfo?.readiness || "NOT_READY")} (${escape(activeStationInfo?.reasons?.join(", ") || "CELL_NOT_READY")})
+                        <span>Check-out unavailable: ${escape(activeStation)} is ${escape(activeStationInfo?.readiness || "NOT_READY")} (${escape(activeStationInfo?.reasons?.join(", ") || "CELL_NOT_READY")})</span>
+                        <button
+                          type="button"
+                          class="lb-add-cal-action secondary-button"
+                          data-board-id="${escape(b.boardId)}"
+                          data-cell-id="${escape(activeStation)}"
+                          aria-label="Add calibration for ${escape(activeStation)}"
+                        >
+                          Add calibration for ${escape(activeStation)}
+                        </button>
                       </div>`
                           : ""
                       }
@@ -1029,7 +1091,10 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
         if (cellInfo && cellInfo.readiness !== "READY") {
           const reasonText = `CELL_NOT_READY (${cellInfo.readiness}: ${cellInfo.reasons?.join(", ") || "CALIBRATION_GATE_FAILED"})`;
           panelState.rowReasons[boardId] = reasonText;
+          panelState.rowBlockedCell[boardId] = cellId;
           panelState.liveAnnouncement = `Checkout rejected for ${boardId}: ${reasonText}`;
+          panelState.checkoutBoardId = null;
+          delete panelState.checkoutSelectedStation[boardId];
           updateUI();
           return;
         }
@@ -1042,16 +1107,21 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
             body: JSON.stringify({ requestId, boardId, cellId, programRevision }),
           });
         } catch (err) {
-          // Synthetic fallback if endpoint not mounted
-          response = {
-            decision: "ALLOCATED",
-            reasons: [],
-            reservation: { reservationId: `RES-${requestId}`, boardId, cellId, programRevision, status: "HELD" },
-          };
+          if (cellInfo && cellInfo.readiness !== "READY") {
+            response = { decision: "REJECTED", reasons: ["CELL_NOT_READY"] };
+          } else {
+            // Synthetic fallback if endpoint not mounted
+            response = {
+              decision: "ALLOCATED",
+              reasons: [],
+              reservation: { reservationId: `RES-${requestId}`, boardId, cellId, programRevision, status: "HELD" },
+            };
+          }
         }
 
         if (response?.decision === "ALLOCATED") {
           panelState.rowReasons[boardId] = "";
+          delete panelState.rowBlockedCell[boardId];
           panelState.liveAnnouncement = `Board ${boardId} checked out to ${cellId} for ${programRevision}`;
           if (panelState.data?.boards) {
             const target = panelState.data.boards.find((b) => b.boardId === boardId);
@@ -1064,6 +1134,9 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
           const reasons = Array.isArray(response?.reasons) ? response.reasons : [];
           const reasonText = reasons.join(", ") || response?.decision || "REJECTED";
           panelState.rowReasons[boardId] = reasonText;
+          if (reasons.includes("CELL_NOT_READY") || reasonText.includes("CELL_NOT_READY")) {
+            panelState.rowBlockedCell[boardId] = cellId;
+          }
           panelState.liveAnnouncement = `Checkout rejected for ${boardId}: ${reasonText}`;
         }
 
@@ -1071,6 +1144,41 @@ export function initLoadboards({ element, request, escape, roomId, getState }) {
         delete panelState.checkoutSelectedStation[boardId];
         await loadData();
         updateUI();
+      });
+    });
+
+    // Add calibration action links
+    element.querySelectorAll(".lb-add-cal-action").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const cellId = e.currentTarget.dataset.cellId;
+        if (!cellId) return;
+
+        // 1. Reveal Calibrations workspace/tab
+        if (window.matchMedia("(max-width: 900px)").matches) {
+          const calsNavBtn = document.querySelector('#workspace-nav button[data-workspace="calibrations"]');
+          if (calsNavBtn) calsNavBtn.click();
+        } else {
+          if (window.CompassTiling?.activatePanel) {
+            window.CompassTiling.activatePanel("calibrations");
+          }
+          const calTab = Array.from(document.querySelectorAll("#floor-tiles .dv-tab")).find((el) =>
+            el.textContent.includes("Calibrations")
+          );
+          if (calTab) calTab.click();
+        }
+
+        // 2. Open Add Form in Calibrations view with cellId prefilled and focus first field
+        document.dispatchEvent(
+          new CustomEvent("compass:open-add-calibration", {
+            detail: { cellId },
+          })
+        );
+
+        const calTile = document.querySelector("#calibrations-tile");
+        if (calTile && window.matchMedia("(max-width: 900px)").matches) {
+          calTile.scrollIntoView({ block: "start", behavior: "instant" });
+        }
       });
     });
 

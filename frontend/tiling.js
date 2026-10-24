@@ -253,8 +253,14 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
     });
     splitObserver.observe(host, { childList: true, subtree: true });
     prepareDividers(); store();
+    window.CompassTiling = {
+      activatePanel(id) {
+        try { api?.getPanel(id)?.api.setActive(); } catch {}
+      },
+    };
   }
   function destroy() {
+    delete window.CompassTiling;
     if (!api && !host.isConnected) return;
     store(); clearTimeout(saveTimer); splitObserver?.disconnect();
     if (refreshFrame !== null) cancelAnimationFrame(refreshFrame);

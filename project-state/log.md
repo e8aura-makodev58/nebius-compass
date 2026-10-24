@@ -844,3 +844,13 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Verified on the server: checkout to ATE-1 is rejected with `CELL_NOT_READY`. Live rooms have no calibration rows, so checkout is blocked until rows exist.
 - Assigned round 37: codex seeds calibration rows into existing live rooms by migration; gemini links a blocked checkout to the calibration form.
 - Pages updated: this log; handover.md merge log and assignments.
+
+## [2026-10-24] feature — Linked blocked checkout to calibration form (round 37, gemini)
+- Linked rejected loadboard checkout (`CELL_NOT_READY`) to the Calibrations entry form:
+  - When checkout is rejected with `CELL_NOT_READY` or when a board is stationed at an unready cell, displays the readiness reason next to the row along with a keyboard-reachable, labelled action "Add calibration for <cellId>" (`.lb-add-cal-action`).
+  - Activating the action opens the Calibrations panel (switching workspace on mobile; activating Dockview panel on desktop), expands the Add Calibration drawer with `cellId` pre-filled, and moves focus to the first form field (`#cal-input-id`) without auto-submitting.
+  - Added custom event bridge `compass:open-add-calibration` and controller method `openAddForm({ cellId })` in `calibrations-view.js`.
+  - Responsive design with touch targets ≥ 44px on mobile and zero horizontal scroll at 375px and 1280px.
+- Added dedicated E2E test suite in `e2e/calibration-link.spec.mjs` (4/4 tests passing).
+- Verification: `npm test` 577/577 passed; targeted E2E suites 31/31 passed; full Chromium E2E suite verified on port 3022.
+- Pages updated: project-state/frontend/overview.md; this log.
