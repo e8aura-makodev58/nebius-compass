@@ -1049,3 +1049,11 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Static serving: `.svg`, `.png` and `.webmanifest` were not in the MIME map and fell back to `application/octet-stream`. They are now mapped in `backend/src/server.mjs`.
 - Tests: `backend/tests/app-icons.test.mjs` (media types, PNG sizes, every referenced file exists) and `e2e/app-logo.spec.mjs` (header logo loads; tab icon links). `npm test` 633/633; E2E 200/200 on port 3024.
 - Pages updated: frontend/overview.md, log.md.
+
+## [2026-10-25] feature — Supplied logo and favicon (replaces the generated mark)
+- Integrated the user's branding from codex's handoff (`3ce72bc` on branch `codex`), kept under the original names in `frontend/icons/`: `Compass_application_logo_icon_20261025201828.jpg` (the logo, shown above the room-picker title) and `Compass_application_logo_icon.ico` (the favicon, `<link rel="icon" type="image/x-icon">`).
+- Removed the generated SVG, PNGs and manifest from the earlier logo commit. The header keeps its text heading, because the supplied logo carries its own wordmark.
+- Server MIME map: `.ico` → `image/x-icon`, `.jpg` → `image/jpeg`. The earlier `.svg`, `.png` and `.webmanifest` entries are removed.
+- Tests: `backend/tests/app-icons.test.mjs` (media types, favicon link, referenced files exist); `e2e/app-logo.spec.mjs` (picker logo loads; favicon served as `image/x-icon`).
+- No apple-touch-icon or web manifest: the supplied files have no square PNG. Add one if iOS home-screen icons matter.
+- Pages updated: frontend/overview.md, log.md.
