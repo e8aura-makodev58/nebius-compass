@@ -1,3 +1,5 @@
+import { createWorkplaceLifecycle } from './workplace-lifecycle.mjs';
+import { createWorkplaceSeed } from './workplace-seed.mjs';
 /**
  * Composes the registry into running Control Rooms: one liveRuntime +
  * offlineRuntime + applicationRuntime triple per room, correctly-scoped
@@ -82,8 +84,8 @@ function assertNoReservedIdCollision(rooms) {
  * rule in SOW §4.2: a caller that forgets to pass a path is exactly the
  * failure class fixed the week before this feature was built.
  */
-function buildRoom({ id, label, dataRoot, logger, plannerOptions, agentOptions, investigatorOptions, narratorOptions, assistantOptions }) {
-  const liveStore = createLiveStore({ filePath: roomFilePath(dataRoot, id, "live-simulation.json") });
+function buildRoom({ id, label, dataRoot, logger, plannerOptions, agentOptions, investigatorOptions, narratorOptions, assistantOptions, seedFactory }) {
+  const liveStore = createLiveStore({ filePath: roomFilePath(dataRoot, id, "live-simulation.json"), ...(seedFactory ? { seedFactory } : {}) });
   const roomLogger = createControlRoomLogger(logger, id);
   const liveRuntime = createLiveRuntime({ store: liveStore, logger: roomLogger, plannerOptions, agentOptions, investigatorOptions, narratorOptions, assistantOptions });
   const offlineAuditStore = createAuditStore(roomFilePath(dataRoot, id, "recommendation-events.json"));
@@ -120,6 +122,7 @@ export async function createControlRoomManager({
   migrateLegacyData = true,
   idlePauseMilliseconds = idlePauseMillisecondsFromEnv(),
   now = Date.now,
+  workplacesEnabled = false,
 } = {}) {
   // Must run before metadata/runtime stores are constructed. It only copies a
   // committed demo snapshot into an entirely new control-room root; an
@@ -162,6 +165,24 @@ export async function createControlRoomManager({
     }
   }
 
+  const templateSeed = workplacesEnabled ? createWorkplaceSeed() : null;
+  let workplaces = null;
+  if (workplacesEnabled) {
+    const buildWorkplace = async (id, label) => {
+      try {
+        const fixture = { mode: 'fixture' };
+        const room = buildRoom({ id, label, dataRoot, logger, plannerOptions: fixture, agentOptions: fixture,
+          investigatorOptions: fixture, narratorOptions: fixture, assistantOptions: fixture,
+          seedFactory: () => structuredClone(templateSeed) });
+        await room.liveStore.snapshot(); await room.liveRuntime.reconcileStartup();
+        return { ...room, health: 'READY', reason: null, demo: id !== 'template' };
+      } catch { return { id, label, demo: id !== 'template', health: 'FAILED', reason: 'Workplace unavailable' }; }
+    };
+    rooms.set('template', await buildWorkplace('template', 'Bootstrap template'));
+    workplaces = createWorkplaceLifecycle({ dataRoot, rooms, now, build: buildWorkplace });
+    await workplaces.initialize();
+  }
+
   let processInterval = null;
   // Real time of each room's last operator activity, in memory only: after a
   // restart nobody has been seen yet, so a room left RUNNING gets one full
@@ -170,7 +191,7 @@ export async function createControlRoomManager({
   const idleCheckRunning = new Set();
 
   async function pauseIfIdle(room) {
-    if (idlePauseMilliseconds === 0 || idleCheckRunning.has(room.id)) return;
+    if (room.demo || room.id === 'template' || idlePauseMilliseconds === 0 || idleCheckRunning.has(room.id)) return;
     const idleMilliseconds = now() - lastActivityAt.get(room.id);
     if (idleMilliseconds < idlePauseMilliseconds) return;
     idleCheckRunning.add(room.id);
@@ -187,6 +208,15 @@ export async function createControlRoomManager({
   }
 
   return {
+    workplacesEnabled,
+    ensureWorkplace(username) {
+      if (!workplaces) throw Object.assign(new Error('Workplace login unavailable'), { statusCode: 503 });
+      return workplaces.ensure(username);
+    },
+    touchWorkplace: id => workplaces ? workplaces.touch(id) : Promise.resolve(false),
+    sweepWorkplaces: () => workplaces?.sweep(),
+    enforceWorkplaceRuns: () => workplaces?.enforceRuns(),
+    _workplaceEntryForTests: id => workplaces?.entry(id),
     /** The sole boundary: every room-scoped route resolves through here. */
     getRoom(id) {
       const room = rooms.get(normalizeRoomId(id));
@@ -222,6 +252,7 @@ export async function createControlRoomManager({
 
     /** Pauses every READY, RUNNING room idle past the limit. The scheduler calls it each cycle. */
     async pauseIdleRooms() {
+      await workplaces?.enforceRuns();
       await Promise.all([...rooms.values()].filter((room) => room.health === "READY").map((room) => pauseIfIdle(room)));
     },
 
@@ -229,12 +260,13 @@ export async function createControlRoomManager({
       return rooms.get(id) ?? null;
     },
 
-    async listRoomsWithStatus() {
+    async listRoomsWithStatus(ownRoomId = null) {
       let metadata;
       try { metadata = await metadataStore.snapshot(); } catch { metadata = { rooms: Object.fromEntries(descriptors.map((room) => [room.id, { displayName: room.label, revision: 0 }])) }; }
       const entries = [];
       for (const room of rooms.values()) {
-        const roomMetadata = metadata.rooms[room.id];
+        if (room.id === 'template' || (ownRoomId ? room.id !== ownRoomId : room.demo)) continue;
+        const roomMetadata = metadata.rooms[room.id] ?? { displayName: room.label, revision: 0 };
         if (room.health !== "READY") {
           entries.push({ id: room.id, label: room.label, displayName: roomMetadata.displayName, revision: roomMetadata.revision, health: "FAILED", reason: room.reason });
           continue;
@@ -281,14 +313,15 @@ export async function createControlRoomManager({
     startProcessScheduler(intervalMilliseconds = 1_000) {
       if (processInterval) return processInterval;
       processInterval = setInterval(() => {
+        workplaces?.sweep().catch(() => logEvent(logger, 'workplace_sweep_failed', { error: 'Workplace cleanup failed' }));
         for (const room of rooms.values()) {
-          if (room.health !== "READY") continue;
+          if (room.health !== "READY" || room.id === "template") continue;
           // Intentionally not awaited: dispatch must not serialize rooms.
           // Each room's own runScheduledTick catches and logs its own
           // errors, so a rejection here is a defensive backstop, not the
           // primary error path.
           // The idle check runs first so a paused room places no tick work.
-          pauseIfIdle(room).then(() => room.liveRuntime.runScheduledTick()).catch((error) => {
+          Promise.resolve(room.demo ? workplaces.enforceRun(room.id) : pauseIfIdle(room)).then(() => room.liveRuntime.runScheduledTick()).catch((error) => {
             createControlRoomLogger(logger, room.id)?.log(JSON.stringify({ timestamp: new Date().toISOString(), event: "control_room_tick_error", error: error.message }));
           });
         }

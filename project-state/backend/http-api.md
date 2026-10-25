@@ -7,6 +7,36 @@ The server binds `COMPASS_HOST` (default `0.0.0.0`) on `COMPASS_PORT` (default `
 All request/response bodies are JSON unless noted. A `409` with a `conflict` body is
 returned for optimistic-concurrency clashes; a `4xx`/`5xx` with `{ error }` otherwise.
 
+## Session boundary (round 45)
+
+Production requires a valid session for every API request except POST session/login.
+GET / and frontend assets stay public so the login UI can load. Signed-out API use
+returns 401. POST logout requires a current session and expires its cookie. Session
+responses use Cache-Control: no-store. No password or opaque token appears in JSON.
+
+| Method | Path | Contract |
+|--------|------|----------|
+| POST | `/api/session/login` | Exactly username/password strings; correct environment secret and safe normalized username return `{username,roomId}` and a session cookie. |
+| GET | `/api/session` | `{username,roomId}` for a current session, otherwise 401. |
+| POST | `/api/session/logout` | Deletes the current session, expires its cookie and returns `{ok:true}`; signed out is 401. |
+
+The password comes only from COMPASS_WORKPLACE_PASSWORD. Missing/empty configuration
+refuses all login (401) and emits one startup warning without the value. Invalid
+password/body uses generic Login refused (401); a correctly authenticated but invalid
+username gets plain validation (400). Usernames trim/lower-case and accept only
+1–32 letters/digits/hyphens. Five failed attempts within ten minutes block further
+attempts from the socket address for ten minutes (429); successful login clears the
+count. This in-memory brake resets on restart and is not a distributed boundary.
+The cookie is compass_session, HttpOnly, SameSite=Strict, Path=/ and Secure on HTTPS;
+it contains 32 random bytes encoded base64url. Idle session lifetime is twelve hours.
+
+Demo sessions can list/read only their own workplace and mutate only deterministic
+allowlisted routes there. Shared/other/template room access and global settings/logs
+are 403. Ask/report/investigation/case/Compass capabilities are 403; manual run
+start/resume/speed/mode is unavailable. This guard precedes the operator API handlers
+described below; existing origin/JSON mutation guards remain active. New workplace
+creation at the 200-room cap returns 503; existing users can still resume.
+
 ## Deployment-global routes
 
 These are shared across every room (settings and diagnostics are process-wide, not

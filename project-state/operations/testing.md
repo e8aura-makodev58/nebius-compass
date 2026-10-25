@@ -247,3 +247,26 @@ retrieved injection, provider error and timeout. Scorer poisoning verifies nonze
 counts independently of service filtering and checks empty/decline denominators. The Live
 adapter is tested with a stub provider only; npm test never makes live calls. The standalone
 `npm run eval:ask -- --mode fixture` prints denominator-bearing scores; Live is main-agent-only.
+
+
+## Workplace authentication and pre-login regressions (round 45)
+
+workplace-sessions.test.mjs uses randomly generated environment-only test secrets;
+no shared secret is stored in source, fixtures, responses or logs. It tests the
+session/HTTP authorization boundary with hermetic request streams. The manager tests
+exercise actual isolated stores, template cloning, restart, fixed run expiry, cleanup
+and concurrent cap enforcement. Scratch files live under the repository .cache.
+
+The existing browser suite predates the round-46 login UI and assumes operator
+plant-1/provider-failure workflows. It now starts e2e/helpers/legacy-server.mjs,
+an explicitly named loopback-only NODE_ENV=test component harness, instead of the
+production CLI. The harness explicitly supplies a null session fixture (accepted only in NODE_ENV=test)
+to the server factory; production network servers default to mandatory sessions. It uses
+programmatic legacy manager/handler fixtures; it
+is not a production auth bypass flag. All browser state/logs/settings use
+.cache/e2e-<port> via COMPASS_DATA_DIR and COMPASS_CONTROL_ROOMS_DATA_ROOT.
+session-smoke.spec.mjs checks the signed-out GET /api/session contract. Full login
+UI coverage belongs to round 46; a passing legacy browser suite does not claim
+end-to-end authenticated visitor UI coverage. Production server.mjs always enables
+workplaces/authentication. No runtime authentication-disable environment variable
+is introduced.

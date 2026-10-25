@@ -1385,3 +1385,30 @@ or allowing future reads to fail. Runs in one bucket may be adjacent but not ove
 planned stops can span buckets. These constraints are documented at the HTTP boundary.
 The policy is the spec's JAM-POLICY-A@2, ten-minute gap and two-alarm pattern threshold.
 All projections and metrics remain deterministic and provider-free.
+
+
+## 2026-10-25 — Visitor workplace auth and pre-login test boundary (round 45)
+
+The approved guest-workplaces contract uses one environment-only shared secret and
+open normalized usernames, not individual credentials. Sessions/failed-login limits
+are process-local; use socket addresses rather than trusting arbitrary forwarded
+client IP headers. Timing-safe comparison uses equal-length SHA-256 digests; no
+password bytes are persisted or logged. Cookie Secure follows TLS/forwarded HTTPS.
+Shared-password users may resume another username if they know it; this explicitly
+accepted demo tradeoff must be revisited before real-use deployment.
+
+Workplace creation reuses the manager runtime builder with an independent bootstrap
+seed, never plant-1 state. A durable creation marker precedes the one-time run start;
+restart never replays it, and missing existing state is unavailable rather than
+silently recloned. The fixed real-time deadline is enforced by the existing scheduler.
+Provider options are fixture-only and public mutation capabilities are allowlisted;
+shared/global/provider capabilities and run extension are denied. Safe per-directory
+ownership metadata controls cleanup, never a caller-supplied path.
+
+The existing browser suite assumes unauthenticated operator rooms while login UI is
+assigned separately to round 46. Keep its regression coverage through an explicit
+loopback-only, NODE_ENV=test legacy component server, and test production auth with
+hermetic boundary/manager tests plus an authenticated CLI smoke. GET session's
+signed-out contract gets a browser smoke. This does not claim authenticated UI
+coverage and creates no environment switch that bypasses the production CLI guard.
+No frontend files or deployed environment secrets are modified in this round.

@@ -93,3 +93,40 @@ committed file below 20 MB. `demo-seed-reader.mjs` restores ordinary runtime JSO
 bootstrap; plant-2's ordinary JSON remains supported. The generator also accepts either
 format. Copying the manifest as a live state file is invalid; see the materialization
 command in `docs/demo-history.md`. Runtime state and memory are not compressed.
+
+
+## Authenticated visitor workplaces (round 45)
+
+Production startup enables workplaces in createControlRoomManager. It reuses the
+same buildRoom/live-store/runtime construction path for a hidden PAUSED template
+and username-derived rooms. The template seed is independently built from synthetic
+seed facts, with ATE-1/ATE-2 calibration, three boards, no reservations and empty
+handler inputs. Neither plant-1 nor the template's evolving live state is copied.
+Usernames normalize lower-case/trim and must match [a-z0-9-]{1,32}; the ID includes
+that username plus a short SHA-256 suffix. This prevents path/registry collisions.
+
+workplace-lifecycle.mjs persists workplace.json only inside owned room directories,
+with username, roomId, createdAt, lastSeenAt and runEndsAt. Creation is serialized:
+cap checks, durable creation marker, normal room initialization, then one RUNNING
+transition. A crash cannot replay start; a missing previously created state file
+marks that workplace unavailable rather than recloning. Resumed rooms retain their
+state; login never starts/resumes their clock. The scheduler enforces a fixed
+three-minute real-time deadline from creation, independently of user activity.
+Demo runtime providers are fixture-only. Manual start/resume/speed/mode/model routes
+are denied at the public session boundary, so users cannot extend the run or spend
+provider budget. Deterministic entry, custody, reset, pause and activity paths are
+allowed only in the owning room; reset yields the paused template seed.
+
+The manager restores durable workplaces at startup, sweeps those idle for seven
+days, and repeats cleanup at most hourly through its existing process scheduler.
+Only directories whose metadata matches the safe username-derived ID are eligible;
+template, plant-1, plant-2 and unrelated files are never swept. Cap is 200 workplaces;
+new creation at cap returns 503 while existing workplaces remain usable. Session
+use touches durable workplace activity; sweeps invalidate a session on its next use.
+Demo rooms and the template are absent from ordinary operator room listings, and
+a demo session receives only its own room. Shared room metadata remains separate.
+
+The default programmatic manager/handler fixtures retain the legacy operator
+surface for hermetic component tests. The actual server.mjs entry point always
+enables workplaces and the auth guard; there is no production environment bypass.
+See operations/testing.md for the explicitly separate pre-login browser harness.
