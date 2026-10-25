@@ -67,7 +67,7 @@ const SETTINGS_READ_ONLY = { error: "Provider settings are read-only on the publ
 // Control_Rooms_SOW_v1_DRAFT.md §4.5) — so serve the same index.html rather
 // than 404ing on a page reload or a direct link to a specific room. The same
 // page serves a room's wall-display screens (/rooms/:id/display/:screen).
-const ROOM_PAGE_PATTERN = /^\/rooms\/[^/]+(?:\/display\/[a-z]+)?\/?$/;
+const ROOM_PAGE_PATTERN = /^\/rooms\/[^/]+(?:\/display\/[A-Za-z]+)?\/?$/;
 
 /**
  * A hash of the app's own frontend files, appended as ?v= to every reference to them in
