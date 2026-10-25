@@ -53,3 +53,25 @@ test("status bar reports a failed poll and recovers with a polite live region th
   await expect(sync).not.toHaveClass(/status-bar-sync-failed/);
   await expect(live).toHaveText("Room updates restored");
 });
+
+test("the agent activity dot blinks while an agent is working and stays still otherwise", async ({ page }) => {
+  await page.goto("/rooms/plant-1");
+  await expect(page.locator("#agent-activity-indicator")).toBeVisible();
+  const dot = page.locator("#agent-activity-indicator .activity-dot");
+  expect(await dot.evaluate((element) => getComputedStyle(element).animationName)).toBe("none");
+  await page.locator("#agent-activity-indicator").evaluate((element) => element.classList.add("working"));
+  // The keyframes must exist in a loaded stylesheet; a dangling animation name would silently do nothing.
+  expect(await page.evaluate(() => [...document.styleSheets].some((sheet) => [...sheet.cssRules].some((rule) => rule.constructor.name === "CSSKeyframesRule" && rule.name === "activity-blink")))).toBe(true);
+  await expect.poll(() => dot.evaluate((element) => getComputedStyle(element).animationName)).toBe("activity-blink");
+});
+
+test("the simulation dot blinks while the room is RUNNING and is steady otherwise", async ({ page }) => {
+  await page.goto("/rooms/plant-1");
+  const run = page.locator("#status-bar-run");
+  await expect(run).not.toHaveText("—");
+  const dot = page.locator("#status-bar-dot");
+  const running = (await run.textContent()).trim() === "Running";
+  await expect(dot).toHaveClass(running ? /(^|\s)running(\s|$)/ : /(^|\s)(paused|offline|completed|idle)(\s|$)/);
+  await expect.poll(() => dot.evaluate((element) => element.getAnimations().map((animation) => animation.animationName))).toEqual(running ? ["sim-blink"] : []);
+  await expect(dot).toHaveAttribute("aria-hidden", "true");
+});

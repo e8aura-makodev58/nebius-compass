@@ -106,6 +106,8 @@ AMD ranking takes about 40–90s, so above 5× it arrives long after the simulat
 moved on. A room already running faster (the API still accepts 10× and 60×) shows its speed
 as a disabled "above recommended" option until the operator lowers it.
 
+The status bar's **Run** dot (`#status-bar-dot`) blinks while the simulation is RUNNING, is amber when PAUSED and grey otherwise. The top-bar agent dot is separate and blinks only while an agent is working.
+
 ## Wall-display screens
 
 A control room can put each panel on its own monitor. `/rooms/:id/display/:screen` shows
