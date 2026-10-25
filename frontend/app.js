@@ -8,6 +8,7 @@ import { initHandlerEpisodes } from './handler-episodes-view.js';
 import { initCalibrations } from './calibrations-view.js';
 import { initChangeoverReadiness } from './changeover-readiness-view.js';
 import { initAsk } from './ask-view.js';
+import { initLoginView } from './login-view.js';
 import { initTiling, TILE_SCREENS } from "./tiling.js";
 import { announcePanelWindow, createPanelWindows } from "./window-panels.js";
 import { initParetoPanel } from "./pareto.js";
@@ -22,7 +23,7 @@ const elements = Object.fromEntries([
   "settings-tab", "settings-view", "settings-content", "settings-api-panel", "settings-demo-panel", "settings-api-tab", "settings-demo-tab", "agent-activity-indicator", "agent-activity-label", "demo-primary-activity", "demo-activity-title", "demo-activity-detail",
   "event-planner-dot", "event-planner-status", "compass-dot", "compass-status", "demo-selected-issue", "issue-heading", "context-eyebrow",
   "control-room-search", "open-control-search", "control-search-palette", "close-control-search", "control-search-input", "control-search-filters", "control-search-results",
-  "room-picker-view", "room-picker-list",
+  "room-picker-view", "room-picker-list", "login-view", "sign-out-button",
 ].map((id) => [id, document.querySelector(`#${id}`)]));
 
 /**
@@ -31,7 +32,7 @@ const elements = Object.fromEntries([
  * route. Room selection is per-browser and never changes without a full page
  * navigation (§4.6): there is deliberately no code path that reassigns this.
  */
-const currentControlRoomId = (() => {
+let currentControlRoomId = (() => {
   const match = window.location.pathname.match(/^\/rooms\/([^/]+)(?:\/display\/[A-Za-z]+)?\/?$/);
   return match ? decodeURIComponent(match[1]) : null;
 })();
@@ -1621,11 +1622,17 @@ function renderRoomPicker(rooms) {
 }
 
 async function bootRoomPicker() {
-  elements["room-picker-view"].hidden = false;
   try {
     const { rooms } = await globalApi("/control-rooms");
+    elements["room-picker-view"].hidden = false;
     renderRoomPicker(rooms);
   } catch (error) {
+    if (error.status === 401 && loginViewInstance) {
+      elements["room-picker-view"].hidden = true;
+      loginViewInstance.show();
+      return;
+    }
+    elements["room-picker-view"].hidden = false;
     setHtml(elements["room-picker-list"], `<p class="load-error">${escapeHtml(error.message)}</p>`);
   }
 }
@@ -1761,8 +1768,150 @@ function bootControlRoom() {
   }
   if (!displayScreen) askView = initAsk({ escape: escapeHtml, request: roomApi, getState: () => currentState, onState: render, getContextIssueId: () => selectedIssueId, navigate: navigateToCitation });
   document.querySelector('#active-room-name').textContent = currentControlRoomId;
-  roomApi("/state").then((state) => { render(state); setStatusBarSync(true); }).catch((error) => { reportClientError("initial_state_load", error); setHtml(elements.floor, `<p class="load-error">${escapeHtml(error.message)}</p>`); });
-  setInterval(async () => { if (actionInFlight || pointerInteractionActive()) return; try { render(await roomApi("/state")); setStatusBarSync(true); if (currentView === "analytics") await loadAnalytics(); } catch (error) { setStatusBarSync(false); reportClientError("poll_state", error); } }, 1_500);
+  roomApi("/state")
+    .then((state) => {
+      render(state);
+      setStatusBarSync(true);
+    })
+    .catch((error) => {
+      if (error.status === 401 && loginViewInstance) {
+        document.querySelector(".app-shell").hidden = true;
+        if (statePollInterval) {
+          clearInterval(statePollInterval);
+          statePollInterval = null;
+        }
+        loginViewInstance.show();
+        return;
+      }
+      reportClientError("initial_state_load", error);
+      setHtml(elements.floor, `<p class="load-error">${escapeHtml(error.message)}</p>`);
+    });
+
+  statePollInterval = setInterval(async () => {
+    if (actionInFlight || pointerInteractionActive()) return;
+    try {
+      render(await roomApi("/state"));
+      setStatusBarSync(true);
+      if (currentView === "analytics") await loadAnalytics();
+    } catch (error) {
+      if (error.status === 401 && loginViewInstance) {
+        clearInterval(statePollInterval);
+        statePollInterval = null;
+        document.querySelector(".app-shell").hidden = true;
+        loginViewInstance.show();
+        return;
+      }
+      setStatusBarSync(false);
+      reportClientError("poll_state", error);
+    }
+  }, 1_500);
 }
 
-if (currentControlRoomId) bootControlRoom(); else bootRoomPicker();
+let loginViewInstance = null;
+let activeSession = null;
+let statePollInterval = null;
+
+async function fetchSession() {
+  const response = await fetch("/api/session", { credentials: "same-origin" });
+  if (response.status === 401) return { authenticated: false };
+  if (response.ok) {
+    const data = await response.json();
+    return { authenticated: true, ...data };
+  }
+  throw new Error(`Session probe failed with status ${response.status}`);
+}
+
+function setupLoginAndSession() {
+  if (elements["login-view"]) {
+    loginViewInstance = initLoginView({
+      viewElement: elements["login-view"],
+      onLoginSuccess: (session) => {
+        const errorEl = document.querySelector("#session-boot-error");
+        if (errorEl) errorEl.remove();
+        activeSession = session;
+        if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
+        const targetRoomId = session.roomId;
+        if (targetRoomId && targetRoomId !== currentControlRoomId) {
+          currentControlRoomId = targetRoomId;
+          window.history.pushState(null, "", `/rooms/${encodeURIComponent(targetRoomId)}`);
+        }
+        loginViewInstance.hide();
+        elements["room-picker-view"].hidden = true;
+        bootControlRoom();
+      },
+      apiCall: globalApi,
+    });
+  }
+
+  if (elements["sign-out-button"]) {
+    elements["sign-out-button"].onclick = async () => {
+      elements["sign-out-button"].disabled = true;
+      try {
+        await globalApi("/session/logout", { method: "POST" });
+      } catch (err) {
+        reportClientError("logout_failed", err);
+      } finally {
+        const errorEl = document.querySelector("#session-boot-error");
+        if (errorEl) errorEl.remove();
+        elements["sign-out-button"].disabled = false;
+        elements["sign-out-button"].hidden = true;
+      }
+      if (statePollInterval) {
+        clearInterval(statePollInterval);
+        statePollInterval = null;
+      }
+      activeSession = null;
+      document.querySelector(".app-shell").hidden = true;
+      elements["room-picker-view"].hidden = true;
+      if (window.location.pathname !== "/") {
+        window.history.pushState(null, "", "/");
+      }
+      if (loginViewInstance) {
+        loginViewInstance.show();
+      }
+    };
+  }
+}
+
+async function bootApp() {
+  setupLoginAndSession();
+
+  let session;
+  try {
+    session = await fetchSession();
+  } catch (error) {
+    reportClientError("session_probe", error);
+    document.querySelector(".app-shell").hidden = true;
+    if (elements["room-picker-view"]) elements["room-picker-view"].hidden = true;
+    if (loginViewInstance) loginViewInstance.hide();
+    let errorEl = document.querySelector("#session-boot-error");
+    if (!errorEl) {
+      errorEl = document.createElement("div");
+      errorEl.id = "session-boot-error";
+      errorEl.className = "session-boot-error";
+      errorEl.setAttribute("role", "alert");
+      errorEl.innerHTML = `<p class="load-error">${escapeHtml(error.message || "Failed to authenticate session")}</p>`;
+      document.body.appendChild(errorEl);
+    }
+    return;
+  }
+
+  if (!session || !session.authenticated) {
+    document.querySelector(".app-shell").hidden = true;
+    if (elements["room-picker-view"]) elements["room-picker-view"].hidden = true;
+    if (loginViewInstance) loginViewInstance.show();
+    return;
+  }
+
+  activeSession = session;
+  if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
+
+  if (currentControlRoomId) {
+    bootControlRoom();
+    return;
+  }
+
+  bootRoomPicker();
+}
+
+bootApp();

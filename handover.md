@@ -1752,54 +1752,39 @@ rolled-back merge is kept as tag `backup/gemini-round46-merge`. Your branch is u
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 23:06 UTC
-- **Task:** Round 43: keyboard-only pass over all workspace panels (tab order, focus visibility, dialog focus return)
-- **Head commit:** `08f976e`
+- **Updated:** 2026-10-25 08:56 UTC
+- **Task:** Round 47: fix round 46 login integration (fail-closed auth & shared Playwright fixture)
+- **Head commit:** `2deea24` (code `c00a175`)
 - **Changes:**
-  - Completed workspace-wide keyboard-only accessibility pass across all 13 workspace panels (Staffing, Field reports/Investigation, Map, Issues, Events, Context/Dispatch, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness):
-    - Verified sequential tab order follows DOM reading order with zero positive `tabindex` attributes across all 13 panels.
-    - Enforced visible focus rings with `outline: 2px solid var(--accent)` (>= 2px outline width) and proper contrast across inputs, buttons, selects, and summary elements in `frontend/base.css`, `frontend/station-kpis.css`, `frontend/calibrations.css`, `frontend/loadboards.css`, `frontend/obligations.css`, `frontend/handler-episodes.css`, and `frontend/analytics.css`.
-    - Created reusable focus trapping utility `frontend/focus-trap.js` (`trapFocus(container, event)`) wrapping Tab / Shift+Tab within visible, non-disabled interactive elements.
-    - Wired accessible focus trapping, Escape dismiss, and trigger focus return across:
-      - Search palette (`#control-search-palette`): traps focus, closes on `Escape`, and restores focus to opener (`#open-control-search`).
-      - Ask Compass dialog (`#ask-dialog`): closes on `Escape` and restores focus to opener (`#open-ask`).
-      - Investigation case dialog (`.inv-case-dialog`): restores focus to case button trigger on close.
-      - Loadboards add drawer (`.lb-add-drawer`), inspect drawer (`.lb-detail-drawer`), and checkout form (`.lb-checkout-form`): trap focus, close on `Escape`, and restore focus to trigger buttons.
-      - Calibrations add drawer (`.cal-add-drawer`) and correlation add drawer (`.cal-add-corr-drawer`): trap focus, close on `Escape`, and restore focus to toggle buttons.
-      - Obligations inspect drawer (`.obl-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
-      - Handler episodes inspect drawer (`.he-detail-drawer`): traps focus, closes on `Escape`, and restores focus to trigger button.
-      - Station KPIs filter dropdown (`.kpi-filter-dropdown`): traps focus when open, closes on `Escape`, and restores focus to summary.
-      - Screen launcher menu (`.screen-launcher`): closes on `Escape` and restores focus to summary.
-      - Analytics drill-down panel (`#analytics-drill`): traps focus, closes on `Escape`, and restores focus to drill trigger button.
-  - Added comprehensive E2E test suite in `e2e/keyboard-pass-r43.spec.mjs` (11/11 tests passing) covering tab order across all 13 panels, outline width >= 2px, focus trapping, Escape dismissal, and trigger focus return.
+  - Merged `master` (including codex round 45 backend authentication).
+  - Hardened `frontend/app.js` to fail closed:
+    - `fetchSession()` raises on non-200 / non-401 responses; `bootApp()` catches errors and displays an explicit `#session-boot-error` alert (`role="alert"`) rather than falling back to unauthenticated boot. Removed the legacy "404 falls back to default boot" branch.
+    - On 401 unauthenticated, hides `.app-shell` and `#room-picker-view` and presents `#login-view`.
+    - When authenticated, visits to `/rooms/:id` boot the room; visits to `/` boot `#room-picker-view`.
+  - Implemented shared Playwright authentication fixture in `e2e/helpers/session-fixture.mjs` and imported in `playwright.config.mjs`:
+    - Stubs `GET /api/session` returning `{ username: "test-operator", roomId: "plant-1" }` for all pages, contexts, and popups.
+    - Automatically excludes `e2e/login.spec.mjs`, ensuring the full login flow (unauthenticated state, invalid credentials, rate limit, keyboard interaction, phone layout) is verified against the real login UI.
+    - Leaves `e2e/session-smoke.spec.mjs` testing direct unauthenticated API probes against the backend server.
+    - Preserves all 187 existing test assertions without weakening or deleting any assertion.
+  - Kept phone width (375px), Nebius palette (no lime text), focus visible (≥2px outline), and zero-outbound-request checks passing.
 - **Files changed:**
-  - `frontend/focus-trap.js`
-  - `frontend/base.css`
-  - `frontend/analytics.css`
-  - `frontend/investigation.css`
-  - `frontend/station-kpis.css`
-  - `frontend/loadboards.css`
-  - `frontend/obligations.css`
-  - `frontend/handler-episodes.css`
   - `frontend/app.js`
-  - `frontend/investigation-view.js`
-  - `frontend/loadboards-view.js`
-  - `frontend/calibrations-view.js`
-  - `frontend/obligations-view.js`
-  - `frontend/handler-episodes-view.js`
-  - `frontend/station-kpis-view.js`
-  - `e2e/keyboard-pass-r43.spec.mjs`
+  - `playwright.config.mjs`
+  - `e2e/helpers/session-fixture.mjs`
   - `project-state/frontend/overview.md`
   - `project-state/log.md`
   - `handover.md`
 - **Verification:**
-  - `npm test`: 612/612 passed (hermetic, zero writes to `backend/data/`).
-  - Targeted E2E `e2e/keyboard-pass-r43.spec.mjs`: 11/11 passed on port 3022.
-  - Full Chromium E2E suite `npm run test:e2e`: 186/186 passed on port 3022.
-  - Ports 3022 and 3122 confirmed completely free (`ss -ltn`).
+  - `npm test`: 630/630 passed (hermetic, zero network, zero writes to `backend/data/`).
+  - Targeted login E2E `e2e/login.spec.mjs`: 8/8 passed on port 3022.
+  - Targeted phone audit E2E `e2e/phone-audit.spec.mjs`: 5/5 passed on port 3022.
+  - Targeted tiling E2E `e2e/tiling.spec.mjs`: 8/8 passed on port 3022.
+  - Targeted control rooms E2E `e2e/control-rooms.spec.mjs`: 8/8 passed on port 3022.
+  - Full Chromium E2E suite `npm run test:e2e`: 195/195 passed on port 3022 (187 existing + 8 login).
+  - Ports 3022 and 3122 confirmed completely free (`ss -ltn | grep -E ':(3022|3122) '`).
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None. No backend files touched.
-- **Questions for main:** Ready for merge. Watcher remains active.
+- **Risks / follow-ups:** None. Backend and `docs/design/` untouched. Ready for round 44 keyboard follow-ups.
+- **Questions for main:** Round 47 is complete, verified green across all 195 E2E tests, and ready for merge. Watcher remains active.
 
 ## codebuddy
 

@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from "@playwright/test";
+import './e2e/helpers/session-fixture.mjs';
 
 // Each agent worktree runs E2E on its own port (see the port table in handover.md) so
 // parallel runs never collide. Playwright starts the server for the run and stops it
