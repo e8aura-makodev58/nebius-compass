@@ -8,6 +8,7 @@ import { initHandlerEpisodes } from './handler-episodes-view.js';
 import { initCalibrations } from './calibrations-view.js';
 import { initChangeoverReadiness } from './changeover-readiness-view.js';
 import { initAsk } from './ask-view.js';
+import { initLoginView } from './login-view.js';
 import { initTiling } from "./tiling.js";
 import { initParetoPanel } from "./pareto.js";
 import { setHtml } from "./render-lifecycle.js";
@@ -21,7 +22,7 @@ const elements = Object.fromEntries([
   "settings-tab", "settings-view", "settings-content", "settings-api-panel", "settings-demo-panel", "settings-api-tab", "settings-demo-tab", "agent-activity-indicator", "agent-activity-label", "demo-primary-activity", "demo-activity-title", "demo-activity-detail",
   "event-planner-dot", "event-planner-status", "compass-dot", "compass-status", "demo-selected-issue", "issue-heading", "context-eyebrow",
   "control-room-search", "open-control-search", "control-search-palette", "close-control-search", "control-search-input", "control-search-filters", "control-search-results",
-  "room-picker-view", "room-picker-list",
+  "room-picker-view", "room-picker-list", "login-view", "sign-out-button",
 ].map((id) => [id, document.querySelector(`#${id}`)]));
 
 /**
@@ -1617,11 +1618,17 @@ function renderRoomPicker(rooms) {
 }
 
 async function bootRoomPicker() {
-  elements["room-picker-view"].hidden = false;
   try {
     const { rooms } = await globalApi("/control-rooms");
+    elements["room-picker-view"].hidden = false;
     renderRoomPicker(rooms);
   } catch (error) {
+    if (error.status === 401 && loginViewInstance) {
+      elements["room-picker-view"].hidden = true;
+      loginViewInstance.show();
+      return;
+    }
+    elements["room-picker-view"].hidden = false;
     setHtml(elements["room-picker-list"], `<p class="load-error">${escapeHtml(error.message)}</p>`);
   }
 }
@@ -1725,8 +1732,131 @@ function bootControlRoom() {
   if (!displayScreen) initTiling({ onMapResize: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS), displayHref: (screen) => `/rooms/${encodeURIComponent(currentControlRoomId)}/display/${screen}` });
   if (!displayScreen) askView = initAsk({ escape: escapeHtml, request: roomApi, getState: () => currentState, onState: render, getContextIssueId: () => selectedIssueId, navigate: navigateToCitation });
   document.querySelector('#active-room-name').textContent = currentControlRoomId;
-  roomApi("/state").then((state) => { render(state); setStatusBarSync(true); }).catch((error) => { reportClientError("initial_state_load", error); setHtml(elements.floor, `<p class="load-error">${escapeHtml(error.message)}</p>`); });
-  setInterval(async () => { if (actionInFlight || pointerInteractionActive()) return; try { render(await roomApi("/state")); setStatusBarSync(true); if (currentView === "analytics") await loadAnalytics(); } catch (error) { setStatusBarSync(false); reportClientError("poll_state", error); } }, 1_500);
+  roomApi("/state")
+    .then((state) => {
+      render(state);
+      setStatusBarSync(true);
+    })
+    .catch((error) => {
+      if (error.status === 401 && loginViewInstance) {
+        document.querySelector(".app-shell").hidden = true;
+        if (statePollInterval) {
+          clearInterval(statePollInterval);
+          statePollInterval = null;
+        }
+        loginViewInstance.show();
+        return;
+      }
+      reportClientError("initial_state_load", error);
+      setHtml(elements.floor, `<p class="load-error">${escapeHtml(error.message)}</p>`);
+    });
+
+  statePollInterval = setInterval(async () => {
+    if (actionInFlight || pointerInteractionActive()) return;
+    try {
+      render(await roomApi("/state"));
+      setStatusBarSync(true);
+      if (currentView === "analytics") await loadAnalytics();
+    } catch (error) {
+      if (error.status === 401 && loginViewInstance) {
+        clearInterval(statePollInterval);
+        statePollInterval = null;
+        document.querySelector(".app-shell").hidden = true;
+        loginViewInstance.show();
+        return;
+      }
+      setStatusBarSync(false);
+      reportClientError("poll_state", error);
+    }
+  }, 1_500);
 }
 
-if (currentControlRoomId) bootControlRoom(); else bootRoomPicker();
+let loginViewInstance = null;
+let activeSession = null;
+let statePollInterval = null;
+
+async function fetchSession() {
+  try {
+    const response = await fetch("/api/session", { credentials: "same-origin" });
+    if (response.status === 401) return { authenticated: false };
+    if (response.ok) {
+      const data = await response.json();
+      return { authenticated: true, ...data };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setupLoginAndSession() {
+  if (elements["login-view"]) {
+    loginViewInstance = initLoginView({
+      viewElement: elements["login-view"],
+      onLoginSuccess: (session) => {
+        activeSession = session;
+        if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
+        const targetRoomId = session.roomId;
+        if (targetRoomId && targetRoomId !== currentControlRoomId) {
+          window.location.href = `/rooms/${encodeURIComponent(targetRoomId)}`;
+        } else {
+          loginViewInstance.hide();
+          elements["room-picker-view"].hidden = true;
+          bootControlRoom();
+        }
+      },
+      apiCall: globalApi,
+    });
+  }
+
+  if (elements["sign-out-button"]) {
+    elements["sign-out-button"].onclick = async () => {
+      elements["sign-out-button"].disabled = true;
+      try {
+        await globalApi("/session/logout", { method: "POST" });
+      } catch (err) {
+        reportClientError("logout_failed", err);
+      } finally {
+        elements["sign-out-button"].disabled = false;
+        elements["sign-out-button"].hidden = true;
+      }
+      if (statePollInterval) {
+        clearInterval(statePollInterval);
+        statePollInterval = null;
+      }
+      activeSession = null;
+      document.querySelector(".app-shell").hidden = true;
+      elements["room-picker-view"].hidden = true;
+      if (window.location.pathname !== "/") {
+        window.history.pushState(null, "", "/");
+      }
+      if (loginViewInstance) {
+        loginViewInstance.show();
+      }
+    };
+  }
+}
+
+async function bootApp() {
+  setupLoginAndSession();
+  const session = await fetchSession();
+  if (session && session.authenticated === false) {
+    document.querySelector(".app-shell").hidden = true;
+    elements["room-picker-view"].hidden = true;
+    if (loginViewInstance) loginViewInstance.show();
+    return;
+  }
+  if (session && session.authenticated === true) {
+    activeSession = session;
+    if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
+    if (!currentControlRoomId && session.roomId) {
+      window.location.href = `/rooms/${encodeURIComponent(session.roomId)}`;
+      return;
+    }
+    bootControlRoom();
+    return;
+  }
+  if (currentControlRoomId) bootControlRoom(); else bootRoomPicker();
+}
+
+bootApp();

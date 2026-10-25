@@ -20,9 +20,32 @@
     <link rel="stylesheet" href="/handler-episodes.css" />
     <link rel="stylesheet" href="/calibrations.css" />
     <link rel="stylesheet" href="/changeover-readiness.css" />
+    <link rel="stylesheet" href="/login.css" />
     <link rel="stylesheet" href="/layout.css" />
   </head>
   <body>
+    <section id="login-view" class="login-view" hidden>
+      <div class="login-card">
+        <p class="eyebrow">ResponseCompass</p>
+        <h1 id="login-title">Workplace Sign In</h1>
+        <p class="tagline">Sign in to your guest workplace to explore the live control room.</p>
+        <form id="login-form" class="login-form" aria-labelledby="login-title" novalidate>
+          <div class="login-field">
+            <label for="login-username">Username</label>
+            <input id="login-username" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required aria-required="true" />
+          </div>
+          <div class="login-field">
+            <label for="login-password">Password</label>
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required aria-required="true" />
+          </div>
+          <p id="login-error" class="login-error" role="alert" aria-live="assertive" hidden></p>
+          <button id="login-submit-button" class="login-submit-button" type="submit">
+            <span class="login-submit-label">Sign in</span>
+            <span class="login-submit-busy" hidden>Signing in…</span>
+          </button>
+        </form>
+      </div>
+    </section>
     <section id="room-picker-view" class="room-picker-view" hidden>
       <div class="room-picker-card">
         <p class="eyebrow">ResponseCompass</p>
@@ -35,7 +58,7 @@
       <header class="topbar">
         <div><p class="eyebrow">Responder dispatch</p><h1>Response<span class="brand-mark">Compass</span></h1><p class="tagline">Not just who's closest. Who makes the most sense.</p></div>
         <nav class="tab-bar" aria-label="Application views"><button id="control-room-tab" class="tab-button active" type="button">Live Floor</button><button id="rooms-tab" class="tab-button" type="button">Control Rooms</button><button id="analytics-tab" class="tab-button" type="button">Analytics</button><button id="settings-tab" class="tab-button" type="button">Settings</button><div id="agent-activity-indicator" class="agent-activity-indicator" role="status" aria-live="polite"><span class="activity-dot"></span><span id="agent-activity-label">Agents idle</span></div></nav>
-        <div class="mode-controls" aria-label="Runtime mode"><button id="live-mode-button" type="button">Live Simulation</button><button id="offline-mode-button" class="secondary-button" type="button">Offline Demo</button><button id="offline-reset-button" class="secondary-button" type="button" hidden>Reset Offline</button></div>
+        <div class="mode-controls" aria-label="Runtime mode"><button id="live-mode-button" type="button">Live Simulation</button><button id="offline-mode-button" class="secondary-button" type="button">Offline Demo</button><button id="offline-reset-button" class="secondary-button" type="button" hidden>Reset Offline</button><button id="sign-out-button" class="secondary-button sign-out-button" type="button" hidden>Sign out</button></div>
       </header>
       <section id="control-room-view">
         <section id="simulation-controls" class="simulation-bar" aria-label="Simulation controls">
