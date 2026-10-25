@@ -1752,26 +1752,25 @@ rolled-back merge is kept as tag `backup/gemini-round46-merge`. Your branch is u
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-25 08:15 UTC
-- **Task:** Round 46: login form and workplace UI (frontend)
-- **Head commit:** `6ca4630` (merged in `fcfdffc`)
+- **Updated:** 2026-10-25 08:56 UTC
+- **Task:** Round 47: fix round 46 login integration (fail-closed auth & shared Playwright fixture)
+- **Head commit:** `2deea24` (code `c00a175`)
 - **Changes:**
-  - Implemented guest workplaces authentication and login UI against `docs/design/guest-workplaces.md` §1 and §8:
-    - Created `frontend/login-view.js` (`initLoginView`) and `frontend/login.css`.
-    - Added `#login-view` card with eyebrow, title, tagline, accessible labelled inputs (`#login-username`, `#login-password`), and submit button (`#login-submit-button`).
-    - Handled `GET /api/session`: when 401 (unauthenticated), hides app shell and shows login screen. If 404 (legacy unauthenticated backend), falls back to default boot so all existing tests pass unchanged.
-    - Added clear busy state on submit (`aria-busy="true"`, disabled inputs, 'Signing in…' busy label).
-    - Single generic error line for invalid credentials or refused logins ("Invalid username or password.") without username enumeration, and dedicated rate limit message (429) prompting the user to wait.
-    - On success, transitions into the returned workplace (`/rooms/:roomId`) and exposes a visible header Sign out button (`#sign-out-button`) in `.mode-controls` that calls `POST /api/session/logout` and returns to the login screen.
-    - Verified phone width (375px) compliance with zero horizontal overflow, Nebius palette without lime as text, focus rings (≥2px outline width) across inputs and buttons, zero credentials in browser storage (`localStorage`/`sessionStorage`), and zero outbound network requests.
-    - Preserved full backwards compatibility with all pre-login regression test harnesses (direct `/rooms/plant-1` boot and bare `/` room picker under `legacy-server.mjs`).
-    - Added comprehensive E2E test suite in `e2e/login.spec.mjs` (8/8 tests passing).
+  - Merged `master` (including codex round 45 backend authentication).
+  - Hardened `frontend/app.js` to fail closed:
+    - `fetchSession()` raises on non-200 / non-401 responses; `bootApp()` catches errors and displays an explicit `#session-boot-error` alert (`role="alert"`) rather than falling back to unauthenticated boot. Removed the legacy "404 falls back to default boot" branch.
+    - On 401 unauthenticated, hides `.app-shell` and `#room-picker-view` and presents `#login-view`.
+    - When authenticated, visits to `/rooms/:id` boot the room; visits to `/` boot `#room-picker-view`.
+  - Implemented shared Playwright authentication fixture in `e2e/helpers/session-fixture.mjs` and imported in `playwright.config.mjs`:
+    - Stubs `GET /api/session` returning `{ username: "test-operator", roomId: "plant-1" }` for all pages, contexts, and popups.
+    - Automatically excludes `e2e/login.spec.mjs`, ensuring the full login flow (unauthenticated state, invalid credentials, rate limit, keyboard interaction, phone layout) is verified against the real login UI.
+    - Leaves `e2e/session-smoke.spec.mjs` testing direct unauthenticated API probes against the backend server.
+    - Preserves all 187 existing test assertions without weakening or deleting any assertion.
+  - Kept phone width (375px), Nebius palette (no lime text), focus visible (≥2px outline), and zero-outbound-request checks passing.
 - **Files changed:**
-  - `frontend/login-view.js`
-  - `frontend/login.css`
-  - `frontend/index.html`
   - `frontend/app.js`
-  - `e2e/login.spec.mjs`
+  - `playwright.config.mjs`
+  - `e2e/helpers/session-fixture.mjs`
   - `project-state/frontend/overview.md`
   - `project-state/log.md`
   - `handover.md`
@@ -1779,11 +1778,13 @@ rolled-back merge is kept as tag `backup/gemini-round46-merge`. Your branch is u
   - `npm test`: 630/630 passed (hermetic, zero network, zero writes to `backend/data/`).
   - Targeted login E2E `e2e/login.spec.mjs`: 8/8 passed on port 3022.
   - Targeted phone audit E2E `e2e/phone-audit.spec.mjs`: 5/5 passed on port 3022.
-  - Full Chromium E2E suite `npm run test:e2e`: 195/195 passed on port 3022.
-  - Ports 3022 and 3122 confirmed completely free (`fuser -k 3022/tcp 3122/tcp`).
+  - Targeted tiling E2E `e2e/tiling.spec.mjs`: 8/8 passed on port 3022.
+  - Targeted control rooms E2E `e2e/control-rooms.spec.mjs`: 8/8 passed on port 3022.
+  - Full Chromium E2E suite `npm run test:e2e`: 195/195 passed on port 3022 (187 existing + 8 login).
+  - Ports 3022 and 3122 confirmed completely free (`ss -ltn | grep -E ':(3022|3122) '`).
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
-- **Risks / follow-ups:** None. Backend files untouched. After round 46, round 44 keyboard follow-ups are queued.
-- **Questions for main:** Round 46 complete and ready for merge. Watcher remains active.
+- **Risks / follow-ups:** None. Backend and `docs/design/` untouched. Ready for round 44 keyboard follow-ups.
+- **Questions for main:** Round 47 is complete, verified green across all 195 E2E tests, and ready for merge. Watcher remains active.
 
 ## codebuddy
 
