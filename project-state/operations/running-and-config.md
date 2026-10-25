@@ -201,3 +201,21 @@ The runtime `Dockerfile` copies both root `fixtures/` and `backend/fixtures/` so
 Offline and fixture paths are available under the same relative paths as a checkout.
 Development `docker-compose.yml` explicitly sets `COMPASS_DATA_DIR=/app/data` and
 binds `./backend/data` there, matching the image persistence directory.
+
+
+## Workplace login configuration (round 45)
+
+Set COMPASS_WORKPLACE_PASSWORD in the server process environment before starting
+the deployed app. Do not put its value in tracked files, documentation, test fixtures
+or command output. Missing/empty configuration refuses every login and logs one
+value-free warning; public frontend assets still load. No environment value is
+changed or deployment performed by this implementation. Setting the deployed secret
+and redeploying require the user's separate go-ahead.
+
+Shared-password/open-username access is intentionally for the judging demo: anyone
+with the shared secret can resume any known username. It is not individual-account
+authorization. Sessions are in memory and expire after twelve idle hours/restart;
+workplaces persist under COMPASS_DATA_DIR/control-rooms until seven idle days.
+The three-minute creation run, hourly cleanup bound and 200-workplace cap are server
+constants, never login request options. The failed-login brake is process-local and
+resets on restart; revisit it for multiple server processes or real-use deployment.

@@ -1,3 +1,4 @@
+import { createWorkplaceSessions } from './workplace-sessions.mjs';
 import { createServer } from "node:http";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
@@ -346,7 +347,7 @@ async function handleRoomScopedRoute({ request, response, path, runtime, logger,
  * /api/control-rooms/:id/. No route reaches a room's runtime except through
  * `manager.getRoom(id)` — see §4.1, "the manager is the sole boundary".
  */
-export function createRequestHandler(manager, logger = null, settingsService = null, { publicSettingsEditable = false } = {}) {
+export function createRequestHandler(manager, logger = null, settingsService = null, { publicSettingsEditable = false, sessionService = manager?.workplacesEnabled ? createWorkplaceSessions({ manager, logger }) : null } = {}) {
   return async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host ?? "localhost"}`);
     const startedAt = performance.now();
@@ -357,9 +358,43 @@ export function createRequestHandler(manager, logger = null, settingsService = n
     const requestLogger = lifecycleRoom ? createControlRoomLogger(logger, lifecycleRoom.id) : logger;
     logEvent(requestLogger, "request_started", { method: request.method, path: url.pathname });
     try {
+      let session = null;
+      if (url.pathname === '/api/session/login' && request.method === 'POST') {
+        assertRoomMutationRequest(request);
+        if (!sessionService) return sendJson(response, 401, { error: 'Login refused' });
+        const result = await sessionService.login(request, await readJsonBody(request));
+        response.setHeader('Set-Cookie', result.cookie);
+        response.setHeader('Cache-Control', 'no-store');
+        return sendJson(response, 200, result.body);
+      }
+      if (url.pathname === '/api/session/logout' && request.method === 'POST') {
+        assertRoomMutationRequest(request);
+        const active = await sessionService?.authenticate(request);
+        if (sessionService) response.setHeader('Set-Cookie', sessionService.logout(request));
+        response.setHeader('Cache-Control', 'no-store');
+        return active ? sendJson(response, 200, { ok: true }) : sendJson(response, 401, { error: 'Sign in required' });
+      }
+      if (url.pathname === '/api/session' && request.method === 'GET') {
+        session = await sessionService?.authenticate(request);
+        response.setHeader('Cache-Control', 'no-store');
+        return session ? sendJson(response, 200, session) : sendJson(response, 401, { error: 'Sign in required' });
+      }
+      if (sessionService && (url.pathname === '/api' || url.pathname.startsWith('/api/'))) {
+        session = await sessionService.authenticate(request);
+        if (!session) return sendJson(response, 401, { error: 'Sign in required' });
+        response.setHeader('Cache-Control', 'no-store');
+        const scoped = url.pathname.match(/^\/api\/control-rooms\/([^/]+)(\/.*)?$/);
+        if (url.pathname !== '/api/control-rooms') {
+          if (!scoped || decodeURIComponent(scoped[1]) !== session.roomId) return sendJson(response, 403, { error: 'Workplace access only' });
+          const tail = scoped[2] ?? '';
+          // An allowlist for mutations keeps new/provider-backed capabilities closed by default.
+          const allowedWrite = ['/activity', '/simulation/pause', '/reset', '/calibrations', '/correlation-records', '/loadboards/boards', '/loadboards/checkout', '/loadboards/release', '/handler-alarms', '/handler-runs', '/handler-planned-stops', '/changeovers'].includes(tail);
+          if (/^\/(?:ask|reports|investigations|cases|compass)(?:\/|$)/.test(tail) || (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && !allowedWrite)) return sendJson(response, 403, { error: 'This action is unavailable in demo workplaces' });
+        }
+      }
       if (/^\/api\/control-rooms\/[^/]+(?:\/|$)/.test(url.pathname) && !['GET','HEAD','OPTIONS'].includes(request.method)) assertRoomMutationRequest(request);
       if (request.method === "GET" && url.pathname === "/api/control-rooms") {
-        return sendJson(response, 200, { rooms: await manager.listRoomsWithStatus() });
+        return sendJson(response, 200, { rooms: await manager.listRoomsWithStatus(session?.roomId) });
       }
       const renameRoomMatch = url.pathname.match(/^\/api\/control-rooms\/([^/]+)\/display-name$/);
       if (request.method === "PATCH" && renameRoomMatch) {
@@ -471,7 +506,9 @@ export function createRequestHandler(manager, logger = null, settingsService = n
 }
 
 export function createCompassServer(manager, logger = console, settingsService = null, options = {}) {
-  const server = createServer(createRequestHandler(manager, logger, settingsService, options));
+  const sessionService = Object.hasOwn(options, 'sessionService') ? options.sessionService : createWorkplaceSessions({ manager, logger });
+  if (sessionService === null && process.env.NODE_ENV !== 'test') throw new Error('Legacy server fixtures require NODE_ENV=test');
+  const server = createServer(createRequestHandler(manager, logger, settingsService, { ...options, sessionService }));
   server.on("error", (error) => logEvent(logger, "server_error", { error: error.message }));
   return server;
 }
@@ -491,6 +528,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     // isolation seam retained for the hermetic browser suite.
     dataRoot: process.env.COMPASS_CONTROL_ROOMS_DATA_ROOT ?? dataRoot,
     logger,
+    workplacesEnabled: true,
     plannerOptions: () => settingsService.requestOptions("event-planner"),
     agentOptions: () => settingsService.requestOptions("compass"),
     investigatorOptions: () => settingsService.requestOptions("investigator"),

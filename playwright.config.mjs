@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from "@playwright/test";
 
 // Each agent worktree runs E2E on its own port (see the port table in handover.md) so
@@ -18,7 +19,9 @@ export default defineConfig({
     extraHTTPHeaders: { "Content-Type": "application/json" },
   },
   webServer: {
-    command: "npm run dev",
+    // Login UI arrives in round 46; keep legacy UI behavior under an explicit
+    // isolated component harness. Production server.mjs always enables auth.
+    command: "node e2e/helpers/legacy-server.mjs",
     // /api/state moved under /api/control-rooms/:id/state with Control Rooms;
     // /api/control-rooms (the room list) is unscoped and always 200s once the
     // manager has booted, so it's the readiness probe now.
@@ -33,7 +36,8 @@ export default defineConfig({
       // Keeps every Control Room's data off the real backend/data/ — the
       // Control Rooms analogue of the COMPASS_LIVE_STATE_PATH override this
       // config used before rooms existed.
-      COMPASS_CONTROL_ROOMS_DATA_ROOT: `/tmp/compass-playwright-control-rooms-${port}`,
+      COMPASS_CONTROL_ROOMS_DATA_ROOT: fileURLToPath(new URL(`./.cache/e2e-${port}/`, import.meta.url)),
+      COMPASS_DATA_DIR: fileURLToPath(new URL(`./.cache/e2e-${port}/`, import.meta.url)),
       COMPASS_EVENT_PLANNER_MODE: "force-failure",
       COMPASS_LIVE_COMPASS_MODE: "force-failure",
       COMPASS_ASSISTANT_MODE: "force-failure",

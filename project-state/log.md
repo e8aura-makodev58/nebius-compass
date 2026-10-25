@@ -1025,3 +1025,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 44 (changeover API documentation only). No code changed since `7d0039a`, which is deployed and passed E2E 186/186. `npm test` 619/619 on master.
 - Gemini round 44 is not READY; its branch holds only a master merge. Resume next run.
 - Live state: the deployed simulation is paused. The smoke-test reservation written earlier was released.
+
+
+## [2026-10-25] feature — Shared-password sessions and per-username workplaces (round 45)
+- Added environment-only constant-time login, opaque idle sessions/cookies, logout, process-local failed-login brake and own-workplace/provider route guards. Manager reuses normal room construction for durable template-derived workplaces, one-time three-minute fixture runs, seven-day cleanup and a 200-workplace cap; shared state is not cloned or swept.
+- Added hermetic auth/lifecycle tests and signed-out session browser smoke. Existing pre-login UI regressions run through an explicit isolated test harness pending round 46; production authentication stays mandatory. All browser persistence now uses the isolated scratch root.
+- Pages updated: backend/overview.md, backend/control-rooms.md, backend/http-api.md, operations/running-and-config.md, operations/testing.md. Security/demo tradeoffs and test boundary recorded in docs/decisions.md.
