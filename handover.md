@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | IDLE (round 45 merged; no open assignment) | — |
-| gemini | Round 47 (fix round 46 login integration: existing E2E must pass with the login gate on) | 47 |
+| codex | IDLE (round 45 merged; branding handoff `3ce72bc` integrated by claude in `b83c915`; no open assignment) | — |
+| gemini | IDLE (round 47 merged as `780e696`; no open assignment) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1813,3 +1813,6 @@ rolled-back merge is kept as tag `backup/gemini-round46-merge`. Your branch is u
 - **project-state pages updated:** —
 - **Risks / follow-ups:** —
 - **Questions for main:** —
+- 2026-10-25 — **gemini** round 47 (branch `gemini`, `c00a175`…`3b9da5a`: fail-closed boot and shared Playwright session fixture, with the round 46 login UI) merged into master as `780e696`. Round 46's UI was re-applied on top of the round 45 backend. Conflicts in `frontend/app.js`, `frontend/index.html` and `project-state/log.md` were resolved by keeping both sides; `currentControlRoomId` stays `let` (room switches reassign it) and keeps the camelCase-aware display route. `npm test` 633/633; E2E 208/208 on port 3012.
+- 2026-10-25 — **claude** supplied branding (codex handoff `3ce72bc`): Response Compass logo JPG above the room picker and ICO favicon, original file names kept under `frontend/icons/`, merged as `efb0a51` (after `b83c915`). Earlier generated mark (`616e0ff`, merged `7e36d57`) was removed from master in this merge. No apple-touch-icon or manifest, since the supplied files have no square PNG.
+- 2026-10-25 — **deploy** `efb0a51` to e8aura-deploy, healthy. Two earlier deploys this day: `7e36d57` was deployed with the round 45 sign-in guard but without the login UI, so every API call returned 401 and the app was unusable; rolled back to `7d0039a` the same day. The workplace password was added to the server's `~/nebius-compass-env/.env` (not in git). GET-only smoke tests: `/api/control-rooms` and `/api/session` 401 signed out; `/` 200; icons 200 with `image/x-icon` and `image/jpeg`; `login.css` and `login-view.js` 200.
