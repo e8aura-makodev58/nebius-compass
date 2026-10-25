@@ -176,7 +176,7 @@ export async function createControlRoomManager({
           seedFactory: () => structuredClone(templateSeed) });
         await room.liveStore.snapshot(); await room.liveRuntime.reconcileStartup();
         return { ...room, health: 'READY', reason: null, demo: id !== 'template' };
-      } catch { return { id, label, health: 'FAILED', reason: 'Workplace unavailable' }; }
+      } catch { return { id, label, demo: id !== 'template', health: 'FAILED', reason: 'Workplace unavailable' }; }
     };
     rooms.set('template', await buildWorkplace('template', 'Bootstrap template'));
     workplaces = createWorkplaceLifecycle({ dataRoot, rooms, now, build: buildWorkplace });

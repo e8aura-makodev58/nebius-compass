@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, readFile, access } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, readFile, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createControlRoomManager } from '../src/control-room-manager.mjs';
@@ -53,4 +53,14 @@ test('missing created workplace state fails closed on restart rather than perfor
   const restarted = await createControlRoomManager({ dataRoot, migrateLegacyData: false, workplacesEnabled: true, now: () => now, plannerOptions: fixture, agentOptions: fixture });
   assert.equal(restarted.getRoom(existing.roomId).health, 'FAILED'); await assert.rejects(restarted.ensureWorkplace('missing-state'), { statusCode: 503 });
   await assert.rejects(access(path), { code: 'ENOENT' }); assert.equal(restarted.getRoom('plant-1').health, 'READY');
+});
+
+
+test('corrupt workplace remains unavailable and hidden from other room listings rather than recloning', async t => {
+  const { manager: m, dataRoot } = await manager(t, () => 0), existing = await m.ensureWorkplace('corrupt-state');
+  await writeFile(join(dataRoot, 'control-rooms', existing.roomId, 'live-simulation.json'), '{');
+  const restarted = await createControlRoomManager({ dataRoot, migrateLegacyData: false, workplacesEnabled: true, now: () => 0, plannerOptions: fixture, agentOptions: fixture });
+  assert.equal(restarted.getRoom(existing.roomId).health, 'FAILED');
+  assert.deepEqual((await restarted.listRoomsWithStatus()).map(row => row.id), ['plant-1', 'plant-2']);
+  await assert.rejects(restarted.ensureWorkplace('corrupt-state'), { statusCode: 503 });
 });
