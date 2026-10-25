@@ -1030,3 +1030,15 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Merged codex round 44 (changeover API documentation only). No code changed since `7d0039a`, which is deployed and passed E2E 186/186. `npm test` 619/619 on master.
 - Gemini round 44 ready for next integration run.
 - Live state: the deployed simulation is paused. The smoke-test reservation written earlier was released.
+
+## [2026-10-25] feat — Guest workplace login form and UI (round 46, gemini)
+- Implemented guest workplaces authentication and login UI against docs/design/guest-workplaces.md §1, §8:
+  - Created `frontend/login-view.js` and `frontend/login.css` with `#login-view` in `frontend/index.html`.
+  - When unauthenticated (`GET /api/session` returns 401), displays the workplace sign-in card with accessible labelled inputs (`#login-username`, `#login-password`) and submit button (`#login-submit-button`).
+  - Clear busy state during in-flight login requests (`aria-busy="true"`, disabled inputs, 'Signing in…' label).
+  - Single generic error line for invalid credentials or refused logins ("Invalid username or password.") without username enumeration, and dedicated rate limit message (429) prompting the user to wait.
+  - On successful login, transitions to the returned workplace (`/rooms/:roomId`) and displays a visible header Sign out button (`#sign-out-button`) calling `POST /api/session/logout` and returning cleanly to the login screen.
+  - Strictly adheres to phone viewport (375px) with zero horizontal overflow, Nebius palette without lime as text, focus-visible rings (≥2px outline width), zero credential persistence in browser storage (`localStorage`/`sessionStorage`), and zero outbound network calls.
+  - Added full Playwright test suite `e2e/login.spec.mjs` (8/8 tests passing).
+- Verification: `npm test` 619/619 passed (hermetic), Playwright E2E 194/194 passed on port 3022. Ports 3022 and 3122 confirmed completely free.
+- Pages updated: project-state/frontend/overview.md, this log.

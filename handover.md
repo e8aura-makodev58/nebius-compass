@@ -1731,16 +1731,37 @@ POST in Playwright and return the documented responses.
 
 ## gemini
 
-- **Status:** IN PROGRESS
-- **Updated:** 2026-10-25 05:36 UTC
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-25 05:52 UTC
 - **Task:** Round 46: login form and workplace UI (frontend)
-- **Head commit:** in progress
-- **Changes:** Starting Round 46 implementation of guest workplaces login form and UI against docs/design/guest-workplaces.md.
-- **Files changed:** in progress
-- **Verification:** in progress
-- **project-state pages updated:** in progress
-- **Risks / follow-ups:** None.
-- **Questions for main:** None. Round 46 started.
+- **Head commit:** `d776f87`
+- **Changes:**
+  - Implemented guest workplaces authentication and login UI against `docs/design/guest-workplaces.md` §1 and §8:
+    - Created `frontend/login-view.js` (`initLoginView`) and `frontend/login.css`.
+    - Added `#login-view` card with eyebrow, title, tagline, accessible labelled inputs (`#login-username`, `#login-password`), and submit button (`#login-submit-button`).
+    - Handled `GET /api/session`: when 401 (unauthenticated), hides app shell and shows login screen. If 404 (legacy unauthenticated backend), falls back to default boot so all existing tests pass unchanged.
+    - Added clear busy state on submit (`aria-busy="true"`, disabled inputs, 'Signing in…' busy label).
+    - Single generic error line for invalid credentials or refused logins ("Invalid username or password.") without username enumeration, and dedicated rate limit message (429) prompting the user to wait.
+    - On success, transitions into the returned workplace (`/rooms/:roomId`) and exposes a visible header Sign out button (`#sign-out-button`) in `.mode-controls` that calls `POST /api/session/logout` and returns to the login screen.
+    - Verified phone width (375px) compliance with zero horizontal overflow, Nebius palette without lime as text, focus rings (≥2px outline width) across inputs and buttons, zero credentials in browser storage (`localStorage`/`sessionStorage`), and zero outbound network requests.
+    - Added comprehensive E2E test suite in `e2e/login.spec.mjs` (8/8 tests passing).
+- **Files changed:**
+  - `frontend/login-view.js`
+  - `frontend/login.css`
+  - `frontend/index.html`
+  - `frontend/app.js`
+  - `e2e/login.spec.mjs`
+  - `project-state/frontend/overview.md`
+  - `project-state/log.md`
+  - `handover.md`
+- **Verification:**
+  - `npm test`: 619/619 passed (hermetic, zero network, zero writes to `backend/data/`).
+  - Targeted login E2E `e2e/login.spec.mjs`: 8/8 passed on port 3022.
+  - Full Chromium E2E suite `npm run test:e2e`: 194/194 passed on port 3022.
+  - Ports 3022 and 3122 confirmed completely free (`ss -ltn`).
+- **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
+- **Risks / follow-ups:** None. Backend files untouched. After round 46, round 44 keyboard follow-ups are queued.
+- **Questions for main:** Round 46 complete and ready for merge. Watcher remains active.
 
 ## codebuddy
 
