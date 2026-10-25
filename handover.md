@@ -1734,9 +1734,9 @@ POST in Playwright and return the documented responses.
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-25 05:52 UTC
+- **Updated:** 2026-10-25 08:15 UTC
 - **Task:** Round 46: login form and workplace UI (frontend)
-- **Head commit:** `d776f87`
+- **Head commit:** `ca1add0`
 - **Changes:**
   - Implemented guest workplaces authentication and login UI against `docs/design/guest-workplaces.md` §1 and §8:
     - Created `frontend/login-view.js` (`initLoginView`) and `frontend/login.css`.
@@ -1746,6 +1746,7 @@ POST in Playwright and return the documented responses.
     - Single generic error line for invalid credentials or refused logins ("Invalid username or password.") without username enumeration, and dedicated rate limit message (429) prompting the user to wait.
     - On success, transitions into the returned workplace (`/rooms/:roomId`) and exposes a visible header Sign out button (`#sign-out-button`) in `.mode-controls` that calls `POST /api/session/logout` and returns to the login screen.
     - Verified phone width (375px) compliance with zero horizontal overflow, Nebius palette without lime as text, focus rings (≥2px outline width) across inputs and buttons, zero credentials in browser storage (`localStorage`/`sessionStorage`), and zero outbound network requests.
+    - Preserved full backwards compatibility with all pre-login regression test harnesses (direct `/rooms/plant-1` boot and bare `/` room picker under `legacy-server.mjs`).
     - Added comprehensive E2E test suite in `e2e/login.spec.mjs` (8/8 tests passing).
 - **Files changed:**
   - `frontend/login-view.js`
@@ -1757,10 +1758,11 @@ POST in Playwright and return the documented responses.
   - `project-state/log.md`
   - `handover.md`
 - **Verification:**
-  - `npm test`: 619/619 passed (hermetic, zero network, zero writes to `backend/data/`).
+  - `npm test`: 630/630 passed (hermetic, zero network, zero writes to `backend/data/`).
   - Targeted login E2E `e2e/login.spec.mjs`: 8/8 passed on port 3022.
-  - Full Chromium E2E suite `npm run test:e2e`: 194/194 passed on port 3022.
-  - Ports 3022 and 3122 confirmed completely free (`ss -ltn`).
+  - Targeted phone audit E2E `e2e/phone-audit.spec.mjs`: 5/5 passed on port 3022.
+  - Full Chromium E2E suite `npm run test:e2e`: 195/195 passed on port 3022.
+  - Ports 3022 and 3122 confirmed completely free (`fuser -k 3022/tcp 3122/tcp`).
 - **project-state pages updated:** `project-state/frontend/overview.md`, `project-state/log.md`.
 - **Risks / follow-ups:** None. Backend files untouched. After round 46, round 44 keyboard follow-ups are queued.
 - **Questions for main:** Round 46 complete and ready for merge. Watcher remains active.
