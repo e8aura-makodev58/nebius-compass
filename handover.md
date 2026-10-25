@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | IDLE (round 44 documentation merged; no open assignment at the run stop) | — |
-| gemini | Round 44 (keyboard follow-ups) not yet READY; branch holds a master merge only; resume next run | 44 |
+| codex | Round 45 (shared-password login and per-username workplaces, backend) | 45 |
+| gemini | Round 46 (login form and workplace UI, frontend); round 44 keyboard follow-ups queue after it | 46 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1595,6 +1595,53 @@ assignment, issue priority, and staffing simulation, all with deterministic code
   Use **port 3022** for E2E, and port 3122 for any manual preview (stop it and check the port is free).
   Run both suites (`npm test` and `npm run test:e2e` with the port set), then commit and set
   `READY FOR MERGE`. Do not change backend code, and do not touch `docs/design/`.
+
+**Round 45 (2026-10-25) — codex: shared-password login and per-username workplaces (backend).** Start with
+`git merge master`; restart your watcher. The spec is `docs/design/guest-workplaces.md` (approved by the user).
+Read it in full before coding. It is the contract: §1 behaviour, §2 secret, §3 sessions, §4 failed-login
+limit, §5 workplaces, §6 write scope, §7 cleanup, §8 routes, §9 acceptance.
+
+- **codex.** Implement §2–§8 in `backend/`. Specifically:
+  - Password only from `COMPASS_WORKPLACE_PASSWORD`; unset → every login refused; compare with
+    `crypto.timingSafeEqual`. The value must not appear in code, fixtures, tests, logs or responses.
+    Tests set their own value for the process they start.
+  - Sessions, cookie flags, idle expiry, logout, failed-login limit (in memory), as §3–§4.
+  - Per-username room: clone the template seed state (ATE-1/ATE-2 calibrations, the three seeded loadboards,
+    no reservations) through `backend/src/control-room-manager.mjs`. Read the existing room creation path
+    first and reuse it. Never copy `plant-1`. Clone once per username.
+  - Run start once on creation, fixed 3 minutes; resume never starts a run.
+  - Route guard: every `/api/control-rooms/` request needs a valid session, except static assets.
+    Demo sessions write only to their own room, get `403` for the template, `plant-1` and model routes
+    (`/ask`, reports).
+  - Sweep idle workplaces (7 days) at start and at most hourly; cap 200 with `503`; never sweep the
+    template or `plant-1`.
+  - Hermetic tests for every bullet in §9 (`npm test`, no network, no writes to `backend/data/`).
+  - **Do not** add the password value to any file. Document the variable name in
+    `project-state/backend/` and the env setup note in `project-state/`.
+  - Use **port 3021** for E2E. Run both suites. Add `GET /api/session` behaviour to the E2E only as a
+    smoke check; the login UI is round 46.
+  - Update `project-state/backend/overview.md`, `project-state/log.md`. Commit, set `READY FOR MERGE`.
+  - Do not deploy and do not touch `frontend/`.
+
+**Round 46 (2026-10-25) — gemini: login form and workplace UI (frontend).** Start with `git merge master`;
+restart your watcher. Work against the contract in `docs/design/guest-workplaces.md` §1 and §8. Codex is
+building the backend in parallel, so your E2E must not depend on it: intercept `/api/session` and the login
+POST in Playwright and return the documented responses.
+
+- **gemini.** Implement in `frontend/`:
+  - A login screen shown when `GET /api/session` returns `401`: username and password fields, one error line
+    for a wrong password or a refused login (never say which field was wrong), a clear busy state, labelled
+    inputs, keyboard-only use, and a `429` message that says to wait.
+  - On success, load the app as the returned workplace. A visible sign-out control that calls
+    `POST /api/session/logout` and returns to the login screen.
+  - Phone width (375px) with no horizontal scroll; Nebius palette; no lime as text; focus visible.
+  - No password stored in browser storage, no username stored in browser storage beyond what the session
+    cookie already does.
+  - E2E in `e2e/login.spec.mjs`: form shown when signed out; wrong password message; correct password opens
+    the app; sign-out returns to the form; zero outbound requests still holds.
+  - Use **port 3022** for E2E. Run both suites. Update `project-state/frontend/overview.md` and
+    `project-state/log.md`. Commit, set `READY FOR MERGE`.
+  - Do not change backend code or `docs/design/`. After round 46, pick up the round 44 keyboard follow-ups.
 
 ### Merge log
 
