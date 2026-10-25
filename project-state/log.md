@@ -1031,3 +1031,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added environment-only constant-time login, opaque idle sessions/cookies, logout, process-local failed-login brake and own-workplace/provider route guards. Manager reuses normal room construction for durable template-derived workplaces, one-time three-minute fixture runs, seven-day cleanup and a 200-workplace cap; shared state is not cloned or swept.
 - Added hermetic auth/lifecycle tests and signed-out session browser smoke. Existing pre-login UI regressions run through an explicit isolated test harness pending round 46; production authentication stays mandatory. All browser persistence now uses the isolated scratch root. Container health probes the expected signed-out session response instead of the protected room list.
 - Pages updated: backend/overview.md, backend/control-rooms.md, backend/http-api.md, operations/running-and-config.md, operations/testing.md. Security/demo tradeoffs and test boundary recorded in docs/decisions.md.
+
+## [2026-10-25] fix + feature — Panel windows: split into workspace or detach
+- Fixed the wall-display routes. The server page pattern and the room parser accepted only lowercase screen names, so camelCase panels (Station KPIs and five others) returned 404 or opened the room picker. The Screens menu now lists all 14 screens.
+- Added the split-or-window chooser (`frontend/window-panels.js`, `frontend/window-panels.css`, `#panel-chooser`). A detached panel's tile shows "Bring back to this workspace". Live state is shared over a BroadcastChannel; nothing is persisted. Design: `docs/design/window-panels.md`.
+- Tests: `e2e/window-panels.spec.mjs` (9 new), `e2e/display-screens.spec.mjs` launcher test updated. `npm test` 630/630; E2E 196/196 on port 3024.
+- Pages updated: frontend/overview.md, log.md.

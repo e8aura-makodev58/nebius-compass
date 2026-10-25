@@ -71,7 +71,7 @@ resolves all nodes before moving any of them, and retains their IDs, ARIA attrib
 listeners and `app.js` references. The default has the map at upper left, issues/events
 beneath it, and a right column of context, Field reports and Staffing. The frame's minimum height is 560px so the three stacked tiles keep their minimum sizes. Tiles fill the bounded frame; dividers resize both
 neighbours and clamp to panel minimum sizes. Users can drag tiles to edges and
-maximise/restore a group. Centre merges, floating groups and pop-outs are disabled. Each tile's header has a labelled action toolbar (`role="toolbar"`, `aria-label="Tile actions"`) containing **Open in window** and **Maximise** / **Restore** buttons with tile-specific accessible names and titles. **Open in window** opens that panel's wall-display page (`/rooms/:id/display/:screen`; the dispatch/context tile opens `dispatch`) in its own window, so it can be moved to another monitor. The tile stays in this window, and the window name is the URL, so pressing the button again focuses the same window. Active tabs feature an inset accent bar indicator (box-shadow) so state is not conveyed by colour alone, and tile action controls enforce a 44px minimum touch target on mobile viewports. Pop-ups must be allowed for the site.
+maximise/restore a group. Centre merges, floating groups and pop-outs are disabled. Each tile's header has a labelled action toolbar (`role="toolbar"`, `aria-label="Tile actions"`) containing **Open in window** and **Maximise** / **Restore** buttons with tile-specific accessible names and titles. **Open in window** opens that panel's wall-display page (`/rooms/:id/display/:screen`; the dispatch/context tile opens `dispatch`) in its own window, so it can be moved to another monitor. The tile then shows a notice with **Bring back to this workspace** (see Wall-display screens). The window name is per panel, so pressing the button again focuses the same window. Active tabs feature an inset accent bar indicator (box-shadow) so state is not conveyed by colour alone, and tile action controls enforce a 44px minimum touch target on mobile viewports. Pop-ups must be allowed for the site.
 Very short desktop windows scroll the page to keep the minimum-sized frame reachable.
 
 Layout persistence is per browser (`responsecompass.tiling.v1`), debounced and guarded
@@ -109,13 +109,22 @@ as a disabled "above recommended" option until the operator lowers it.
 ## Wall-display screens
 
 A control room can put each panel on its own monitor. `/rooms/:id/display/:screen` shows
-one panel full screen (`DISPLAY_SCREENS` in `app.js`: `map`, `issues`, `events`,
-`dispatch`, `analytics`, `pareto`, `staffing`, `investigation`), with the room's simulated clock, run state and agent activity,
+one panel full screen (`DISPLAY_SCREENS` in `app.js`: every workspace panel plus `analytics` and
+`pareto`; screen names are camelCase, e.g. `stationKpis`, `handlerEpisodes`), with the room's simulated clock, run state and agent activity,
 and none of the console controls (view tabs, mode, speed, pause, reset, search). It is
 the same page and state as the console, so panels stay interactive. Tiling is not
 started on a display screen. An unknown screen name falls back to the console. The
-console's **Screens** menu (next to Find in Control Room) opens each screen in a new
-window. Layout rules are in `layout.css` under `.display-mode`; `e2e/display-screens.spec.mjs`
+console's **Screens** menu (next to Find in Control Room) lists all 14 screens. Each choice opens a
+chooser: **Split into this workspace** brings a panel's tile back (or activates it), and **Open in its own
+window** detaches it. Analytics and Issue Pareto are views, so they offer only the window. On a phone the
+chooser offers only the window, since there are no tiles.
+
+**Detached panels** (`frontend/window-panels.js`). A panel is either docked or detached. A detached panel's
+tile shows "is open in its own window" with **Bring back to this workspace**, which closes the window. The
+state is the set of live display windows, shared over a `BroadcastChannel` named `compass-panels:<roomId>`:
+a display window announces `open` on boot, answers `hello`, sends `closed` on `pagehide`, and closes on
+`dock`. Nothing is persisted, so a reload keeps the notice only while the window is open. A detached panel's
+DOM is kept, hidden, in the workspace so its state survives. Layout rules are in `layout.css` under `.display-mode`; `e2e/display-screens.spec.mjs`
 covers each screen at 1920×1080. At wide viewports (≥1440px and ≥2200px), wall displays
 for Field reports, Staffing, Issues and Event feed use multi-column grids or constrained containers
 with enlarged typography to prevent excessive single-line measures at reading distance while

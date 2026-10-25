@@ -8,7 +8,8 @@ import { initHandlerEpisodes } from './handler-episodes-view.js';
 import { initCalibrations } from './calibrations-view.js';
 import { initChangeoverReadiness } from './changeover-readiness-view.js';
 import { initAsk } from './ask-view.js';
-import { initTiling } from "./tiling.js";
+import { initTiling, TILE_SCREENS } from "./tiling.js";
+import { announcePanelWindow, createPanelWindows } from "./window-panels.js";
 import { initParetoPanel } from "./pareto.js";
 import { setHtml } from "./render-lifecycle.js";
 import { layoutProjectedLabels } from "./map-label-layout.js";
@@ -31,7 +32,7 @@ const elements = Object.fromEntries([
  * navigation (§4.6): there is deliberately no code path that reassigns this.
  */
 const currentControlRoomId = (() => {
-  const match = window.location.pathname.match(/^\/rooms\/([^/]+)(?:\/display\/[a-z]+)?\/?$/);
+  const match = window.location.pathname.match(/^\/rooms\/([^/]+)(?:\/display\/[A-Za-z]+)?\/?$/);
   return match ? decodeURIComponent(match[1]) : null;
 })();
 /**
@@ -39,9 +40,9 @@ const currentControlRoomId = (() => {
  * control room can put each panel on its own monitor. Read once at boot like the room;
  * `null` is the operator console. An unknown screen name falls back to the console.
  */
-const DISPLAY_SCREENS = { map: "Floor map", issues: "Issues", events: "Event feed", dispatch: "Dispatch", analytics: "Analytics", pareto: "Issue Pareto", staffing: "Staffing", investigation: "Field reports" };
+const DISPLAY_SCREENS = { map: "Floor map", issues: "Issues", events: "Event feed", dispatch: "Dispatch / context", analytics: "Analytics", pareto: "Issue Pareto", staffing: "Staffing", investigation: "Field reports", stationKpis: "Station KPIs", loadboards: "Loadboards", obligations: "Obligations", handlerEpisodes: "Handler episodes", calibrations: "Calibrations", changeoverReadiness: "Changeover readiness" };
 const displayScreen = (() => {
-  const match = window.location.pathname.match(/^\/rooms\/[^/]+\/display\/([a-z]+)\/?$/);
+  const match = window.location.pathname.match(/^\/rooms\/[^/]+\/display\/([A-Za-z]+)\/?$/);
   return match && Object.hasOwn(DISPLAY_SCREENS, match[1]) ? match[1] : null;
 })();
 const FLOOR_WIDTH = 150;
@@ -62,6 +63,8 @@ let selectedResponderId = null;
 let sidebarTab = "personnel";
 const paretoRoot = document.querySelector("#pareto-panel");
 let paretoPanel = null;
+let panelWindows = null;
+let tiling = null;
 let workspaceNav = null;
 let askView = { render() {} };
 let stationKpisView = null;
@@ -1628,6 +1631,7 @@ async function bootRoomPicker() {
 
 /** One panel per monitor: no tiles, no console controls, the room's clock and agent status kept. */
 function bootDisplayScreen() {
+  announcePanelWindow({ roomId: currentControlRoomId, screen: displayScreen });
   document.body.classList.add("display-mode");
   document.body.dataset.display = displayScreen;
   document.title = `${DISPLAY_SCREENS[displayScreen]} — ResponseCompass`;
@@ -1636,6 +1640,34 @@ function bootDisplayScreen() {
   label.textContent = `${DISPLAY_SCREENS[displayScreen]} · ${currentControlRoomId}`;
   document.querySelector(".topbar > div:first-child").append(label);
   if (displayScreen === "analytics" || displayScreen === "pareto") switchView("analytics");
+}
+
+/**
+ * Screens launcher: each panel asks whether to split it into this workspace or open it in its own
+ * window. Analytics and Issue Pareto are views, not tiles, so they only open in their own window.
+ */
+function wireScreenLauncher() {
+  const dialog = document.querySelector("#panel-chooser");
+  const launcher = document.querySelector(".screen-launcher");
+  const splitButton = dialog.querySelector('[data-choose="split"]');
+  document.querySelectorAll("[data-open-screen]").forEach((item) => item.addEventListener("click", () => {
+    const screen = item.dataset.openScreen;
+    dialog.dataset.screen = screen;
+    dialog.querySelector("#panel-chooser-title").textContent = `Open ${item.textContent.trim()}`;
+    splitButton.hidden = !(TILE_SCREENS[screen] && tiling?.isTiling());
+    launcher?.removeAttribute("open");
+    dialog.showModal();
+  }));
+  dialog.addEventListener("click", (event) => {
+    const choice = event.target.closest("[data-choose]")?.dataset.choose;
+    if (!choice) return;
+    const screen = dialog.dataset.screen;
+    if (choice === "split" && TILE_SCREENS[screen]) { panelWindows.dock(screen); window.CompassTiling?.activatePanel(TILE_SCREENS[screen]); }
+    if (choice === "window") panelWindows.detach(screen, `/rooms/${encodeURIComponent(currentControlRoomId)}/display/${screen}`);
+    dialog.close();
+  });
+  // Return focus to the launcher, which the dialog cannot reach once the menu is closed.
+  dialog.addEventListener("close", () => launcher?.querySelector("summary")?.focus());
 }
 
 /**
@@ -1659,7 +1691,6 @@ function bootControlRoom() {
   lastSyncOk = null;
   startActivityHeartbeat();
   document.querySelector(".app-shell").hidden = false;
-  document.querySelectorAll("[data-display-screen]").forEach((link) => { link.href = `/rooms/${encodeURIComponent(currentControlRoomId)}/display/${link.dataset.displayScreen}`; });
   paretoPanel = initParetoPanel(document.querySelector("#pareto-panel"), { roomApi, isVisible: () => currentView === "analytics" && !document.hidden });
   if (displayScreen) bootDisplayScreen();
   else workspaceNav = initWorkspaceNav({onReveal: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS)});
@@ -1722,7 +1753,11 @@ function bootControlRoom() {
       getRoomId: () => currentControlRoomId,
     });
   }
-  if (!displayScreen) initTiling({ onMapResize: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS), displayHref: (screen) => `/rooms/${encodeURIComponent(currentControlRoomId)}/display/${screen}` });
+  if (!displayScreen) {
+    panelWindows = createPanelWindows({ roomId: currentControlRoomId });
+    tiling = initTiling({ onMapResize: () => scheduleProjectedLabelLayout(CAMERA_SETTLE_MS), displayHref: (screen) => `/rooms/${encodeURIComponent(currentControlRoomId)}/display/${screen}`, panelWindows });
+    wireScreenLauncher();
+  }
   if (!displayScreen) askView = initAsk({ escape: escapeHtml, request: roomApi, getState: () => currentState, onState: render, getContextIssueId: () => selectedIssueId, navigate: navigateToCitation });
   document.querySelector('#active-room-name').textContent = currentControlRoomId;
   roomApi("/state").then((state) => { render(state); setStatusBarSync(true); }).catch((error) => { reportClientError("initial_state_load", error); setHtml(elements.floor, `<p class="load-error">${escapeHtml(error.message)}</p>`); });

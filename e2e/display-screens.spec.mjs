@@ -18,12 +18,14 @@ for (const [screen, visible] of Object.entries(SCREENS)) {
   });
 }
 
-test("the console's Screens menu links each panel to its own display page", async ({ page }) => {
+test("the console's Screens menu offers every panel; each choice opens the split-or-window chooser", async ({ page }) => {
   await page.goto("/rooms/plant-1");
   await page.locator(".screen-launcher > summary").click();
-  const links = page.locator("[data-display-screen]");
-  await expect(links).toHaveCount(8);
-  expect(await links.evaluateAll((rows) => rows.map((row) => row.getAttribute("href")))).toEqual(Object.keys(SCREENS).map((screen) => `/rooms/plant-1/display/${screen}`));
+  const choices = page.locator("[data-open-screen]");
+  await expect(choices).toHaveCount(14);
+  expect(await choices.evaluateAll((rows) => rows.map((row) => row.dataset.openScreen))).toEqual(expect.arrayContaining(Object.keys(SCREENS)));
+  await choices.first().click();
+  await expect(page.locator("#panel-chooser")).toBeVisible();
 });
 
 test("an unknown display screen falls back to the operator console", async ({ page }) => {

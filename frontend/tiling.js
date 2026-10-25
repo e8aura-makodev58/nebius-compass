@@ -17,6 +17,8 @@ const PANELS = {
   events: { selector: "#event-feed", title: "Event feed", screen: "events", minimumWidth: 180, minimumHeight: 130 },
   context: { selector: ".context-panel", title: "Dispatch / context", screen: "dispatch", minimumWidth: 280, minimumHeight: 180 },
 };
+/** Screen name (URL and launcher id) to workspace panel id. */
+export const TILE_SCREENS = Object.fromEntries(Object.entries(PANELS).map(([id, spec]) => [spec.screen, id]));
 
 /** Validate before fromJSON: no hidden, missing, duplicate, foreign or detached tiles. */
 export function parseStoredLayout(raw) {
@@ -69,7 +71,7 @@ function constraints(id) { return { minimumWidth: PANELS[id].minimumWidth, minim
  * Move the original DOM nodes; never clone application state, IDs or listeners.
  * `displayHref(screen)` gives the wall-display URL a tile opens in its own window.
  */
-export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) {
+export function initTiling({ onMapResize = () => {}, displayHref = null, panelWindows = null } = {}) {
   const dashboard = document.querySelector(".dashboard");
   const regions = Object.fromEntries(Object.entries(PANELS).map(([id, spec]) => {
     const selected = dashboard.querySelector(spec.selector);
@@ -91,7 +93,12 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
   document.querySelector(".control-room-search").prepend(reset);
   const media = matchMedia("(min-width: 901px)");
   let api = null, saveTimer = null, adjusting = false, lastLayout = null, refreshFrame = null;
-  let splitObserver = null;
+  let splitObserver = null, unsubscribePanels = null;
+  // Panels that are detached keep their nodes here, hidden, so their state and listeners survive.
+  const holder = document.createElement("div");
+  holder.hidden = true;
+  dashboard.append(holder);
+  const tileElements = {};
   const handles = new WeakSet();
   const hostObserver = new ResizeObserver(() => {
     if (!api || !host.clientWidth || !host.clientHeight) return;
@@ -121,6 +128,35 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
     if (adjusting) return;
     clearTimeout(saveTimer); saveTimer = setTimeout(store, 200);
     if (refreshFrame === null) refreshFrame = requestAnimationFrame(() => { refreshFrame = null; ensureFits(); prepareDividers(); });
+  }
+  function detachedNotice(id) {
+    const { title, screen } = PANELS[id];
+    const notice = document.createElement("div");
+    notice.className = "tiling-detached"; notice.dataset.detachedScreen = screen;
+    const text = document.createElement("p");
+    text.textContent = `${title} is open in its own window.`;
+    const bring = document.createElement("button");
+    bring.type = "button"; bring.className = "secondary-button";
+    bring.textContent = "Bring back to this workspace";
+    bring.setAttribute("aria-label", `Bring ${title} back to this workspace`);
+    bring.addEventListener("click", () => panelWindows.dock(screen));
+    notice.append(text, bring);
+    return notice;
+  }
+  function showTile(id) {
+    const element = tileElements[id];
+    if (!element) return;
+    if (panelWindows?.isDetached(PANELS[id].screen)) {
+      holder.append(regions[id]);
+      element.replaceChildren(detachedNotice(id));
+    } else {
+      element.replaceChildren(regions[id]);
+    }
+  }
+  function refreshTiles() {
+    if (!api) return;
+    for (const id of Object.keys(tileElements)) showTile(id);
+    onMapResize();
   }
   function defaultLayout() {
     api.clear();
@@ -182,7 +218,8 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
         if (!regions[id]) throw new Error("Unknown tile");
         const element = document.createElement("div");
         element.className = "tiling-content"; element.dataset.tile = id;
-        return { element, init() { element.append(regions[id]); }, layout() { if (id === "map") onMapResize(); } };
+        tileElements[id] = element;
+        return { element, init() { showTile(id); }, layout() { if (id === "map") onMapResize(); }, dispose() { if (tileElements[id] === element) delete tileElements[id]; } };
       },
       createTabComponent: () => {
         const element = document.createElement("span"); element.className = "tiling-tab-title";
@@ -209,14 +246,12 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
           if (group.api.isMaximized()) group.api.exitMaximized();
           else { store(); group.api.maximize(); }
         });
-        // The tile stays in this window; the same panel opens in a window that can be moved to another display.
+        // The panel moves to its own window and the tile shows a notice with "Bring back".
         detach.addEventListener("click", () => {
           const screen = PANELS[group.activePanel?.id]?.screen;
-          if (!screen || !displayHref) return;
-          const href = displayHref(screen);
-          const opened = window.open(href, href, "popup,width=1100,height=760");
+          if (!screen || !displayHref || !panelWindows) return;
+          const opened = panelWindows.detach(screen, displayHref(screen));
           detach.title = opened ? `Open ${group.activePanel?.title ?? "tile"} in its own window` : "Allow pop-ups for this site to open panels in their own window";
-          opened?.focus();
         });
         element.append(detach, maximize);
         const listener = group.api.onDidActivePanelChange(update);
@@ -241,6 +276,7 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
       onMapResize();
     });
     api.onDidLayoutChange(scheduleSave);
+    unsubscribePanels = panelWindows?.subscribe(refreshTiles) ?? null;
     api.layout(host.clientWidth, host.clientHeight);
     adjusting = true;
     let stored;
@@ -265,7 +301,7 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
   function destroy() {
     delete window.CompassTiling;
     if (!api && !host.isConnected) return;
-    store(); clearTimeout(saveTimer); splitObserver?.disconnect();
+    store(); clearTimeout(saveTimer); splitObserver?.disconnect(); unsubscribePanels?.(); unsubscribePanels = null;
     if (refreshFrame !== null) cancelAnimationFrame(refreshFrame);
     refreshFrame = null;
     // Restore nodes before disposing renderer containers, preserving their identity.
@@ -283,5 +319,5 @@ export function initTiling({ onMapResize = () => {}, displayHref = null } = {}) 
   window.addEventListener("pagehide", store);
   reset.hidden = !media.matches;
   try { change(); } catch (error) { destroy(); console.error("Tiling initialization failed", error); }
-  return { dispose() { destroy(); mapObserver.disconnect(); hostObserver.disconnect(); media.removeEventListener("change", change); window.removeEventListener("pagehide", store); reset.remove(); Object.values(anchors).forEach((anchor) => anchor.remove()); } };
+  return { isTiling: () => Boolean(api), dispose() { destroy(); holder.remove(); mapObserver.disconnect(); hostObserver.disconnect(); media.removeEventListener("change", change); window.removeEventListener("pagehide", store); reset.remove(); Object.values(anchors).forEach((anchor) => anchor.remove()); } };
 }
