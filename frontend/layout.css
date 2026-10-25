@@ -457,6 +457,12 @@
 .status-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; min-height: 28px; margin: 0 0 6px; padding: 4px 12px; border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--paper-sunk); color: var(--ink-2); font-size: .78rem; }
 .status-bar > span { display: inline-flex; gap: 6px; align-items: baseline; white-space: nowrap; }
 .status-bar strong { color: var(--ink); font-family: var(--font-mono); font-weight: 600; }
+/* Simulation run dot: blinks while the room is RUNNING, steady otherwise. "Run" text carries the status too. */
+.sim-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); align-self: center; }
+.sim-dot.running { background: var(--ok); animation: sim-blink 1.1s steps(2, start) infinite; }
+.sim-dot.paused { background: var(--warn); }
+@keyframes sim-blink { to { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .sim-dot.running { animation: none; } }
 .status-bar .status-bar-sync-failed { color: var(--warn-ink); font-weight: 600; }
 @media (max-width: 900px) {
   body:not(.display-mode) .status-bar { min-height: 44px; padding: 6px 12px; gap: 6px 14px; font-size: .75rem; }

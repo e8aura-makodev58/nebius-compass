@@ -1037,3 +1037,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Added the split-or-window chooser (`frontend/window-panels.js`, `frontend/window-panels.css`, `#panel-chooser`). A detached panel's tile shows "Bring back to this workspace". Live state is shared over a BroadcastChannel; nothing is persisted. Design: `docs/design/window-panels.md`.
 - Tests: `e2e/window-panels.spec.mjs` (9 new), `e2e/display-screens.spec.mjs` launcher test updated. `npm test` 630/630; E2E 196/196 on port 3024.
 - Pages updated: frontend/overview.md, log.md.
+
+## [2026-10-25] feature — Simulation run dot in the status bar
+- Added a dot beside "Run" in the status bar (`#status-bar-dot`). It blinks while the room is RUNNING, is amber when PAUSED, and is grey otherwise. The agent-activity dot in the top bar is unchanged; it still blinks only while an agent works. Tests in `e2e/status-bar.spec.mjs`.
+- Pages updated: log.md.

@@ -1129,6 +1129,7 @@ function renderStatusBar(state) {
   document.querySelector("#status-bar-room").textContent = currentControlRoomId ?? "—";
   document.querySelector("#status-bar-clock").textContent = live && sim ? new Date(sim.simulationTime).toISOString().replace("T", " ").slice(0, 16) : "—";
   document.querySelector("#status-bar-run").textContent = live && sim ? statusLabel(sim.status) : "Offline demo";
+  document.querySelector("#status-bar-dot").className = `sim-dot ${live && sim ? String(sim.status).toLowerCase() : "offline"}`;
   document.querySelector("#status-bar-speed").textContent = live && sim ? `${sim.speedMultiplier}×` : "—";
 }
 let lastSyncOk = null;
