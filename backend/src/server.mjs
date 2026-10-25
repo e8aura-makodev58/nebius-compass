@@ -26,9 +26,8 @@ const mimeTypes = {
   ".js": "text/javascript; charset=utf-8",
   ".mjs": "text/javascript; charset=utf-8",
   ".woff2": "font/woff2",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".webmanifest": "application/manifest+json",
+  ".ico": "image/x-icon",
+  ".jpg": "image/jpeg",
 };
 
 function sendJson(response, status, payload) {

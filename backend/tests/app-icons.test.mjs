@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import { createRequestHandler } from "../src/server.mjs";
 
 const frontend = fileURLToPath(new URL("../../frontend/", import.meta.url));
+const ICON = "/icons/Compass_application_logo_icon.ico";
+const LOGO = "/icons/Compass_application_logo_icon_20261025201828.jpg";
 
 async function responseFor(url) {
   const capture = { body: Buffer.alloc(0) };
@@ -14,30 +16,23 @@ async function responseFor(url) {
   return capture;
 }
 
-test("the logo and icons are served with their own media types", async () => {
-  const expected = { "/icons/compass-mark.svg": "image/svg+xml", "/icons/icon-192.png": "image/png", "/icons/icon-512.png": "image/png", "/icons/apple-touch-icon.png": "image/png", "/icons/manifest.webmanifest": "application/manifest+json" };
-  for (const [url, type] of Object.entries(expected)) {
+test("the supplied favicon and logo are served with their own media types", async () => {
+  for (const [url, type] of [[ICON, "image/x-icon"], [LOGO, "image/jpeg"]]) {
     const { status, headers } = await responseFor(url);
     assert.equal(status, 200, url);
     assert.equal(headers["content-type"], type, url);
   }
 });
 
-test("PNG icons have the pixel sizes their links and manifest promise", async () => {
-  for (const [file, size] of [["icon-192.png", 192], ["icon-512.png", 512], ["apple-touch-icon.png", 180]]) {
-    const bytes = await readFile(join(frontend, "icons", file));
-    assert.equal(bytes.readUInt32BE(16), size, file);
-    assert.equal(bytes.readUInt32BE(20), size, file);
-  }
+test("the page requests the favicon, and the picker shows the logo", async () => {
+  const html = await readFile(join(frontend, "index.html"), "utf8");
+  assert.match(html, new RegExp(`<link rel="icon" href="${ICON.replaceAll(".", "\\.")}"`));
+  assert.ok(html.includes(`src="${LOGO}"`));
 });
 
-test("every icon the page and manifest reference exists in the frontend folder", async () => {
+test("every icon and logo the page references exists in the frontend folder", async () => {
   const html = await readFile(join(frontend, "index.html"), "utf8");
-  const manifest = JSON.parse(await readFile(join(frontend, "icons", "manifest.webmanifest"), "utf8"));
-  const referenced = [...html.matchAll(/(?:href|src)="(\/icons\/[^"]+)"/g)].map((match) => match[1]);
-  referenced.push(...manifest.icons.map((icon) => icon.src));
-  assert.ok(referenced.length >= 5);
-  for (const path of new Set(referenced)) {
+  for (const path of new Set([...html.matchAll(/(?:href|src)="(\/icons\/[^"]+)"/g)].map((match) => match[1]))) {
     await readFile(join(frontend, path));
   }
 });

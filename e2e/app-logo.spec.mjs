@@ -1,18 +1,17 @@
 import { expect, test } from "@playwright/test";
 
-// The compass mark is the app's own artwork (frontend/icons). It must load in the header and the room picker.
-test("the header shows the compass mark beside the ResponseCompass heading", async ({ page }) => {
+// The supplied logo and favicon live in frontend/icons. The picker shows the logo; the tab requests the icon.
+test("the room picker shows the supplied logo", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto("/rooms/plant-1");
-  const logo = page.locator(".topbar h1 img.app-logo");
-  await expect(logo).toHaveAttribute("src", /\/icons\/compass-mark\.svg$/);
+  await page.goto("/");
+  const logo = page.locator(".room-picker-logo");
+  await expect(logo).toHaveAttribute("src", /\/icons\/Compass_application_logo_icon_20261025201828\.jpg$/);
   await expect.poll(() => logo.evaluate((img) => img.complete && img.naturalWidth)).toBeGreaterThan(0);
-  await expect(page.locator(".topbar h1")).toHaveText("ResponseCompass");
 });
 
-test("the browser tab advertises the mark as its icon and the manifest is linked", async ({ page }) => {
+test("the browser tab requests the supplied favicon", async ({ page }) => {
   await page.goto("/rooms/plant-1");
-  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "/icons/compass-mark.svg");
-  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/icons/apple-touch-icon.png");
-  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/icons/manifest.webmanifest");
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "/icons/Compass_application_logo_icon.ico");
+  const status = await page.evaluate(async () => (await fetch("/icons/Compass_application_logo_icon.ico")).headers.get("content-type"));
+  expect(status).toBe("image/x-icon");
 });

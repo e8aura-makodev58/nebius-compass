@@ -1080,3 +1080,11 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
   - Playwright E2E suite on port 3022 (`COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`): all 195 tests passed (187 existing + 8 login).
   - Clean port teardown: ports 3022 and 3122 confirmed free.
 - Pages updated: project-state/frontend/overview.md, this log.
+
+## [2026-10-25] feature — Supplied logo and favicon (replaces the generated mark)
+- Integrated the user's branding from codex's handoff (`3ce72bc` on branch `codex`), kept under the original names in `frontend/icons/`: `Compass_application_logo_icon_20261025201828.jpg` (the logo, shown above the room-picker title) and `Compass_application_logo_icon.ico` (the favicon, `<link rel="icon" type="image/x-icon">`).
+- Removed the generated SVG, PNGs and manifest from the earlier logo commit. The header keeps its text heading, because the supplied logo carries its own wordmark.
+- Server MIME map: `.ico` → `image/x-icon`, `.jpg` → `image/jpeg`. The earlier `.svg`, `.png` and `.webmanifest` entries are removed.
+- Tests: `backend/tests/app-icons.test.mjs` (media types, favicon link, referenced files exist); `e2e/app-logo.spec.mjs` (picker logo loads; favicon served as `image/x-icon`).
+- No apple-touch-icon or web manifest: the supplied files have no square PNG. Add one if iOS home-screen icons matter.
+- Pages updated: frontend/overview.md, log.md.
