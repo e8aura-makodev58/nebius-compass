@@ -1047,3 +1047,19 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
   - Added full Playwright test suite `e2e/login.spec.mjs` (8/8 tests passing).
 - Verification: `npm test` 630/630 passed (hermetic), Playwright E2E 195/195 passed on port 3022. Ports 3022 and 3122 confirmed completely free.
 - Pages updated: project-state/frontend/overview.md, this log.
+
+## [2026-10-25] fix — Fail-closed session boot and shared Playwright test authentication fixture (round 47, gemini)
+- Hardened `frontend/app.js` session lifecycle to fail closed across all routes:
+  - `fetchSession()` raises on non-200 / non-401 responses; `bootApp()` catches errors and displays an explicit `#session-boot-error` alert rather than falling back to default boot or booting unauthenticated.
+  - On 401 unauthenticated, hides `.app-shell` and `#room-picker-view` and presents `#login-view`.
+  - When authenticated, visits to `/rooms/:id` boot that control room, while visits to `/` boot `#room-picker-view`.
+- Added shared Playwright test authentication fixture in `e2e/helpers/session-fixture.mjs` imported in `playwright.config.mjs`:
+  - Stubs `GET /api/session` to return `{ username: "test-operator", roomId: "plant-1" }` for all pages, contexts, and popups across the test suite.
+  - Automatically excludes `e2e/login.spec.mjs`, ensuring the full login flow (unauthenticated state, invalid credentials, rate limit, keyboard interaction, phone layout) is verified against the real login UI.
+  - Leaves `e2e/session-smoke.spec.mjs` testing direct unauthenticated API request probes against the backend server.
+  - Preserved every existing test assertion without weakening or deleting.
+- Verification:
+  - Hermetic unit suite: `npm test` (630/630 passed).
+  - Playwright E2E suite on port 3022 (`COMPASS_E2E_PORT=3022 LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`): all 195 tests passed (187 existing + 8 login).
+  - Clean port teardown: ports 3022 and 3122 confirmed free.
+- Pages updated: project-state/frontend/overview.md, this log.

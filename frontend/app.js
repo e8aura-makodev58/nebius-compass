@@ -1776,17 +1776,13 @@ let activeSession = null;
 let statePollInterval = null;
 
 async function fetchSession() {
-  try {
-    const response = await fetch("/api/session", { credentials: "same-origin" });
-    if (response.status === 401) return { authenticated: false };
-    if (response.ok) {
-      const data = await response.json();
-      return { authenticated: true, ...data };
-    }
-    return null;
-  } catch {
-    return null;
+  const response = await fetch("/api/session", { credentials: "same-origin" });
+  if (response.status === 401) return { authenticated: false };
+  if (response.ok) {
+    const data = await response.json();
+    return { authenticated: true, ...data };
   }
+  throw new Error(`Session probe failed with status ${response.status}`);
 }
 
 function setupLoginAndSession() {
@@ -1794,6 +1790,8 @@ function setupLoginAndSession() {
     loginViewInstance = initLoginView({
       viewElement: elements["login-view"],
       onLoginSuccess: (session) => {
+        const errorEl = document.querySelector("#session-boot-error");
+        if (errorEl) errorEl.remove();
         activeSession = session;
         if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
         const targetRoomId = session.roomId;
@@ -1817,6 +1815,8 @@ function setupLoginAndSession() {
       } catch (err) {
         reportClientError("logout_failed", err);
       } finally {
+        const errorEl = document.querySelector("#session-boot-error");
+        if (errorEl) errorEl.remove();
         elements["sign-out-button"].disabled = false;
         elements["sign-out-button"].hidden = true;
       }
@@ -1840,30 +1840,41 @@ function setupLoginAndSession() {
 async function bootApp() {
   setupLoginAndSession();
 
-  if (currentControlRoomId) {
-    if (currentControlRoomId !== "plant-1") {
-      fetchSession().then((session) => {
-        if (session && session.authenticated) {
-          activeSession = session;
-          if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
-        }
-      });
+  let session;
+  try {
+    session = await fetchSession();
+  } catch (error) {
+    reportClientError("session_probe", error);
+    document.querySelector(".app-shell").hidden = true;
+    if (elements["room-picker-view"]) elements["room-picker-view"].hidden = true;
+    if (loginViewInstance) loginViewInstance.hide();
+    let errorEl = document.querySelector("#session-boot-error");
+    if (!errorEl) {
+      errorEl = document.createElement("div");
+      errorEl.id = "session-boot-error";
+      errorEl.className = "session-boot-error";
+      errorEl.setAttribute("role", "alert");
+      errorEl.innerHTML = `<p class="load-error">${escapeHtml(error.message || "Failed to authenticate session")}</p>`;
+      document.body.appendChild(errorEl);
     }
+    return;
+  }
+
+  if (!session || !session.authenticated) {
+    document.querySelector(".app-shell").hidden = true;
+    if (elements["room-picker-view"]) elements["room-picker-view"].hidden = true;
+    if (loginViewInstance) loginViewInstance.show();
+    return;
+  }
+
+  activeSession = session;
+  if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
+
+  if (currentControlRoomId) {
     bootControlRoom();
     return;
   }
 
-  const session = await fetchSession();
-  if (session && session.authenticated === true) {
-    activeSession = session;
-    if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
-    if (session.roomId) {
-      currentControlRoomId = session.roomId;
-      window.history.pushState(null, "", `/rooms/${encodeURIComponent(session.roomId)}`);
-      bootControlRoom();
-      return;
-    }
-  }
   bootRoomPicker();
 }
 
