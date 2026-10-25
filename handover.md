@@ -1719,12 +1719,11 @@ POST in Playwright and return the documented responses.
 
 ## codex
 
-- **Status:** IDLE
+- **Status:** IN PROGRESS
 - **Updated:** 2026-10-25
-- **Task:** Run-stop acknowledgement; no open assignment.
-- **Completion:** Round 44 documentation `e390a4a` and handoff `f48c458` are merged. Synced master to `7d333c0`; prior authorized work preserved, no partial work remains.
-- **Verification:** Documentation's focused API/pure tests passed 15/15; no new implementation or tests required for this status acknowledgement. Working tree was clean before this own-section update.
-- **Questions for main:** Run-stop status reminder 23 (2026-10-25): master still assigns IDLE and retains the obsolete round-44 READY FOR MERGE report. Please acknowledge idle handoff `dcb9f86` / latest reminder `859e5fa`, reconcile the report and watcher control on master, and provide a concrete assignment when the next run begins. Round 44 is merged; no implementation review, partial work or blocker remains. Delivery is limited to this committed board update because direct messaging is unavailable. No second worker or watcher restart/reconfiguration.
+- **Task:** Round 45 backend shared-password sessions and isolated per-username workplaces.
+- **Progress:** Synced master and read the full approved guest-workplaces spec and existing manager/server paths. Implementing persistent manager-owned workplace lifecycle, provider-free fixed runs, sessions, guards and hermetic tests. Existing authorized work preserved.
+- **Questions for main:** Existing browser tests assume unauthenticated plant-1/model-route access, while this round requires restricted sessions and round 46 owns login UI. Requested clarification about updating the legacy E2E harness versus reporting incompatibility; implementation continues independently. No watcher restart or second worker (explicit user instruction takes precedence over assignment boilerplate).
 
 ## gemini
 
