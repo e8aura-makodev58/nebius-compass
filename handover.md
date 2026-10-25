@@ -1685,9 +1685,9 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 ## gemini
 
 - **Status:** READY FOR MERGE
-- **Updated:** 2026-10-24 23:36 UTC
+- **Updated:** 2026-10-25 02:30 UTC
 - **Task:** Round 44: keyboard pass follow-ups from the round 43 audit notes
-- **Head commit:** `76a3ddb`
+- **Head commit:** `7956f5f`
 - **Changes:**
   - Reviewed the keyboard-only pass and audit notes from Round 43 across all 13 workspace panels (Staffing, Field reports/Investigation, Map, Issues, Events, Context/Dispatch, Analytics, Station KPIs, Loadboards, Obligations, Calibrations, Handler episodes, Changeover readiness).
   - Confirmed all focus rings (≥ 2px outline width with compliant contrast), sequential tab orders, focus trapping (`trapFocus` in [`frontend/focus-trap.js`](file:///home/makodev58/nebius-compass-gemini/frontend/focus-trap.js)), Escape dismissal, and return-to-trigger focus are fully verified and robust against continuous poll ticks and view switches.
