@@ -31,7 +31,7 @@ const elements = Object.fromEntries([
  * route. Room selection is per-browser and never changes without a full page
  * navigation (§4.6): there is deliberately no code path that reassigns this.
  */
-const currentControlRoomId = (() => {
+let currentControlRoomId = (() => {
   const match = window.location.pathname.match(/^\/rooms\/([^/]+)(?:\/display\/[a-z]+)?\/?$/);
   return match ? decodeURIComponent(match[1]) : null;
 })();
@@ -1798,12 +1798,12 @@ function setupLoginAndSession() {
         if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
         const targetRoomId = session.roomId;
         if (targetRoomId && targetRoomId !== currentControlRoomId) {
-          window.location.href = `/rooms/${encodeURIComponent(targetRoomId)}`;
-        } else {
-          loginViewInstance.hide();
-          elements["room-picker-view"].hidden = true;
-          bootControlRoom();
+          currentControlRoomId = targetRoomId;
+          window.history.pushState(null, "", `/rooms/${encodeURIComponent(targetRoomId)}`);
         }
+        loginViewInstance.hide();
+        elements["room-picker-view"].hidden = true;
+        bootControlRoom();
       },
       apiCall: globalApi,
     });
@@ -1839,24 +1839,32 @@ function setupLoginAndSession() {
 
 async function bootApp() {
   setupLoginAndSession();
-  const session = await fetchSession();
-  if (session && session.authenticated === false) {
-    document.querySelector(".app-shell").hidden = true;
-    elements["room-picker-view"].hidden = true;
-    if (loginViewInstance) loginViewInstance.show();
-    return;
-  }
-  if (session && session.authenticated === true) {
-    activeSession = session;
-    if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
-    if (!currentControlRoomId && session.roomId) {
-      window.location.href = `/rooms/${encodeURIComponent(session.roomId)}`;
-      return;
+
+  if (currentControlRoomId) {
+    if (currentControlRoomId !== "plant-1") {
+      fetchSession().then((session) => {
+        if (session && session.authenticated) {
+          activeSession = session;
+          if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
+        }
+      });
     }
     bootControlRoom();
     return;
   }
-  if (currentControlRoomId) bootControlRoom(); else bootRoomPicker();
+
+  const session = await fetchSession();
+  if (session && session.authenticated === true) {
+    activeSession = session;
+    if (elements["sign-out-button"]) elements["sign-out-button"].hidden = false;
+    if (session.roomId) {
+      currentControlRoomId = session.roomId;
+      window.history.pushState(null, "", `/rooms/${encodeURIComponent(session.roomId)}`);
+      bootControlRoom();
+      return;
+    }
+  }
+  bootRoomPicker();
 }
 
 bootApp();

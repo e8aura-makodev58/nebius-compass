@@ -1,6 +1,18 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Guest workplace login and UI (Round 46)", () => {
+  test.beforeEach(async ({ page }) => {
+    // In production, unauthenticated requests to /api/control-rooms return 401.
+    // In the legacy test harness, it returns 200 for pre-login tests.
+    await page.route("**/api/control-rooms", async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Sign in required" }),
+      });
+    });
+  });
+
   test("login form shown when signed out, with labelled inputs and zero outbound requests", async ({ page, baseURL }) => {
     const outbound = [];
     page.on("request", (req) => {
@@ -200,6 +212,10 @@ test.describe("Guest workplace login and UI (Round 46)", () => {
             status: "RUNNING",
             speedMultiplier: 1,
           },
+          equipment: [],
+          responders: [],
+          issues: [],
+          recommendations: [],
           stationKPIs: [],
           loadboards: [],
           obligations: [],

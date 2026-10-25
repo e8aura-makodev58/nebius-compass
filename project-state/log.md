@@ -1045,5 +1045,5 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
   - On successful login, transitions to the returned workplace (`/rooms/:roomId`) and displays a visible header Sign out button (`#sign-out-button`) calling `POST /api/session/logout` and returning cleanly to the login screen.
   - Strictly adheres to phone viewport (375px) with zero horizontal overflow, Nebius palette without lime as text, focus-visible rings (≥2px outline width), zero credential persistence in browser storage (`localStorage`/`sessionStorage`), and zero outbound network calls.
   - Added full Playwright test suite `e2e/login.spec.mjs` (8/8 tests passing).
-- Verification: `npm test` 619/619 passed (hermetic), Playwright E2E 194/194 passed on port 3022. Ports 3022 and 3122 confirmed completely free.
+- Verification: `npm test` 630/630 passed (hermetic), Playwright E2E 195/195 passed on port 3022. Ports 3022 and 3122 confirmed completely free.
 - Pages updated: project-state/frontend/overview.md, this log.
