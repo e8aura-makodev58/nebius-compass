@@ -1041,3 +1041,11 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-25] feature — Simulation run dot in the status bar
 - Added a dot beside "Run" in the status bar (`#status-bar-dot`). It blinks while the room is RUNNING, is amber when PAUSED, and is grey otherwise. The agent-activity dot in the top bar is unchanged; it still blinks only while an agent works. Tests in `e2e/status-bar.spec.mjs`.
 - Pages updated: log.md.
+
+## [2026-10-25] feature — App logo and icons
+- Added Compass's own mark (`frontend/icons/compass-mark.svg`: a navy tile, a lime ring and a split needle). It is original artwork, not the Nebius logo, which `docs/design/nebius-theme.md` still rules out.
+- Icons: `frontend/icons/icon-192.png`, `icon-512.png`, `apple-touch-icon.png` (full-bleed square for iOS), and `manifest.webmanifest`. They are rendered from the SVG with headless Chromium.
+- The header heading and the room picker heading show the mark beside the name (`.app-logo` in `base.css`, decorative `alt=""`). `index.html` links the SVG as the tab icon, the Apple icon and the manifest, and sets `theme-color`.
+- Static serving: `.svg`, `.png` and `.webmanifest` were not in the MIME map and fell back to `application/octet-stream`. They are now mapped in `backend/src/server.mjs`.
+- Tests: `backend/tests/app-icons.test.mjs` (media types, PNG sizes, every referenced file exists) and `e2e/app-logo.spec.mjs` (header logo loads; tab icon links). `npm test` 633/633; E2E 200/200 on port 3024.
+- Pages updated: frontend/overview.md, log.md.

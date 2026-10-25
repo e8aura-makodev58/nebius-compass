@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="ResponseCompass live responder assignment control room" />
     <title>ResponseCompass — Live Floor</title>
+    <link rel="icon" href="/icons/compass-mark.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/icons/manifest.webmanifest" />
+    <meta name="theme-color" content="#0F2B43" />
     <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/base.css" />
     <link rel="stylesheet" href="/floor.css" />
@@ -27,14 +31,14 @@
     <section id="room-picker-view" class="room-picker-view" hidden>
       <div class="room-picker-card">
         <p class="eyebrow">ResponseCompass</p>
-        <h1>Choose a Control Room</h1>
+        <h1><img class="app-logo" src="/icons/compass-mark.svg" alt="" width="36" height="36" />Choose a Control Room</h1>
         <p class="tagline">Each Control Room runs an independent simulation. Pick one to continue.</p>
         <div id="room-picker-list" class="room-picker-list" aria-live="polite"><p class="workflow-prompt">Loading control rooms…</p></div>
       </div>
     </section>
     <main class="app-shell" hidden>
       <header class="topbar">
-        <div><p class="eyebrow">Responder dispatch</p><h1>Response<span class="brand-mark">Compass</span></h1><p class="tagline">Not just who's closest. Who makes the most sense.</p></div>
+        <div><p class="eyebrow">Responder dispatch</p><h1><img class="app-logo" src="/icons/compass-mark.svg" alt="" width="36" height="36" />Response<span class="brand-mark">Compass</span></h1><p class="tagline">Not just who's closest. Who makes the most sense.</p></div>
         <nav class="tab-bar" aria-label="Application views"><button id="control-room-tab" class="tab-button active" type="button">Live Floor</button><button id="rooms-tab" class="tab-button" type="button">Control Rooms</button><button id="analytics-tab" class="tab-button" type="button">Analytics</button><button id="settings-tab" class="tab-button" type="button">Settings</button><div id="agent-activity-indicator" class="agent-activity-indicator" role="status" aria-live="polite"><span class="activity-dot"></span><span id="agent-activity-label">Agents idle</span></div></nav>
         <div class="mode-controls" aria-label="Runtime mode"><button id="live-mode-button" type="button">Live Simulation</button><button id="offline-mode-button" class="secondary-button" type="button">Offline Demo</button><button id="offline-reset-button" class="secondary-button" type="button" hidden>Reset Offline</button></div>
       </header>

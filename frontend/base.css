@@ -51,6 +51,8 @@ button.is-loading { cursor: wait; }
 .simulation-bar strong { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: .92rem; }
 .topbar h1 { font-weight: 700; letter-spacing: -.03em; }
 .topbar h1 .brand-mark { margin-left: 2px; padding: 0 .28em; border-radius: var(--radius-sm); background: var(--brand-lime); color: var(--ink); }
+/* Our own compass mark (frontend/icons/compass-mark.svg). Sized to the heading's cap height. */
+.app-logo { display: inline-block; width: 1.15em; height: 1.15em; margin-right: .3em; vertical-align: -.2em; }
 /* Text fields and selects share one form style with a visible focus ring. */
 input[type="text"], input[type="password"], input[type="search"], input:not([type]), select { border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); background: var(--paper-raised); color: var(--ink); font: inherit; transition: border-color .12s ease, box-shadow .12s ease; }
 input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible, [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); box-shadow: var(--focus-ring); }
