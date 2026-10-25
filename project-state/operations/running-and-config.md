@@ -219,3 +219,8 @@ workplaces persist under COMPASS_DATA_DIR/control-rooms until seven idle days.
 The three-minute creation run, hourly cleanup bound and 200-workplace cap are server
 constants, never login request options. The failed-login brake is process-local and
 resets on restart; revisit it for multiple server processes or real-use deployment.
+
+The container healthcheck probes the signed-out `/api/session` response (401 with
+Sign in required), because the room list now requires authentication. No password
+is supplied to health probes or committed in the image. The server listens only
+after manager initialization; per-workplace failures remain isolated.
