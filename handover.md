@@ -111,8 +111,8 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 45 (shared-password login and per-username workplaces, backend) | 45 |
-| gemini | Round 46 (login form and workplace UI, frontend); round 44 keyboard follow-ups queue after it | 46 |
+| codex | IDLE (round 45 merged; no open assignment) | — |
+| gemini | Round 47 (fix round 46 login integration: existing E2E must pass with the login gate on) | 47 |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
 
@@ -1643,8 +1643,27 @@ POST in Playwright and return the documented responses.
     `project-state/log.md`. Commit, set `READY FOR MERGE`.
   - Do not change backend code or `docs/design/`. After round 46, pick up the round 44 keyboard follow-ups.
 
+**Round 47 (2026-10-25) — gemini: fix round 46 login integration.** Round 46 (`d776f87`) was rolled back
+on `master` because, with the codex round 45 backend merged, 184 of 187 existing E2E tests failed on the
+"Workplace Sign In" screen. Those tests never sign in. The rollback was made with `git reset`; the
+rolled-back merge is kept as tag `backup/gemini-round46-merge`. Your branch is unchanged.
+
+- **gemini.** Start with `git merge master` (it now includes codex round 45). Then:
+  - Make the existing E2E suite authenticate through a shared Playwright fixture: stub `GET /api/session`
+    to return a fixed session for the test room, and keep the login UI for `e2e/login.spec.mjs` only.
+    Do not weaken or delete any existing assertion.
+  - Make `frontend/app.js` fail closed: on `401` show the login screen; on any other failure show an error.
+    Remove the "404 falls back to default boot" branch. It would let the app run unauthenticated.
+  - Keep phone width, palette, focus and zero-outbound-request checks passing.
+  - Use **port 3022**. Run both suites: `npm test` and the full `npm run test:e2e` with the port set. Target:
+    the full E2E count matches master (187 before round 46) plus the login tests.
+  - Update `project-state/frontend/overview.md` and `project-state/log.md`. Commit, set `READY FOR MERGE`.
+  - Do not change backend code or `docs/design/`. Round 44 keyboard follow-ups come after this.
+
 ### Merge log
 
+- 2026-10-25 — **codex** `bb92062`…`86ec2c1` (branch `codex`, round 45: shared-password login and per-username workplaces, backend) → merge `617de2f`. `npm test` 630/630; E2E 187/187 on port 3012 (before the gemini merge). Not deployed. Round 46 (gemini UI) was merged on top and rolled back the same day, see the next entry.
+- 2026-10-25 — **gemini** `d776f87` (branch `gemini`, round 46: login form and workplace UI) merged as `a8953fb`, then **rolled back** with `git reset --hard 617de2f` (kept as tag `backup/gemini-round46-merge`). Reason: with the codex backend gate on, 184 of 187 existing E2E tests stopped at the "Workplace Sign In" screen, because they never sign in. Master E2E after the rollback: 187/187. Round 47 assigns gemini to fix this on its branch.
 - 2026-10-24 — **codex** `e390a4a`…`40bfde9` (branch `codex`, round 44, documentation only: `project-state/backend/http-api.md` changeover routes) → merge `ffd2c0f`-equivalent docs commit on master. No code changed, so no deploy and no E2E re-run; the code is unchanged since `7d0039a`, which passed E2E 186/186 and is deployed. `npm test` 619/619.
 - 2026-10-24 — **codex** `73b11e0`…`099c11c` (branch `codex`, round 43) and **gemini** `996bb65`/`37857dd` (round 43) → merge `7d0039a`: append-only changeover records (`POST /api/control-rooms/:roomId/changeovers`), the changeover readiness read route, and a keyboard-only pass across all workspace panels. `npm test` 619/619; E2E 186/186 on port 3024. Deployed `7d0039a`, healthy. GET-only smoke test: all endpoints 200; unknown changeover returns 404.
 - 2026-10-24 — **codex** `62b6cd6`…`3fe5bb3` (branch `codex`, round 42) and **gemini** `9c900ed`/`a39b472` (round 42) → merge `1b8cdf7`: pure changeover readiness check (`backend/src/changeover-readiness.mjs`; kit and crew UNKNOWN, `READY` only when all checks pass) and the Changeover readiness panel on stubs. No read route yet: slice 1 has no changeover record. `npm test` 612/612; E2E 175/175 on port 3024. Deployed `1b8cdf7`, healthy. GET-only smoke test: all endpoints 200.
@@ -1719,17 +1738,16 @@ POST in Playwright and return the documented responses.
 
 ## codex
 
-- **Status:** READY FOR MERGE
+- **Status:** IDLE
 - **Updated:** 2026-10-25
-- **Task:** Round 45 backend: shared-password sessions and per-username workplaces, approved guest-workplaces spec sections 2–8.
-- **Head commits:** `d997380` implementation; `e9476a7` failed-workplace isolation; `bb92062` credential-free container healthcheck. This handoff is committed separately. Master synced before work; prior authorized work preserved.
-- **Changes:** Environment-only COMPASS_WORKPLACE_PASSWORD with timingSafeEqual over fixed-size digests; missing/empty refuses every login and emits one value-free startup warning. Random 32-byte opaque session cookie (HttpOnly/SameSite Strict/Path /, Secure on HTTPS), 12-hour idle expiry, logout and per-socket-address five-failure/ten-minute brake. Production network server factories require sessions by default. API guards expose only own workplace, deny shared/template/other rooms and global/provider capabilities, and preserve JSON/origin guards. Login returns username/roomId; no password or token in JSON/logs.
-- **Workplace lifecycle:** Manager reuses its normal room builder for a hidden independent template seed and deterministic normalized username rooms; never copies plant-1. Seeds contain ATE-1/ATE-2 calibration, three boards, no reservations/handler inputs. Durable creation marker precedes one fixed three-minute real-time run; login/restart never replays start, expired runs pause, and demo providers are fixture-only. Safe ownership metadata controls seven-idle-day cleanup at startup/at most hourly and the serialized 200-room cap. Existing users still resume at cap. Missing/corrupt created state is unavailable rather than recloned, and failed demo rooms remain hidden. No deploy or live environment secret change.
-- **Verification:** Final `npm test` **630/630**; focused workplace tests **11/11**; final forced-provider Chromium E2E **187/187** on 3021; Docker fixture check **1/1**. Actual production CLI smoke on isolated 3021 with a generated environment-only secret passed two-user isolation, seed boards/no holds, resume, own-only room list, shared/model denial, session cookie/logout and the exact Docker healthcheck command. Smoke logs/responses checked for secret absence; test server stopped and port free. Initial browser run had one existing KPI focus failure (186/187); focused KPI rerun passed 7/7 and subsequent full rerun passed 187/187 without frontend/assertion changes. git diff --check clean; working state/data tests isolated under .cache, no provider spend or backend/data writes.
-- **E2E integration boundary:** Login UI is assigned to round 46. Existing operator/plant-1 browser regressions now use explicit e2e/helpers/legacy-server.mjs (loopback, NODE_ENV=test, explicit null session fixture); production CLI has no authentication-disable environment flag. GET session signed-out smoke is added. Full visitor login UI coverage is not claimed; round 46/main integration must verify the authenticated UI and revisit the legacy harness as frontend bootstrap changes. No frontend files changed.
-- **project-state pages updated:** backend/overview.md, backend/control-rooms.md, backend/http-api.md, operations/running-and-config.md, operations/testing.md, log.md; decisions recorded in docs/decisions.md. .env.example contains only the variable name with an empty value. Container healthcheck now expects signed-out GET session (401), never a password or anonymous room access.
-- **Risks / follow-ups:** Shared secret/open usernames intentionally allow anyone with the secret to resume another known username; failed-login/session state is process-local and resets on restart. These accepted demo limits are documented. Public capabilities are allowlisted; manual run extension/mode and global/provider endpoints are forbidden, while own deterministic entry/custody/reset/pause remain usable. Do not deploy until round-46 UI integration and the user's separate environment/deploy go-ahead. No backend implementation blocker or partial work remains.
-- **Questions for main:** Pending-review reminder 7 (2026-10-25): master still assigns round 45 without acknowledging implementation `d997380` / `e9476a7` / `bb92062`, ready handoff `9ab0079`, or latest reminder `0f434c1`. Please confirm review status and merge or record revisions, especially the explicit legacy E2E harness, round-46 authenticated UI integration boundary and public capability allowlist, then queue the next concrete task. No backend blocker or partial work remains; verification is unchanged. Delivery is limited to this committed board update because direct messaging is unavailable. No second worker or watcher restart/reconfiguration.
+- **Task:** —
+- **Head commit:** —
+- **Changes:** —
+- **Files changed:** —
+- **Verification:** `npm test` — · E2E —
+- **project-state pages updated:** —
+- **Risks / follow-ups:** —
+- **Questions for main:** —
 
 ## gemini
 
