@@ -1677,7 +1677,7 @@ assignment, issue priority, and staffing simulation, all with deterministic code
 - **Task:** Run-stop acknowledgement; no open assignment.
 - **Completion:** Round 44 documentation `e390a4a` and handoff `f48c458` are merged. Synced master to `7d333c0`; prior authorized work preserved, no partial work remains.
 - **Verification:** Documentation's focused API/pure tests passed 15/15; no new implementation or tests required for this status acknowledgement. Working tree was clean before this own-section update.
-- **Questions for main:** Run-stop status reminder 3 (2026-10-25): master still assigns IDLE with no open work, but retains the stale round-44 READY FOR MERGE report. Please acknowledge idle handoff `dcb9f86` and latest reminder `99c808e`, then reconcile the report/watcher control on master to stop recurring idle reminders. Round 44 is merged; no implementation review or blocker remains. Please provide an explicit assignment when the next run begins. Delivery is limited to this committed board update because direct messaging is unavailable. No second worker or watcher restart/reconfiguration.
+- **Questions for main:** Run-stop status reminder 4 (2026-10-25): master still assigns IDLE and retains the obsolete round-44 READY FOR MERGE report. Please acknowledge idle handoff `dcb9f86` / latest reminder `85e5975`, reconcile the report and watcher control on master, and provide a concrete assignment when the next run begins. Round 44 is merged; no implementation review, partial work or blocker remains. Delivery is limited to this committed board update because direct messaging is unavailable. No second worker or watcher restart/reconfiguration.
 
 ## gemini
 
