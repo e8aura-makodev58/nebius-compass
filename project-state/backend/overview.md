@@ -17,6 +17,10 @@ one TypeScript type file; there is no build step.
 | Module | Responsibility |
 |--------|----------------|
 | `control-room-registry.mjs` | The frozen, hardcoded list of rooms (`plant-1` / `e8-aura-p1`, `plant-2` / `e8-aura-p2`) and the reserved-id guard against real route segments. |
+| `workplace-sessions.mjs` | Environment-only shared-password verification, opaque idle-expiring sessions, strict cookies and in-memory failed-login brake; no simulation/model dependencies. |
+| `workplace-identity.mjs` | Safe normalized usernames, deterministic room IDs and fixed lifetime/cap constants. |
+| `workplace-lifecycle.mjs` | Durable workplace ownership/timestamps, serialized creation/touch/cleanup and one-time run deadlines; invoked through the manager. |
+| `workplace-seed.mjs` | Independent bootstrap template seed with ready calibrations, three boards and no holds/handler inputs; never clones plant-1. |
 | `control-room-manager.mjs` | The **sole boundary** for room-scoped runtime access. Composes one Live + Offline + application runtime per room, shares one logger/settings/planner/agent config, and owns the one process-level scheduler that ticks every `READY` room concurrently. |
 | `control-room-migration.mjs` | Idempotent one-time move of legacy single-instance data into the per-room layout, with an explicit `CONFLICT` state that never silently picks a winner. |
 | `control-room-metadata-store.mjs` | Revisioned display-name storage shared across rooms (`room-metadata.json`), with optimistic-concurrency renames. |

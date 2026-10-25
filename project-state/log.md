@@ -1031,6 +1031,11 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Gemini round 44 ready for next integration run.
 - Live state: the deployed simulation is paused. The smoke-test reservation written earlier was released.
 
+## [2026-10-25] feature — Shared-password sessions and per-username workplaces (round 45)
+- Added environment-only constant-time login, opaque idle sessions/cookies, logout, process-local failed-login brake and own-workplace/provider route guards. Manager reuses normal room construction for durable template-derived workplaces, one-time three-minute fixture runs, seven-day cleanup and a 200-workplace cap; shared state is not cloned or swept.
+- Added hermetic auth/lifecycle tests and signed-out session browser smoke. Existing pre-login UI regressions run through an explicit isolated test harness pending round 46; production authentication stays mandatory. All browser persistence now uses the isolated scratch root. Container health probes the expected signed-out session response instead of the protected room list.
+- Pages updated: backend/overview.md, backend/control-rooms.md, backend/http-api.md, operations/running-and-config.md, operations/testing.md. Security/demo tradeoffs and test boundary recorded in docs/decisions.md.
+
 ## [2026-10-25] feat — Guest workplace login form and UI (round 46, gemini)
 - Implemented guest workplaces authentication and login UI against docs/design/guest-workplaces.md §1, §8:
   - Created `frontend/login-view.js` and `frontend/login.css` with `#login-view` in `frontend/index.html`.

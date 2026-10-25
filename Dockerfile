@@ -24,6 +24,6 @@ USER node
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD ["node", "-e", "const http=require('node:http');const r=http.get('http://127.0.0.1:3000/api/control-rooms',x=>{let b='';x.on('data',c=>b+=c);x.on('end',()=>{try{const rooms=JSON.parse(b).rooms;process.exit(x.statusCode===200&&Array.isArray(rooms)&&rooms.length>0&&rooms.every(room=>room.health==='READY')?0:1)}catch{process.exit(1)}})});r.on('error',()=>process.exit(1));r.setTimeout(4000,()=>{r.destroy();process.exit(1)})"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD ["node", "-e", "const http=require('node:http');const r=http.get('http://127.0.0.1:3000/api/session',x=>{let b='';x.on('data',c=>b+=c);x.on('end',()=>{try{const status=JSON.parse(b);process.exit(x.statusCode===401&&status.error==='Sign in required'?0:1)}catch{process.exit(1)}})});r.on('error',()=>process.exit(1));r.setTimeout(4000,()=>{r.destroy();process.exit(1)})"]
 
 CMD ["node", "backend/src/server.mjs"]
