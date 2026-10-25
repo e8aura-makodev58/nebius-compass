@@ -1736,7 +1736,7 @@ POST in Playwright and return the documented responses.
 - **Status:** READY FOR MERGE
 - **Updated:** 2026-10-25 08:15 UTC
 - **Task:** Round 46: login form and workplace UI (frontend)
-- **Head commit:** `ca1add0`
+- **Head commit:** `6ca4630` (merged in `fcfdffc`)
 - **Changes:**
   - Implemented guest workplaces authentication and login UI against `docs/design/guest-workplaces.md` §1 and §8:
     - Created `frontend/login-view.js` (`initLoginView`) and `frontend/login.css`.
