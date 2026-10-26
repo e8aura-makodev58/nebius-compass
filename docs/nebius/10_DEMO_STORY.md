@@ -37,9 +37,10 @@ history that lives in past tickets and in people's heads.
 
 ## Blockers before recording
 
-1. **Nebius Token Factory API key.** Not set on the deployed server. Without it, the Investigator
-   and every ranking use the deterministic fallback, so beats 3–4 would show fallback output, not
-   Nemotron. The video must be recorded with the key set and forced-off providers turned off.
+1. **Nebius Token Factory API key.** Set on the deployed server through `NEBIUS_TOKEN_FACTORY_API_KEY_FILE`
+   (the sponsor's token, kept outside git). Checked 2026-10-26: the models endpoint returns 200, and a live
+   Nemotron 3 Super call returned a reply. The video must be recorded with providers on, so beats 3–4 show
+   real Nemotron output, not fallback output.
 2. **Live Nemotron check (N0 probe)** must pass with the key before recording. Captures are
    recorded as saved outputs, never as model output we did not get.
 
@@ -73,6 +74,6 @@ history that lives in past tickets and in people's heads.
 
 ## Blocking questions (2026-10-26)
 
-- **Guest workplaces block field reports.** `/investigations` returns "This action is unavailable in demo
-  workplaces". Judges cannot reach the Investigator through the public URL. Decide whether to allow it.
-- **Nebius key.** Not set on the deployed server.
+- **Guest workplaces and the Investigator.** Decided 2026-10-26: field reports, investigations and cases are open
+  to guest workplaces, paid from the sponsor's Nebius tokens. `/ask` and `/compass` stay closed.
+- **Nebius key.** Set on the deployed server and confirmed with a live call on 2026-10-26.
