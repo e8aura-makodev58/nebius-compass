@@ -1098,3 +1098,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Removed the AMD-era submission folder `docs/submission/` (deck PDF and PPTX, demo WebM, form answers, pitch deck, video script, build scripts and assets). Also removed the superseded pptxgenjs draft `docs/nebius/deck/build-deck.mjs`.
 - `README.md` now points to `docs/nebius/` for the submission materials. Earlier log, decision and handover entries that mention `docs/submission/` are kept as history.
 - Pages updated: README.md, log.md. No runtime code changed.
+
+## [2026-10-26] docs — Nebius deck rebuilt on the AMD deck's structure
+- `docs/nebius/deck/build_deck.py` now builds a 20-slide deck (`ResponseCompass-nebius-deck.pptx`) on the AMD deck's backgrounds, palette and slide order. Nebius additions: field reports and the Investigator (flow, safety), guest workplaces, measured Nebius results (ranking validity, paired first-fix replay, Investigator checks run 3), Token Factory role table, open-before-filing card.
+- Screenshots in `docs/nebius/deck/assets/` are live captures from a local build on the synthetic plant-1 month. Investigator captures are not included: field reports are closed to guest workplaces, and no Nebius key is set.
+- Removed the earlier draft deck (`ResponseCompass-nebius-deck-draft.pptx`). `AMDResponseCompass-deck.pptx` is the user's reference file and is not committed.
+- Pages updated: log.md only.
