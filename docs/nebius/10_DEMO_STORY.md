@@ -66,5 +66,13 @@ history that lives in past tickets and in people's heads.
 
 1. Keep the Investigator as the lead beat (recommended, it is the new Nebius-era feature), or lead
    with the dispatch wall?
-2. Confirm the synthetic-month figures to quote on beat 6 (the old deck quotes 73.5% first-time fix
-   over 3,512 issues; re-check against the current Analytics screen before it goes on a slide).
+2. Figures for beat 6. Checked on 2026-10-26 against the live Analytics screen: September 2026 has 3,004
+   issues, a 25% reopen rate over 4,683 observed attempts, and the top two classes make 78% of issues; the 80% line is crossed on the third.
+   The old 73.5% first-time-fix figure from the AMD-era deck does not appear on the current screen, so it is
+   not used.
+
+## Blocking questions (2026-10-26)
+
+- **Guest workplaces block field reports.** `/investigations` returns "This action is unavailable in demo
+  workplaces". Judges cannot reach the Investigator through the public URL. Decide whether to allow it.
+- **Nebius key.** Not set on the deployed server.
