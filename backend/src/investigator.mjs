@@ -127,7 +127,8 @@ function interpretationProblem(output, rows, available) {
   if (rows.length !== available.length) return 'count';
   if (new Set(rows.map((r) => r.optionId)).size !== rows.length) return 'duplicate-option';
   if (rows.some((row) => !exact(row,['optionId','rationale']))) return 'row-shape';
-  if (rows.some((row) => !available.some((o) => o.optionId === row.optionId))) return 'unknown-option';
+  const unknown = rows.find((row) => !available.some((o) => o.optionId === row.optionId));
+  if (unknown) return `unknown-option ${JSON.stringify(String(unknown.optionId)).slice(0, 48)}`;
   const failed = rows.map((row) => proseError(row.rationale, available.map((o) => o.optionId))).find(Boolean);
   return failed ? `rationale ${failed}` : null;
 }
