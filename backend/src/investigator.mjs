@@ -119,7 +119,7 @@ export async function rankInterpretations(report, options = {}) {
     if (problem) return fallback(`invalid-output: ${problem}`);
     return { options:rows.map((row) => { const option = available.find((item) => item.optionId === row.optionId); return {optionId:option.optionId,equipmentId:option.equipmentId,equipmentName:option.equipmentName,issueClass:option.issueClass,symptomCode:option.symptomCode,symptomText:option.symptomText,rationale:row.rationale}; }),
       source:options.mode === 'fixture' ? 'FIXTURE' : provider === 'nebius' ? 'NEBIUS_MODEL' : 'AMD_MODEL',model:{modelId} };
-  } catch(error) { return fallback(error.code==='budget-exhausted'?'budget-exhausted':`provider-error: ${error.code ?? error.name ?? 'unknown'}`); }
+  } catch(error) { return fallback(error.code==='budget-exhausted'?'budget-exhausted':`provider-error: ${error.code ?? error.name ?? 'unknown'}${error.name==='TypeError'?` ${String(error.message).slice(0,90)}`:''}`); }
 }
 // Names the first check a ranking output fails, so a fallback can be diagnosed without logging model text.
 function interpretationProblem(output, rows, available) {
