@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | IDLE (round 45 merged; branding handoff `3ce72bc` integrated by claude in `b83c915`; no open assignment) | — |
+| codex | Round 48: critique the Nebius deck (review only, `docs/nebius/deck/REVIEW-codex-round48.md`) | 48 |
 | gemini | IDLE (round 47 merged as `780e696`; no open assignment) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
@@ -1659,6 +1659,37 @@ rolled-back merge is kept as tag `backup/gemini-round46-merge`. Your branch is u
     the full E2E count matches master (187 before round 46) plus the login tests.
   - Update `project-state/frontend/overview.md` and `project-state/log.md`. Commit, set `READY FOR MERGE`.
   - Do not change backend code or `docs/design/`. Round 44 keyboard follow-ups come after this.
+
+**Round 48 (2026-10-26) — codex: critique the Nebius deck (review only, no edits to the deck).** Main agent
+rebuilt the Nebius submission deck on the structure of the AMD deck, with Nebius features added. The user asked
+for an independent critique before the final version is made. Reviewing is the whole task this round.
+
+- **codex.** Start with `git merge master`. Read and render the deck:
+  - Deck: `docs/nebius/deck/ResponseCompass-nebius-deck.pptx`. Builder: `docs/nebius/deck/build_deck.py`
+    (it regenerates the deck; do not rebuild it or change either file this round).
+  - Baseline the user wants kept: `docs/nebius/deck/AMDResponseCompass-deck.pptx` (untracked; it is in
+    your worktree only if you copy it from `/home/makodev58/nebius-compass-claude/docs/nebius/deck/`
+    — read it from there, read-only). The new deck must keep at least the AMD content and add the Nebius
+    features.
+  - Rules and brief: `docs/nebius/02_OFFICIAL_RULES.md`, `docs/nebius/01_HACKATHON_BRIEF.md`,
+    `docs/nebius/10_DEMO_STORY.md`, `HACKATHON_CHANGES.md`.
+- **Check every number and claim against its source.** Sources: `docs/evaluation.md` (run 3, paired replay),
+  `docs/nebius/05_TOKEN_FACTORY_FACTS.md` (probe), `backend/src/model-provider.mjs` (model roles),
+  `backend/src/workplace-identity.mjs` (cap 10, 7-day sweep), the analytics figures from the Analytics
+  screen. Flag any number you cannot trace. The test count 635 is from the hermetic run on 2026-10-26.
+- **Check the rendering:** text overflow, overlaps with background art, wrong labels, slide numbering,
+  speaker notes that contradict the slide, and whether every diagram arrow is glued to its boxes.
+- **Judge it against the rules:** the Best Apps and Agents criteria (stage one: genuine fit; stage two:
+  technological implementation, design, potential impact, quality of idea). Say which slide answers each
+  criterion and where the deck is weak.
+- **Output:** write `docs/nebius/deck/REVIEW-codex-round48.md` with numbered findings, most severe first. Each
+  finding names the slide number, what is wrong, the source that shows it, and the concrete fix. Add a short
+  section "What is strong, keep it". Do not edit the deck or the builder.
+- Run `npm test` (hermetic) and `LD_LIBRARY_PATH=/home/makodev58/nebius-tools/libs/usr/lib/x86_64-linux-gnu npm run test:e2e`
+  on port **3022** as the protocol requires. The review file is docs only, so a failure in either suite is a
+  finding to report, not something to fix here.
+- Update `project-state/log.md` with one entry. Commit on `codex`, set `READY FOR MERGE`.
+- **Questions for main** (put them in your section): anything the rules require that the deck does not show.
 
 ### Merge log
 
