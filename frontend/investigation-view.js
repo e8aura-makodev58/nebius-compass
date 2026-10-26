@@ -49,6 +49,7 @@ function sourceLabel(record) {
 }
 function modelFacts(record, escape) {
   const m = record.model;
+  if (['QUEUED', 'RUNNING'].includes(record.status)) return '';
   if (!m || record.source === 'DETERMINISTIC') return record.fallbackReason ? `<p class="inv-meta">Fallback: ${escape(record.fallbackReason)}</p>` : '';
   const parts = [m.calls != null ? `${m.calls} model calls` : null, m.latencyMs != null ? `${(m.latencyMs / 1000).toFixed(1)} s` : null, m.promptTokens != null ? `${m.promptTokens} in / ${m.completionTokens ?? 0} out tokens` : null].filter(Boolean);
   return parts.length ? `<p class="inv-meta">${escape(parts.join(' · '))}</p>` : '';
