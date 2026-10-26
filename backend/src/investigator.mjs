@@ -114,7 +114,7 @@ export async function rankInterpretations(report, options = {}) {
     } else output = await timed(() => callChatCompletion({...options,role:'compass',provider,modelId,apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,
       timeoutMs: Math.min(options.timeoutMs ?? 90000,120000),systemInstruction:INTERPRETATION_INSTRUCTION,userContent:JSON.stringify({report:JSON.stringify(report.narrative),options:available}),
       jsonSchemaName:'interpretations',jsonSchema:{type:'object',required:['rankedOptions']}}),Math.min(options.timeoutMs ?? 90000,120000));
-    const rows = output.rankedOptions;
+    const rows = output?.rankedOptions;
     const problem = interpretationProblem(output, rows, available);
     if (problem) return fallback(`invalid-output: ${problem}`);
     return { options:rows.map((row) => { const option = available.find((item) => item.optionId === row.optionId); return {optionId:option.optionId,equipmentId:option.equipmentId,equipmentName:option.equipmentName,issueClass:option.issueClass,symptomCode:option.symptomCode,symptomText:option.symptomText,rationale:row.rationale}; }),

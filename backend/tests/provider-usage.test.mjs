@@ -122,3 +122,10 @@ test('budget preflight cannot extend the original provider deadline',async()=>{
   await assert.rejects(callChatTurn(args(ledger,{now:()=>clock,timeoutMs:10,fetchImpl:async()=>{calls++;return envelope();}})),{code:'deadline'});
   assert.equal(calls,0);
 });
+test('an empty ranking response falls back with a named reason instead of throwing',async()=>{
+  const report={narrative:'Station 12 transfer stops short.',interpretation:{options:[{optionId:'OPTION-1',equipmentId:'EQ-1',equipmentName:'Station 1',issueClass:'B',symptomCode:'B-STOP',symptomText:'Transfer stops.'}]}};
+  const fetchImpl=async()=>({ok:true,headers:{get:()=>null},json:async()=>({usage:{prompt_tokens:1,completion_tokens:1},choices:[{message:{content:'null'},finish_reason:'stop'}]})});
+  const result=await rankInterpretations(report,{provider:'nebius',modelId:'nvidia/nemotron-3-super-120b-a12b',apiKey:'test-key',fetchImpl});
+  assert.equal(result.source,'DETERMINISTIC');
+  assert.equal(result.fallbackReason,'invalid-output: shape');
+});
