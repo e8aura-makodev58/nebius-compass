@@ -173,9 +173,9 @@ export async function createControlRoomManager({
   if (workplacesEnabled) {
     const buildWorkplace = async (id, label) => {
       try {
-        const fixture = { mode: 'fixture' };
-        const room = buildRoom({ id, label, dataRoot, logger, plannerOptions: fixture, agentOptions: fixture,
-          investigatorOptions: fixture, narratorOptions: fixture, assistantOptions: fixture,
+        // Workplaces use the same model options as every other room, so judges see Nemotron output.
+        // Each workplace runs for three minutes after creation, which bounds its model spend.
+        const room = buildRoom({ id, label, dataRoot, logger, plannerOptions, agentOptions, investigatorOptions, narratorOptions, assistantOptions,
           seedFactory: () => structuredClone(template.state) });
         await room.liveStore.snapshot(); await room.liveRuntime.reconcileStartup();
         return { ...room, health: 'READY', reason: null, demo: id !== 'template' };
