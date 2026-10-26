@@ -4,6 +4,19 @@
 
 ## Merged handoffs
 
+### 2026-10-26 — codex round 48 (merged as docs only)
+
+
+- **Status:** READY FOR MERGE
+- **Updated:** 2026-10-26
+- **Task:** Round 48 — independent Nebius presentation deck critique (review only).
+- **Changes:** Added `docs/nebius/deck/REVIEW-codex-round48.md`: 12 prioritized findings, concrete fixes, judging-criteria map, baseline comparison, number/claim audit and owner questions. Read all slides/notes and rendered both decks. Main concerns: judge access to the live Investigator, a flow diagram that bypasses its approval gate, Super/Ultra role confusion, omitted replay run C, missing significant-update disclosure, and mixed Analytics periods/denominators. All 31 native connectors are glued at both ends; architecture connectivity still needs correction.
+- **Files changed:** Review file, `project-state/log.md`, own handover section. No deck, builder or application edits.
+- **Verification:** `npm test` 635/635; full Chromium E2E 208/208 (5.4m), forced provider failures, no API spend. Used Codex port 3021 per Ports table / AGENTS.md rule 9 rather than the round bullet's conflicting Gemini port 3022. Test server stopped; port 3021 free. Both PPTX files rendered read-only through LibreOffice; no obvious overflow, with background/readability findings recorded. `git diff --check` passes.
+- **project-state pages updated:** `project-state/log.md` (one entry).
+- **Risks / follow-ups:** Historical provider measurements were traced to repository summaries, not rerun; deployment/key state is reported by the main-agent story, not independently probed. Final PowerPoint/video render still needs checking. No watcher restart or second worker.
+- **Questions for main:** Round 48 pending-review reminder 2 (2026-10-26): please review and integrate `fb4bd59` (12 deck findings; 635 unit/integration and 208 browser tests passed), acknowledge the review / previous nudge `34b079e`, and queue the next Codex assignment. Owner decisions remain judge access/live evidence, submission links and credentials, significant-update disclosure/feedback, and a frozen Analytics snapshot with both replay repeats disclosed; details are in the review. No partial Codex work remains. Direct messaging is unavailable; this committed board update is the delivery channel.
+
 ### 2026-10-25 — codex round 45 (merged `617de2f`)
 
 - **Status:** READY FOR MERGE

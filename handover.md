@@ -97,7 +97,7 @@ A watcher also stops on its own once the **Current task per agent** table shows 
 
 | Agent | Watcher |
 |---|---|
-| codex | RUN (round 28, 2026-10-24) |
+| codex | STOP (round 48 merged; no open assignment; set RUN with the next assignment) |
 | gemini | RUN (round 28, 2026-10-24) |
 | codebuddy | STOP (excluded from tasks) |
 | claude | n/a (main agent; runs the main agent watcher) |
@@ -111,7 +111,7 @@ and stops once no agent has an open assignment.
 
 | Agent | Current task | Round |
 |---|---|---|
-| codex | Round 48: critique the Nebius deck (review only, `docs/nebius/deck/REVIEW-codex-round48.md`) | 48 |
+| codex | IDLE (round 48 review merged; no open assignment) | — |
 | gemini | IDLE (round 47 merged as `780e696`; no open assignment) | — |
 | codebuddy | none — **excluded from tasks** (user, 2026-10-17) | — |
 | claude | none (round 26 closed 2026-10-21; its Ask item moved into round 27) | — |
@@ -1693,6 +1693,7 @@ for an independent critique before the final version is made. Reviewing is the w
 
 ### Merge log
 
+- 2026-10-26 — **codex** `fb4bd59`…`eae5501` (branch `codex`, round 48: independent critique of the Nebius deck, review only). Merged as docs only: `docs/nebius/deck/REVIEW-codex-round48.md` and its log entry. The branch's root-level logo copies were not merged; they duplicate `frontend/icons/`. `npm test` 635/635 on master; codex reported E2E 208/208 on port 3021.
 - 2026-10-25 — **codex** `bb92062`…`86ec2c1` (branch `codex`, round 45: shared-password login and per-username workplaces, backend) → merge `617de2f`. `npm test` 630/630; E2E 187/187 on port 3012 (before the gemini merge). Not deployed. Round 46 (gemini UI) was merged on top and rolled back the same day, see the next entry.
 - 2026-10-25 — **gemini** `d776f87` (branch `gemini`, round 46: login form and workplace UI) merged as `a8953fb`, then **rolled back** with `git reset --hard 617de2f` (kept as tag `backup/gemini-round46-merge`). Reason: with the codex backend gate on, 184 of 187 existing E2E tests stopped at the "Workplace Sign In" screen, because they never sign in. Master E2E after the rollback: 187/187. Round 47 assigns gemini to fix this on its branch.
 - 2026-10-24 — **codex** `e390a4a`…`40bfde9` (branch `codex`, round 44, documentation only: `project-state/backend/http-api.md` changeover routes) → merge `ffd2c0f`-equivalent docs commit on master. No code changed, so no deploy and no E2E re-run; the code is unchanged since `7d0039a`, which passed E2E 186/186 and is deployed. `npm test` 619/619.
@@ -1770,7 +1771,7 @@ for an independent critique before the final version is made. Reviewing is the w
 ## codex
 
 - **Status:** IDLE
-- **Updated:** 2026-10-25
+- **Updated:** 2026-10-26
 - **Task:** —
 - **Head commit:** —
 - **Changes:** —

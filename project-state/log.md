@@ -1104,3 +1104,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Screenshots in `docs/nebius/deck/assets/` are live captures from a local build on the synthetic plant-1 month. Investigator captures are not included: field reports are closed to guest workplaces, and no Nebius key is set.
 - Removed the earlier draft deck (`ResponseCompass-nebius-deck-draft.pptx`). `AMDResponseCompass-deck.pptx` is the user's reference file and is not committed.
 - Pages updated: log.md only.
+
+## [2026-10-26] docs — Independent Nebius deck critique (round 48)
+- Reviewed all 20 slides/notes and rendered the Nebius and AMD baseline decks; checked claims against implementation, saved Analytics captures, historical provider/evaluation summaries and supplied judging criteria. Recorded 12 prioritized findings and concrete fixes; did not edit the deck, builder or application.
+- Pages updated: `docs/nebius/deck/REVIEW-codex-round48.md`. Verification: 635 hermetic tests passed; full Chromium result recorded in the review and Codex handoff. Used Codex port 3021 per the Ports table, resolving the round brief's conflicting 3022 instruction in favor of AGENTS.md rule 9.
