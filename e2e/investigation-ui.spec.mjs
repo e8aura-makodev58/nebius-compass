@@ -44,9 +44,12 @@ function readyInvestigation(report) {
 
 async function installStubs(page, store) {
   await page.route(`**${room}/state`, async (route) => {
-    const response = await route.fetch();
-    const state = await response.json();
-    await route.fulfill({ response, json: { ...state, fieldReports: [...store.extraReports, ...store.reports], investigations: store.investigations } });
+    // The page can navigate away while the request is in flight; then the response is disposed and the stub passes through.
+    const response = await route.fetch().catch(() => null);
+    if (!response) return route.continue().catch(() => {});
+    const state = await response.json().catch(() => null);
+    if (!state) return route.continue().catch(() => {});
+    await route.fulfill({ response, json: { ...state, fieldReports: [...store.extraReports, ...store.reports], investigations: store.investigations } }).catch(() => {});
   });
   const ok = (route, json = { message: 'Updated.' }) => route.fulfill({ json });
   await page.route(`**${room}/reports`, async (route) => {
