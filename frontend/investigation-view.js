@@ -43,6 +43,7 @@ function sourceLabel(record) {
   if (record.source === 'NEBIUS_MODEL') return `Nebius · ${record.model?.modelId ?? 'model'}`;
   if (record.source === 'AMD_MODEL') return `AMD · ${record.model?.modelId ?? 'model'}`;
   if (record.source === 'FIXTURE') return 'Offline fixture';
+  if (!record.source) return 'Pending';
   return 'Deterministic';
 }
 function modelFacts(record, escape) {
