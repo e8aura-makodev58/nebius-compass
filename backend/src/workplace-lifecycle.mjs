@@ -57,7 +57,7 @@ export function createWorkplaceLifecycle({ dataRoot, rooms, build, prepare, now 
         entry = { ...entry, lastSeenAt: now() }; await save(entry); entries.set(entry.roomId, entry); await enforce(entry.roomId);
         return { ...identity, created: false };
       }
-      if (entries.size >= WORKPLACE_CAP) throw Object.assign(new Error('Workplace limit reached; try again later'), { statusCode: 503 });
+      if (entries.size >= WORKPLACE_CAP) throw Object.assign(new Error(`Guest access is full: ${WORKPLACE_CAP} workplaces are registered. New usernames are closed; registered users can still sign in.`), { statusCode: 503 });
       const createdAt = now();
       entry = { ...identity, createdAt, lastSeenAt: createdAt, runEndsAt: createdAt + WORKPLACE_RUN_MS };
       // Durable creation marker precedes run activation. A restart never replays start.

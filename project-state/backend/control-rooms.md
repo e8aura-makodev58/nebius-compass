@@ -120,7 +120,7 @@ allowed only in the owning room; reset yields the paused template seed.
 The manager restores durable workplaces at startup, sweeps those idle for seven
 days, and repeats cleanup at most hourly through its existing process scheduler.
 Only directories whose metadata matches the safe username-derived ID are eligible;
-template, plant-1, plant-2 and unrelated files are never swept. Cap is 200 workplaces;
+template, plant-1, plant-2 and unrelated files are never swept. Cap is 10 registered workplaces;
 new creation at cap returns 503 while existing workplaces remain usable. Session
 use touches durable workplace activity; sweeps invalidate a session on its next use.
 Demo rooms and the template are absent from ordinary operator room listings, and

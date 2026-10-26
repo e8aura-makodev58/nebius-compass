@@ -69,7 +69,7 @@ workplace for a demo, without giving them any write access to shared state.
 
 - Workplaces idle for **7 days** are deleted by a scheduled sweep. The sweep runs at server start and
   then at most once an hour. Deleting a workplace removes its room state files, and nothing else.
-- Hard cap: **200** demo workplaces. Creating a new one at the cap returns `503` with a plain message;
+- Hard cap: **10** registered guest workplaces (`WORKPLACE_CAP`, to limit bot sign-ups). Creating a new one at the cap returns `503` with a plain message;
   existing workplaces keep working.
 - The template and `plant-1` are never swept.
 
@@ -94,7 +94,7 @@ Hermetic tests (`npm test`, no network, no writes to `backend/data/`):
 - Five failures from one address → `429` until the window passes; success resets the count.
 - Demo session `POST` to another room, to the template, or to `/ask` → `403`.
 - Cookie has `HttpOnly` and `SameSite=Strict`; logout invalidates it.
-- Sweep deletes an idle workplace and leaves the template and `plant-1` untouched; the cap returns `503`.
+- Sweep deletes an idle workplace and leaves the template and `plant-1` untouched; the cap returns `503`. Sweeping an idle workplace frees its slot.
 - The module imports nothing from `simulation`, `responder` or `analytics` for the auth path, and the
   password value appears in no log line or response body.
 
