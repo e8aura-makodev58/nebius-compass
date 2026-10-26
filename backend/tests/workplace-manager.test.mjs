@@ -42,7 +42,7 @@ test('cap is 200 under concurrent creation, existing workplace still works and m
   const dataRoot = await scratch(t), rooms = new Map();
   const lifecycle = createWorkplaceLifecycle({ dataRoot, rooms, now: () => 0, build: async (id, username) => ({ id, label: username, health: 'READY', liveStore: { mutate: async () => {}, snapshot: async () => ({ simulationState: { status: 'PAUSED' } }) }, liveRuntime: { pause: async () => {} } }) });
   await lifecycle.initialize(); const results = await Promise.allSettled(Array.from({ length: WORKPLACE_CAP + 1 }, (_, i) => lifecycle.ensure(`user-${i}`)));
-  assert.equal(results.filter(x => x.status === 'fulfilled').length, 200); assert.equal(results.find(x => x.status === 'rejected').reason.statusCode, 503);
+  assert.equal(results.filter(x => x.status === 'fulfilled').length, WORKPLACE_CAP); assert.equal(results.find(x => x.status === 'rejected').reason.statusCode, 503);
   const existing = await lifecycle.ensure('user-0'); assert.equal(existing.created, false);
   const metadata = JSON.parse(await readFile(join(dataRoot, 'control-rooms', existing.roomId, 'workplace.json'), 'utf8')); assert.equal(metadata.username, 'user-0');
 });

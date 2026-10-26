@@ -1088,3 +1088,7 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Tests: `backend/tests/app-icons.test.mjs` (media types, favicon link, referenced files exist); `e2e/app-logo.spec.mjs` (picker logo loads; favicon served as `image/x-icon`).
 - No apple-touch-icon or web manifest: the supplied files have no square PNG. Add one if iOS home-screen icons matter.
 - Pages updated: frontend/overview.md, log.md.
+
+## [2026-10-26] change — Guest workplace cap lowered to 10
+- `WORKPLACE_CAP` is now 10 (was 200), to stop bot sign-ups. A new username at the cap gets `503` with a message saying guest access is full; registered usernames still sign in. Idle workplaces swept after 7 days free their slots.
+- Pages updated: docs/design/guest-workplaces.md, project-state/operations/running-and-config.md, project-state/backend/control-rooms.md, log.md.
