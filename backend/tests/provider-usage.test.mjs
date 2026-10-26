@@ -129,3 +129,13 @@ test('an empty ranking response falls back with a named reason instead of throwi
   assert.equal(result.source,'DETERMINISTIC');
   assert.equal(result.fallbackReason,'invalid-output: shape');
 });
+test('a dropped connection or an unknown option gets one retry before falling back',async()=>{
+  const report={narrative:'Station 12 transfer stops short.',interpretation:{options:[{optionId:'OPTION-1',equipmentId:'EQ-1',equipmentName:'Station 1',issueClass:'B',symptomCode:'B-STOP',symptomText:'Transfer stops.'}]}};
+  const envelope=(content)=>({ok:true,headers:{get:()=>null},json:async()=>({usage:{prompt_tokens:1,completion_tokens:1},choices:[{message:{content},finish_reason:'stop'}]})});
+  const good=envelope(JSON.stringify({rankedOptions:[{optionId:'OPTION-1',rationale:'Matches the reported stopping behaviour.'}]}));
+  const bad=envelope(JSON.stringify({rankedOptions:[{optionId:'OPTION-9',rationale:'Matches the reported stopping behaviour.'}]}));
+  const scripted=(responses)=>{let i=0;return {provider:'nebius',modelId:'nvidia/nemotron-3-super-120b-a12b',apiKey:'test-key',fetchImpl:async()=>{const r=responses[Math.min(i,responses.length-1)];i+=1;if(r instanceof Error) throw r;return r;}};};
+  assert.equal((await rankInterpretations(report,scripted([new TypeError('fetch failed'),good]))).source,'NEBIUS_MODEL');
+  assert.equal((await rankInterpretations(report,scripted([bad,good]))).source,'NEBIUS_MODEL');
+  assert.equal((await rankInterpretations(report,scripted([bad,bad]))).fallbackReason,'invalid-output: unknown-option "OPTION-9"');
+});

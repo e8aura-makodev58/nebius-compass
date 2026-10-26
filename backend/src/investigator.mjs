@@ -106,21 +106,34 @@ export async function rankInterpretations(report, options = {}) {
   const fallback = (fallbackReason='provider-error') => ({options:available,fallbackReason,source:'DETERMINISTIC',model:null});
   if (options.mode === 'force-failure') return fallback('forced-failure');
   try {
-    let output;
+    let output, problem = null;
     if (options.mode === 'fixture') {
       const fixture = JSON.parse(await readFile(new URL('../../fixtures/investigation/synthetic-responses/default.json',import.meta.url)));
       if (fixture.label !== 'synthetic') return fallback();
       output = {rankedOptions:available.map((row) => ({optionId:row.optionId,rationale:fixture.interpretationRationale}))};
-    } else output = await timed(() => callChatCompletion({...options,role:'compass',provider,modelId,apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,
-      timeoutMs: Math.min(options.timeoutMs ?? 90000,120000),systemInstruction:INTERPRETATION_INSTRUCTION,userContent:JSON.stringify({report:JSON.stringify(report.narrative),options:available}),
-      jsonSchemaName:'interpretations',jsonSchema:{type:'object',required:['rankedOptions']}}),Math.min(options.timeoutMs ?? 90000,120000));
-    const rows = output?.rankedOptions;
-    const problem = interpretationProblem(output, rows, available);
+    } else {
+      // One retry for a dropped connection, and one for an invalid answer; any other failure falls back at once.
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+          output = await timed(() => callChatCompletion({...options,role:'compass',provider,modelId,apiKey:options.apiKey ?? readProviderApiKey(provider),fetchImpl:options.fetchImpl ?? fetch,
+            timeoutMs: Math.min(options.timeoutMs ?? 90000,120000),systemInstruction:INTERPRETATION_INSTRUCTION,userContent:JSON.stringify({report:JSON.stringify(report.narrative),options:available}),
+            jsonSchemaName:'interpretations',jsonSchema:{type:'object',required:['rankedOptions']}}),Math.min(options.timeoutMs ?? 90000,120000));
+        } catch (error) {
+          if (attempt === 1 && isDroppedConnection(error)) continue;
+          throw error;
+        }
+        problem = interpretationProblem(output, output?.rankedOptions, available);
+        if (!problem) break;
+      }
+    }
     if (problem) return fallback(`invalid-output: ${problem}`);
+    const rows = output.rankedOptions;
     return { options:rows.map((row) => { const option = available.find((item) => item.optionId === row.optionId); return {optionId:option.optionId,equipmentId:option.equipmentId,equipmentName:option.equipmentName,issueClass:option.issueClass,symptomCode:option.symptomCode,symptomText:option.symptomText,rationale:row.rationale}; }),
       source:options.mode === 'fixture' ? 'FIXTURE' : provider === 'nebius' ? 'NEBIUS_MODEL' : 'AMD_MODEL',model:{modelId} };
   } catch(error) { return fallback(error.code==='budget-exhausted'?'budget-exhausted':`provider-error: ${error.code ?? error.name ?? 'unknown'}${error.name==='TypeError'?` ${String(error.message).slice(0,90)}`:''}`); }
 }
+// Node reports a dropped connection to Token Factory as a TypeError with this message.
+function isDroppedConnection(error) { return error?.name === 'TypeError' && /fetch failed/.test(String(error.message)); }
 // Names the first check a ranking output fails, so a fallback can be diagnosed without logging model text.
 function interpretationProblem(output, rows, available) {
   if (!exact(output,['rankedOptions']) || !Array.isArray(rows)) return 'shape';
