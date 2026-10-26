@@ -1104,3 +1104,8 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 - Screenshots in `docs/nebius/deck/assets/` are live captures from a local build on the synthetic plant-1 month. Investigator captures are not included: field reports are closed to guest workplaces, and no Nebius key is set.
 - Removed the earlier draft deck (`ResponseCompass-nebius-deck-draft.pptx`). `AMDResponseCompass-deck.pptx` is the user's reference file and is not committed.
 - Pages updated: log.md only.
+
+## [2026-10-26] docs — Final Nebius deck (round 48 review applied)
+- `docs/nebius/deck/build_deck.py` now builds 21 slides (`ResponseCompass-nebius-deck.pptx`). Applied the codex round 48 findings that do not need an owner decision: Super ranks interpretations and Ultra runs the bounded investigation; two labelled paths on "How it runs" (ordinary dispatch and field-report investigation, both through the approval gate); approval wording (operator approval by default, audited policy only where enabled); replay runs B and C both shown with fallback counts; the Analytics 25% (of 4,682 attempts, full history) separated from the September Pareto figures (3,004; 78% = 2,339 of 3,004); architecture links fixed; provenance of each measurement dated on the slide; a new "Existing foundation, new Nebius work" slide.
+- Left open for the owner: judge access to field reports and the Investigator, the Nebius key and a live capture, and the submission links (repository, video, working URL and test credentials). These stay on the amber cards.
+- Pages updated: log.md only.
