@@ -29,8 +29,8 @@ history that lives in past tickets and in people's heads.
 ## What must be on screen (rules)
 
 - **Nebius Token Factory and an NVIDIA open-source model** must be visibly in use in the video.
-  Nemotron 3 Ultra runs the Investigator; Nemotron Super ranks responders and fixes; Nemotron Nano writes
-  the simulated narratives. The model names appear in Settings, next to the calls they make.
+  Nemotron 3 Ultra runs the Investigator; Nemotron 3 Super ranks responders, fixes and overtime; Nemotron
+  3.5 Lightning plans events and writes the simulated narratives. The model names appear in Settings, next to the calls they make.
 - **Public YouTube video under three minutes.** Upload after recording; link it on the form.
 - **Working URL.** The live demo runs on the deployed app. Judges sign in with a guest username and
   the shared password, and each username gets its own workplace.
