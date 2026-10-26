@@ -40,6 +40,7 @@ export function openInvestigations(state) {
 }
 
 function sourceLabel(record) {
+  if (['QUEUED', 'RUNNING'].includes(record.status)) return 'Pending';
   if (record.source === 'NEBIUS_MODEL') return `Nebius · ${record.model?.modelId ?? 'model'}`;
   if (record.source === 'AMD_MODEL') return `AMD · ${record.model?.modelId ?? 'model'}`;
   if (record.source === 'FIXTURE') return 'Offline fixture';
