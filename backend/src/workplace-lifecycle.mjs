@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, writeFile, rename, rm, access } from 'node:fs
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { workplaceIdentity, WORKPLACE_RUN_MS, WORKPLACE_IDLE_MS, WORKPLACE_CAP } from './workplace-identity.mjs';
-export function createWorkplaceLifecycle({ dataRoot, rooms, build, now = Date.now }) {
+export function createWorkplaceLifecycle({ dataRoot, rooms, build, prepare, now = Date.now }) {
   const root = join(dataRoot, 'control-rooms'), entries = new Map();
   let queue = Promise.resolve(), lastSweep = -Infinity;
   const run = operation => { const next = queue.catch(() => {}).then(operation); queue = next.catch(() => {}); return next; };
@@ -62,6 +62,7 @@ export function createWorkplaceLifecycle({ dataRoot, rooms, build, now = Date.no
       entry = { ...identity, createdAt, lastSeenAt: createdAt, runEndsAt: createdAt + WORKPLACE_RUN_MS };
       // Durable creation marker precedes run activation. A restart never replays start.
       await save(entry); entries.set(entry.roomId, entry);
+      await prepare?.(entry.roomId);
       const room = await build(entry.roomId, identity.username); rooms.set(entry.roomId, room);
       if (room.health !== 'READY') throw Object.assign(new Error('Workplace unavailable'), { statusCode: 503 });
       await room.liveStore.mutate('workplace-create-run', state => { state.simulationState.status = 'RUNNING'; state.simulationState.speedMultiplier = 1; });

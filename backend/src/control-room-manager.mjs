@@ -1,5 +1,6 @@
 import { createWorkplaceLifecycle } from './workplace-lifecycle.mjs';
 import { createWorkplaceSeed } from './workplace-seed.mjs';
+import { copyHistoryArchive } from './history-archive.mjs';
 /**
  * Composes the registry into running Control Rooms: one liveRuntime +
  * offlineRuntime + applicationRuntime triple per room, correctly-scoped
@@ -165,7 +166,9 @@ export async function createControlRoomManager({
     }
   }
 
-  const templateSeed = workplacesEnabled ? createWorkplaceSeed() : null;
+  const template = workplacesEnabled ? await createWorkplaceSeed() : null;
+  // Each workplace gets its own copy of the plant-1 history archive, which its live state refers to.
+  const prepareWorkplaceHistory = (id) => copyHistoryArchive(template.historyRoot, join(dataRoot, 'control-rooms', id, 'history-archive'));
   let workplaces = null;
   if (workplacesEnabled) {
     const buildWorkplace = async (id, label) => {
@@ -173,13 +176,14 @@ export async function createControlRoomManager({
         const fixture = { mode: 'fixture' };
         const room = buildRoom({ id, label, dataRoot, logger, plannerOptions: fixture, agentOptions: fixture,
           investigatorOptions: fixture, narratorOptions: fixture, assistantOptions: fixture,
-          seedFactory: () => structuredClone(templateSeed) });
+          seedFactory: () => structuredClone(template.state) });
         await room.liveStore.snapshot(); await room.liveRuntime.reconcileStartup();
         return { ...room, health: 'READY', reason: null, demo: id !== 'template' };
       } catch { return { id, label, demo: id !== 'template', health: 'FAILED', reason: 'Workplace unavailable' }; }
     };
+    await prepareWorkplaceHistory('template');
     rooms.set('template', await buildWorkplace('template', 'Bootstrap template'));
-    workplaces = createWorkplaceLifecycle({ dataRoot, rooms, now, build: buildWorkplace });
+    workplaces = createWorkplaceLifecycle({ dataRoot, rooms, now, build: buildWorkplace, prepare: prepareWorkplaceHistory });
     await workplaces.initialize();
   }
 
