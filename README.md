@@ -43,8 +43,9 @@ In-flight calls can finish, and explicit operator actions can still request infe
 A positive `COMPASS_DAILY_BUDGET_USD` adds an estimated daily limit; its default is
 unlimited. **Offline Demo** makes no provider calls.
 
-ResponseCompass was first built for an earlier AMD hackathon; that submission's media
-remain in [docs/submission/](docs/submission/). What is new for Nebius is listed in
+ResponseCompass was first built for an earlier AMD hackathon. That submission's documents
+and media have been removed. The Nebius x NVIDIA submission materials are in
+[docs/nebius/](docs/nebius/). What is new for Nebius is listed in
 [HACKATHON_CHANGES.md](HACKATHON_CHANGES.md).
 
 This is a synthetic project. It contains no proprietary facility context, real personnel
