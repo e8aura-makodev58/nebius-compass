@@ -390,8 +390,10 @@ export function createRequestHandler(manager, logger = null, settingsService = n
           if (!scoped || decodeURIComponent(scoped[1]) !== session.roomId) return sendJson(response, 403, { error: 'Workplace access only' });
           const tail = scoped[2] ?? '';
           // An allowlist for mutations keeps new/provider-backed capabilities closed by default.
-          const allowedWrite = ['/activity', '/simulation/pause', '/reset', '/calibrations', '/correlation-records', '/loadboards/boards', '/loadboards/checkout', '/loadboards/release', '/handler-alarms', '/handler-runs', '/handler-planned-stops', '/changeovers'].includes(tail);
-          if (/^\/(?:ask|reports|investigations|cases|compass)(?:\/|$)/.test(tail) || (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && !allowedWrite)) return sendJson(response, 403, { error: 'This action is unavailable in demo workplaces' });
+          // Field reports, investigations and cases are the Nebius Investigator: open to guests as sponsor-funded demo features.
+          const investigator = /^\/(?:reports|investigations|cases)(?:\/|$)/.test(tail);
+          const allowedWrite = investigator || ['/activity', '/simulation/pause', '/reset', '/calibrations', '/correlation-records', '/loadboards/boards', '/loadboards/checkout', '/loadboards/release', '/handler-alarms', '/handler-runs', '/handler-planned-stops', '/changeovers'].includes(tail);
+          if (/^\/(?:ask|compass)(?:\/|$)/.test(tail) || (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && !allowedWrite)) return sendJson(response, 403, { error: 'This action is unavailable in demo workplaces' });
         }
       }
       if (/^\/api\/control-rooms\/[^/]+(?:\/|$)/.test(url.pathname) && !['GET','HEAD','OPTIONS'].includes(request.method)) assertRoomMutationRequest(request);

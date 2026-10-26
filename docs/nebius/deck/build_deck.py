@@ -417,8 +417,8 @@ for n, (title, body) in enumerate(steps):
 for a_, b_ in zip(cards_, cards_[1:]):
     link(s, a_, 3, b_, 1)
 placeholder(s, 0.6, 5.0, 12.1, 1.25, "Live capture pending",
-            "The Nebius key is not yet set on the deployment, and field reports are closed to guest workplaces "
-            "(access decision pending). Replace this box with a live Nemotron capture before filing. Nothing here is a model output.")
+            "The Nebius key is set on the deployment, and a live Nemotron call succeeded on 2026-10-26. Replace this box "
+            "with a captured Investigator run before filing. Nothing here is a model output.")
 
 # 9. Investigator safety (new) --------------------------------------------------------
 s = new_slide("plain", notes=(
@@ -615,7 +615,7 @@ text(s, 9.3, 2.75, 3.2, 1.8,
 s = new_slide("plain", notes=(
     "Judges sign in with a valid username and the shared guest password. Each username gets its own workplace, copied "
     "from the full plant-1 history. New usernames close after ten registered workplaces, to limit bot sign-ups. "
-    "Field reports and the Investigator are operator-only on guest workplaces until the access decision is made."))
+    "Field reports and the Investigator are open to guest workplaces, paid from the sponsor's Nebius tokens."))
 header(s, "Try it", "Guest workplaces",
        "Sign in with a valid username and the shared guest password. Each username gets its own workplace.")
 for n, (title, body) in enumerate([
@@ -627,9 +627,11 @@ for n, (title, body) in enumerate([
     card(s, x, 2.0, 3.8, 2.4, fill=WHITE, line=RULE)
     text(s, x + 0.3, 2.25, 3.2, 0.5, title, size=16, bold=True, color=INK)
     text(s, x + 0.3, 2.85, 3.2, 1.5, body, size=13, color=BODY)
-placeholder(s, 0.6, 4.75, 12.1, 1.2, "Access decision pending",
-            "Field reports and the Investigator are closed on guest workplaces. Judges cannot reach the Nemotron "
-            "Investigator until the owner decides whether to open it, and the Nebius key is set on the server.")
+card(s, 0.6, 4.75, 12.1, 1.2, fill=WHITE, line=RULE)
+text(s, 0.9, 4.95, 11.5, 0.4, "The Investigator is open to judges", size=14, bold=True, color=INK)
+text(s, 0.9, 5.35, 11.5, 0.5,
+     "Field reports and the Investigator run on guest workplaces with the sponsor's Nebius tokens. Ask Compass stays closed.",
+     size=13, color=BODY)
 
 # 19. Engineering ---------------------------------------------------------------------
 s = new_slide("plain", notes=(
@@ -659,7 +661,7 @@ for n, (title, body, y) in enumerate([
 card(s, 7.0, 2.0, 5.7, 4.3, fill=AMBER_FILL, line=AMBER, dashed=True)
 text(s, 7.3, 2.2, 5.1, 0.4, "Open before submission (remove before filing)", size=14, bold=True, color=AMBER_INK)
 text(s, 7.3, 2.8, 5.1, 3.4,
-     ["Nebius key set on the server, then a live Nemotron check and captures for the Investigator slides.",
+     ["Captured Investigator run on the deployment, to replace the placeholder on slide 8.",
       "Owner decision: whether judges can use field reports and the Investigator, and for how long.",
       "Demo video, under three minutes, uploaded to YouTube and linked on the form.",
       "Public repository under Apache-2.0, with a sanitized history scan, and a working URL with test credentials."],

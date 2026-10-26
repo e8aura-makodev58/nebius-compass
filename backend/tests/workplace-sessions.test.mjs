@@ -60,7 +60,9 @@ test('HTTP guard: signed-out API 401, own-only list/writes, shared/model/global 
   assert.deepEqual((await http(handler, '/api/control-rooms', undefined, { headers })).body.rooms, [{ id: room }]);
   assert.equal((await http(handler, `/api/control-rooms/${room}/state`, undefined, { headers })).status, 200);
   assert.equal((await http(handler, `/api/control-rooms/${room}/calibrations`, {}, { headers })).status, 200);
-  for (const path of ['/api/control-rooms/plant-1/reset', '/api/control-rooms/template/reset', '/api/control-rooms/other/reset', `/api/control-rooms/${room}/ask`, `/api/control-rooms/${room}/reports`, `/api/control-rooms/${room}/simulation/start`, '/api/settings/models', '/api/logs/client']) assert.equal((await http(handler, path, {}, { headers })).status, 403, path);
+  for (const path of ['/api/control-rooms/plant-1/reset', '/api/control-rooms/template/reset', '/api/control-rooms/other/reset', `/api/control-rooms/${room}/ask`, `/api/control-rooms/${room}/compass`, `/api/control-rooms/${room}/simulation/start`, '/api/settings/models', '/api/logs/client']) assert.equal((await http(handler, path, {}, { headers })).status, 403, path);
+  assert.notEqual((await http(handler, `/api/control-rooms/${room}/reports`, {}, { headers })).status, 403);
+  assert.notEqual((await http(handler, `/api/control-rooms/${room}/investigations/none/approve`, {}, { headers })).status, 403);
   assert.equal((await http(handler, '/api/session/login', input('judge'), { headers: { origin: 'https://other.test' } })).status, 403);
   const logout = await http(handler, '/api/session/logout', {}, { headers }); assert.equal(logout.status, 200); assert.match(logout.headers['set-cookie'], /Max-Age=0/);
   assert.equal((await http(handler, '/api/session', undefined, { headers })).status, 401);
