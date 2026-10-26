@@ -218,7 +218,7 @@ export function createInvestigationService(store,{ investigatorOptions={}, ranki
         });
       } else if(claim.kind==='report') {
         const report=state.fieldReports.find((r)=>r.id===claim.id);const output=await rankInterpretations(report,await resolve(rankingOptions));
-        await mutate('interpretation-ranked',(draft)=>{const report=draft.fieldReports?.find((r)=>r.id===claim.id);if(report?.requestToken!==claim.token||report.status!=='UNRESOLVED')return;delete report.requestToken;report.interpretation={status:'READY',source:output.source,model:output.model,options:output.options};report.revision++;});
+        await mutate('interpretation-ranked',(draft)=>{const report=draft.fieldReports?.find((r)=>r.id===claim.id);if(report?.requestToken!==claim.token||report.status!=='UNRESOLVED')return;delete report.requestToken;report.interpretation={status:'READY',source:output.source,model:output.model,options:output.options,...(output.fallbackReason?{fallbackReason:output.fallbackReason}:{})};report.revision++;});
       } else {
         const run=state.investigations.find((r)=>r.id===claim.id);const issue=state.issues.find((r)=>r.id===run.issueId);
         if(!issue)return false;

@@ -115,11 +115,21 @@ export async function rankInterpretations(report, options = {}) {
       timeoutMs: Math.min(options.timeoutMs ?? 90000,120000),systemInstruction:INTERPRETATION_INSTRUCTION,userContent:JSON.stringify({report:JSON.stringify(report.narrative),options:available}),
       jsonSchemaName:'interpretations',jsonSchema:{type:'object',required:['rankedOptions']}}),Math.min(options.timeoutMs ?? 90000,120000));
     const rows = output.rankedOptions;
-    if (!exact(output,['rankedOptions']) || !Array.isArray(rows) || rows.length !== available.length || new Set(rows.map((r) => r.optionId)).size !== rows.length ||
-      rows.some((row) => !exact(row,['optionId','rationale']) || !available.some((o) => o.optionId === row.optionId) || !prose(row.rationale,available.map((o) => o.optionId)))) return fallback();
+    const problem = interpretationProblem(output, rows, available);
+    if (problem) return fallback(`invalid-output: ${problem}`);
     return { options:rows.map((row) => { const option = available.find((item) => item.optionId === row.optionId); return {optionId:option.optionId,equipmentId:option.equipmentId,equipmentName:option.equipmentName,issueClass:option.issueClass,symptomCode:option.symptomCode,symptomText:option.symptomText,rationale:row.rationale}; }),
       source:options.mode === 'fixture' ? 'FIXTURE' : provider === 'nebius' ? 'NEBIUS_MODEL' : 'AMD_MODEL',model:{modelId} };
-  } catch(error) { return fallback(error.code==='budget-exhausted'?'budget-exhausted':'provider-error'); }
+  } catch(error) { return fallback(error.code==='budget-exhausted'?'budget-exhausted':`provider-error: ${error.code ?? error.name ?? 'unknown'}`); }
+}
+// Names the first check a ranking output fails, so a fallback can be diagnosed without logging model text.
+function interpretationProblem(output, rows, available) {
+  if (!exact(output,['rankedOptions']) || !Array.isArray(rows)) return 'shape';
+  if (rows.length !== available.length) return 'count';
+  if (new Set(rows.map((r) => r.optionId)).size !== rows.length) return 'duplicate-option';
+  if (rows.some((row) => !exact(row,['optionId','rationale']))) return 'row-shape';
+  if (rows.some((row) => !available.some((o) => o.optionId === row.optionId))) return 'unknown-option';
+  const failed = rows.map((row) => proseError(row.rationale, available.map((o) => o.optionId))).find(Boolean);
+  return failed ? `rationale ${failed}` : null;
 }
 function shiftWarnings(rows,asOf) {
   return rows.filter((row)=>row.shiftEndsAt && Date.parse(row.shiftEndsAt)>Date.parse(asOf) && Date.parse(row.shiftEndsAt)-Date.parse(asOf)<=30*60000)
