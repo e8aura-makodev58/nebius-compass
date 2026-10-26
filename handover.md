@@ -1804,15 +1804,16 @@ rolled-back merge is kept as tag `backup/gemini-round46-merge`. Your branch is u
 ## claude
 
 - **Status:** IDLE
-- **Updated:** —
-- **Task:** —
-- **Head commit:** —
-- **Changes:** —
-- **Files changed:** —
-- **Verification:** `npm test` — · E2E —
-- **project-state pages updated:** —
-- **Risks / follow-ups:** —
+- **Updated:** 2026-10-26
+- **Task:** Nebius deck builder committed; AMD-era submission folder removed; deck and docs pushed to `nebius-compass`.
+- **Head commit:** see `git log` on `claude`
+- **Changes:** Added `docs/nebius/deck/build_deck.py`, the draft deck and `docs/nebius/deck/assets/`. Removed `docs/submission/` and `docs/nebius/deck/build-deck.mjs`. README points to `docs/nebius/`.
+- **Files changed:** `docs/nebius/deck/*`, `docs/submission/*` (deleted), `README.md`, `project-state/log.md`, `handover.md`
+- **Verification:** docs only; no runtime code changed. Suites not run for this change.
+- **project-state pages updated:** log.md
+- **Risks / follow-ups:** Deck slides 5, 9 and 10 still await the Nebius key and the judge access decision.
 - **Questions for main:** —
+
 - 2026-10-25 — **gemini** round 47 (branch `gemini`, `c00a175`…`3b9da5a`: fail-closed boot and shared Playwright session fixture, with the round 46 login UI) merged into master as `780e696`. Round 46's UI was re-applied on top of the round 45 backend. Conflicts in `frontend/app.js`, `frontend/index.html` and `project-state/log.md` were resolved by keeping both sides; `currentControlRoomId` stays `let` (room switches reassign it) and keeps the camelCase-aware display route. `npm test` 633/633; E2E 208/208 on port 3012.
 - 2026-10-25 — **claude** supplied branding (codex handoff `3ce72bc`): Response Compass logo JPG above the room picker and ICO favicon, original file names kept under `frontend/icons/`, merged as `efb0a51` (after `b83c915`). Earlier generated mark (`616e0ff`, merged `7e36d57`) was removed from master in this merge. No apple-touch-icon or manifest, since the supplied files have no square PNG.
 - 2026-10-25 — **deploy** `efb0a51` to e8aura-deploy, healthy. Two earlier deploys this day: `7e36d57` was deployed with the round 45 sign-in guard but without the login UI, so every API call returned 401 and the app was unusable; rolled back to `7d0039a` the same day. The workplace password was added to the server's `~/nebius-compass-env/.env` (not in git). GET-only smoke tests: `/api/control-rooms` and `/api/session` 401 signed out; `/` 200; icons 200 with `image/x-icon` and `image/jpeg`; `login.css` and `login-view.js` 200.

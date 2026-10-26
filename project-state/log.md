@@ -1092,3 +1092,9 @@ See [README.md](README.md#logmd-entry-format) for the entry format. `<type>` is 
 ## [2026-10-26] change — Guest workplace cap lowered to 10
 - `WORKPLACE_CAP` is now 10 (was 200), to stop bot sign-ups. A new username at the cap gets `503` with a message saying guest access is full; registered usernames still sign in. Idle workplaces swept after 7 days free their slots.
 - Pages updated: docs/design/guest-workplaces.md, project-state/operations/running-and-config.md, project-state/backend/control-rooms.md, log.md.
+
+## [2026-10-26] docs — Nebius deck and AMD submission removed
+- Added the Nebius submission deck builder `docs/nebius/deck/build_deck.py` (python-pptx, glued connectors for block diagrams), its draft `ResponseCompass-nebius-deck-draft.pptx` and screenshots in `docs/nebius/deck/assets/`.
+- Removed the AMD-era submission folder `docs/submission/` (deck PDF and PPTX, demo WebM, form answers, pitch deck, video script, build scripts and assets). Also removed the superseded pptxgenjs draft `docs/nebius/deck/build-deck.mjs`.
+- `README.md` now points to `docs/nebius/` for the submission materials. Earlier log, decision and handover entries that mention `docs/submission/` are kept as history.
+- Pages updated: README.md, log.md. No runtime code changed.
